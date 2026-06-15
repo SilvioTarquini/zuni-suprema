@@ -1,3 +1,4 @@
+// ZUNI Suprema v2.0 - rebuild 15/06/2026
 // Servidor principal do ZUNI Suprema
 const express = require('express');
 const cors = require('cors');
@@ -177,7 +178,17 @@ const stripe = stripeSecretKey
 const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../public')));
+app.get('/chat', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/chat.html'));
+});
 
+app.get('/checkout', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/checkout.html'));
+});
+
+app.get('/obrigado', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/obrigado.html'));
+});
 // Usamos express.json() para todas as rotas, exceto o webhook Stripe.
 app.use((req, res, next) => {
   if (req.originalUrl === '/api/pagamento/webhook') {
@@ -190,7 +201,7 @@ const sessions = new Map();
 
 function buildSuccessUrl(sessionId) {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-  return `${baseUrl}/chat?sessionId=${sessionId}`;
+  return `${baseUrl}/chat.html?sessionId=${sessionId}`;
 }
 
 function buildCancelUrl() {
