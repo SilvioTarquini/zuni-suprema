@@ -225,7 +225,10 @@
             audio.src = `data:audio/mpeg;base64,${data.audio}`;
             audio.play();
           }
-          if (contador >= 20) { setTimeout(gerarRelatorio, 1500); }
+          if (contador >= 20) {
+            addMsg('assistant', 'Nossa sessão chegou ao fim. Em instantes você receberá seu Mapa Integrativo ZUNI Suprema por email. Por favor, verifique sua caixa de entrada (e a pasta de spam).');
+            setTimeout(gerarRelatorio, 1500);
+          }
         } else {
           addMsg('assistant', data.error || 'Erro ao processar resposta.');
         }

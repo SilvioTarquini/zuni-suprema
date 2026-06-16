@@ -749,6 +749,42 @@ app.post('/api/relatorio', async (req, res) => {
   }
 });
 
+// ROTA DE DESENVOLVIMENTO — permite gerar o relatório de qualquer sessão
+// sem depender do contador de 20 mensagens. Bloqueada em produção, exceto
+// se a sessão já tiver pelo menos 3 mensagens no histórico.
+app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId é obrigatório.' });
+    }
+
+    const session = await getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Sessão não encontrada.' });
+    }
+
+    const isDev = process.env.NODE_ENV !== 'production';
+    const temHistoricoSuficiente = (session.history || []).length >= 3;
+
+    if (!isDev && !temHistoricoSuficiente) {
+      return res.status(403).json({ error: 'Rota de teste indisponível em produção para esta sessão.' });
+    }
+
+    const reportText = await generateReportText(session);
+    const pdfPath = await generatePdf(reportText, sessionId, session.name);
+    await sendEmail(session.email, session.name, pdfPath);
+    await triggerMake(session.name, session.email, reportText.slice(0, 1200));
+
+    return res.json({ relatório: reportText });
+  } catch (error) {
+    console.error('Erro em /api/relatorio/teste/:sessionId:', error);
+    return res.status(500).json({ error: 'Erro ao gerar o relatório de teste.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor ZUNI Suprema escutando na porta ${PORT}`);
