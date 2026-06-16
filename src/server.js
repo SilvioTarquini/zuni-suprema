@@ -520,23 +520,32 @@ app.post('/api/pagamento/webhook', express.raw({ type: 'application/json' }), as
 
     const signature = req.headers['stripe-signature'];
     const payload = req.body;
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
     if (!signature) {
       return res.status(400).json({ error: 'Cabeçalho Stripe-Signature ausente.' });
     }
 
-    const event = stripe.webhooks.constructEvent(payload, signature, process.env.STRIPE_WEBHOOK_SECRET || '');
+    if (!webhookSecret) {
+      return res.status(500).json({ error: 'STRIPE_WEBHOOK_SECRET não configurado.' });
+    }
+
+    const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
 
     if (event.type === 'checkout.session.completed') {
       const checkoutSession = event.data.object;
       const sessionId = checkoutSession.metadata?.sessionId;
 
-      if (sessionId && sessions.has(sessionId)) {
+      if (sessionId) {
         const session = sessions.get(sessionId);
-        session.paid = true;
-        session.paymentStatus = 'paid';
-        sessions.set(sessionId, session);
-        console.log('Sessão liberada:', sessionId);
+        if (session) {
+          session.paid = true;
+          session.paymentStatus = 'paid';
+          sessions.set(sessionId, session);
+          console.log('Sessão liberada:', sessionId);
+        } else {
+          console.warn('Webhook recebido para sessionId desconhecido:', sessionId);
+        }
       }
     }
 
