@@ -247,6 +247,11 @@ const stripe = stripeSecretKey
 const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../public')));
+
+app.get('/', (req, res) => {
+  res.redirect('/checkout');
+});
+
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/chat.html'));
 });
