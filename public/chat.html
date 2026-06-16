@@ -7,70 +7,94 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #0a0a0a;
-      color: #f0f0f0;
-      font-family: 'Georgia', serif;
+      background: linear-gradient(180deg, #faf8f4, #f5f0e8);
+      color: #1a1a1a;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       height: 100vh;
       display: flex;
       flex-direction: column;
     }
     header {
-      padding: 16px 24px;
-      border-bottom: 1px solid #1e1e1e;
+      background: #ffffff;
+      padding: 14px 16px;
+      border-bottom: 1px solid #ece4d6;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
     }
-    .header-logo { font-size: 11px; letter-spacing: 3px; color: #c9a84c; text-transform: uppercase; }
-    .counter { font-size: 12px; color: #555; }
-    .counter span { color: #c9a84c; }
+    .header-logo {
+      font-family: 'Georgia', serif;
+      font-size: 12px;
+      letter-spacing: 3px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      font-weight: bold;
+    }
+    .counter { font-size: 11px; color: #999; }
+    .counter span { color: #c9a84c; font-weight: bold; }
     #messages {
       flex: 1;
       overflow-y: auto;
-      padding: 24px;
+      padding: 16px;
+      padding-bottom: 110px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 14px;
     }
     .msg {
-      max-width: 75%;
-      padding: 14px 18px;
-      border-radius: 12px;
+      max-width: 85%;
+      padding: 14px 16px;
+      border-radius: 14px;
+      font-family: 'Georgia', serif;
       font-size: 15px;
       line-height: 1.6;
     }
     .msg.user {
-      background: #1a1a1a;
-      border: 1px solid #2a2a2a;
+      background: #ffffff;
+      border: 1px solid #ece4d6;
       align-self: flex-end;
-      color: #ddd;
+      color: #1a1a1a;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
     .msg.assistant {
-      background: #141414;
-      border: 1px solid #c9a84c33;
+      background: #fef9f0;
+      border: 1px solid #c9a84c4d;
       align-self: flex-start;
-      color: #f0f0f0;
+      color: #1a1a1a;
     }
     .msg .author {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
       font-size: 10px;
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 6px;
       color: #c9a84c;
+      font-weight: bold;
     }
     .input-area {
-      padding: 16px 24px;
-      border-top: 1px solid #1e1e1e;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      padding: 16px;
+      padding-bottom: max(16px, env(safe-area-inset-bottom));
       display: flex;
-      gap: 12px;
+      gap: 10px;
+      align-items: flex-end;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+      border-top: 1px solid #ece4d6;
     }
     #input {
       flex: 1;
-      background: #141414;
-      border: 1px solid #2a2a2a;
-      border-radius: 8px;
-      padding: 14px 16px;
-      color: #f0f0f0;
+      background: #faf8f4;
+      border: 1px solid #ece4d6;
+      border-radius: 24px;
+      padding: 14px 18px;
+      min-height: 48px;
+      max-height: 120px;
+      color: #1a1a1a;
       font-size: 15px;
       font-family: inherit;
       outline: none;
@@ -80,35 +104,44 @@
     #input:focus { border-color: #c9a84c; }
     #sendBtn {
       background: linear-gradient(135deg, #c9a84c, #e8c96a);
-      color: #0a0a0a;
+      color: #ffffff;
       border: none;
-      border-radius: 8px;
-      padding: 14px 20px;
+      border-radius: 50%;
+      width: 48px;
+      height: 48px;
+      min-width: 48px;
       font-size: 18px;
       cursor: pointer;
       transition: opacity 0.2s;
+      flex-shrink: 0;
     }
     #sendBtn:hover { opacity: 0.9; }
     #sendBtn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .typing { color: #555; font-style: italic; font-size: 13px; padding: 4px 0; }
+    .typing { color: #999; font-style: italic; font-size: 13px; padding: 4px 0; font-family: 'Georgia', serif; }
     audio { display: none; }
     #whatsappFloat {
       position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 56px;
-      height: 56px;
+      bottom: 90px;
+      right: 16px;
+      width: 52px;
+      height: 52px;
       background: #25D366;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
       z-index: 1000;
       transition: transform 0.2s;
     }
     #whatsappFloat:hover { transform: scale(1.08); }
-    #whatsappFloat svg { width: 30px; height: 30px; }
+    #whatsappFloat svg { width: 28px; height: 28px; }
+
+    @media (min-width: 768px) {
+      #messages { padding: 24px; padding-bottom: 110px; }
+      .input-area { padding: 16px 24px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
+      .msg { max-width: 70%; }
+    }
   </style>
 </head>
 <body>
@@ -118,7 +151,7 @@
   </header>
   <div id="messages"></div>
   <div class="input-area">
-    <textarea id="input" rows="2" placeholder="Digite sua mensagem..."></textarea>
+    <textarea id="input" rows="1" placeholder="Digite sua mensagem..."></textarea>
     <button id="sendBtn" onclick="enviar()">➤</button>
   </div>
   <audio id="audio"></audio>
