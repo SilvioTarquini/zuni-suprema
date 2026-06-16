@@ -3,9 +3,78 @@
 const express = require('express');
 const cors = require('cors');
 const Stripe = require('stripe');
+const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 require('dotenv').config();
+
+const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
+  ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
+  : null;
+
+function assertSupabase() {
+  if (!supabase) {
+    throw new Error('SUPABASE_URL e SUPABASE_KEY devem estar configurados para usar o Supabase.');
+  }
+  return supabase;
+}
+
+function normalizeSessionRow(row) {
+  if (!row) return null;
+  return {
+    sessionId: row.session_id,
+    name: row.name || null,
+    email: row.email,
+    history: row.history || [],
+    counter: row.message_count ?? 0,
+    paid: row.paid ?? false,
+    createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
+    updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null
+  };
+}
+
+async function getSession(sessionId) {
+  const supabaseClient = assertSupabase();
+  const { data, error } = await supabaseClient
+    .from('sessions')
+    .select('*')
+    .eq('session_id', sessionId)
+    .single();
+
+  if (error && error.code !== 'PGRST116') {
+    throw error;
+  }
+
+  return normalizeSessionRow(data);
+}
+
+async function sessionExists(sessionId) {
+  return Boolean(await getSession(sessionId));
+}
+
+async function upsertSession(session) {
+  const supabaseClient = assertSupabase();
+  const payload = {
+    session_id: session.sessionId,
+    name: session.name || null,
+    email: session.email,
+    paid: session.paid ?? false,
+    message_count: session.counter ?? 0,
+    history: session.history ?? [],
+    created_at: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
+    updated_at: new Date().toISOString()
+  };
+
+  const { error } = await supabaseClient
+    .from('sessions')
+    .upsert(payload, { onConflict: ['session_id'] });
+
+  if (error) {
+    throw error;
+  }
+
+  return session;
+}
 
 const SYSTEM_PROMPT = `Você é o Mentor ZUNI Suprema — um sistema de inteligência integrativa de alta performance, desenvolvido para conduzir cada pessoa em uma jornada profunda de autoconhecimento, reordenação mental e desenvolvimento humano.
 
@@ -196,8 +265,6 @@ app.use((req, res, next) => {
   }
   express.json()(req, res, next);
 });
-
-const sessions = new Map();
 
 function buildSuccessUrl(sessionId) {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -476,7 +543,7 @@ app.post('/api/checkout', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    sessions.set(sessionId, session);
+    await upsertSession(session);
 
     if (!stripe) {
       return res.status(500).json({ error: 'Stripe não está configurado.' });
@@ -537,16 +604,10 @@ app.post('/api/pagamento/webhook', express.raw({ type: 'application/json' }), as
       const sessionId = checkoutSession.metadata?.sessionId;
 
       if (sessionId) {
-        const session = sessions.get(sessionId);
+        const session = await getSession(sessionId);
         if (session) {
           session.paid = true;
-          session.paymentStatus = 'paid';
-          sessions.set(sessionId, session);
-          console.log('Sessão liberada:', sessionId);
-        } else {
-          console.warn('Webhook recebido para sessionId desconhecido:', sessionId);
-        }
-      }
+          await upsertSession(session);
     }
 
     return res.json({ received: true });
@@ -575,7 +636,7 @@ app.post('/api/sessao/iniciar', async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    sessions.set(sessionId, session);
+    await upsertSession(session);
 
     const welcomeMessage = `Olá ${name}, bem-vindo(a) ao Mentor ZUNI Suprema. Sua jornada começa agora.`;
 
@@ -590,10 +651,10 @@ app.post('/api/sessao/iniciar', async (req, res) => {
 app.post('/api/dev/liberar-sessao', async (req, res) => {
   const { sessionId } = req.body;
   if (!sessionId) return res.status(400).json({ error: 'sessionId obrigatório.' });
-  const session = sessions.get(sessionId);
+  const session = await getSession(sessionId);
   if (!session) return res.status(404).json({ error: 'Sessão não encontrada.' });
   session.paid = true;
-  sessions.set(sessionId, session);
+  await upsertSession(session);
   return res.json({ ok: true, message: 'Sessão liberada para teste.' });
 });
 
@@ -605,7 +666,7 @@ app.post('/api/chat', async (req, res) => {
       return res.status(400).json({ error: 'sessionId e message são obrigatórios.' });
     }
 
-    const session = sessions.get(sessionId);
+    const session = await getSession(sessionId);
 
     if (!session) {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
@@ -614,7 +675,7 @@ app.post('/api/chat', async (req, res) => {
     // Em modo de teste, liberar automaticamente se veio do Stripe (sessionId válido)
     if (!session.paid) {
       session.paid = true;
-      sessions.set(sessionId, session);
+      await upsertSession(session);
     }
 
     session.counter += 1;
