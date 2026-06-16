@@ -608,6 +608,8 @@ app.post('/api/pagamento/webhook', express.raw({ type: 'application/json' }), as
         if (session) {
           session.paid = true;
           await upsertSession(session);
+        }
+      }
     }
 
     return res.json({ received: true });
@@ -698,7 +700,7 @@ app.post('/api/chat', async (req, res) => {
 
     session.history.push({ role: 'user', message });
     session.history.push({ role: 'assistant', message: responseText });
-    sessions.set(sessionId, session);
+    await upsertSession(session);
 
     return res.json({ texto: responseText, audio: audioBase64, contador: session.counter });
   } catch (error) {
@@ -715,7 +717,7 @@ app.post('/api/relatorio', async (req, res) => {
       return res.status(400).json({ error: 'sessionId é obrigatório.' });
     }
 
-    const session = sessions.get(sessionId);
+    const session = await getSession(sessionId);
 
     if (!session) {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
