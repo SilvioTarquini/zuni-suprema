@@ -32,17 +32,22 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      background: url('/Desktop%202.png') no-repeat center top;
-      background-size: cover;
+      overflow: hidden;
       background-color: #F8F5F0;
     }
+    .bg-img {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center top;
+    }
+    .bg-mobile { display: none; }
 
     @media (max-width: 768px) {
-      .bg-zuni {
-        background: url('/Smartphone%202.png') no-repeat center center;
-        background-size: cover;
-        background-color: #F8F5F0;
-      }
+      .bg-desktop { display: none; }
+      .bg-mobile  { display: block; }
     }
 
     /* CONTAINER — sem overlay colorido */
@@ -283,7 +288,10 @@
   </style>
 </head>
 <body>
-  <div class="bg-zuni"></div>
+  <div class="bg-zuni">
+    <img src="/Desktop%202.png" alt="" class="bg-img bg-desktop">
+    <img src="/Smartphone%202.png" alt="" class="bg-img bg-mobile">
+  </div>
 
   <div class="chat-container">
     <header>
