@@ -32,22 +32,17 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      overflow: hidden;
+      background: url('./Desktop%202.png?v=4') no-repeat center center;
+      background-size: contain;
       background-color: #F8F5F0;
     }
-    .bg-img {
-      position: absolute;
-      top: 0; left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center top;
-    }
-    .bg-mobile { display: none; }
 
     @media (max-width: 768px) {
-      .bg-desktop { display: none; }
-      .bg-mobile  { display: block; }
+      .bg-zuni {
+        background: url('./Smartphone%202.png?v=4') no-repeat center center;
+        background-size: cover;
+        background-color: #F8F5F0;
+      }
     }
 
     /* CONTAINER — sem overlay colorido */
@@ -129,7 +124,7 @@
       background: rgba(255,255,255,0.92) !important;
       backdrop-filter: blur(6px) !important;
       -webkit-backdrop-filter: blur(6px) !important;
-      border: 1px solid rgba(212,175,55,0.3) !important;
+      border: 1px solid #btn-microfonergba(212,175,55,0.3) !important;
       border-radius: 18px !important;
       box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
       color: var(--texto) !important;
@@ -186,7 +181,7 @@
     }
 
     /* BOTÕES MIC E ENVIAR */
-    #btn-microfone,
+    ,
     #btn-enviar {
       width: 44px !important;
       height: 44px !important;
@@ -203,12 +198,37 @@
       transition: all 0.3s !important;
       flex-shrink: 0;
     }
-    #btn-microfone:hover,
+    :hover,
     #btn-enviar:hover {
-      background: var(--dourado-hover) !important;
-      transform: scale(1.05) !important;
-      box-shadow: 0 4px 15px rgba(212,175,55,0.4) !important;
-    }
+     #btn-microfone, #btn-enviar {
+  width: 48px !important;
+  height: 48px !important;
+  min-width: 48px !important;
+  border-radius: 50% !important;
+  background: linear-gradient(135deg, #D4AF37 0%, #C5A028 100%) !important;
+  border: none !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25), 
+              inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+  padding: 0 !important;
+}
+
+#btn-microfone:hover, #btn-enviar:hover {
+  transform: translateY(-2px) scale(1.05) !important;
+  box-shadow: 0 8px 24px rgba(212, 175, 55, 0.35) !important;
+}
+
+#btn-microfone svg, #btn-enviar svg {
+  width: 22px !important;
+  height: 22px !important;
+  fill: #FFFFFF !important;
+}
+
+
     #btn-enviar:disabled { opacity: 0.4 !important; cursor: not-allowed !important; transform: none !important; }
 
     #btn-microfone.recording {
@@ -288,10 +308,7 @@
   </style>
 </head>
 <body>
-  <div class="bg-zuni">
-    <img src="/Desktop%202.png" alt="" class="bg-img bg-desktop">
-    <img src="/Smartphone%202.png" alt="" class="bg-img bg-mobile">
-  </div>
+  <div class="bg-zuni"></div>
 
   <div class="chat-container">
     <header>
