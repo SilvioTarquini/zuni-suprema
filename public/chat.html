@@ -12,53 +12,73 @@
       --champagne: #F7E7CE;
       --dourado: #D4AF37;
       --dourado-hover: #C5A032;
+      --texto: #2c2c2c;
     }
 
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: url('./Desktop%202.png?v=2') no-repeat center center fixed !important;
-      background-size: cover !important;
-      color: #1a1a1a;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: var(--texto);
+      background: none !important;
+    }
+
+    /* BACKGROUND FIXO SEM OVERLAY */
+    .bg-zuni {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: -1;
+      background: url('./Desktop%202.png?v=4') no-repeat center center;
+      background-size: contain;
+      background-color: #F8F5F0;
     }
 
     @media (max-width: 768px) {
-      body {
-        background: url('./Smartphone%202.png?v=2') no-repeat center center fixed !important;
-        background-size: cover !important;
+      .bg-zuni {
+        background: url('./Smartphone%202.png?v=4') no-repeat center center;
+        background-size: cover;
+        background-color: #F8F5F0;
       }
     }
 
+    /* CONTAINER — sem overlay colorido */
     .chat-container {
-      background: linear-gradient(rgba(248,245,240,0.75), rgba(247,231,206,0.75));
-      height: 100vh;
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
       display: flex;
       flex-direction: column;
     }
 
+    /* HEADER GLASSMORPHISM FIXO */
     header {
-      background: rgba(248,245,240,0.7);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      padding: 14px 16px;
+      position: fixed !important;
+      top: 0;
+      width: 100%;
+      background: rgba(248,245,240,0.75) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border-bottom: 1px solid rgba(212,175,55,0.3) !important;
+      z-index: 100;
+      padding: 12px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid rgba(212,175,55,0.3);
-      position: relative;
-      z-index: 10;
-      flex-shrink: 0;
     }
 
     header h1 {
-      font-family: 'Playfair Display', serif;
-      font-size: 13px;
-      letter-spacing: 2px;
-      color: var(--dourado);
+      font-family: 'Playfair Display', serif !important;
+      color: var(--dourado) !important;
+      font-size: 14px !important;
+      letter-spacing: 2px !important;
       text-transform: uppercase;
       font-weight: 700;
-      text-shadow: 0 2px 8px rgba(212,175,55,0.3);
+      text-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+      margin: 0;
     }
 
     .counter {
@@ -69,42 +89,46 @@
     }
     .counter span { color: var(--dourado); font-weight: 500; }
 
+    /* ÁREA DE MENSAGENS */
     #messages {
       flex: 1;
       overflow-y: auto;
       padding: 16px;
+      padding-top: 76px;
       padding-bottom: 110px;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
+    /* BOLHAS */
     .msg-usuario,
     .msg-mentor {
       max-width: 85%;
       padding: 14px 16px;
       font-family: 'Georgia', serif;
-      font-size: 18px;
+      font-size: 17px;
       line-height: 1.65;
-      box-shadow: 0 2px 12px rgba(0,0,0,0.05);
     }
 
     .msg-usuario {
-      background: rgba(247,231,206,0.95);
-      border: 1px solid var(--dourado);
-      border-radius: 18px;
+      background: rgba(247,231,206,0.95) !important;
+      border: 1.5px solid var(--dourado) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+      color: var(--texto) !important;
       align-self: flex-end;
-      color: #2a2a2a;
     }
 
     .msg-mentor {
-      background: rgba(248,245,240,0.95);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-      border: 1px solid rgba(212,175,55,0.2);
-      border-radius: 18px;
+      background: rgba(255,255,255,0.92) !important;
+      backdrop-filter: blur(6px) !important;
+      -webkit-backdrop-filter: blur(6px) !important;
+      border: 1px solid rgba(212,175,55,0.3) !important;
+      border-radius: 18px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+      color: var(--texto) !important;
       align-self: flex-start;
-      color: #1a1a1a;
     }
 
     .msg-autor {
@@ -117,65 +141,73 @@
       font-weight: 500;
     }
 
+    /* INPUT AREA */
     .input-area {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background: rgba(248,245,240,0.92);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      padding: 16px;
-      padding-bottom: max(16px, env(safe-area-inset-bottom));
+      bottom: 0; left: 0; right: 0;
+      background: rgba(248,245,240,0.9) !important;
+      backdrop-filter: blur(10px) !important;
+      -webkit-backdrop-filter: blur(10px) !important;
+      padding: 12px 16px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
       display: flex;
       gap: 10px;
       align-items: flex-end;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
-      border-top: 1px solid rgba(212,175,55,0.3);
+      border-top: 1px solid rgba(212,175,55,0.2) !important;
+      box-shadow: 0 -2px 16px rgba(0,0,0,0.06);
       z-index: 10;
     }
 
     #input-mensagem {
       flex: 1;
-      background: var(--perola);
-      border: 2px solid rgba(212,175,55,0.4);
-      border-radius: 30px;
-      padding: 14px 18px;
+      background: #FFFFFF !important;
+      border: 2px solid rgba(212,175,55,0.5) !important;
+      border-radius: 30px !important;
+      padding: 12px 20px !important;
       min-height: 48px;
       max-height: 120px;
-      color: #1a1a1a;
-      font-size: 17px;
+      color: var(--texto) !important;
+      font-size: 16px;
       font-family: inherit;
       outline: none;
       resize: none;
-      transition: border-color 0.2s;
+      transition: border-color 0.2s, box-shadow 0.2s;
     }
-    #input-mensagem::placeholder { color: #999; opacity: 1; }
-    #input-mensagem:focus { border-color: var(--dourado); }
+    #input-mensagem::placeholder { color: #aaa; opacity: 1; }
+    #input-mensagem:focus {
+      border-color: var(--dourado) !important;
+      box-shadow: 0 0 0 3px rgba(212,175,55,0.15) !important;
+      outline: none !important;
+    }
 
-    #btn-enviar,
-    #btn-microfone {
-      background: var(--dourado);
-      color: var(--perola);
-      border: none;
-      border-radius: 50%;
-      width: 48px;
-      height: 48px;
-      min-width: 48px;
+    /* BOTÕES MIC E ENVIAR */
+    #btn-microfone,
+    #btn-enviar {
+      width: 44px !important;
+      height: 44px !important;
+      min-width: 44px;
+      background: var(--dourado) !important;
+      border: none !important;
+      border-radius: 50% !important;
+      color: #FFFFFF !important;
       font-size: 18px;
-      cursor: pointer;
-      transition: all 0.3s;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      transition: all 0.3s !important;
       flex-shrink: 0;
     }
-    #btn-enviar:hover,
-    #btn-microfone:hover {
-      background: var(--dourado-hover);
-      box-shadow: 0 4px 15px rgba(212,175,55,0.4);
+    #btn-microfone:hover,
+    #btn-enviar:hover {
+      background: var(--dourado-hover) !important;
+      transform: scale(1.05) !important;
+      box-shadow: 0 4px 15px rgba(212,175,55,0.4) !important;
     }
-    #btn-enviar:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
+    #btn-enviar:disabled { opacity: 0.4 !important; cursor: not-allowed !important; transform: none !important; }
 
     #btn-microfone.recording {
-      background: linear-gradient(135deg, #e05555, #ff7777);
+      background: linear-gradient(135deg, #e05555, #ff7777) !important;
       animation: micPulse 0.8s infinite alternate;
     }
     @keyframes micPulse {
@@ -183,6 +215,7 @@
       to   { opacity: 1;    transform: scale(1.07); }
     }
 
+    /* TYPING */
     .typing {
       display: flex;
       align-items: center;
@@ -191,8 +224,7 @@
       align-self: flex-start;
     }
     .typing .dot {
-      width: 7px;
-      height: 7px;
+      width: 7px; height: 7px;
       border-radius: 50%;
       background: var(--dourado);
       animation: pulse 1.4s infinite ease-in-out;
@@ -221,34 +253,39 @@
     .play-btn:hover { background: rgba(212,175,55,0.13); }
     .play-btn.playing { color: #e07a10; }
 
+    /* WHATSAPP FLUTUANTE — verde padrão */
     #btn-whatsapp {
-      position: fixed;
-      bottom: 90px;
-      right: 16px;
-      width: 52px;
-      height: 52px;
-      background: linear-gradient(135deg, var(--dourado), var(--champagne));
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 20px rgba(212,175,55,0.5);
-      z-index: 1000;
-      transition: transform 0.2s;
+      position: fixed !important;
+      bottom: 90px !important;
+      right: 20px !important;
+      width: 56px !important;
+      height: 56px !important;
+      background: linear-gradient(135deg, #25D366, #128C7E) !important;
+      border-radius: 50% !important;
+      box-shadow: 0 4px 20px rgba(37,211,102,0.4) !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 999 !important;
+      transition: all 0.3s !important;
     }
-    #btn-whatsapp:hover { transform: scale(1.08); }
-    #btn-whatsapp svg { width: 28px; height: 28px; }
+    #btn-whatsapp:hover {
+      transform: scale(1.1) !important;
+      box-shadow: 0 6px 25px rgba(37,211,102,0.5) !important;
+    }
+    #btn-whatsapp svg { width: 28px !important; height: 28px !important; }
 
     @media (min-width: 769px) {
-      #messages { padding: 24px; padding-bottom: 110px; }
-      .input-area { padding: 16px 24px; padding-bottom: max(16px, env(safe-area-inset-bottom)); }
-      .msg-usuario, .msg-mentor { max-width: 70%; font-size: 18px; }
+      #messages { padding: 24px; padding-top: 76px; padding-bottom: 110px; }
+      .input-area { padding: 14px 24px; padding-bottom: max(14px, env(safe-area-inset-bottom)); }
+      .msg-usuario, .msg-mentor { max-width: 70%; }
     }
   </style>
 </head>
 <body>
-  <div class="chat-container">
+  <div class="bg-zuni"></div>
 
+  <div class="chat-container">
     <header>
       <h1>Mentor ZUNI Suprema</h1>
       <div class="counter">Mensagens: <span id="cnt">0</span>/20</div>
@@ -261,8 +298,7 @@
       <button id="btn-microfone" style="display:none" title="Falar">🎤</button>
       <button id="btn-enviar" onclick="enviar()">➤</button>
     </div>
-
-  </div><!-- /.chat-container -->
+  </div>
 
   <audio id="audio"></audio>
 
