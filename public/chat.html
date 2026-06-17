@@ -7,7 +7,9 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: linear-gradient(135deg, #f0e6f5 0%, #e6f0ed 100%);
+      background-image: url('/bg-zuni.png');
+      background-size: cover;
+      background-position: center;
       background-attachment: fixed;
       color: #1a1a1a;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -51,23 +53,20 @@
       padding: 14px 16px;
       border-radius: 16px;
       font-family: 'Georgia', serif;
-      font-size: 17px;
+      font-size: 18px;
       line-height: 1.65;
-      background: rgba(255,255,255,0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(253,248,242,0.92);
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
     }
     .msg.user {
-      border: 1px solid rgba(155,126,184,0.25);
+      border: 1px solid rgba(201,168,76,0.2);
       align-self: flex-end;
       color: #2a2a2a;
-      box-shadow: 0 2px 14px rgba(155,126,184,0.1);
     }
     .msg.assistant {
-      border: 1px solid rgba(201,168,76,0.3);
+      border: 1px solid rgba(201,168,76,0.28);
       align-self: flex-start;
       color: #1a1a1a;
-      box-shadow: 0 2px 14px rgba(201,168,76,0.1);
     }
     .msg .author {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -209,44 +208,6 @@
   </style>
 </head>
 <body>
-
-  <!-- Decorativo canto superior-esquerdo: folhas púrpura -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="210" height="230" aria-hidden="true"
-       style="position:fixed;top:50px;left:0;opacity:0.15;pointer-events:none;z-index:0">
-    <path d="M22,205 C38,162 55,128 80,96" stroke="#9b7eb8" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-    <path d="M80,96 C58,62 90,40 98,76 C84,87 68,98 80,96Z" fill="#9b7eb8"/>
-    <path d="M80,96 C108,72 124,86 104,108 C91,118 76,112 80,96Z" fill="#9b7eb8"/>
-    <path d="M57,132 C32,108 58,84 72,118 C63,129 54,136 57,132Z" fill="#9b7eb8"/>
-    <path d="M39,163 C16,146 36,120 51,152 C43,163 36,167 39,163Z" fill="#9b7eb8"/>
-  </svg>
-
-  <!-- Decorativo canto superior-direito: ondas douradas -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="230" height="190" aria-hidden="true"
-       style="position:fixed;top:50px;right:0;opacity:0.15;pointer-events:none;z-index:0">
-    <path d="M230,8  C182,22 192,66 144,76"  stroke="#c9a84c" stroke-width="3"   fill="none" stroke-linecap="round"/>
-    <path d="M230,38 C177,54 184,96 130,108" stroke="#c9a84c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M230,68 C170,84 178,124 116,136" stroke="#c9a84c" stroke-width="2"  fill="none" stroke-linecap="round"/>
-    <path d="M230,98 C163,114 170,150 102,162" stroke="#c9a84c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  </svg>
-
-  <!-- Decorativo canto inferior-esquerdo: ondas douradas -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="230" height="190" aria-hidden="true"
-       style="position:fixed;bottom:75px;left:0;opacity:0.15;pointer-events:none;z-index:0">
-    <path d="M0,182 C48,166 38,122 86,112" stroke="#c9a84c" stroke-width="3"   fill="none" stroke-linecap="round"/>
-    <path d="M0,152 C53,136 44,92 96,80"   stroke="#c9a84c" stroke-width="2.5" fill="none" stroke-linecap="round"/>
-    <path d="M0,122 C58,106 50,62 108,50"  stroke="#c9a84c" stroke-width="2"   fill="none" stroke-linecap="round"/>
-    <path d="M0,92  C63,76 56,34 120,22"   stroke="#c9a84c" stroke-width="1.5" fill="none" stroke-linecap="round"/>
-  </svg>
-
-  <!-- Decorativo canto inferior-direito: folhas púrpura -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="210" height="230" aria-hidden="true"
-       style="position:fixed;bottom:75px;right:0;opacity:0.15;pointer-events:none;z-index:0">
-    <path d="M188,25 C162,46 144,68 122,104" stroke="#9b7eb8" stroke-width="2.2" fill="none" stroke-linecap="round"/>
-    <path d="M122,104 C144,138 112,158 102,122 C116,110 134,102 122,104Z" fill="#9b7eb8"/>
-    <path d="M122,104 C94,80 76,94 96,114 C109,124 126,118 122,104Z" fill="#9b7eb8"/>
-    <path d="M143,68 C168,90 144,116 128,84 C138,74 146,62 143,68Z" fill="#9b7eb8"/>
-    <path d="M162,40 C184,58 162,84 146,58 C154,48 163,38 162,40Z" fill="#9b7eb8"/>
-  </svg>
 
   <header>
     <div class="header-logo">Mentor ZUNI Suprema</div>
