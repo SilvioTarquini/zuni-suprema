@@ -27,8 +27,10 @@ function normalizeSessionRow(row) {
     email: row.email,
     history: row.history || [],
     counter: row.message_count ?? 0,
-    paid: row.paid ?? false,
-    createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
+    paid: row.paid ?? false,paid: row.paid ?? false,
+relatorioGerado: row.relatorio_gerado || false,  // ← ADICIONAR AQUI
+createdAt: row.created_at ? new Date(ro...
+      createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null
   };
 }
@@ -759,7 +761,6 @@ app.post('/api/chat', async (req, res) => {
     return res.status(500).json({ error: 'Erro ao processar a mensagem de chat.' });
   }
 });
-
 app.post('/api/relatorio', async (req, res) => {
   try {
     const { sessionId } = req.body;
