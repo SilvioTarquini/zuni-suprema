@@ -317,7 +317,16 @@
       <div class="counter">Mensagens: <span id="cnt">0</span>/20</div>
     </header>
 
-    <div id="messages"></div>
+    <div id="messages">
+  <div id="painel-instrucoes" style="background:rgba(255,255,255,0.93);border:1px solid rgba(212,175,55,0.35);border-radius:16px;padding:22px 24px;margin:8px 4px;font-family:'Georgia',serif;font-size:15px;line-height:1.75;color:#2c2c2c;box-shadow:0 4px 16px rgba(0,0,0,0.07);">
+    <div style="font-family:'Playfair Display',serif;color:#D4AF37;font-size:12px;letter-spacing:2.5px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">Como usar esta sessão</div>
+    <p style="margin-bottom:11px;">🖊️ <strong>Escrever:</strong> digite sua mensagem no campo abaixo e pressione <strong>➤</strong> ou <strong>Enter</strong>.</p>
+    <p style="margin-bottom:11px;">🎤 <strong>Falar:</strong> toque no <strong>microfone</strong>, aguarde e fale. Verifique se o texto foi capturado corretamente antes de enviar.</p>
+    <p style="margin-bottom:11px;">🔊 <strong>Ouvir respostas:</strong> toque no ícone <strong>🔊</strong> ao final de cada resposta para ouvir. Toque novamente para pausar.</p>
+    <p style="margin-bottom:16px;">📖 <strong>Prefere só ler?</strong> Sem problema — todas as respostas aparecem na tela. O áudio é opcional.</p>
+    <div style="border-top:1px solid rgba(212,175,55,0.25);padding-top:11px;font-size:12px;color:#aaa;font-family:'Inter',sans-serif;font-style:italic;">Esta mensagem desaparecerá quando você enviar sua primeira pergunta.</div>
+  </div>
+</div>
 
     <div class="input-area">
       <textarea id="input-mensagem" rows="1" placeholder="Digite sua mensagem..."></textarea>
@@ -407,7 +416,9 @@
       if (!msg) return;
       input.value = '';
       document.getElementById('btn-enviar').disabled = true;
-      addMsg('user', msg);
+      const painel = document.getElementById('painel-instrucoes');
+if (painel) painel.remove();
+addMsg('user', msg);   // ← linha 419 original, fica aquiaddMsg('user', msg);
       const typing = document.createElement('div');
       typing.className = 'typing';
       typing.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
