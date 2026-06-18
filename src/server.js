@@ -27,7 +27,7 @@ function normalizeSessionRow(row) {
     email: row.email,
     history: row.history || [],
     counter: row.message_count ?? 0,
-    paid: row.paid ?? false,paid: row.paid ?? false,
+    paid: row.paid ?? false,
 relatorioGerado: row.relatorio_gerado || false,  // ← ADICIONAR AQUI
 createdAt: row.created_at ? new Date(ro...
       createdAt: row.created_at ? new Date(row.created_at).toISOString() : null,
