@@ -76,11 +76,22 @@ async function upsertSession(session) {
   return session;
 }
 
-const SYSTEM_PROMPT = `Você é o Mentor ZUNI Suprema — um sistema de inteligência integrativa de alta performance, desenvolvido para conduzir cada pessoa em uma jornada profunda de autoconhecimento, reordenação mental e desenvolvimento humano.
+const SYSTEM_PROMPT = `Você é o Mentor ZUNI Suprema — ## USO OBRIGATÓRIO DA BASE DE CONHECIMENTO
 
-Na PRIMEIRA mensagem da sessão, apresente-se brevemente e faça DUAS perguntas: o nome da pessoa (se ainda não souber) e como prefere ser tratada (ele/ela/outro). Use essas informações em todas as mensagens seguintes. NUNCA assuma gênero sem confirmar.
+Toda resposta deve ser fundamentada no conteúdo recuperado da base vetorial ZUNI. Quando contexto relevante for fornecido entre as tags <contexto_zuni> e </contexto_zuni>, siga estas regras sem exceção:
 
-Sua missão não é oferecer conselhos genéricos.
+1. **Prioridade absoluta**: O conteúdo entre <contexto_zuni>...</contexto_zuni> é a fonte primária de cada resposta. Nunca ignore esse material — ele representa o conhecimento proprietário e validado de ZUNI Suprema.
+
+2. **Integração natural**: Incorpore as informações do contexto de forma fluida, como se fossem conhecimento próprio do Mentor. Não cite "de acordo com o documento" nem revele que existe uma base de dados — apenas use o conteúdo com naturalidade e autoridade.
+
+3. **Síntese inteligente**: Quando o contexto contiver múltiplos trechos, sintetize-os em uma resposta coesa, conectando os pontos de forma que faça sentido para a situação específica do usuário.
+
+4. **Complemento contextual**: Você pode complementar o conteúdo da base com raciocínio clínico e psicológico próprio, mas jamais substitua o conteúdo da base por respostas genéricas quando o contexto for relevante.
+
+5. **Ausência de contexto**: Se nenhum contexto for fornecido ou o contexto for insuficiente, responda com base no seu conhecimento integrado em saúde, psicologia e desenvolvimento humano — e sinalize internamente que uma busca mais específica pode ser necessária.
+
+6. **Tom e profundidade**: Cada resposta deve entregar valor real e perceptível. Evite respostas superficiais. O usuário pagou por uma experiência de mentoria de alto nível — entregue isso.
+
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IDENTIDADE E TOM DE VOZ
@@ -713,6 +724,34 @@ app.post('/api/chat', async (req, res) => {
     session.history.push({ role: 'user', message });
     session.history.push({ role: 'assistant', message: responseText });
     await upsertSession(session);
+// ── GATILHO SEMÂNTICO DE ENCERRAMENTO ──────────────────
+    const sinaisDeEncerramento = [
+      'mapa integrativo zuni suprema',
+      'será enviado para o seu email',
+      'relatório completo e personalizado',
+      'esta sessão está chegando ao seu momento',
+      'vou preparar o seu mapa',
+      'cuide-se',
+      'até logo'
+    ];
+
+    const encerramentoDetetado = sinaisDeEncerramento.some(sinal =>
+      textoResposta.toLowerCase().includes(sinal.toLowerCase())
+    );
+
+    if (encerramentoDetetado && !session.relatorioGerado) {
+      session.relatorioGerado = true;
+      await upsertSession(session);
+      setTimeout(async () => {
+        try {
+          await gerarEEnviarRelatorio(sessionId);
+          console.log(`[RELATORIO] Gerado por encerramento — sessão ${sessionId}`);
+        } catch (err) {
+          console.error(`[RELATORIO] Erro:`, err);
+        }
+      }, 2000);
+    }
+    // ────────────────────────────────────────────────────────
 
     return res.json({ texto: responseText, audio: audioBase64, contador: session.counter });
   } catch (error) {
