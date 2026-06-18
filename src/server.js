@@ -28,7 +28,7 @@ function normalizeSessionRow(row) {
     history: row.history || [],
     counter: row.message_count ?? 0,
     paid: row.paid ?? false,
-relatorioGerado: row.relatorio_gerado || false,
+    relatorioGerado: row.relatorio_gerado || false,
     createdAt: row.created_at ? new Date(row.created_at) : null,
     updatedAt: row.updated_at ? new Date(row.updated_at) : null,
   };
