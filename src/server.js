@@ -381,7 +381,7 @@ async function searchKnowledge(query) {
       return [];
     }
 
-    return data.map(row => row.conteudo);
+    return data.map(row => row.corpo);
   } catch (error) {
     console.error('Erro em searchKnowledge:', error);
     return [];
