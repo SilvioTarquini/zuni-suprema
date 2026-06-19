@@ -755,7 +755,7 @@ app.post('/api/chat', async (req, res) => {
     ];
 
     const encerramentoDetetado = sinaisDeEncerramento.some(sinal =>
-      textoResposta.toLowerCase().includes(sinal.toLowerCase())
+      responseText.toLowerCase().includes(sinal.toLowerCase())
     );
 
     if (encerramentoDetetado && !session.relatorioGerado) {
@@ -848,3 +848,4 @@ const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Servidor ZUNI Suprema escutando na porta ${PORT}`);
 });
+
