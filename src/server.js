@@ -62,6 +62,7 @@ async function upsertSession(session) {
     paid: session.paid ?? false,
     message_count: session.counter ?? 0,
     history: session.history ?? [],
+    relatorio_gerado: session.relatorioGerado ?? false,
     created_at: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
     updated_at: new Date().toISOString()
   };
