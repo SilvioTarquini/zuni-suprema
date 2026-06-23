@@ -750,7 +750,7 @@ app.post('/api/chat', async (req, res) => {
     const LIMITE_INTERACOES = 15;
 
     if (session.counter > LIMITE_INTERACOES) {
-      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida — vou preparar agora o seu Mapa Integrativo, que será enviado para o seu email em breve. Cuide-se.`;
+      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida — vou preparar agora o seu Mapa Integrativo, que será enviado para o seu email em breve. Se quiser continuar essa jornada com acompanhamento mais profundo, nossa equipe de suporte natural integrativo está sempre à disposição pelo WhatsApp, no canto da tela. Cuide-se.`;
 
       if (!session.relatorioGerado) {
         session.relatorioGerado = true;
