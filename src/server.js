@@ -146,23 +146,22 @@ Você nunca mais apenas escuta. Toda resposta a partir daqui precisa ENTREGAR va
 Cada resposta deve deixar a pessoa sabendo algo sobre si mesma ou sobre o que está vivendo que ela não sabia antes de escrever aquela mensagem. Se uma resposta sua poderia ter sido escrita só com perguntas, ela está incompleta — refaça mentalmente entregando substância antes de perguntar.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ARCO DA SESSÃO (até 20 trocas)
+ARCO DA SESSÃO (até 15 trocas)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 O arco geral da sessão continua progredindo da compreensão inicial até o direcionamento — mas em todas as fases, a regra de "entregar valor real a partir da segunda mensagem" vale sempre.
 
-FASE 1 — DIAGNÓSTICO COM ENTREGA (trocas 2 a 7)
+FASE 1 — DIAGNÓSTICO COM ENTREGA (trocas 2 a 6)
 Mapeie a raiz por trás do sintoma, mas já nomeando, interpretando e conectando a cada troca — nunca apenas coletando informação.
 
-FASE 2 — APROFUNDAMENTO (trocas 8 a 14)
-Conecte os pontos que a pessoa trouxe. Nomeie padrões com precisão. Use o conhecimento da base de forma cada vez mais densa e integrada à conversa.
+FASE 2 — APROFUNDAMENTO (trocas 7 a 11)
+Conecte os pontos trazidos. Nomeie padrões com precisão. Use o conhecimento da base de forma cada vez mais densa e integrada à conversa.
 
-FASE 3 — DIRECIONAMENTO (trocas 15 a 19)
+FASE 3 — DIRECIONAMENTO (trocas 12 a 14)
 Ofereça direcionamentos específicos para esta pessoa, neste momento, com base no que foi revelado na sessão. Conecte sempre ação e justificativa — o "o quê" e o "por quê".
 
-ENCERRAMENTO (troca 20)
+ENCERRAMENTO (troca 15)
 Sinalize que a sessão está chegando ao fim. Ofereça um resumo do que foi revelado e anuncie que o Mapa Integrativo — o relatório personalizado — será gerado e enviado por email.
-
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 USO DA BASE DE CONHECIMENTO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -565,7 +564,15 @@ async function triggerMake(name, email, summary) {
     return false;
   }
 }
+async function gerarEEnviarRelatorio(sessionId) {
+  const session = await getSession(sessionId);
+  if (!session) throw new Error(`Sessão ${sessionId} não encontrada para gerar relatório.`);
 
+  const reportText = await generateReportText(session);
+  const pdfPath = await generatePdf(reportText, sessionId, session.name);
+  await sendEmail(session.email, session.name, pdfPath);
+  await triggerMake(session.name, session.email, reportText.slice(0, 1200));
+}
 app.post('/api/checkout', async (req, res) => {
   try {
     const { name, email } = req.body;
@@ -723,7 +730,28 @@ app.post('/api/chat', async (req, res) => {
     }
 
     session.counter += 1;
+// ── BLOQUEIO RÍGIDO DE LIMITE DE INTERAÇÕES ────────────
+    const LIMITE_INTERACOES = 15;
 
+    if (session.counter > LIMITE_INTERACOES) {
+      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida — vou preparar agora o seu Mapa Integrativo, que será enviado para o seu email em breve. Cuide-se.`;
+
+      if (!session.relatorioGerado) {
+        session.relatorioGerado = true;
+        await upsertSession(session);
+        setTimeout(async () => {
+          try {
+            await gerarEEnviarRelatorio(sessionId);
+            console.log(`[RELATORIO] Gerado por limite de interações — sessão ${sessionId}`);
+          } catch (err) {
+            console.error(`[RELATORIO] Erro:`, err);
+          }
+        }, 2000);
+      }
+
+      return res.json({ texto: mensagemEncerramento, audio: '', contador: session.counter, sessaoEncerrada: true });
+    }
+    // ────────────────────────────────────────────────────────
     const knowledge = await searchKnowledge(message);
     const contextBlock = knowledge.length > 0
       ? `\n\nConhecimento relevante da base ZUNI Suprema:\n${knowledge.join('\n\n')}`
@@ -807,7 +835,24 @@ app.post('/api/relatorio', async (req, res) => {
     return res.status(500).json({ error: 'Erro ao gerar o relatório.' });
   }
 });
+app.get('/api/relatorio/download/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await getSession(sessionId);
 
+    if (!session) {
+      return res.status(404).json({ error: 'Sessão não encontrada.' });
+    }
+
+    const reportText = await generateReportText(session);
+    const pdfPath = await generatePdf(reportText, sessionId, session.name);
+
+    res.download(pdfPath, `mapa-integrativo-${session.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+  } catch (error) {
+    console.error('Erro em /api/relatorio/download:', error);
+    res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
+  }
+});
 // ROTA DE DESENVOLVIMENTO — permite gerar o relatório de qualquer sessão
 // sem depender do contador de 20 mensagens. Bloqueada em produção, exceto
 // se a sessão já tiver pelo menos 3 mensagens no histórico.

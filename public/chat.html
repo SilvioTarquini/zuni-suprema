@@ -312,7 +312,10 @@
   <div class="chat-container">
     <header>
       <h1>Mentor ZUNI Suprema</h1>
-      <div class="counter">Mensagens: <span id="cnt">0</span>/20</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="counter">Mensagens: <span id="cnt">0</span>/15</div>
+        <button id="btn-pdf" onclick="window.open('/api/relatorio/download/' + sessionId, '_blank')" style="font-family:'Inter',sans-serif;font-size:11px;font-weight:500;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:5px 12px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;">Baixar PDF</button>
+      </div>
     </header>
 
     <div id="messages">
@@ -437,9 +440,10 @@ addMsg('user', msg);
           if (data.audio) {
             attachAudio(msgDiv, data.audio);
           }
-          if (contador >= 20) {
-            addMsg('assistant', 'Nossa sessão chegou ao fim. Em instantes você receberá seu Mapa Integrativo ZUNI Suprema por email. Por favor, verifique sua caixa de entrada (e a pasta de spam).');
-            setTimeout(gerarRelatorio, 1500);
+          if (data.sessaoEncerrada) {
+            document.getElementById('input-mensagem').disabled = true;
+            document.getElementById('btn-enviar').disabled = true;
+            setTimeout(() => { window.location.href = '/obrigado.html'; }, 2500);
           }
         } else {
           addMsg('assistant', data.error || 'Erro ao processar resposta.');
