@@ -478,10 +478,12 @@ addMsg('user', msg);
       const numero = '5515996088895';
       const texto = encodeURIComponent('Olá! Vim do Mapa Integrativo ZUNI Suprema e gostaria de falar com um profissional.');
       const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const url = isMobile
-        ? `https://wa.me/${numero}?text=${texto}`
-        : `https://web.whatsapp.com/send?phone=${numero}&text=${texto}`;
-      window.open(url, '_blank', 'noopener,noreferrer');
+      if (isMobile) {
+        window.open(`https://wa.me/${numero}?text=${texto}`, '_blank', 'noopener,noreferrer');
+      } else {
+        alert('Aponte a câmera do seu celular para o código que vai aparecer agora, e sua solicitação chegará até nossa equipe clínica.');
+        window.open(`https://web.whatsapp.com/send?phone=${numero}&text=${texto}`, '_blank', 'noopener,noreferrer');
+      }
     }
 
     // Web Speech API — botão de mic só aparece quando suportado
