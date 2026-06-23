@@ -503,7 +503,7 @@ addMsg('user', msg);
       recognition.continuous = true;
       recognition.interimResults = true;
 
-      let isRecording = true;
+      let isRecording = false;
 
       micBtn.addEventListener('click', () => {
         if (isRecording) {
