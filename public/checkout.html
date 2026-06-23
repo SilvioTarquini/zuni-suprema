@@ -138,8 +138,8 @@
         <li>Relatório PDF personalizado</li>
         <li>Enviado direto para seu email</li>
       </ul>
-      <input type="text" id="name" placeholder="Seu nome completo" />
-      <input type="email" id="email" placeholder="Seu melhor email" />
+      <input type="text" id="name" name="name" autocomplete="name" placeholder="Seu nome completo" />
+      <input type="email" id="email" name="email" autocomplete="email" placeholder="Seu melhor email" onkeydown="if(event.key==='Enter'){event.preventDefault();iniciarCheckout();}" />
       <button id="btn" onclick="iniciarCheckout()">Iniciar minha jornada →</button>
       <p class="error" id="error">Preencha nome e email para continuar.</p>
     </div>
