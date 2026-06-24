@@ -476,6 +476,13 @@ async function generatePdf(reportText, sessionId, userName) {
 
     doc.pipe(stream);
 
+    // Página de capa
+    const capaPath = path.join(__dirname, '../public/capa-pdf.jpg');
+    if (fs.existsSync(capaPath)) {
+      doc.image(capaPath, 0, 0, { fit: [595.28, 841.89], align: 'center', valign: 'center' });
+      doc.addPage();
+    }
+
     // Cabeçalho
     doc.fontSize(22).font('Helvetica-Bold')
        .text('ZUNI Suprema', { align: 'center' });
