@@ -2,7 +2,6 @@
 // Servidor principal do ZUNI Suprema
 const express = require('express');
 const cors = require('cors');
-const Stripe = require('stripe');
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
@@ -291,11 +290,6 @@ REGRAS INVIOLÁVEIS
 - Se a sessão revelou risco de vida, inclua na Seção 6: CVV 188 | SAMU 192
 - Cada relatório deve ser genuinamente único — a pessoa deve reconhecer sua própria história nele`;
 
-const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, { apiVersion: '2023-08-16' })
-  : null;
-
 const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../public')));
@@ -315,13 +309,7 @@ app.get('/checkout', (req, res) => {
 app.get('/obrigado', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/obrigado.html'));
 });
-// Usamos express.json() para todas as rotas, exceto o webhook Stripe.
-app.use((req, res, next) => {
-  if (req.originalUrl === '/api/pagamento/webhook') {
-    return next();
-  }
-  express.json()(req, res, next);
-});
+app.use(express.json());
 
 function buildSuccessUrl(sessionId) {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -598,10 +586,14 @@ async function gerarEEnviarRelatorio(sessionId) {
 }
 app.post('/api/checkout', async (req, res) => {
   try {
-    const { name, email } = req.body;
+    const { name, email, cpf, metodoPagamento } = req.body;
 
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
+    if (!name || !email || !cpf || !metodoPagamento) {
+      return res.status(400).json({ error: 'Nome, email, CPF e método de pagamento são obrigatórios.' });
+    }
+
+    if (metodoPagamento === 'CREDIT_CARD') {
+      return res.status(400).json({ error: 'Pagamento por cartão em configuração, use PIX por enquanto.' });
     }
 
     const sessionId = uuidv4();
@@ -617,77 +609,112 @@ app.post('/api/checkout', async (req, res) => {
 
     await upsertSession(session);
 
-    if (!stripe) {
-      return res.status(500).json({ error: 'Stripe não está configurado.' });
-    }
+    const expirationDate = new Date(Date.now() + 30 * 60000).toISOString();
 
-    const checkoutSession = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'payment',
-      line_items: [
+    const orderBody = {
+      reference_id: sessionId,
+      customer: { name, email, tax_id: cpf },
+      items: [
         {
-          price_data: {
-            currency: 'brl',
-            product_data: {
-              name: 'Sessão Mapa Integrativo ZUNI Suprema'
-            },
-            unit_amount: 2990
-          },
-          quantity: 1
+          reference_id: 'mapa-integrativo',
+          name: 'Sessão Mapa Integrativo ZUNI Suprema',
+          quantity: 1,
+          unit_amount: 2990
         }
       ],
-      metadata: {
-        sessionId
+      qr_codes: [{ amount: { value: 2990 }, expiration_date: expirationDate }],
+      notification_urls: [`${process.env.FRONTEND_URL}/api/pagamento/webhook`]
+    };
+
+    const pagbankRes = await fetch('https://api.pagseguro.com/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.PAGBANK_TOKEN}`,
+        'Content-Type': 'application/json'
       },
-      customer_email: email,
-      success_url: buildSuccessUrl(sessionId),
-      cancel_url: buildCancelUrl()
+      body: JSON.stringify(orderBody)
     });
 
-    return res.json({ url: checkoutSession.url });
+    if (!pagbankRes.ok) {
+      const errText = await pagbankRes.text();
+      console.error('Erro PagBank:', errText);
+      return res.status(500).json({ error: 'Erro ao criar pedido no PagBank.' });
+    }
+
+    const order = await pagbankRes.json();
+    const qrCode = order.qr_codes?.[0];
+    const qrCodeText = qrCode?.text || '';
+
+    let qrCodeImage = '';
+    const qrCodeImageLink = qrCode?.links?.find(l => l.rel === 'QRCODE.PNG');
+    if (qrCodeImageLink?.href) {
+      try {
+        const imgRes = await fetch(qrCodeImageLink.href);
+        const imgBuffer = await imgRes.arrayBuffer();
+        qrCodeImage = Buffer.from(imgBuffer).toString('base64');
+      } catch (e) {
+        console.error('Erro ao buscar imagem QR Code:', e);
+      }
+    }
+
+    return res.json({ sessionId, pedidoId: order.id, qrCodeText, qrCodeImage });
   } catch (error) {
     console.error('Erro em /api/checkout:', error);
-    return res.status(500).json({ error: 'Erro ao criar sessão de checkout.' });
+    return res.status(500).json({ error: 'Erro ao criar pedido.' });
   }
 });
 
-app.post('/api/pagamento/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+app.post('/api/pagamento/webhook', async (req, res) => {
   try {
-    if (!stripe) {
-      return res.status(500).json({ error: 'Stripe não está configurado.' });
-    }
+    const event = req.body;
+    const sessionId = event.reference_id;
+    const isPaid = event.charges?.some(c => c.status === 'PAID') ||
+                   event.qr_codes?.some(q => q.status === 'PAID');
 
-    const signature = req.headers['stripe-signature'];
-    const payload = req.body;
-    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-
-    if (!signature) {
-      return res.status(400).json({ error: 'Cabeçalho Stripe-Signature ausente.' });
-    }
-
-    if (!webhookSecret) {
-      return res.status(500).json({ error: 'STRIPE_WEBHOOK_SECRET não configurado.' });
-    }
-
-    const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
-
-    if (event.type === 'checkout.session.completed') {
-      const checkoutSession = event.data.object;
-      const sessionId = checkoutSession.metadata?.sessionId;
-
-      if (sessionId) {
-        const session = await getSession(sessionId);
-        if (session) {
-          session.paid = true;
-          await upsertSession(session);
-        }
+    if (sessionId && isPaid) {
+      const session = await getSession(sessionId);
+      if (session && !session.paid) {
+        session.paid = true;
+        await upsertSession(session);
+        console.log(`[WEBHOOK] Pagamento confirmado — sessão ${sessionId}`);
       }
     }
 
     return res.json({ received: true });
   } catch (error) {
     console.error('Erro em /api/pagamento/webhook:', error);
-    return res.status(400).send(`Webhook error: ${error.message}`);
+    return res.status(400).json({ error: error.message });
+  }
+});
+
+app.get('/api/checkout/status/:pedidoId', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+
+    const pagbankRes = await fetch(`https://api.pagseguro.com/orders/${pedidoId}`, {
+      headers: { 'Authorization': `Bearer ${process.env.PAGBANK_TOKEN}` }
+    });
+
+    if (!pagbankRes.ok) {
+      return res.status(500).json({ pago: false, error: 'Erro ao consultar PagBank.' });
+    }
+
+    const order = await pagbankRes.json();
+    const isPaid = order.charges?.some(c => c.status === 'PAID') ||
+                   order.qr_codes?.some(q => q.status === 'PAID');
+
+    if (isPaid && order.reference_id) {
+      const session = await getSession(order.reference_id);
+      if (session && !session.paid) {
+        session.paid = true;
+        await upsertSession(session);
+      }
+    }
+
+    return res.json({ pago: isPaid });
+  } catch (error) {
+    console.error('Erro em /api/checkout/status:', error);
+    return res.status(500).json({ pago: false });
   }
 });
 
