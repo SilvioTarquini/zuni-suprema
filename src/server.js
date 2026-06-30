@@ -672,7 +672,8 @@ app.post('/api/checkout', async (req, res) => {
       notification_urls: [`${process.env.FRONTEND_URL}/api/pagamento/webhook`]
     };
 
-    const pagbankRes = await fetch('https://api.pagseguro.com/orders', {
+    const pagbankUrl = (process.env.PAGBANK_URL || 'https://api.pagseguro.com/').replace(/\/$/, '') + '/orders';
+    const pagbankRes = await fetch(pagbankUrl, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${process.env.PAGBANK_TOKEN}`,
@@ -683,8 +684,8 @@ app.post('/api/checkout', async (req, res) => {
 
     if (!pagbankRes.ok) {
       const errText = await pagbankRes.text();
-      console.error('Erro PagBank:', errText);
-      return res.status(500).json({ error: 'Erro ao criar pedido no PagBank.' });
+      console.error('Erro PagBank:', pagbankRes.status, errText);
+      return res.status(502).json({ error: 'Erro ao criar pedido no PagBank.', status: pagbankRes.status, detail: errText });
     }
 
     const order = await pagbankRes.json();
