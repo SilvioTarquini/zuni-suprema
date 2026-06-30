@@ -446,7 +446,7 @@ async function generateReportText(session) {
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
+      max_tokens: 4096,
       system: REPORT_PROMPT,
       messages: [
         {
@@ -870,7 +870,9 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
     const reportText = await generateReportText(session);
     const pdfPath = await generatePdf(reportText, sessionId, session.name);
 
-    res.download(pdfPath, `mapa-integrativo-${session.name.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="mapa-integrativo-${session.name.toLowerCase().replace(/\s+/g, '-')}.pdf"`);
+    res.sendFile(pdfPath);
   } catch (error) {
     console.error('Erro em /api/relatorio/download:', error);
     res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
