@@ -245,6 +245,7 @@ Evite termos médicos ou científicos. Substitua sempre por palavras do dia a di
 - "cortisol" → "hormônio do estresse"
 - "amígdala" → "parte do cérebro que dispara o alarme emocional"
 - "sistema nervoso autônomo" → "sistema do corpo que controla reações automáticas"
+- "fisiologia" → "como o corpo funciona"
 
 Quando precisar explicar algo mais complexo, use comparações do cotidiano. Exemplos:
 - "É como quando você deixa o celular sem carregar por dias — o corpo funciona igual."
@@ -325,6 +326,7 @@ Evite termos médicos ou científicos. Substitua sempre por palavras do dia a di
 - "cortisol" → "hormônio do estresse"
 - "amígdala" → "parte do cérebro que dispara o alarme emocional"
 - "sistema nervoso autônomo" → "sistema do corpo que controla reações automáticas"
+- "fisiologia" → "como o corpo funciona"
 
 Quando precisar explicar algo mais complexo, use comparações do cotidiano. Exemplos:
 - "É como quando você deixa o celular sem carregar por dias — o corpo funciona igual."
