@@ -623,6 +623,11 @@ app.post('/api/checkout', async (req, res) => {
 
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ['card', 'pix'],
+      payment_method_options: {
+        pix: {
+          expires_after_seconds: 600
+        }
+      },
       mode: 'payment',
       line_items: [
         {
