@@ -912,6 +912,42 @@ app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
   }
 });
 
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage() });
+
+app.post('/api/transcrever', upload.single('audio'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ erro: 'Arquivo de áudio não recebido.' });
+    }
+
+    const formData = new FormData();
+    formData.append('file', new Blob([req.file.buffer], { type: req.file.mimetype }), req.file.originalname);
+    formData.append('model', 'whisper-1');
+    formData.append('language', 'pt');
+
+    const response = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+      },
+      body: formData
+    });
+
+    if (!response.ok) {
+      const erro = await response.text();
+      console.error('Erro Whisper:', erro);
+      return res.status(500).json({ erro: 'Erro ao transcrever áudio.' });
+    }
+
+    const data = await response.json();
+    return res.json({ texto: data.text });
+  } catch (error) {
+    console.error('Erro em /api/transcrever:', error);
+    return res.status(500).json({ erro: 'Erro interno ao transcrever.' });
+  }
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Servidor ZUNI Suprema escutando na porta ${PORT}`);
