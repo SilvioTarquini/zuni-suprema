@@ -21,6 +21,7 @@
   src="https://www.facebook.com/tr?id=840645502240564&ev=PageView&noscript=1"
   /></noscript>
   <!-- End Meta Pixel Code -->
+  <script src="https://sdk.mercadopago.com/js/v2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -162,6 +163,9 @@
         <button type="button" id="btn-pix" onclick="selecionarMetodo('PIX')" style="flex:1; padding:12px; border-radius:8px; border:2px solid #333; background:#1a1a1a; color:#f0f0f0; cursor:pointer; width:auto; margin-top:0;">PIX</button>
         <button type="button" id="btn-cartao" onclick="selecionarMetodo('CREDIT_CARD')" style="flex:1; padding:12px; border-radius:8px; border:2px solid #333; background:#1a1a1a; color:#f0f0f0; cursor:pointer; width:auto; margin-top:0;">Cartão</button>
       </div>
+      <div id="card-payment-container" style="display:none; margin-bottom:12px;">
+        <div id="card-payment-brick"></div>
+      </div>
       <button id="btn" onclick="iniciarCheckout()">Iniciar minha jornada →</button>
       <p class="error" id="error">Preencha nome e email para continuar.</p>
     </div>
@@ -181,11 +185,130 @@
     let pedidoId = null;
     let sessionIdCheckout = null;
     let pollingInterval = null;
+    let mpInstance = null;
+    let cardBrickController = null;
 
-    function selecionarMetodo(metodo) {
+    async function initMercadoPago() {
+      try {
+        const res = await fetch('/api/mercadopago/public-key');
+        const data = await res.json();
+        if (data.publicKey) {
+          mpInstance = new MercadoPago(data.publicKey, { locale: 'pt-BR' });
+        }
+      } catch (e) {
+        console.error('Erro ao carregar Mercado Pago:', e);
+      }
+    }
+    initMercadoPago();
+
+    async function selecionarMetodo(metodo) {
       metodoPagamento = metodo;
       document.getElementById('btn-pix').style.borderColor = metodo === 'PIX' ? '#c9a84c' : '#333';
       document.getElementById('btn-cartao').style.borderColor = metodo === 'CREDIT_CARD' ? '#c9a84c' : '#333';
+
+      const cardContainer = document.getElementById('card-payment-container');
+      const btnPrincipal = document.getElementById('btn');
+      const error = document.getElementById('error');
+      error.style.display = 'none';
+
+      if (metodo === 'CREDIT_CARD') {
+        btnPrincipal.style.display = 'none';
+        cardContainer.style.display = 'block';
+        await montarCardBrick();
+      } else {
+        btnPrincipal.style.display = 'block';
+        cardContainer.style.display = 'none';
+        if (cardBrickController) {
+          cardBrickController.unmount();
+          cardBrickController = null;
+        }
+      }
+    }
+
+    async function montarCardBrick() {
+      const error = document.getElementById('error');
+
+      if (cardBrickController) return;
+
+      if (!mpInstance) {
+        error.textContent = 'Erro ao carregar o Mercado Pago. Recarregue a página.';
+        error.style.display = 'block';
+        return;
+      }
+
+      const bricksBuilder = mpInstance.bricks();
+
+      cardBrickController = await bricksBuilder.create('cardPayment', 'card-payment-brick', {
+        initialization: { amount: 29.90 },
+        callbacks: {
+          onReady: () => {},
+          onSubmit: (formData) => processarPagamentoCartao(formData),
+          onError: (err) => {
+            console.error('Erro no formulário de cartão:', err);
+            error.textContent = 'Erro no formulário de cartão. Verifique os dados e tente novamente.';
+            error.style.display = 'block';
+          }
+        }
+      });
+    }
+
+    function processarPagamentoCartao(formData) {
+      return new Promise(async (resolve, reject) => {
+        const name = document.getElementById('name').value.trim();
+        const email = document.getElementById('email').value.trim();
+        const cpf = document.getElementById('cpf').value.trim().replace(/\D/g, '');
+        const error = document.getElementById('error');
+
+        if (!name || !email || !cpf) {
+          error.textContent = 'Preencha nome, email e CPF para continuar.';
+          error.style.display = 'block';
+          return reject();
+        }
+
+        try {
+          const res = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name,
+              email,
+              cpf,
+              metodoPagamento: 'CREDIT_CARD',
+              token: formData.token,
+              paymentMethodId: formData.payment_method_id,
+              installments: formData.installments,
+              issuerId: formData.issuer_id
+            })
+          });
+          const data = await res.json();
+
+          if (!res.ok) {
+            error.textContent = data.error || 'Erro ao processar pagamento.';
+            error.style.display = 'block';
+            return reject();
+          }
+
+          if (data.status === 'approved') {
+            fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+            window.location.href = `/chat.html?sessionId=${data.sessionId}`;
+            return resolve();
+          }
+
+          if (data.status === 'in_process' || data.status === 'pending') {
+            error.textContent = 'Pagamento em análise. Você será notificado assim que for aprovado.';
+            error.style.display = 'block';
+            return resolve();
+          }
+
+          error.textContent = 'Pagamento recusado. Verifique os dados do cartão ou tente novamente.';
+          error.style.display = 'block';
+          return reject();
+        } catch (e) {
+          error.textContent = 'Erro ao processar pagamento. Tente novamente.';
+          error.style.display = 'block';
+          return reject();
+        }
+      });
     }
 
     async function iniciarCheckout() {
@@ -218,25 +341,21 @@
         });
         const data = await res.json();
 
-        if (metodoPagamento === 'PIX') {
-          if (data.qrCodeText) {
-            pedidoId = data.pedidoId;
-            sessionIdCheckout = data.sessionId;
-            if (data.qrCodeImage) {
-              document.getElementById('qr-img').src = `data:image/png;base64,${data.qrCodeImage}`;
-              document.getElementById('qr-img').style.display = 'block';
-            } else {
-              document.getElementById('qr-img').style.display = 'none';
-            }
-            document.getElementById('qr-text').value = data.qrCodeText;
-            document.querySelector('.card').style.display = 'none';
-            document.getElementById('pix-container').style.display = 'block';
-            pollingInterval = setInterval(verificarPagamento, 5000);
+        if (data.qrCodeText) {
+          pedidoId = data.pedidoId;
+          sessionIdCheckout = data.sessionId;
+          if (data.qrCodeImage) {
+            document.getElementById('qr-img').src = `data:image/png;base64,${data.qrCodeImage}`;
+            document.getElementById('qr-img').style.display = 'block';
           } else {
-            throw new Error(data.error || 'Erro ao gerar QR Code PIX.');
+            document.getElementById('qr-img').style.display = 'none';
           }
+          document.getElementById('qr-text').value = data.qrCodeText;
+          document.querySelector('.card').style.display = 'none';
+          document.getElementById('pix-container').style.display = 'block';
+          pollingInterval = setInterval(verificarPagamento, 5000);
         } else {
-          throw new Error(data.error || 'Pagamento por cartão em configuração, use PIX por enquanto.');
+          throw new Error(data.error || 'Erro ao gerar QR Code PIX.');
         }
       } catch (e) {
         btn.disabled = false;

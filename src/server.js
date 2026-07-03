@@ -658,16 +658,26 @@ async function marcarPagoSeAprovado(order) {
   return isPaid;
 }
 
+app.get('/api/mercadopago/public-key', (req, res) => {
+  const publicKey = process.env.MERCADOPAGO_PUBLIC_KEY;
+
+  if (!publicKey) {
+    return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+  }
+
+  return res.json({ publicKey });
+});
+
 app.post('/api/checkout', async (req, res) => {
   try {
-    const { name, email, cpf, metodoPagamento } = req.body;
+    const { name, email, cpf, metodoPagamento, token, paymentMethodId, installments, issuerId } = req.body;
 
     if (!name || !email || !cpf || !metodoPagamento) {
       return res.status(400).json({ error: 'Nome, email, CPF e método de pagamento são obrigatórios.' });
     }
 
-    if (metodoPagamento === 'CREDIT_CARD') {
-      return res.status(400).json({ error: 'Pagamento por cartão em configuração, use PIX por enquanto.' });
+    if (metodoPagamento === 'CREDIT_CARD' && (!token || !paymentMethodId)) {
+      return res.status(400).json({ error: 'Dados do cartão inválidos. Tente novamente.' });
     }
 
     const sessionId = uuidv4();
@@ -686,6 +696,16 @@ app.post('/api/checkout', async (req, res) => {
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
 
+    const paymentMethod = metodoPagamento === 'CREDIT_CARD'
+      ? {
+          id: paymentMethodId,
+          type: 'credit_card',
+          token,
+          installments: installments || 1,
+          ...(issuerId ? { issuer_id: issuerId } : {})
+        }
+      : { id: 'pix', type: 'bank_transfer' };
+
     const orderBody = {
       type: 'online',
       total_amount: '29.90',
@@ -695,7 +715,7 @@ app.post('/api/checkout', async (req, res) => {
         payments: [
           {
             amount: '29.90',
-            payment_method: { id: 'pix', type: 'bank_transfer' }
+            payment_method: paymentMethod
           }
         ]
       },
@@ -719,12 +739,24 @@ app.post('/api/checkout', async (req, res) => {
 
     if (!mpRes.ok) {
       const errText = await mpRes.text();
-      console.error('Erro Mercado Pago:', mpRes.status, errText);
-      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText });
+      const requestId = mpRes.headers.get('x-request-id');
+      console.error('Erro Mercado Pago:', mpRes.status, errText, '| x-request-id:', requestId);
+      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
     }
 
     const order = await mpRes.json();
     const payment = order.transactions?.payments?.[0];
+
+    if (metodoPagamento === 'CREDIT_CARD') {
+      await marcarPagoSeAprovado(order);
+      return res.json({
+        sessionId,
+        pedidoId: order.id,
+        status: payment?.status || order.status,
+        statusDetail: payment?.status_detail || ''
+      });
+    }
+
     const qrCodeText = payment?.payment_method?.qr_code || '';
     const qrCodeImage = payment?.payment_method?.qr_code_base64 || '';
 
