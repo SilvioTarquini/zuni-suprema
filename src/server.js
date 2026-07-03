@@ -630,6 +630,34 @@ async function gerarEEnviarRelatorio(sessionId) {
   await sendEmail(session.email, session.name, pdfPath);
   await triggerMake(session.name, session.email, reportText.slice(0, 1200));
 }
+async function consultarPedidoMercadoPago(pedidoId) {
+  const mpRes = await fetch(`https://api.mercadopago.com/v1/orders/${pedidoId}`, {
+    headers: { 'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}` }
+  });
+
+  if (!mpRes.ok) {
+    const errText = await mpRes.text();
+    throw new Error(`Erro ao consultar pedido no Mercado Pago (status ${mpRes.status}): ${errText}`);
+  }
+
+  return mpRes.json();
+}
+
+async function marcarPagoSeAprovado(order) {
+  const isPaid = order.status === 'approved' ||
+                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
+
+  if (isPaid && order.external_reference) {
+    const session = await getSession(order.external_reference);
+    if (session && !session.paid) {
+      session.paid = true;
+      await upsertSession(session);
+    }
+  }
+
+  return isPaid;
+}
+
 app.post('/api/checkout', async (req, res) => {
   try {
     const { name, email, cpf, metodoPagamento } = req.body;
@@ -655,53 +683,54 @@ app.post('/api/checkout', async (req, res) => {
 
     await upsertSession(session);
 
-    const expirationDate = new Date(Date.now() + 30 * 60000).toISOString();
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
 
     const orderBody = {
-      reference_id: sessionId,
-      customer: { name, email, tax_id: cpf },
-      items: [
-        {
-          reference_id: 'mapa-integrativo',
-          name: 'Sessão Mapa Integrativo ZUNI Suprema',
-          quantity: 1,
-          unit_amount: 2990
-        }
-      ],
-      qr_codes: [{ amount: { value: 2990 }, expiration_date: expirationDate }],
-      notification_urls: [`${process.env.FRONTEND_URL}/api/pagamento/webhook`]
+      type: 'online',
+      total_amount: '29.90',
+      external_reference: sessionId,
+      processing_mode: 'automatic',
+      transactions: {
+        payments: [
+          {
+            amount: '29.90',
+            payment_method: { id: 'pix', type: 'bank_transfer' }
+          }
+        ]
+      },
+      payer: {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        identification: { type: 'CPF', number: cpf }
+      }
     };
 
-    const pagbankUrl = (process.env.PAGBANK_URL || 'https://api.pagseguro.com/').replace(/\/$/, '') + '/orders';
-    const pagbankRes = await fetch(pagbankUrl, {
+    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${process.env.PAGBANK_TOKEN}`,
-        'Content-Type': 'application/json'
+        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': uuidv4()
       },
       body: JSON.stringify(orderBody)
     });
 
-    if (!pagbankRes.ok) {
-      const errText = await pagbankRes.text();
-      console.error('Erro PagBank:', pagbankRes.status, errText);
-      return res.status(502).json({ error: 'Erro ao criar pedido no PagBank.', status: pagbankRes.status, detail: errText });
+    if (!mpRes.ok) {
+      const errText = await mpRes.text();
+      console.error('Erro Mercado Pago:', mpRes.status, errText);
+      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText });
     }
 
-    const order = await pagbankRes.json();
-    const qrCode = order.qr_codes?.[0];
-    const qrCodeText = qrCode?.text || '';
+    const order = await mpRes.json();
+    const payment = order.transactions?.payments?.[0];
+    const qrCodeText = payment?.payment_method?.qr_code || '';
+    const qrCodeImage = payment?.payment_method?.qr_code_base64 || '';
 
-    let qrCodeImage = '';
-    const qrCodeImageLink = qrCode?.links?.find(l => l.rel === 'QRCODE.PNG');
-    if (qrCodeImageLink?.href) {
-      try {
-        const imgRes = await fetch(qrCodeImageLink.href);
-        const imgBuffer = await imgRes.arrayBuffer();
-        qrCodeImage = Buffer.from(imgBuffer).toString('base64');
-      } catch (e) {
-        console.error('Erro ao buscar imagem QR Code:', e);
-      }
+    if (!qrCodeText) {
+      console.error('Mercado Pago não retornou QR Code PIX:', JSON.stringify(order));
+      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
     }
 
     return res.json({ sessionId, pedidoId: order.id, qrCodeText, qrCodeImage });
@@ -714,16 +743,13 @@ app.post('/api/checkout', async (req, res) => {
 app.post('/api/pagamento/webhook', async (req, res) => {
   try {
     const event = req.body;
-    const sessionId = event.reference_id;
-    const isPaid = event.charges?.some(c => c.status === 'PAID') ||
-                   event.qr_codes?.some(q => q.status === 'PAID');
+    const orderId = event.data?.id;
 
-    if (sessionId && isPaid) {
-      const session = await getSession(sessionId);
-      if (session && !session.paid) {
-        session.paid = true;
-        await upsertSession(session);
-        console.log(`[WEBHOOK] Pagamento confirmado — sessão ${sessionId}`);
+    if (event.type === 'order' && orderId) {
+      const order = await consultarPedidoMercadoPago(orderId);
+      const pago = await marcarPagoSeAprovado(order);
+      if (pago) {
+        console.log(`[WEBHOOK] Pagamento confirmado — pedido ${orderId}`);
       }
     }
 
@@ -737,28 +763,9 @@ app.post('/api/pagamento/webhook', async (req, res) => {
 app.get('/api/checkout/status/:pedidoId', async (req, res) => {
   try {
     const { pedidoId } = req.params;
-
-    const pagbankRes = await fetch(`https://api.pagseguro.com/orders/${pedidoId}`, {
-      headers: { 'Authorization': `Bearer ${process.env.PAGBANK_TOKEN}` }
-    });
-
-    if (!pagbankRes.ok) {
-      return res.status(500).json({ pago: false, error: 'Erro ao consultar PagBank.' });
-    }
-
-    const order = await pagbankRes.json();
-    const isPaid = order.charges?.some(c => c.status === 'PAID') ||
-                   order.qr_codes?.some(q => q.status === 'PAID');
-
-    if (isPaid && order.reference_id) {
-      const session = await getSession(order.reference_id);
-      if (session && !session.paid) {
-        session.paid = true;
-        await upsertSession(session);
-      }
-    }
-
-    return res.json({ pago: isPaid });
+    const order = await consultarPedidoMercadoPago(pedidoId);
+    const pago = await marcarPagoSeAprovado(order);
+    return res.json({ pago });
   } catch (error) {
     console.error('Erro em /api/checkout/status:', error);
     return res.status(500).json({ pago: false });
