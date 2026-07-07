@@ -701,10 +701,15 @@ app.post('/api/checkout', async (req, res) => {
           id: paymentMethodId,
           type: 'credit_card',
           token,
-          installments: installments || 1,
-          ...(issuerId ? { issuer_id: issuerId } : {})
+          installments: installments || 1
         }
       : { id: 'pix', type: 'bank_transfer' };
+
+    const payment = {
+      amount: '29.90',
+      payment_method: paymentMethod,
+      ...(metodoPagamento === 'CREDIT_CARD' && issuerId ? { issuer_id: issuerId } : {})
+    };
 
     const orderBody = {
       type: 'online',
@@ -712,12 +717,7 @@ app.post('/api/checkout', async (req, res) => {
       external_reference: sessionId,
       processing_mode: 'automatic',
       transactions: {
-        payments: [
-          {
-            amount: '29.90',
-            payment_method: paymentMethod
-          }
-        ]
+        payments: [payment]
       },
       payer: {
         email,
@@ -745,7 +745,7 @@ app.post('/api/checkout', async (req, res) => {
     }
 
     const order = await mpRes.json();
-    const payment = order.transactions?.payments?.[0];
+    const paymentResponse = order.transactions?.payments?.[0];
 
     if (metodoPagamento === 'CREDIT_CARD') {
       await marcarPagoSeAprovado(order);
@@ -757,8 +757,8 @@ app.post('/api/checkout', async (req, res) => {
       });
     }
 
-    const qrCodeText = payment?.payment_method?.qr_code || '';
-    const qrCodeImage = payment?.payment_method?.qr_code_base64 || '';
+    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
+    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
 
     if (!qrCodeText) {
       console.error('Mercado Pago não retornou QR Code PIX:', JSON.stringify(order));
