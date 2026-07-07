@@ -670,7 +670,7 @@ app.get('/api/mercadopago/public-key', (req, res) => {
 
 app.post('/api/checkout', async (req, res) => {
   try {
-    const { name, email, cpf, metodoPagamento, token, paymentMethodId, installments, issuerId } = req.body;
+    const { name, email, cpf, metodoPagamento, token, paymentMethodId, installments } = req.body;
 
     if (!name || !email || !cpf || !metodoPagamento) {
       return res.status(400).json({ error: 'Nome, email, CPF e método de pagamento são obrigatórios.' });
@@ -707,8 +707,7 @@ app.post('/api/checkout', async (req, res) => {
 
     const payment = {
       amount: '29.90',
-      payment_method: paymentMethod,
-      ...(metodoPagamento === 'CREDIT_CARD' && issuerId ? { issuer_id: issuerId } : {})
+      payment_method: paymentMethod
     };
 
     const orderBody = {
