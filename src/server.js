@@ -5,7 +5,12 @@ const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const { MercadoPagoConfig, Preference } = require('mercadopago');
 require('dotenv').config();
+
+const mpClient = process.env.MERCADOPAGO_TOKEN
+  ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
+  : null;
 
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
@@ -643,6 +648,19 @@ async function consultarPedidoMercadoPago(pedidoId) {
   return mpRes.json();
 }
 
+async function consultarPagamentoMercadoPago(paymentId) {
+  const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
+    headers: { 'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}` }
+  });
+
+  if (!mpRes.ok) {
+    const errText = await mpRes.text();
+    throw new Error(`Erro ao consultar pagamento no Mercado Pago (status ${mpRes.status}): ${errText}`);
+  }
+
+  return mpRes.json();
+}
+
 async function marcarPagoSeAprovado(order) {
   const isPaid = order.status === 'approved' ||
                  Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
@@ -668,16 +686,89 @@ app.get('/api/mercadopago/public-key', (req, res) => {
   return res.json({ publicKey });
 });
 
+app.post('/api/checkout/preference', async (req, res) => {
+  try {
+    const { name, email, cpf } = req.body;
+
+    if (!name || !email || !cpf) {
+      return res.status(400).json({ error: 'Nome, email e CPF são obrigatórios.' });
+    }
+
+    if (!mpClient) {
+      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name,
+      email,
+      history: [],
+      counter: 0,
+      paid: false,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    const preference = new Preference(mpClient);
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            id: 'mapa-integrativo',
+            title: 'Mapa Integrativo',
+            quantity: 1,
+            unit_price: 29.90,
+            currency_id: 'BRL'
+          }
+        ],
+        payer: {
+          name: firstName,
+          surname: lastName,
+          email,
+          identification: { type: 'CPF', number: cpf }
+        },
+        external_reference: sessionId,
+        back_urls: {
+          success: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno`,
+          pending: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno`,
+          failure: `${frontendUrl}/checkout.html?erro=1`
+        },
+        // auto_return exige back_urls públicas em HTTPS — indisponível em dev local (http://localhost)
+        ...(frontendUrl.startsWith('https://') ? { auto_return: 'approved' } : {})
+      }
+    });
+
+    return res.json({ sessionId, init_point: result.init_point });
+  } catch (error) {
+    console.error('Erro ao criar preferência Mercado Pago:', error);
+    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
+  }
+});
+
+app.get('/api/checkout/session-status/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await getSession(sessionId);
+    if (!session) return res.status(404).json({ pago: false });
+    return res.json({ pago: Boolean(session.paid) });
+  } catch (error) {
+    console.error('Erro em /api/checkout/session-status:', error);
+    return res.status(500).json({ pago: false });
+  }
+});
+
 app.post('/api/checkout', async (req, res) => {
   try {
-    const { name, email, cpf, metodoPagamento, token, paymentMethodId, installments } = req.body;
+    const { name, email, cpf, metodoPagamento } = req.body;
 
     if (!name || !email || !cpf || !metodoPagamento) {
       return res.status(400).json({ error: 'Nome, email, CPF e método de pagamento são obrigatórios.' });
-    }
-
-    if (metodoPagamento === 'CREDIT_CARD' && (!token || !paymentMethodId)) {
-      return res.status(400).json({ error: 'Dados do cartão inválidos. Tente novamente.' });
     }
 
     const sessionId = uuidv4();
@@ -696,14 +787,7 @@ app.post('/api/checkout', async (req, res) => {
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
 
-    const paymentMethod = metodoPagamento === 'CREDIT_CARD'
-      ? {
-          id: paymentMethodId,
-          type: 'credit_card',
-          token,
-          installments: installments || 1
-        }
-      : { id: 'pix', type: 'bank_transfer' };
+    const paymentMethod = { id: 'pix', type: 'bank_transfer' };
 
     const payment = {
       amount: '29.90',
@@ -746,16 +830,6 @@ app.post('/api/checkout', async (req, res) => {
     const order = await mpRes.json();
     const paymentResponse = order.transactions?.payments?.[0];
 
-    if (metodoPagamento === 'CREDIT_CARD') {
-      await marcarPagoSeAprovado(order);
-      return res.json({
-        sessionId,
-        pedidoId: order.id,
-        status: payment?.status || order.status,
-        statusDetail: payment?.status_detail || ''
-      });
-    }
-
     const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
     const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
 
@@ -774,13 +848,19 @@ app.post('/api/checkout', async (req, res) => {
 app.post('/api/pagamento/webhook', async (req, res) => {
   try {
     const event = req.body;
-    const orderId = event.data?.id;
+    const dataId = event.data?.id;
 
-    if (event.type === 'order' && orderId) {
-      const order = await consultarPedidoMercadoPago(orderId);
+    if (event.type === 'order' && dataId) {
+      const order = await consultarPedidoMercadoPago(dataId);
       const pago = await marcarPagoSeAprovado(order);
       if (pago) {
-        console.log(`[WEBHOOK] Pagamento confirmado — pedido ${orderId}`);
+        console.log(`[WEBHOOK] Pagamento confirmado — pedido ${dataId}`);
+      }
+    } else if (event.type === 'payment' && dataId) {
+      const payment = await consultarPagamentoMercadoPago(dataId);
+      const pago = await marcarPagoSeAprovado(payment);
+      if (pago) {
+        console.log(`[WEBHOOK] Pagamento confirmado — pagamento ${dataId}`);
       }
     }
 
@@ -833,17 +913,6 @@ app.post('/api/sessao/iniciar', async (req, res) => {
   }
 });
 
-// ROTA TEMPORÁRIA DE TESTE — remover antes de produção
-app.post('/api/dev/liberar-sessao', async (req, res) => {
-  const { sessionId } = req.body;
-  if (!sessionId) return res.status(400).json({ error: 'sessionId obrigatório.' });
-  const session = await getSession(sessionId);
-  if (!session) return res.status(404).json({ error: 'Sessão não encontrada.' });
-  session.paid = true;
-  await upsertSession(session);
-  return res.json({ ok: true, message: 'Sessão liberada para teste.' });
-});
-
 app.post('/api/chat', async (req, res) => {
   try {
     const { sessionId, message } = req.body;
@@ -858,10 +927,8 @@ app.post('/api/chat', async (req, res) => {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
     }
 
-    // Em modo de teste, liberar automaticamente se veio do Stripe (sessionId válido)
     if (!session.paid) {
-      session.paid = true;
-      await upsertSession(session);
+      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
     }
 
     session.counter += 1;
