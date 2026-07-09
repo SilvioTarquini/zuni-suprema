@@ -174,9 +174,19 @@
       <p style="font-size:12px; color:#666; margin-bottom:16px;">Após o pagamento, a confirmação é automática. Ou clique em "Já paguei" para verificar agora.</p>
       <button type="button" onclick="verificarPagamento()" style="background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; width:100%; margin-top:0;">✓ Já paguei</button>
     </div>
+    <div id="pix-timeout-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:#e74c3c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pagamento ainda não confirmado</p>
+      <p style="font-size:13px; color:#888; margin-bottom:20px;">Não conseguimos confirmar seu pagamento via PIX. Se você já pagou, aguarde alguns minutos — a confirmação pode demorar um pouco. Caso o problema persista, fale com nosso suporte.</p>
+      <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20PIX%20no%20Mapa%20Integrativo%20ZUNI%20Suprema%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
+    </div>
     <div id="card-pending-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
       <p style="color:#c9a84c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Confirmando seu pagamento</p>
       <p style="font-size:13px; color:#888;">Aguarde enquanto validamos seu pagamento com o Mercado Pago. Isso pode levar alguns segundos.</p>
+    </div>
+    <div id="card-timeout-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:#e74c3c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pagamento ainda não confirmado</p>
+      <p style="font-size:13px; color:#888; margin-bottom:20px;">Seu pagamento pode ainda estar em processamento, ou não foi aprovado. Se você já pagou, aguarde alguns minutos e recarregue esta página. Caso o problema persista, fale com nosso suporte.</p>
+      <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20no%20Mapa%20Integrativo%20ZUNI%20Suprema%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
     </div>
     <div class="footer">Pagamento seguro via Mercado Pago · ZUNI Suprema © 2025</div>
   </div>
@@ -185,6 +195,8 @@
     let pedidoId = null;
     let sessionIdCheckout = null;
     let pollingInterval = null;
+    let pixTentativas = 0;
+    const MAX_TENTATIVAS_PIX = 36; // 36 x 5s = 180s (~3 minutos)
 
     async function selecionarMetodo(metodo) {
       metodoPagamento = metodo;
@@ -248,7 +260,11 @@
       document.querySelector('.card').style.display = 'none';
       document.getElementById('card-pending-container').style.display = 'block';
 
+      const MAX_TENTATIVAS = 60; // 60 x 3s = 180s (~3 minutos)
+      let tentativas = 0;
+
       pollingInterval = setInterval(async () => {
+        tentativas++;
         try {
           const res = await fetch(`/api/checkout/session-status/${sessionIdRetorno}`);
           const data = await res.json();
@@ -256,8 +272,15 @@
             clearInterval(pollingInterval);
             fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
             window.location.href = `/chat.html?sessionId=${sessionIdRetorno}`;
+            return;
           }
         } catch (e) {}
+
+        if (tentativas >= MAX_TENTATIVAS) {
+          clearInterval(pollingInterval);
+          document.getElementById('card-pending-container').style.display = 'none';
+          document.getElementById('card-timeout-container').style.display = 'block';
+        }
       }, 3000);
     }
     verificarRetornoCartao();
@@ -304,6 +327,7 @@
           document.getElementById('qr-text').value = data.qrCodeText;
           document.querySelector('.card').style.display = 'none';
           document.getElementById('pix-container').style.display = 'block';
+          pixTentativas = 0;
           pollingInterval = setInterval(verificarPagamento, 5000);
         } else {
           throw new Error(data.error || 'Erro ao gerar QR Code PIX.');
@@ -318,6 +342,7 @@
 
     async function verificarPagamento() {
       if (!pedidoId || !sessionIdCheckout) return;
+      pixTentativas++;
       try {
         const res = await fetch(`/api/checkout/status/${pedidoId}`);
         const data = await res.json();
@@ -325,8 +350,15 @@
           clearInterval(pollingInterval);
           fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
           window.location.href = `/chat.html?sessionId=${sessionIdCheckout}`;
+          return;
         }
       } catch (e) {}
+
+      if (pixTentativas >= MAX_TENTATIVAS_PIX) {
+        clearInterval(pollingInterval);
+        document.getElementById('pix-container').style.display = 'none';
+        document.getElementById('pix-timeout-container').style.display = 'block';
+      }
     }
 
     function copiarPix() {
