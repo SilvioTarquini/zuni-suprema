@@ -1046,6 +1046,10 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
     }
 
+    if (!session.paid) {
+      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
+    }
+
     const reportText = await generateReportText(session);
     const pdfPath = await generatePdf(reportText, sessionId, session.name);
 
@@ -1072,6 +1076,10 @@ app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
 
     if (!session) {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
+    }
+
+    if (!session.paid) {
+      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
     }
 
     const isDev = process.env.NODE_ENV !== 'production';
