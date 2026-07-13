@@ -8,6 +8,9 @@ const path = require('path');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 require('dotenv').config();
 
+const livrosRouter = require('./routes/livros');
+const { criarAcesso } = require('./lib/acessoLivros');
+
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
   : null;
@@ -360,6 +363,7 @@ Se usar qualquer palavra que o público possa não conhecer, explique logo em se
 const app = express();
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../public')));
+app.use('/', livrosRouter);
 
 app.get('/', (req, res) => {
   res.redirect('/checkout');
@@ -692,6 +696,37 @@ async function marcarPagoSeAprovado(order) {
   return isPaid;
 }
 
+// ── LIVROS: liberação de acesso a livro comprado avulso ────────────
+// Ainda não existe checkout para livros — este trecho fica inerte até
+// que um endpoint de checkout de livros seja criado. Quando existir,
+// esse endpoint deve montar o external_reference exatamente no formato
+// "livro:<livroId>:<email>:<cpf-ou-->" (componentes URI-encoded) para
+// que o webhook reconheça a compra e chame criarAcesso() automaticamente.
+function parseExternalReferenceLivro(externalReference) {
+  if (!externalReference || !externalReference.startsWith('livro:')) return null;
+
+  const [, livroId, emailCodificado, cpfCodificado] = externalReference.split(':');
+  if (!livroId || !emailCodificado) return null;
+
+  return {
+    livroId: decodeURIComponent(livroId),
+    email: decodeURIComponent(emailCodificado),
+    cpf: cpfCodificado && cpfCodificado !== '-' ? decodeURIComponent(cpfCodificado) : null
+  };
+}
+
+async function criarAcessoLivroSeAplicavel(order, paymentId) {
+  const dadosLivro = parseExternalReferenceLivro(order.external_reference);
+  if (!dadosLivro) return null;
+
+  const isPaid = order.status === 'approved' ||
+                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
+  if (!isPaid) return null;
+
+  return criarAcesso({ ...dadosLivro, paymentId });
+}
+// ─────────────────────────────────────────────────────────────────
+
 app.get('/api/mercadopago/public-key', (req, res) => {
   const publicKey = process.env.MERCADOPAGO_PUBLIC_KEY;
 
@@ -869,12 +904,22 @@ app.post('/api/pagamento/webhook', async (req, res) => {
     if (event.type === 'order' && dataId) {
       const order = await consultarPedidoMercadoPago(dataId);
       const pago = await marcarPagoSeAprovado(order);
+      try {
+        await criarAcessoLivroSeAplicavel(order, dataId);
+      } catch (err) {
+        console.error('[WEBHOOK] Erro ao liberar acesso a livro:', err.message);
+      }
       if (pago) {
         console.log(`[WEBHOOK] Pagamento confirmado — pedido ${dataId}`);
       }
     } else if (event.type === 'payment' && dataId) {
       const payment = await consultarPagamentoMercadoPago(dataId);
       const pago = await marcarPagoSeAprovado(payment);
+      try {
+        await criarAcessoLivroSeAplicavel(payment, dataId);
+      } catch (err) {
+        console.error('[WEBHOOK] Erro ao liberar acesso a livro:', err.message);
+      }
       if (pago) {
         console.log(`[WEBHOOK] Pagamento confirmado — pagamento ${dataId}`);
       }

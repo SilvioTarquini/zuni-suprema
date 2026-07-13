@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Seu livro — ZUNI Suprema</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --fundo: #0f0f0f;
+    --dourado: #B8963E;
+    --dourado-suave: #d9c68f;
+    --texto: #f2ead9;
+    --texto-suave: #b6ab93;
+    --borda: #2a2620;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .barra {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 24px;
+    background: rgba(15,15,15,0.95);
+    border-bottom: 1px solid var(--borda);
+    backdrop-filter: blur(4px);
+  }
+
+  .barra .prazo {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+  .barra .prazo strong { color: var(--dourado-suave); }
+
+  .acoes { display: flex; gap: 10px; }
+
+  .acoes a {
+    font-family: Arial, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  .acoes a.baixar,
+  .acoes a.imprimir {
+    background: transparent;
+    color: var(--dourado-suave);
+    border: 1px solid var(--dourado);
+  }
+  .acoes a.baixar:hover,
+  .acoes a.imprimir:hover {
+    background: var(--dourado);
+    color: #0f0f0f;
+  }
+
+  .conteudo-livro {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  /* ===================================================================
+     A partir daqui entra o conteúdo formatado do livro (o HTML que já
+     está pronto). Substitua o bloco de exemplo abaixo pelo conteúdo real.
+     =================================================================== */
+  .conteudo-livro h1 { color: var(--dourado-suave); font-weight: normal; }
+  .conteudo-livro h2 { color: var(--dourado); font-weight: normal; margin-top: 2.5em; }
+
+  @media print {
+    .barra { display: none; }
+    body { background: #fff; color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  <div class="prazo">Acesso válido até <strong id="data-expiracao">—</strong></div>
+  <div class="acoes">
+    <a class="baixar" id="link-baixar" href="#">Baixar PDF</a>
+    <a class="imprimir" id="link-imprimir" href="#" target="_blank">Imprimir</a>
+  </div>
+</div>
+
+<article class="conteudo-livro">
+  <!-- Substituir por: conteúdo real do livro em HTML -->
+  <h1>Título do Livro</h1>
+  <p>Conteúdo do livro formatado entra aqui.</p>
+</article>
+
+<script>
+  // Lê o token e o id do livro a partir da própria URL, para montar
+  // os links de download e impressão sem expor lógica no HTML estático.
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get('token') || '';
+  const partesCaminho = window.location.pathname.split('/').filter(Boolean);
+  const livroId = partesCaminho[partesCaminho.length - 1] || '';
+
+  document.getElementById('link-baixar').href =
+    `/livros/${livroId}/download?token=${encodeURIComponent(token)}`;
+  document.getElementById('link-imprimir').href =
+    `/livros/${livroId}/imprimir?token=${encodeURIComponent(token)}`;
+
+  // Opcional: exibir a data de expiração real. Se o backend expuser uma
+  // rota simples (ex: GET /livros/:id/status?token=...) retornando
+  // { data_expiracao }, ela pode ser buscada aqui via fetch() e o valor
+  // formatado inserido no elemento #data-expiracao.
+</script>
+
+</body>
+</html>
