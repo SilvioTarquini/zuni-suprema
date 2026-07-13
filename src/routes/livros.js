@@ -8,16 +8,15 @@
 // estaticamente por express.static, sem qualquer verificação de token, então
 // qualquer arquivo ali dentro é acessível diretamente por URL. O conteúdo
 // pago fica em private/livros/, fora da árvore servida estaticamente, e só é
-// entregue através das rotas abaixo, depois de exigirAcesso() validar o token:
-//   private/livros/<livroId>/index.html    -> HTML formatado do livro (ler na tela)
-//   private/livros/<livroId>/livro.pdf     -> arquivo para baixar/imprimir
+// entregue através da rota abaixo, depois de exigirAcesso() validar o token:
+//   private/livros/<livroId>/index.html    -> HTML do livro (ler, baixar e imprimir já embutidos)
 //
 // public/livros/_acesso-expirado.html é a única coisa que continua em
 // public/, pois não é conteúdo pago — só a página exibida quando o token é
 // inválido ou expirou.
 //
 // Cada HTML de livro deve ler o token da própria URL (query string) e
-// mandar esse mesmo token para os botões de "Baixar" e "Imprimir"
+// manter esse token nos links/ações internas da página
 // (ver template em private/livros/_template/index.html).
 
 const path = require('path');
@@ -58,22 +57,10 @@ async function exigirAcesso(req, res, next) {
   }
 }
 
-// Leitura na tela (HTML do livro)
+// Leitura na tela (HTML do livro, com ler/baixar/imprimir embutidos)
 router.get('/livros/:livroId', exigirAcesso, (req, res) => {
   const { livroId } = req.params;
   res.sendFile(path.join(CONTEUDO_LIVROS_DIR, livroId, 'index.html'));
-});
-
-// Download do PDF
-router.get('/livros/:livroId/download', exigirAcesso, (req, res) => {
-  const { livroId } = req.params;
-  res.download(path.join(CONTEUDO_LIVROS_DIR, livroId, 'livro.pdf'));
-});
-
-// Impressão: reaproveita o PDF (o navegador abre o diálogo de impressão)
-router.get('/livros/:livroId/imprimir', exigirAcesso, (req, res) => {
-  const { livroId } = req.params;
-  res.sendFile(path.join(CONTEUDO_LIVROS_DIR, livroId, 'livro.pdf'));
 });
 
 module.exports = router;

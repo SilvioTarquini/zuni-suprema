@@ -92,8 +92,8 @@
 <div class="barra">
   <div class="prazo">Acesso válido até <strong id="data-expiracao">—</strong></div>
   <div class="acoes">
-    <a class="baixar" id="link-baixar" href="#">Baixar PDF</a>
-    <a class="imprimir" id="link-imprimir" href="#" target="_blank">Imprimir</a>
+    <a class="baixar" id="link-baixar" href="#" download>Baixar</a>
+    <a class="imprimir" id="link-imprimir" href="#">Imprimir</a>
   </div>
 </div>
 
@@ -104,17 +104,16 @@
 </article>
 
 <script>
-  // Lê o token e o id do livro a partir da própria URL, para montar
-  // os links de download e impressão sem expor lógica no HTML estático.
-  const params = new URLSearchParams(window.location.search);
-  const token = params.get('token') || '';
-  const partesCaminho = window.location.pathname.split('/').filter(Boolean);
-  const livroId = partesCaminho[partesCaminho.length - 1] || '';
+  // Baixar: gera o download da própria página (mesma URL, com o token
+  // já presente na query string), sem depender de rota ou arquivo à parte.
+  document.getElementById('link-baixar').href = window.location.href;
 
-  document.getElementById('link-baixar').href =
-    `/livros/${livroId}/download?token=${encodeURIComponent(token)}`;
-  document.getElementById('link-imprimir').href =
-    `/livros/${livroId}/imprimir?token=${encodeURIComponent(token)}`;
+  // Imprimir: abre o diálogo de impressão nativo do navegador. O bloco
+  // @media print acima já esconde a barra de ações na hora de imprimir.
+  document.getElementById('link-imprimir').addEventListener('click', (evento) => {
+    evento.preventDefault();
+    window.print();
+  });
 
   // Opcional: exibir a data de expiração real. Se o backend expuser uma
   // rota simples (ex: GET /livros/:id/status?token=...) retornando
