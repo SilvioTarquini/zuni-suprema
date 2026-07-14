@@ -38,6 +38,23 @@ const DIAS_DE_ACESSO = parseInt(process.env.LIVRO_ACESSO_DIAS || '7', 10);
  */
 async function criarAcesso({ livroId, email, cpf, paymentId }) {
   const supabaseClient = assertSupabase();
+
+  // Idempotente: o webhook do MercadoPago pode reenviar a mesma notificação
+  // mais de uma vez, então se já existe acesso criado para este pagamento,
+  // devolve o token já existente em vez de gerar um novo.
+  if (paymentId) {
+    const { data: existente } = await supabaseClient
+      .from('acessos_livros')
+      .select('*')
+      .eq('livro_id', livroId)
+      .eq('payment_id', paymentId)
+      .maybeSingle();
+
+    if (existente) {
+      return { token: existente.token, expiraEm: new Date(existente.data_expiracao) };
+    }
+  }
+
   const token = crypto.randomBytes(24).toString('hex');
   const expiraEm = new Date(Date.now() + DIAS_DE_ACESSO * 24 * 60 * 60 * 1000);
 
@@ -94,4 +111,31 @@ async function verificarAcesso(token, livroId) {
   return data;
 }
 
-module.exports = { criarAcesso, verificarAcesso, DIAS_DE_ACESSO };
+/**
+ * Busca o acesso mais recente de um comprador a um livro, pelo e-mail
+ * usado na compra. Usado para o polling de status do checkout via
+ * cartão, onde ainda não se tem o token no momento do retorno.
+ *
+ * @param {Object} params
+ * @param {string} params.livroId
+ * @param {string} params.email
+ * @returns {Promise<{token: string, expiraEm: Date}|null>}
+ */
+async function buscarAcessoPorEmail({ livroId, email }) {
+  const supabaseClient = assertSupabase();
+
+  const { data, error } = await supabaseClient
+    .from('acessos_livros')
+    .select('*')
+    .eq('livro_id', livroId)
+    .eq('email', email)
+    .order('data_pagamento', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) return null;
+
+  return { token: data.token, expiraEm: new Date(data.data_expiracao) };
+}
+
+module.exports = { criarAcesso, verificarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO };

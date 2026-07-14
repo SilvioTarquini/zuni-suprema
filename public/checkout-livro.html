@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comprar livro — ZUNI Suprema</title>
+<style>
+  :root {
+    --fundo: #0f0f0f;
+    --fundo-carta: #171512;
+    --dourado: #B8963E;
+    --dourado-suave: #d9c68f;
+    --texto: #f2ead9;
+    --texto-suave: #b6ab93;
+    --borda: #2a2620;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Georgia, 'Times New Roman', serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .container { max-width: 440px; width: 100%; text-align: center; }
+  .selo {
+    display: inline-block;
+    width: 40px; height: 40px;
+    border: 1px solid var(--dourado);
+    border-radius: 50%;
+    margin-bottom: 14px;
+    position: relative;
+  }
+  .selo::after {
+    content: "Z";
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--dourado); font-size: 1rem; letter-spacing: 1px;
+  }
+  h1 { font-size: 1.5rem; font-weight: normal; color: var(--dourado-suave); margin: 0 0 6px; }
+  .subtitulo { font-size: 0.85rem; color: var(--texto-suave); margin-bottom: 28px; }
+  .card {
+    background: var(--fundo-carta);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    padding: 32px 24px;
+    text-align: left;
+  }
+  .preco { color: var(--dourado-suave); font-size: 1.8rem; text-align: center; margin-bottom: 4px; }
+  .etiqueta-digital {
+    color: var(--texto-suave);
+    font-size: 0.72rem;
+    text-align: center;
+    margin: 0 0 20px;
+  }
+  .aviso-digital {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    background: rgba(184,150,62,0.08);
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    padding: 12px 14px;
+    margin-bottom: 20px;
+    line-height: 1.5;
+  }
+  label {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+    margin-bottom: 6px;
+    font-family: Arial, sans-serif;
+  }
+  input {
+    width: 100%;
+    background: #1a1712;
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    padding: 12px 14px;
+    color: var(--texto);
+    font-size: 0.95rem;
+    margin-bottom: 14px;
+    outline: none;
+  }
+  input:focus { border-color: var(--dourado); }
+  .metodos { display: flex; gap: 10px; margin-bottom: 12px; }
+  .metodos button {
+    flex: 1;
+    padding: 11px;
+    border-radius: 6px;
+    border: 1px solid var(--borda);
+    background: #1a1712;
+    color: var(--texto);
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    font-size: 0.85rem;
+  }
+  .metodos button.selecionado { border-color: var(--dourado); color: var(--dourado-suave); }
+  button.acao {
+    width: 100%;
+    padding: 13px;
+    border: none;
+    border-radius: 6px;
+    background: var(--dourado);
+    color: #0f0f0f;
+    font-weight: bold;
+    font-size: 0.9rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+  }
+  button.acao:disabled { opacity: 0.5; cursor: not-allowed; }
+  .erro { color: #e0716a; font-size: 0.8rem; margin-top: 10px; display: none; }
+  .pix-bloco, .aguardando { display: none; text-align: center; margin-top: 20px; }
+  .pix-bloco img { width: 180px; height: 180px; border-radius: 6px; background: #fff; padding: 8px; margin-bottom: 12px; }
+  .pix-bloco input { text-align: center; font-size: 0.75rem; }
+  .rodape { margin-top: 20px; font-size: 0.75rem; color: var(--texto-suave); }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <span class="selo"></span>
+  <h1 id="titulo-livro">Carregando…</h1>
+  <p class="subtitulo">ZUNI Suprema — Loja de Livros</p>
+
+  <div class="card" id="card-formulario">
+    <p class="preco" id="preco-livro">—</p>
+    <p class="etiqueta-digital">E-book digital · sem envio físico</p>
+    <p class="aviso-digital">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
+
+    <label for="name">Nome completo</label>
+    <input type="text" id="name" autocomplete="name" placeholder="Ex: Maria da Silva" />
+    <label for="email">E-mail</label>
+    <input type="email" id="email" autocomplete="email" placeholder="Ex: maria@email.com" />
+    <label for="cpf">CPF</label>
+    <input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+
+    <div class="metodos">
+      <button type="button" id="btn-pix" onclick="selecionarMetodo('PIX')">PIX</button>
+      <button type="button" id="btn-cartao-metodo" onclick="selecionarMetodo('CARTAO')">Cartão / Outros</button>
+    </div>
+
+    <button class="acao" id="btn-continuar" onclick="continuar()">Comprar agora</button>
+    <p class="erro" id="erro"></p>
+  </div>
+
+  <div class="card pix-bloco" id="bloco-pix">
+    <p style="color:var(--dourado-suave); font-size:0.8rem; letter-spacing:1px; text-transform:uppercase; text-align:center;">Pague via PIX</p>
+    <img id="qr-img" src="" alt="QR Code PIX" />
+    <input id="qr-text" readonly />
+    <button class="acao" type="button" onclick="copiarPix()" style="margin-bottom:10px;">Copiar código PIX</button>
+    <p style="font-size:0.75rem; color:var(--texto-suave); text-align:center;">A confirmação é automática após o pagamento.</p>
+  </div>
+
+  <div class="card aguardando" id="bloco-aguardando">
+    <p style="text-align:center; color:var(--texto-suave); font-size:0.85rem;">Confirmando seu pagamento…</p>
+  </div>
+
+  <p class="rodape">Pagamento seguro via Mercado Pago</p>
+</div>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const livroId = params.get('livro');
+  let metodoPagamento = null;
+  let pollingInterval = null;
+
+  function formatarCPF(valor) {
+    return valor.replace(/\D/g, '').slice(0, 11)
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d)/, '$1.$2')
+      .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+  }
+  document.getElementById('cpf').addEventListener('input', (e) => { e.target.value = formatarCPF(e.target.value); });
+
+  function mostrarErro(msg) {
+    const erro = document.getElementById('erro');
+    erro.textContent = msg;
+    erro.style.display = 'block';
+  }
+
+  async function carregarLivro() {
+    if (!livroId) {
+      document.getElementById('titulo-livro').textContent = 'Livro não informado';
+      document.getElementById('card-formulario').style.display = 'none';
+      return;
+    }
+    try {
+      const res = await fetch(`/api/livros/catalogo/${encodeURIComponent(livroId)}`);
+      if (!res.ok) throw new Error();
+      const livro = await res.json();
+      document.getElementById('titulo-livro').textContent = livro.titulo;
+      document.getElementById('preco-livro').textContent = `R$ ${livro.preco.toFixed(2).replace('.', ',')}`;
+    } catch {
+      document.getElementById('titulo-livro').textContent = 'Livro indisponível';
+      document.getElementById('card-formulario').style.display = 'none';
+    }
+  }
+
+  function selecionarMetodo(metodo) {
+    metodoPagamento = metodo;
+    document.getElementById('btn-pix').classList.toggle('selecionado', metodo === 'PIX');
+    document.getElementById('btn-cartao-metodo').classList.toggle('selecionado', metodo === 'CARTAO');
+  }
+
+  async function continuar() {
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const cpf = document.getElementById('cpf').value.trim().replace(/\D/g, '');
+    const btn = document.getElementById('btn-continuar');
+
+    if (!name || !email || !cpf) return mostrarErro('Preencha nome, email e CPF para continuar.');
+    if (!metodoPagamento) return mostrarErro('Escolha PIX ou Cartão para continuar.');
+
+    document.getElementById('erro').style.display = 'none';
+    btn.disabled = true;
+    btn.textContent = 'Aguarde…';
+
+    try {
+      if (metodoPagamento === 'CARTAO') {
+        const res = await fetch('/api/checkout/livro/preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ livroId, name, email, cpf })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.init_point) throw new Error(data.error || 'Erro ao gerar link de pagamento.');
+        window.location.href = data.init_point;
+      } else {
+        const res = await fetch('/api/checkout/livro', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ livroId, name, email, cpf })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.qrCodeText) throw new Error(data.error || 'Erro ao gerar QR Code PIX.');
+
+        if (data.qrCodeImage) {
+          document.getElementById('qr-img').src = `data:image/png;base64,${data.qrCodeImage}`;
+        }
+        document.getElementById('qr-text').value = data.qrCodeText;
+        document.getElementById('card-formulario').style.display = 'none';
+        document.getElementById('bloco-pix').style.display = 'block';
+
+        pollingInterval = setInterval(() => verificarStatusPedido(data.pedidoId), 5000);
+      }
+    } catch (e) {
+      btn.disabled = false;
+      btn.textContent = 'Comprar agora';
+      mostrarErro(e.message || 'Erro ao processar. Tente novamente.');
+    }
+  }
+
+  async function verificarStatusPedido(pedidoId) {
+    try {
+      const res = await fetch(`/api/checkout/livro/status/${pedidoId}`);
+      const data = await res.json();
+      if (data.pago && data.token) {
+        clearInterval(pollingInterval);
+        window.location.href = `/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(data.token)}`;
+      }
+    } catch {}
+  }
+
+  function copiarPix() {
+    const campo = document.getElementById('qr-text');
+    campo.select();
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(campo.value).catch(() => document.execCommand('copy'));
+    } else {
+      document.execCommand('copy');
+    }
+  }
+
+  async function verificarRetornoCartao() {
+    const status = params.get('status');
+    const email = params.get('email');
+    const erro = params.get('erro');
+
+    if (erro) return mostrarErro('Pagamento não concluído. Tente novamente.');
+    if (status !== 'retorno' || !email || !livroId) return;
+
+    document.getElementById('card-formulario').style.display = 'none';
+    document.getElementById('bloco-aguardando').style.display = 'block';
+
+    let tentativas = 0;
+    const MAX_TENTATIVAS = 60;
+    pollingInterval = setInterval(async () => {
+      tentativas++;
+      try {
+        const res = await fetch(`/api/checkout/livro/session-status?livroId=${encodeURIComponent(livroId)}&email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        if (data.pago && data.token) {
+          clearInterval(pollingInterval);
+          window.location.href = `/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(data.token)}`;
+        }
+      } catch {}
+      if (tentativas >= MAX_TENTATIVAS) {
+        clearInterval(pollingInterval);
+        mostrarErro('Não conseguimos confirmar seu pagamento ainda. Se você já pagou, aguarde alguns minutos e recarregue esta página.');
+        document.getElementById('bloco-aguardando').style.display = 'none';
+        document.getElementById('card-formulario').style.display = 'block';
+      }
+    }, 3000);
+  }
+
+  carregarLivro();
+  verificarRetornoCartao();
+</script>
+
+</body>
+</html>

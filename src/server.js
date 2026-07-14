@@ -9,7 +9,9 @@ const { MercadoPagoConfig, Preference } = require('mercadopago');
 require('dotenv').config();
 
 const livrosRouter = require('./routes/livros');
-const { criarAcesso } = require('./lib/acessoLivros');
+const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
+const { buscarLivro } = require('./lib/catalogoLivros');
+const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -696,24 +698,14 @@ async function marcarPagoSeAprovado(order) {
   return isPaid;
 }
 
-// ── LIVROS: liberação de acesso a livro comprado avulso ────────────
-// Ainda não existe checkout para livros — este trecho fica inerte até
-// que um endpoint de checkout de livros seja criado. Quando existir,
-// esse endpoint deve montar o external_reference exatamente no formato
-// "livro:<livroId>:<email>:<cpf-ou-->" (componentes URI-encoded) para
-// que o webhook reconheça a compra e chame criarAcesso() automaticamente.
-function parseExternalReferenceLivro(externalReference) {
-  if (!externalReference || !externalReference.startsWith('livro:')) return null;
-
-  const [, livroId, emailCodificado, cpfCodificado] = externalReference.split(':');
-  if (!livroId || !emailCodificado) return null;
-
-  return {
-    livroId: decodeURIComponent(livroId),
-    email: decodeURIComponent(emailCodificado),
-    cpf: cpfCodificado && cpfCodificado !== '-' ? decodeURIComponent(cpfCodificado) : null
-  };
-}
+// ── LIVROS: checkout avulso e liberação de acesso ──────────────────
+// Os endpoints /api/checkout/livro* abaixo criam um pedido pendente via
+// criarPedidoPendente() (tabela pedidos_livros_pendentes) e usam a
+// referência curta devolvida como external_reference no MercadoPago —
+// a API de orders só aceita [A-Za-z0-9_-] com no máximo 64 caracteres,
+// curto demais para carregar e-mail e CPF diretamente. No webhook,
+// buscarPedidoPendente() recupera os dados reais a partir dessa
+// referência para então chamar criarAcesso().
 
 async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
   try {
@@ -749,17 +741,182 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
 }
 
 async function criarAcessoLivroSeAplicavel(order, paymentId) {
-  const dadosLivro = parseExternalReferenceLivro(order.external_reference);
-  if (!dadosLivro) return null;
+  const referencia = order.external_reference;
+  if (!referencia || !referencia.startsWith('lv')) return null;
+
+  const pedido = await buscarPedidoPendente(referencia);
+  if (!pedido) return null;
 
   const isPaid = order.status === 'approved' ||
                  Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
   if (!isPaid) return null;
 
-  const acesso = await criarAcesso({ ...dadosLivro, paymentId });
-  await enviarEmailAcessoLivro(dadosLivro.email, dadosLivro.livroId, acesso.token, acesso.expiraEm);
+  const acesso = await criarAcesso({ livroId: pedido.livroId, email: pedido.email, cpf: pedido.cpf, paymentId });
+  await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm);
   return acesso;
 }
+
+app.get('/api/livros/catalogo/:livroId', (req, res) => {
+  const livro = buscarLivro(req.params.livroId);
+  if (!livro) {
+    return res.status(404).json({ error: 'Livro não encontrado.' });
+  }
+  return res.json({ livroId: req.params.livroId, titulo: livro.titulo, preco: livro.preco });
+});
+
+app.post('/api/checkout/livro/preference', async (req, res) => {
+  try {
+    const { livroId, name, email, cpf } = req.body;
+
+    if (!livroId || !name || !email || !cpf) {
+      return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
+    }
+
+    const livro = buscarLivro(livroId);
+    if (!livro) {
+      return res.status(404).json({ error: 'Livro não encontrado.' });
+    }
+
+    if (!mpClient) {
+      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf });
+
+    const preference = new Preference(mpClient);
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            id: livroId,
+            title: livro.titulo,
+            quantity: 1,
+            unit_price: livro.preco,
+            currency_id: 'BRL'
+          }
+        ],
+        payer: {
+          name: firstName,
+          surname: lastName,
+          email,
+          identification: { type: 'CPF', number: cpf }
+        },
+        external_reference: externalReference,
+        back_urls: {
+          success: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&email=${encodeURIComponent(email)}&status=retorno`,
+          pending: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&email=${encodeURIComponent(email)}&status=retorno`,
+          failure: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&erro=1`
+        },
+        // auto_return exige back_urls públicas em HTTPS — indisponível em dev local (http://localhost)
+        ...(frontendUrl.startsWith('https://') ? { auto_return: 'approved' } : {})
+      }
+    });
+
+    return res.json({ init_point: result.init_point });
+  } catch (error) {
+    console.error('Erro ao criar preferência Mercado Pago (livro):', error);
+    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
+  }
+});
+
+app.post('/api/checkout/livro', async (req, res) => {
+  try {
+    const { livroId, name, email, cpf } = req.body;
+
+    if (!livroId || !name || !email || !cpf) {
+      return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
+    }
+
+    const livro = buscarLivro(livroId);
+    if (!livro) {
+      return res.status(404).json({ error: 'Livro não encontrado.' });
+    }
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf });
+    const valorFormatado = livro.preco.toFixed(2);
+
+    const orderBody = {
+      type: 'online',
+      total_amount: valorFormatado,
+      external_reference: externalReference,
+      processing_mode: 'automatic',
+      transactions: {
+        payments: [
+          { amount: valorFormatado, payment_method: { id: 'pix', type: 'bank_transfer' } }
+        ]
+      },
+      payer: {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        identification: { type: 'CPF', number: cpf }
+      }
+    };
+
+    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': uuidv4()
+      },
+      body: JSON.stringify(orderBody)
+    });
+
+    if (!mpRes.ok) {
+      const errText = await mpRes.text();
+      const requestId = mpRes.headers.get('x-request-id');
+      console.error('Erro Mercado Pago (livro):', mpRes.status, errText, '| x-request-id:', requestId);
+      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
+    }
+
+    const order = await mpRes.json();
+    const paymentResponse = order.transactions?.payments?.[0];
+    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
+    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
+
+    if (!qrCodeText) {
+      console.error('Mercado Pago não retornou QR Code PIX (livro):', JSON.stringify(order));
+      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
+    }
+
+    return res.json({ pedidoId: order.id, qrCodeText, qrCodeImage });
+  } catch (error) {
+    console.error('Erro em /api/checkout/livro:', error);
+    return res.status(500).json({ error: 'Erro ao criar pedido.' });
+  }
+});
+
+app.get('/api/checkout/livro/status/:pedidoId', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const order = await consultarPedidoMercadoPago(pedidoId);
+    const acesso = await criarAcessoLivroSeAplicavel(order, pedidoId);
+    return res.json({ pago: Boolean(acesso), token: acesso?.token || null });
+  } catch (error) {
+    console.error('Erro em /api/checkout/livro/status:', error);
+    return res.status(500).json({ pago: false });
+  }
+});
+
+app.get('/api/checkout/livro/session-status', async (req, res) => {
+  try {
+    const { livroId, email } = req.query;
+    if (!livroId || !email) {
+      return res.status(400).json({ pago: false });
+    }
+    const acesso = await buscarAcessoPorEmail({ livroId, email });
+    return res.json({ pago: Boolean(acesso), token: acesso?.token || null });
+  } catch (error) {
+    console.error('Erro em /api/checkout/livro/session-status:', error);
+    return res.status(500).json({ pago: false });
+  }
+});
 // ─────────────────────────────────────────────────────────────────
 
 app.get('/api/mercadopago/public-key', (req, res) => {
