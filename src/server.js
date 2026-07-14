@@ -715,6 +715,39 @@ function parseExternalReferenceLivro(externalReference) {
   };
 }
 
+async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
+  try {
+    const sgMail = require('@sendgrid/mail');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+    const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
+    const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
+
+    const msg = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL,
+      subject: 'Seu acesso ao livro ZUNI Suprema está liberado',
+      html: `
+        <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
+          <p>Olá!</p>
+          <p>Seu pagamento foi confirmado e o acesso ao seu livro já está liberado.</p>
+          <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
+          <p><a href="${linkAcesso}" style="color:#B8963E;font-weight:bold;">Acessar meu livro</a></p>
+          <p style="color:#b6ab93;font-size:0.85rem;">O acesso fica disponível até ${expiraFormatado}.</p>
+          <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
+        </div>
+      `
+    };
+
+    await sgMail.send(msg);
+    console.log(`E-mail de acesso ao livro enviado para ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao enviar e-mail de acesso ao livro:', error?.response?.body || error.message);
+    return false;
+  }
+}
+
 async function criarAcessoLivroSeAplicavel(order, paymentId) {
   const dadosLivro = parseExternalReferenceLivro(order.external_reference);
   if (!dadosLivro) return null;
@@ -723,7 +756,9 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
                  Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
   if (!isPaid) return null;
 
-  return criarAcesso({ ...dadosLivro, paymentId });
+  const acesso = await criarAcesso({ ...dadosLivro, paymentId });
+  await enviarEmailAcessoLivro(dadosLivro.email, dadosLivro.livroId, acesso.token, acesso.expiraEm);
+  return acesso;
 }
 // ─────────────────────────────────────────────────────────────────
 

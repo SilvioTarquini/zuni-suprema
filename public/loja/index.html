@@ -69,6 +69,10 @@
     line-height: 1.6;
   }
 
+  header.topo p.aviso-digital {
+    margin-top: 10px;
+  }
+
   main {
     max-width: 1080px;
     margin: 0 auto;
@@ -141,8 +145,15 @@
   .info .preco {
     color: var(--dourado-suave);
     font-size: 0.95rem;
-    margin-bottom: 14px;
+    margin-bottom: 4px;
     letter-spacing: 0.3px;
+  }
+
+  .info .etiqueta-digital {
+    color: var(--texto-suave);
+    font-size: 0.72rem;
+    letter-spacing: 0.2px;
+    margin: 0 0 14px;
   }
 
   a.comprar {
@@ -175,6 +186,7 @@
   <span class="selo"></span>
   <h1>Loja de Livros ZUNI Suprema</h1>
   <p>Após a confirmação do pagamento, cada livro fica disponível por um prazo determinado para leitura na tela, download e impressão.</p>
+  <p class="aviso-digital">Produto 100% digital — não há envio de exemplar físico. O acesso é liberado por link, direto após a confirmação do pagamento.</p>
 </header>
 
 <main>
@@ -187,6 +199,7 @@
         <h2>Título do Livro</h2>
         <p class="desc">Breve descrição do conteúdo, em uma ou duas linhas, para orientar a escolha do leitor.</p>
         <p class="preco">R$ 00,00</p>
+        <p class="etiqueta-digital">E-book digital · sem envio físico</p>
         <a class="comprar" href="/checkout.html?livro=id-do-livro">Comprar</a>
       </div>
     </article>
