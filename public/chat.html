@@ -83,9 +83,24 @@
       z-index: 100;
       padding: 12px 20px;
       display: flex;
+      flex-wrap: wrap;
+      row-gap: 8px;
       justify-content: space-between;
       align-items: center;
     }
+
+    .link-loja {
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--dourado);
+      text-decoration: none;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+      border-bottom: 1px solid rgba(212,175,55,0.4);
+      padding-bottom: 1px;
+    }
+    .link-loja:hover { color: var(--dourado-hover); border-color: var(--dourado-hover); }
 
     header h1 {
       font-family: 'Playfair Display', serif !important;
@@ -211,25 +226,7 @@
     }
 
     /* BOTÕES MIC E ENVIAR */
-    ,
-    #btn-enviar {
-      width: 44px !important;
-      height: 44px !important;
-      min-width: 44px;
-      background: var(--dourado) !important;
-      border: none !important;
-      border-radius: 50% !important;
-      color: #FFFFFF !important;
-      font-size: 18px;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      transition: all 0.3s !important;
-      flex-shrink: 0;
-    }
     #btn-microfone, #btn-enviar {
-  width: 48px !important;
   height: 48px !important;
   min-width: 48px !important;
   border-radius: 50% !important;
@@ -240,9 +237,30 @@
   justify-content: center !important;
   cursor: pointer !important;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25), 
+  box-shadow: 0 4px 16px rgba(212, 175, 55, 0.25),
               inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
   padding: 0 !important;
+}
+
+#btn-enviar { width: 48px !important; }
+
+/* Microfone vira uma pílula com ícone + rótulo "Falar", em vez de círculo,
+   pra deixar explícito pra quem não está acostumado com apps de chat que
+   esse botão serve pra falar a pergunta em voz alta. */
+#btn-microfone {
+  width: auto !important;
+  gap: 6px;
+  padding: 0 16px !important;
+  border-radius: 24px !important;
+}
+
+.rotulo-microfone {
+  color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.2px;
+  white-space: nowrap;
 }
 
 #btn-microfone:hover, #btn-enviar:hover {
@@ -291,20 +309,30 @@
 
     audio { display: none; }
 
-    .play-btn {
+    .acoes-resposta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .play-btn, .btn-ja-li {
       background: none;
-      border: none;
+      border: 1px solid rgba(212,175,55,0.4);
       cursor: pointer;
-      font-size: 17px;
-      margin-top: 8px;
-      padding: 4px 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 6px 12px;
       border-radius: 20px;
       color: var(--dourado);
-      display: inline-block;
-      transition: background 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: background 0.15s, border-color 0.15s;
     }
-    .play-btn:hover { background: rgba(212,175,55,0.13); }
-    .play-btn.playing { color: #e07a10; }
+    .play-btn:hover, .btn-ja-li:hover { background: rgba(212,175,55,0.13); border-color: var(--dourado); }
+    .play-btn.playing { color: #e07a10; border-color: rgba(224,122,16,0.4); }
 
     /* WHATSAPP FLUTUANTE — verde padrão */
     #btn-whatsapp {
@@ -346,6 +374,7 @@
         <div class="counter">Mensagens: <span id="cnt">0</span>/15</div>
         <span style="font-family:'Inter',sans-serif;font-size:11px;color:#9a9a9a;">Você pode baixar seu relatório aqui</span>
         <button id="btn-pdf" onclick="window.open('/api/relatorio/download/' + sessionId, '_blank')" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:8px 16px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;box-shadow:0 2px 8px rgba(212,175,55,0.35);">📄 Baixar relatório</button>
+        <a class="link-loja" href="/loja">Loja de Livros</a>
       </div>
     </header>
 
@@ -364,7 +393,7 @@
     <div class="input-area">
       <div class="input-row">
         <textarea id="input-mensagem" rows="1" placeholder="Digite sua mensagem..."></textarea>
-        <button id="btn-microfone" title="Falar">🎤</button>
+        <button id="btn-microfone" title="Falar"><span aria-hidden="true">🎤</span><span class="rotulo-microfone">Falar</span></button>
         <button id="btn-enviar" onclick="enviar()">➤</button>
       </div>
       <p class="input-aviso">As respostas podem levar alguns segundos — estamos elaborando com cuidado para você.</p>
@@ -388,9 +417,12 @@
     let currentAudio = null;
     let currentPlayBtn = null;
 
+    const ROTULO_OUVIR = '<span aria-hidden="true">🔊</span> Ouvir resposta';
+    const ROTULO_PAUSAR = '<span aria-hidden="true">⏸</span> Pausar áudio';
+
     function stopCurrentAudio() {
       if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-      if (currentPlayBtn) { currentPlayBtn.textContent = '🔊'; currentPlayBtn.classList.remove('playing'); }
+      if (currentPlayBtn) { currentPlayBtn.innerHTML = ROTULO_OUVIR; currentPlayBtn.classList.remove('playing'); }
       currentAudio = null;
       currentPlayBtn = null;
     }
@@ -409,10 +441,19 @@
 
     function attachAudio(msgDiv, base64) {
       const audioEl = new Audio(`data:audio/mpeg;base64,${base64}`);
+
+      const acoes = document.createElement('div');
+      acoes.className = 'acoes-resposta';
+
       const playBtn = document.createElement('button');
       playBtn.className = 'play-btn';
-      playBtn.title = 'Ouvir mensagem';
-      playBtn.textContent = '🔊';
+      playBtn.title = 'Ouvir a resposta em áudio';
+      playBtn.innerHTML = ROTULO_OUVIR;
+
+      const jaLiBtn = document.createElement('button');
+      jaLiBtn.className = 'btn-ja-li';
+      jaLiBtn.title = 'Prefiro só ler — parar o áudio';
+      jaLiBtn.innerHTML = '<span aria-hidden="true">✓</span> Já li, obrigado';
 
       playBtn.addEventListener('click', () => {
         if (currentAudio === audioEl) {
@@ -423,27 +464,35 @@
           audioEl.play().catch(() => {});
           currentAudio = audioEl;
           currentPlayBtn = playBtn;
-          playBtn.textContent = '⏸';
+          playBtn.innerHTML = ROTULO_PAUSAR;
           playBtn.classList.add('playing');
+        }
+      });
+
+      jaLiBtn.addEventListener('click', () => {
+        if (currentAudio === audioEl) {
+          stopCurrentAudio();
         }
       });
 
       audioEl.addEventListener('ended', () => {
         if (currentPlayBtn === playBtn) {
-          playBtn.textContent = '🔊';
+          playBtn.innerHTML = ROTULO_OUVIR;
           playBtn.classList.remove('playing');
           currentAudio = null;
           currentPlayBtn = null;
         }
       });
 
-      msgDiv.appendChild(playBtn);
+      acoes.appendChild(playBtn);
+      acoes.appendChild(jaLiBtn);
+      msgDiv.appendChild(acoes);
 
       stopCurrentAudio();
       audioEl.play().then(() => {
         currentAudio = audioEl;
         currentPlayBtn = playBtn;
-        playBtn.textContent = '⏸';
+        playBtn.innerHTML = ROTULO_PAUSAR;
         playBtn.classList.add('playing');
       }).catch(() => {});
     }
@@ -553,7 +602,7 @@ addMsg('user', msg);
 
             micBtn.disabled = true;
             micBtn.title = 'Transcrevendo...';
-            micBtn.innerHTML = '⏳';
+            micBtn.innerHTML = '<span aria-hidden="true">⏳</span><span class="rotulo-microfone">Transcrevendo…</span>';
 
             try {
               const res = await fetch('/api/transcrever', { method: 'POST', body: formData });
@@ -571,13 +620,14 @@ addMsg('user', msg);
             micBtn.disabled = false;
             micBtn.classList.remove('recording');
             micBtn.title = 'Falar';
-            micBtn.innerHTML = '🎤';
+            micBtn.innerHTML = '<span aria-hidden="true">🎤</span><span class="rotulo-microfone">Falar</span>';
           });
 
           mediaRecorder.start();
           isRecording = true;
           micBtn.classList.add('recording');
           micBtn.title = 'Parar gravação';
+          micBtn.innerHTML = '<span aria-hidden="true">🎤</span><span class="rotulo-microfone">Gravando…</span>';
 
           recordingTimeout = setTimeout(() => {
             if (isRecording) {

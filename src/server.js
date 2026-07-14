@@ -368,7 +368,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/', livrosRouter);
 
 app.get('/', (req, res) => {
-  res.redirect('/checkout');
+  // Ainda não existe uma landing page própria — enquanto isso não é feito,
+  // manda pra loja em vez de cair direto no paywall do checkout do Mentor.
+  res.redirect('/loja/');
 });
 
 app.get('/chat', (req, res) => {
