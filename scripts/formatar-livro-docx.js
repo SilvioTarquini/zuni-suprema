@@ -20,7 +20,24 @@
 // negrito (a entrada do SUMÁRIO usa "Capítulo 1 —", sem negrito e sem
 // maiúsculas, então não é confundida com o título real).
 //
-// Uso: node scripts/formatar-livro-docx.js <caminho.docx> <livro_id> "<Título>" ["<Subtítulo>"] ["<Autor>"]
+// Alguns manuscritos mais antigos da série não usam negrito em maiúsculo
+// para marcar PARTE/CAPÍTULO — o texto flui contínuo, com transições em
+// prosa ("no capítulo anterior...", "este capítulo..."). Para esses casos,
+// passe um arquivo de marcadores manuais (--marcadores <arquivo.json>):
+//   {
+//     "intervalos": [[11, 24], [42, 397]],   // faixas de parágrafos (por
+//                                             // índice no array retornado
+//                                             // pelo mammoth) a incluir
+//     "marcadores": {
+//       "42": [{ "tag": "h2", "classe": "parte-livro", "texto": "PARTE I — ..." },
+//              { "tag": "h2", "classe": null, "texto": "Capítulo 1 — ..." }]
+//     }
+//   }
+// Os índices de "marcadores" inserem os elementos indicados imediatamente
+// antes do parágrafo daquele índice. "intervalos" define quais faixas
+// (SUMÁRIO e afins ficam de fora) entram como corpo do texto, em ordem.
+//
+// Uso: node scripts/formatar-livro-docx.js <caminho.docx> <livro_id> "<Título>" ["<Subtítulo>"] ["<Autor>"] [--marcadores <arquivo.json>]
 
 const fs = require('fs');
 const path = require('path');
@@ -62,29 +79,61 @@ function classificarParagrafo(p) {
   return { tag: 'p', html: p.replace(/^<p>/, '').replace(/<\/p>$/, '') };
 }
 
-async function formatarLivro(docxPath, livroId, titulo, subtitulo, autor) {
+function aplicarMarcadoresManuais(paragrafos, config) {
+  const blocos = [];
+
+  for (const [inicio, fim] of config.intervalos) {
+    for (let i = inicio; i <= fim; i++) {
+      const insercoes = config.marcadores[String(i)];
+      if (insercoes) {
+        for (const ins of insercoes) {
+          const classeAttr = ins.classe ? ` class="${ins.classe}"` : '';
+          blocos.push(`<${ins.tag}${classeAttr}>${ins.texto}</${ins.tag}>`);
+        }
+      }
+
+      const item = classificarParagrafo(paragrafos[i]);
+      if (!item) continue;
+
+      if (item.tag === 'p') {
+        blocos.push(`<p>${item.html}</p>`);
+      } else {
+        const classeAttr = item.classe ? ` class="${item.classe}"` : '';
+        blocos.push(`<${item.tag}${classeAttr}>${item.texto}</${item.tag}>`);
+      }
+    }
+  }
+
+  return blocos;
+}
+
+async function formatarLivro(docxPath, livroId, titulo, subtitulo, autor, marcadoresConfig) {
   const resultado = await mammoth.convertToHtml({ path: docxPath });
   const semImagens = resultado.value.replace(/<img[^>]*>/g, '');
   const paragrafos = semImagens.match(/<p>.*?<\/p>/gs) || [];
-
-  const inicioReal = encontrarInicioReal(paragrafos);
-  if (inicioReal === -1) {
-    throw new Error('Não encontrei "CAPÍTULO 1 —" em negrito no documento — verifique a formatação de origem.');
-  }
 
   const blocos = [`<h1>${titulo}</h1>`];
   if (subtitulo) blocos.push(`<p class="subtitulo-livro"><em>${subtitulo}</em></p>`);
   if (autor) blocos.push(`<p class="autor-livro">${autor}</p>`);
 
-  for (let i = inicioReal; i < paragrafos.length; i++) {
-    const item = classificarParagrafo(paragrafos[i]);
-    if (!item) continue;
+  if (marcadoresConfig) {
+    blocos.push(...aplicarMarcadoresManuais(paragrafos, marcadoresConfig));
+  } else {
+    const inicioReal = encontrarInicioReal(paragrafos);
+    if (inicioReal === -1) {
+      throw new Error('Não encontrei "CAPÍTULO 1 —" em negrito no documento — se este manuscrito não usa esse padrão, use --marcadores.');
+    }
 
-    if (item.tag === 'p') {
-      blocos.push(`<p>${item.html}</p>`);
-    } else {
-      const classeAttr = item.classe ? ` class="${item.classe}"` : '';
-      blocos.push(`<${item.tag}${classeAttr}>${item.texto}</${item.tag}>`);
+    for (let i = inicioReal; i < paragrafos.length; i++) {
+      const item = classificarParagrafo(paragrafos[i]);
+      if (!item) continue;
+
+      if (item.tag === 'p') {
+        blocos.push(`<p>${item.html}</p>`);
+      } else {
+        const classeAttr = item.classe ? ` class="${item.classe}"` : '';
+        blocos.push(`<${item.tag}${classeAttr}>${item.texto}</${item.tag}>`);
+      }
     }
   }
 
@@ -113,14 +162,25 @@ async function formatarLivro(docxPath, livroId, titulo, subtitulo, autor) {
 }
 
 if (require.main === module) {
-  const [, , docxPath, livroId, titulo, subtitulo, autor] = process.argv;
+  const args = process.argv.slice(2);
+  const marcadoresIdx = args.indexOf('--marcadores');
+  let marcadoresPath = null;
+
+  if (marcadoresIdx !== -1) {
+    marcadoresPath = args[marcadoresIdx + 1];
+    args.splice(marcadoresIdx, 2);
+  }
+
+  const [docxPath, livroId, titulo, subtitulo, autor] = args;
 
   if (!docxPath || !livroId || !titulo) {
-    console.error('Uso: node scripts/formatar-livro-docx.js <caminho.docx> <livro_id> "<Título>" ["<Subtítulo>"] ["<Autor>"]');
+    console.error('Uso: node scripts/formatar-livro-docx.js <caminho.docx> <livro_id> "<Título>" ["<Subtítulo>"] ["<Autor>"] [--marcadores <arquivo.json>]');
     process.exit(1);
   }
 
-  formatarLivro(docxPath, livroId, titulo, subtitulo, autor).catch(err => {
+  const marcadoresConfig = marcadoresPath ? JSON.parse(fs.readFileSync(marcadoresPath, 'utf8')) : null;
+
+  formatarLivro(docxPath, livroId, titulo, subtitulo, autor, marcadoresConfig).catch(err => {
     console.error('Erro:', err.message);
     process.exit(1);
   });

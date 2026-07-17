@@ -3,10 +3,11 @@
 // Pipeline de ingestão da base RAG de um livro individual, usada pelo chat
 // de leitura (routes/livroChat.js). Diferente de indexar.js (que faz
 // chunking genérico por tamanho de texto para a base do Mentor), este
-// script espera um arquivo .txt já organizado em blocos temáticos:
+// script espera um arquivo .txt já organizado em blocos temáticos, em um
+// destes dois formatos (detectados automaticamente):
 //
-//   [TEMA]
-//   texto do bloco...
+//   [TEMA]                              === TEMA: NOME ===
+//   texto do bloco...          ou       texto do bloco...
 //   ==========
 //
 // Cada bloco vira um chunk em public.documentos, com livro_id preenchido,
@@ -32,7 +33,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function parseBlocos(raw) {
+function parseBlocosColchetes(raw) {
   const blocos = raw
     .split(/\n={5,}\n?/)
     .map(b => b.trim())
@@ -45,6 +46,26 @@ function parseBlocos(raw) {
     }
     return { tema: match[1].trim(), corpo: match[2].trim() };
   });
+}
+
+function parseBlocosDelimitador(raw) {
+  const regex = /={3,}\s*TEMA:\s*(.+?)\s*={3,}/g;
+  const marcadores = [];
+  let m;
+  while ((m = regex.exec(raw)) !== null) {
+    marcadores.push({ tema: m[1].trim(), inicioMarcador: m.index, fimMarcador: m.index + m[0].length });
+  }
+
+  if (!marcadores.length) return null;
+
+  return marcadores.map((marcador, i) => {
+    const fimCorpo = i + 1 < marcadores.length ? marcadores[i + 1].inicioMarcador : raw.length;
+    return { tema: marcador.tema, corpo: raw.slice(marcador.fimMarcador, fimCorpo).trim() };
+  });
+}
+
+function parseBlocos(raw) {
+  return parseBlocosDelimitador(raw) || parseBlocosColchetes(raw);
 }
 
 async function gerarEmbeddingsBatch(textos) {

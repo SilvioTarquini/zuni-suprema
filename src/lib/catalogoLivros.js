@@ -9,6 +9,11 @@
 // exatamente para impedir que alguém manipule o valor pago.
 
 const CATALOGO = {
+  'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal': {
+    titulo: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal',
+    preco: 57.90,
+    categoria: 'principal'
+  },
   'os-bastidores-da-mente-4-a-travessia': {
     titulo: 'Os Bastidores da Mente — Volume IV: A Travessia',
     preco: 57.90,
