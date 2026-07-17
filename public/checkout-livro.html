@@ -119,6 +119,9 @@
   .pix-bloco img { width: 180px; height: 180px; border-radius: 6px; background: #fff; padding: 8px; margin-bottom: 12px; }
   .pix-bloco input { text-align: center; font-size: 0.75rem; }
   .rodape { margin-top: 20px; font-size: 0.75rem; color: var(--texto-suave); }
+  .ajuda-whatsapp { margin-top: 14px; text-align: center; font-size: 0.9rem; }
+  .ajuda-whatsapp a { color: var(--texto-suave); text-decoration: underline; }
+  .ajuda-whatsapp a:hover { color: var(--dourado-suave); }
 </style>
 </head>
 <body>
@@ -146,6 +149,9 @@
     </div>
 
     <button class="acao" id="btn-continuar" onclick="continuar()">Comprar agora</button>
+    <p class="ajuda-whatsapp">
+      <a id="link-whatsapp" href="https://wa.me/5515996088895" target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
+    </p>
     <p class="erro" id="erro"></p>
   </div>
 
@@ -184,10 +190,18 @@
     erro.style.display = 'block';
   }
 
+  function atualizarLinkWhatsapp(tituloLivro) {
+    const mensagem = tituloLivro
+      ? `Olá, estou com dúvida/problema no checkout do livro ${tituloLivro}.`
+      : 'Olá, estou com dúvida/problema no checkout de um livro da loja.';
+    document.getElementById('link-whatsapp').href = `https://wa.me/5515996088895?text=${encodeURIComponent(mensagem)}`;
+  }
+
   async function carregarLivro() {
     if (!livroId) {
       document.getElementById('titulo-livro').textContent = 'Livro não informado';
       document.getElementById('card-formulario').style.display = 'none';
+      atualizarLinkWhatsapp(null);
       return;
     }
     try {
@@ -196,9 +210,11 @@
       const livro = await res.json();
       document.getElementById('titulo-livro').textContent = livro.titulo;
       document.getElementById('preco-livro').textContent = `R$ ${livro.preco.toFixed(2).replace('.', ',')}`;
+      atualizarLinkWhatsapp(livro.titulo);
     } catch {
       document.getElementById('titulo-livro').textContent = 'Livro indisponível';
       document.getElementById('card-formulario').style.display = 'none';
+      atualizarLinkWhatsapp(null);
     }
   }
 
