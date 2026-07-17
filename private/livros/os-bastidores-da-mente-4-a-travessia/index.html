@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Os Bastidores da Mente — Volume IV: A Travessia — ZUNI Suprema</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root {
+    --fundo: #0f0f0f;
+    --dourado: #B8963E;
+    --dourado-suave: #d9c68f;
+    --texto: #f2ead9;
+    --texto-suave: #b6ab93;
+    --borda: #2a2620;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+
+  .barra {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 24px;
+    background: rgba(15,15,15,0.95);
+    border-bottom: 1px solid var(--borda);
+    backdrop-filter: blur(4px);
+  }
+
+  .barra .prazo {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+  }
+  .barra .prazo strong { color: var(--dourado-suave); }
+
+  .acoes { display: flex; gap: 10px; }
+
+  .acoes a {
+    font-family: Arial, sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 9px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+  }
+  .acoes a.baixar,
+  .acoes a.imprimir {
+    background: transparent;
+    color: var(--dourado-suave);
+    border: 1px solid var(--dourado);
+  }
+  .acoes a.baixar:hover,
+  .acoes a.imprimir:hover {
+    background: var(--dourado);
+    color: #0f0f0f;
+  }
+
+  .conteudo-livro {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 48px 24px 100px;
+    line-height: 1.8;
+    font-size: 1.05rem;
+  }
+
+  /* ===================================================================
+     A partir daqui entra o conteúdo formatado do livro (o HTML que já
+     está pronto). Substitua o bloco de exemplo abaixo pelo conteúdo real.
+     =================================================================== */
+  .conteudo-livro h1 { color: var(--dourado-suave); font-weight: normal; }
+  .conteudo-livro h2 { color: var(--dourado); font-weight: normal; margin-top: 2.5em; }
+
+  @media print {
+    .barra { display: none; }
+    body { background: #fff; color: #000; }
+  }
+</style>
+</head>
+<body>
+
+<div class="barra">
+  <div class="prazo">Acesso válido até <strong id="data-expiracao">—</strong></div>
+  <div class="acoes">
+    <a class="baixar" id="link-baixar" href="#" download>Baixar</a>
+    <a class="imprimir" id="link-imprimir" href="#">Imprimir</a>
+  </div>
+</div>
+
+<article class="conteudo-livro">
+  <!-- PLACEHOLDER — falta o texto integral formatado da obra em HTML.
+       Esta página existe só para validar o widget de chat na URL real
+       antes do commit. Substituir por: conteúdo real do livro em HTML. -->
+  <h1>Os Bastidores da Mente — Volume IV: A Travessia</h1>
+  <p><em>[Conteúdo de leitura ainda não formatado — esta é uma página placeholder para testar o widget de chat na URL real da obra.]</em></p>
+</article>
+
+<script>
+  // Baixar: gera o download da própria página (mesma URL, com o token
+  // já presente na query string), sem depender de rota ou arquivo à parte.
+  document.getElementById('link-baixar').href = window.location.href;
+
+  // Imprimir: abre o diálogo de impressão nativo do navegador. O bloco
+  // @media print acima já esconde a barra de ações na hora de imprimir.
+  document.getElementById('link-imprimir').addEventListener('click', (evento) => {
+    evento.preventDefault();
+    window.print();
+  });
+
+  // Opcional: exibir a data de expiração real. Se o backend expuser uma
+  // rota simples (ex: GET /livros/:id/status?token=...) retornando
+  // { data_expiracao }, ela pode ser buscada aqui via fetch() e o valor
+  // formatado inserido no elemento #data-expiracao.
+</script>
+<!-- ZUNI-CHAT-WIDGET-START -->
+<!--
+  Widget de chat de leitura — arquivo-fonte único.
+
+  Não editar o HTML de nenhum livro diretamente para adicionar/atualizar
+  este widget. Em vez disso, edite este arquivo e rode:
+    node scripts/injetar-chat-livros.js
+  O script injeta este bloco inteiro (idempotente, delimitado pelos
+  marcadores ZUNI-CHAT-WIDGET-START/END) antes do fechamento de body de
+  cada private/livros/(id-do-livro)/index.html, substituindo o
+  placeholder de livro_id abaixo pelo nome real de cada pasta.
+
+  O token de acesso é lido da query string da própria página de leitura
+  (?token=...), que já foi validada pelo servidor (exigirAcesso) antes de
+  a página ser servida — o widget não precisa validar nada, só usar.
+-->
+<div id="zuni-chat-widget" data-livro-id="os-bastidores-da-mente-4-a-travessia">
+  <button id="zuni-chat-toggle" type="button" aria-expanded="false" aria-controls="zuni-chat-painel">
+    💬 Conversar com o livro
+  </button>
+
+  <div id="zuni-chat-painel" role="dialog" aria-modal="true" aria-labelledby="zuni-chat-titulo">
+    <div class="zuni-chat-cabecalho">
+      <div class="zuni-chat-cabecalho-texto">
+        <h2 id="zuni-chat-titulo">Converse com o livro</h2>
+        <p class="zuni-chat-aviso">Este é um assistente de leitura baseado em IA, treinado exclusivamente no conteúdo deste livro.</p>
+      </div>
+      <button id="zuni-chat-fechar" type="button" aria-label="Fechar chat">&times;</button>
+    </div>
+
+    <div id="zuni-chat-contador" class="zuni-chat-contador" hidden></div>
+
+    <div id="zuni-chat-mensagens" class="zuni-chat-mensagens">
+      <div id="zuni-chat-sugestoes" class="zuni-chat-sugestoes">
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Resuma o capítulo que estou lendo">Resuma o capítulo que estou lendo</button>
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Dê um exemplo prático">Dê um exemplo prático</button>
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Como aplico isso no meu dia?">Como aplico isso no meu dia?</button>
+      </div>
+    </div>
+
+    <form id="zuni-chat-form" class="zuni-chat-form">
+      <textarea id="zuni-chat-input" class="zuni-chat-input" placeholder="Pergunte algo sobre o livro..." maxlength="1000" rows="1" required></textarea>
+      <button type="submit" id="zuni-chat-enviar" class="zuni-chat-enviar" aria-label="Enviar pergunta">Enviar</button>
+    </form>
+  </div>
+
+  <div id="zuni-chat-overlay"></div>
+</div>
+
+<style>
+  #zuni-chat-widget {
+    --zc-fundo: #0f0f0f;
+    --zc-fundo-carta: #171512;
+    --zc-dourado: #B8963E;
+    --zc-dourado-suave: #d9c68f;
+    --zc-texto: #f2ead9;
+    --zc-texto-suave: #b6ab93;
+    --zc-borda: #2a2620;
+    --zc-erro: #c96b5a;
+    all: initial;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  #zuni-chat-widget * { box-sizing: border-box; }
+
+  #zuni-chat-toggle {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 999998;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    background: var(--zc-dourado);
+    color: var(--zc-fundo);
+    border: none;
+    border-radius: 999px;
+    font-family: Arial, sans-serif;
+    font-size: 0.88rem;
+    font-weight: bold;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  #zuni-chat-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.55);
+  }
+  #zuni-chat-widget.zuni-chat-aberto #zuni-chat-toggle { display: none; }
+
+  #zuni-chat-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999997;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  #zuni-chat-widget.zuni-chat-aberto #zuni-chat-overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #zuni-chat-painel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(420px, 100vw);
+    background: var(--zc-fundo-carta);
+    border-left: 1px solid var(--zc-borda);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  #zuni-chat-widget.zuni-chat-aberto #zuni-chat-painel {
+    transform: translateX(0);
+  }
+  @media (max-width: 640px) {
+    #zuni-chat-painel { width: 100vw; }
+  }
+
+  .zuni-chat-cabecalho {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--zc-borda);
+  }
+  .zuni-chat-cabecalho-texto h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    font-weight: normal;
+    color: var(--zc-dourado-suave);
+  }
+  .zuni-chat-aviso {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--zc-texto-suave);
+  }
+  #zuni-chat-fechar {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--zc-borda);
+    color: var(--zc-texto-suave);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  #zuni-chat-fechar:hover {
+    border-color: var(--zc-dourado);
+    color: var(--zc-dourado-suave);
+  }
+
+  .zuni-chat-contador {
+    padding: 8px 20px;
+    font-family: Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.3px;
+    color: var(--zc-texto-suave);
+    border-bottom: 1px solid var(--zc-borda);
+  }
+
+  .zuni-chat-mensagens {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .zuni-chat-sugestoes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .zuni-chat-sugestao {
+    text-align: left;
+    background: transparent;
+    border: 1px solid var(--zc-borda);
+    color: var(--zc-texto-suave);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .zuni-chat-sugestao:hover {
+    border-color: var(--zc-dourado);
+    color: var(--zc-dourado-suave);
+  }
+
+  .zuni-chat-msg {
+    max-width: 88%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .zuni-chat-msg-usuario {
+    align-self: flex-end;
+    background: var(--zc-dourado);
+    color: var(--zc-fundo);
+    border-bottom-right-radius: 2px;
+  }
+  .zuni-chat-msg-assistente {
+    align-self: flex-start;
+    background: var(--zc-fundo);
+    border: 1px solid var(--zc-borda);
+    color: var(--zc-texto);
+    border-bottom-left-radius: 2px;
+  }
+  .zuni-chat-msg-erro {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--zc-erro);
+    color: var(--zc-erro);
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+  }
+  .zuni-chat-msg-carregando {
+    align-self: flex-start;
+    color: var(--zc-texto-suave);
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+
+  .zuni-chat-form {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--zc-borda);
+  }
+  .zuni-chat-input {
+    flex: 1;
+    resize: none;
+    max-height: 100px;
+    padding: 10px 12px;
+    background: var(--zc-fundo);
+    border: 1px solid var(--zc-borda);
+    border-radius: 6px;
+    color: var(--zc-texto);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 0.9rem;
+  }
+  .zuni-chat-input:focus {
+    outline: none;
+    border-color: var(--zc-dourado);
+  }
+  .zuni-chat-enviar {
+    flex-shrink: 0;
+    padding: 0 18px;
+    background: var(--zc-dourado);
+    color: var(--zc-fundo);
+    border: none;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+  }
+  .zuni-chat-enviar:hover { background: var(--zc-dourado-suave); }
+  .zuni-chat-enviar:disabled,
+  .zuni-chat-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media print {
+    #zuni-chat-widget { display: none !important; }
+  }
+</style>
+
+<script>
+(function () {
+  var LIVRO_ID_INJETADO = 'os-bastidores-da-mente-4-a-travessia';
+
+  function obterLivroId() {
+    if (LIVRO_ID_INJETADO && LIVRO_ID_INJETADO.indexOf('ZUNI_LIVRO_ID') === -1) {
+      return LIVRO_ID_INJETADO;
+    }
+    var segmentos = window.location.pathname.split('/').filter(Boolean);
+    return segmentos[segmentos.length - 1] || null;
+  }
+
+  function obterToken() {
+    return new URLSearchParams(window.location.search).get('token');
+  }
+
+  var livroId = obterLivroId();
+  var token = obterToken();
+
+  var widget = document.getElementById('zuni-chat-widget');
+  if (!widget || !livroId || !token) {
+    if (widget) widget.style.display = 'none';
+    return;
+  }
+
+  var toggle = document.getElementById('zuni-chat-toggle');
+  var painel = document.getElementById('zuni-chat-painel');
+  var overlay = document.getElementById('zuni-chat-overlay');
+  var fechar = document.getElementById('zuni-chat-fechar');
+  var mensagensEl = document.getElementById('zuni-chat-mensagens');
+  var sugestoesEl = document.getElementById('zuni-chat-sugestoes');
+  var contadorEl = document.getElementById('zuni-chat-contador');
+  var form = document.getElementById('zuni-chat-form');
+  var input = document.getElementById('zuni-chat-input');
+  var botaoEnviar = document.getElementById('zuni-chat-enviar');
+
+  var historico = [];
+  var enviando = false;
+
+  function abrirChat() {
+    widget.classList.add('zuni-chat-aberto');
+    toggle.setAttribute('aria-expanded', 'true');
+    input.focus();
+  }
+
+  function fecharChat() {
+    widget.classList.remove('zuni-chat-aberto');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  toggle.addEventListener('click', abrirChat);
+  fechar.addEventListener('click', fecharChat);
+  overlay.addEventListener('click', fecharChat);
+  document.addEventListener('keydown', function (evento) {
+    if (evento.key === 'Escape' && widget.classList.contains('zuni-chat-aberto')) fecharChat();
+  });
+
+  function escaparHtml(texto) {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // Conversor minimalista, sem dependências: escapa tudo primeiro (nunca
+  // insere HTML não confiável) e só então reconhece **negrito**, títulos
+  // markdown (#, ##, ...) e linhas divisórias (---), que é o subconjunto
+  // que a Claude API costuma usar nas respostas do chat.
+  function formatarRespostaAssistente(texto) {
+    var escapado = escaparHtml(texto);
+    var linhas = escapado.split('\n').map(function (linha) {
+      if (/^-{3,}$/.test(linha.trim())) return '';
+      return linha.replace(/^#{1,6}\s*/, '');
+    });
+    return linhas.join('\n')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n{3,}/g, '\n\n');
+  }
+
+  function adicionarMensagem(texto, tipo) {
+    var bolha = document.createElement('div');
+    bolha.className = 'zuni-chat-msg zuni-chat-msg-' + tipo;
+    if (tipo === 'assistente') {
+      bolha.innerHTML = formatarRespostaAssistente(texto);
+    } else {
+      bolha.textContent = texto;
+    }
+    mensagensEl.appendChild(bolha);
+    mensagensEl.scrollTop = mensagensEl.scrollHeight;
+    return bolha;
+  }
+
+  function atualizarContador(restantes) {
+    if (typeof restantes !== 'number') return;
+    contadorEl.hidden = false;
+    contadorEl.textContent = restantes > 0
+      ? 'Perguntas restantes hoje: ' + restantes
+      : 'Limite de perguntas de hoje atingido para este livro.';
+  }
+
+  function mensagemDeErro(status) {
+    if (status === 401) return 'Seu acesso a este chat expirou ou é inválido. Recarregue a página a partir do link de acesso original.';
+    if (status === 429) return 'Você atingiu o limite de perguntas de hoje para este livro. Volte amanhã para continuar.';
+    if (status === 400) return 'Não consegui entender a pergunta. Tente reformular.';
+    return 'Não foi possível responder agora. Tente novamente em instantes.';
+  }
+
+  async function enviarPergunta(pergunta) {
+    if (enviando) return;
+    enviando = true;
+    input.disabled = true;
+    botaoEnviar.disabled = true;
+    if (sugestoesEl) sugestoesEl.remove();
+
+    adicionarMensagem(pergunta, 'usuario');
+    var carregando = adicionarMensagem('Pensando...', 'carregando');
+
+    try {
+      var resposta = await fetch('/api/livro-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, livro_id: livroId, pergunta: pergunta, historico: historico })
+      });
+
+      var dados = await resposta.json().catch(function () { return {}; });
+      carregando.remove();
+
+      if (!resposta.ok) {
+        adicionarMensagem(dados.error || mensagemDeErro(resposta.status), 'erro');
+        return;
+      }
+
+      adicionarMensagem(dados.resposta, 'assistente');
+      historico.push({ role: 'user', content: pergunta });
+      historico.push({ role: 'assistant', content: dados.resposta });
+      atualizarContador(dados.restantes_hoje);
+    } catch (erro) {
+      carregando.remove();
+      adicionarMensagem(mensagemDeErro(null), 'erro');
+    } finally {
+      enviando = false;
+      input.disabled = false;
+      botaoEnviar.disabled = false;
+      input.focus();
+    }
+  }
+
+  form.addEventListener('submit', function (evento) {
+    evento.preventDefault();
+    var pergunta = input.value.trim();
+    if (!pergunta) return;
+    input.value = '';
+    enviarPergunta(pergunta);
+  });
+
+  input.addEventListener('keydown', function (evento) {
+    if (evento.key === 'Enter' && !evento.shiftKey) {
+      evento.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.zuni-chat-sugestao'), function (botao) {
+    botao.addEventListener('click', function () {
+      enviarPergunta(botao.getAttribute('data-pergunta'));
+    });
+  });
+})();
+</script>
+<!-- ZUNI-CHAT-WIDGET-END -->
+</body>
+</html>
