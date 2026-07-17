@@ -9,7 +9,11 @@
 // exatamente para impedir que alguém manipule o valor pago.
 
 const CATALOGO = {
-  // 'os-bastidores-vol-5': { titulo: 'Os Bastidores Vol. 5', preco: 29.90 },
+  'os-bastidores-da-mente-4-a-travessia': {
+    titulo: 'Os Bastidores da Mente — Volume IV: A Travessia',
+    preco: 57.90,
+    categoria: 'principal'
+  },
 };
 
 function buscarLivro(livroId) {
