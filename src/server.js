@@ -9,6 +9,7 @@ const { MercadoPagoConfig, Preference } = require('mercadopago');
 require('dotenv').config();
 
 const livrosRouter = require('./routes/livros');
+const livroChatRouter = require('./routes/livroChat');
 const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
@@ -919,6 +920,8 @@ app.get('/api/checkout/livro/session-status', async (req, res) => {
     return res.status(500).json({ pago: false });
   }
 });
+
+app.use('/', livroChatRouter);
 // ─────────────────────────────────────────────────────────────────
 
 app.get('/api/mercadopago/public-key', (req, res) => {
