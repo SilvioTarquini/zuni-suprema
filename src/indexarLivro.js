@@ -34,18 +34,39 @@ function sleep(ms) {
 }
 
 function parseBlocosColchetes(raw) {
-  const blocos = raw
+  const segmentos = raw
     .split(/\n={5,}\n?/)
     .map(b => b.trim())
     .filter(Boolean);
 
-  return blocos.map(bloco => {
-    const match = bloco.match(/^\[([^\]]+)\]\s*\n([\s\S]+)$/);
-    if (!match) {
-      throw new Error(`Bloco fora do formato [TEMA] esperado:\n${bloco.slice(0, 80)}...`);
+  const blocos = [];
+
+  segmentos.forEach((bloco, i) => {
+    // Variante A (Volume IV): "[Título]\ncorpo" — o título inteiro fica dentro dos colchetes.
+    const variantA = bloco.match(/^\[([^\]]+)\]\s*\n([\s\S]+)$/);
+    if (variantA) {
+      blocos.push({ tema: variantA[1].trim(), corpo: variantA[2].trim() });
+      return;
     }
-    return { tema: match[1].trim(), corpo: match[2].trim() };
+
+    // Variante B (Volume II): "[TEMA] Título\ncorpo" — "[TEMA]" é rótulo fixo, título vem depois.
+    const variantB = bloco.match(/^\[TEMA\]\s+(.+?)\n([\s\S]+)$/);
+    if (variantB) {
+      blocos.push({ tema: variantB[1].trim(), corpo: variantB[2].trim() });
+      return;
+    }
+
+    if (i === 0 || i === segmentos.length - 1) {
+      // Primeiro/último segmento sem o formato esperado costuma ser
+      // cabeçalho ou rodapé do arquivo (título da obra, "FIM DA BASE") —
+      // ignora. Qualquer bloco no meio fora do padrão é erro real.
+      return;
+    }
+
+    throw new Error(`Bloco fora do formato [TEMA] esperado:\n${bloco.slice(0, 80)}...`);
   });
+
+  return blocos;
 }
 
 function parseBlocosDelimitador(raw) {
