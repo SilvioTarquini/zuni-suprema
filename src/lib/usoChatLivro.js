@@ -2,7 +2,7 @@
 //
 // Controla o limite diário de perguntas do chat de leitura por livro.
 // Cada combinação token+livro_id só pode fazer um número limitado de
-// perguntas por dia (configurável via CHAT_LIVRO_LIMITE_DIARIO, default 20),
+// perguntas por dia (configurável via CHAT_LIVRO_LIMITE_DIARIO, default 15),
 // contado na tabela `uso_chat_livro` (token, livro_id, data, perguntas).
 //
 // A checagem e o incremento são separados de propósito: o chamador deve
@@ -23,7 +23,7 @@ function assertSupabase() {
   return supabase;
 }
 
-const LIMITE_DIARIO = parseInt(process.env.CHAT_LIVRO_LIMITE_DIARIO || '20', 10);
+const LIMITE_DIARIO = parseInt(process.env.CHAT_LIVRO_LIMITE_DIARIO || '15', 10);
 
 function hojeISO() {
   return new Date().toISOString().slice(0, 10);
