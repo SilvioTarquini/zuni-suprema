@@ -29,6 +29,11 @@ const CATALOGO = {
     preco: 57.90,
     categoria: 'principal'
   },
+  'os-bastidores-da-mente-5-a-escada': {
+    titulo: 'Os Bastidores da Mente — Volume V: A Escada e o Plano',
+    preco: 57.90,
+    categoria: 'principal'
+  },
 };
 
 function buscarLivro(livroId) {
