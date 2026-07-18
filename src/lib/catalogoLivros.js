@@ -34,6 +34,11 @@ const CATALOGO = {
     preco: 57.90,
     categoria: 'principal'
   },
+  'os-bastidores-da-mente-6-o-designio': {
+    titulo: 'Os Bastidores da Mente — Volume VI: O Grande Desígnio',
+    preco: 57.90,
+    categoria: 'principal'
+  },
 };
 
 function buscarLivro(livroId) {
