@@ -19,6 +19,11 @@ const CATALOGO = {
     preco: 57.90,
     categoria: 'principal'
   },
+  'os-bastidores-da-mente-3-a-bussola-humana': {
+    titulo: 'Os Bastidores da Mente — Volume III: A Bússola Humana',
+    preco: 57.90,
+    categoria: 'principal'
+  },
   'os-bastidores-da-mente-4-a-travessia': {
     titulo: 'Os Bastidores da Mente — Volume IV: A Travessia',
     preco: 57.90,
