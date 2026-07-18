@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>ZUNI Suprema</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="ZUNI Suprema — a ciência da excelência humana.">
+<style>
+  :root {
+    --fundo: #0f0f0f;
+    --dourado: #B8963E;
+    --dourado-suave: #d9c68f;
+    --texto: #f2ead9;
+    --texto-suave: #b6ab93;
+    --borda: #2a2620;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--fundo);
+    color: var(--texto);
+    font-family: Georgia, 'Times New Roman', serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  main {
+    max-width: 560px;
+    padding: 48px 24px;
+    text-align: center;
+  }
+
+  .selo {
+    display: inline-block;
+    width: 52px;
+    height: 52px;
+    border: 1px solid var(--dourado);
+    border-radius: 50%;
+    margin-bottom: 22px;
+    position: relative;
+  }
+  .selo::after {
+    content: "Z";
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--dourado);
+    font-size: 1.3rem;
+    letter-spacing: 1px;
+  }
+
+  h1 {
+    font-size: clamp(2rem, 5vw, 2.8rem);
+    font-weight: normal;
+    letter-spacing: 1px;
+    margin: 0 0 8px;
+    color: var(--dourado-suave);
+  }
+
+  p.tagline {
+    color: var(--dourado);
+    font-size: 1rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin: 0 0 28px;
+  }
+
+  p.apresentacao {
+    color: var(--texto-suave);
+    font-size: 1.05rem;
+    line-height: 1.7;
+    margin: 0 0 40px;
+  }
+
+  a.ver-livros {
+    display: inline-block;
+    padding: 15px 36px;
+    background: var(--dourado);
+    color: #0f0f0f;
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    font-size: 0.9rem;
+    letter-spacing: 0.6px;
+    text-transform: uppercase;
+    font-weight: bold;
+    border-radius: 4px;
+  }
+
+  footer {
+    margin-top: 56px;
+    color: var(--texto-suave);
+    font-size: 0.78rem;
+    border-top: 1px solid var(--borda);
+    padding-top: 20px;
+  }
+</style>
+</head>
+<body>
+
+<main>
+  <span class="selo"></span>
+  <h1>ZUNI Suprema</h1>
+  <p class="tagline">A ciência da excelência humana</p>
+  <p class="apresentacao">
+    Conteúdo e mentoria dedicados a decifrar os bastidores da mente humana —
+    o que move as pessoas, o que gera conflito e o que, de fato, leva ao
+    crescimento consciente.
+  </p>
+  <a class="ver-livros" href="/loja/">Ver Livros</a>
+  <footer>ZUNI Suprema — www.zunisuprema.com.br</footer>
+</main>
+
+</body>
+</html>
