@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Setup SQL - Sessões Extras</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+      background: #f5f5f5;
+      color: #333;
+    }
+    .container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 40px;
+    }
+    h1 {
+      color: #0f766e;
+      margin-bottom: 10px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+    .steps {
+      background: #f0fdf4;
+      border-left: 4px solid #16a34a;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .step {
+      margin: 15px 0;
+      font-size: 16px;
+      line-height: 1.6;
+    }
+    .step-num {
+      display: inline-block;
+      background: #16a34a;
+      color: white;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 28px;
+      margin-right: 12px;
+      font-weight: bold;
+    }
+    code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: 'Monaco', 'Courier New', monospace;
+    }
+    .sql-box {
+      background: #1e1e1e;
+      color: #d4d4d4;
+      padding: 20px;
+      border-radius: 6px;
+      overflow-x: auto;
+      margin: 20px 0;
+      position: relative;
+    }
+    .sql-box pre {
+      margin: 0;
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .copy-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: #0f766e;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .copy-btn:hover {
+      background: #115e59;
+    }
+    .copy-btn.copied {
+      background: #16a34a;
+    }
+    .warning {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+      color: #92400e;
+    }
+    .success {
+      background: #dcfce7;
+      border-left: 4px solid #22c55e;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+      color: #166534;
+    }
+    .next {
+      background: #dbeafe;
+      border-left: 4px solid #3b82f6;
+      padding: 15px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+      color: #1e40af;
+    }
+    .url {
+      background: #f0f9ff;
+      padding: 15px 20px;
+      border-radius: 4px;
+      margin: 20px 0;
+      border: 1px solid #bfdbfe;
+    }
+    .url a {
+      color: #0284c7;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .url a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>📦 Setup de Tabelas - Sessões Extras</h1>
+  <p class="subtitle">Crie as tabelas do Supabase necessárias para Sessões Extras</p>
+
+  <div class="steps">
+    <div class="step">
+      <span class="step-num">1</span>
+      <strong>Abra o Supabase Dashboard</strong><br>
+      <a href="https://app.supabase.com" target="_blank" style="color: #16a34a; text-decoration: none; font-weight: 600;">https://app.supabase.com</a>
+    </div>
+
+    <div class="step">
+      <span class="step-num">2</span>
+      <strong>Selecione seu projeto</strong><br>
+      Procure por "Zuni Suprema" na lista de projetos
+    </div>
+
+    <div class="step">
+      <span class="step-num">3</span>
+      <strong>Vá para SQL Editor</strong><br>
+      Menu esquerdo → SQL Editor → Clique em "New Query"
+    </div>
+
+    <div class="step">
+      <span class="step-num">4</span>
+      <strong>Cole o SQL abaixo</strong><br>
+      Copie o código usando o botão "Copiar"
+    </div>
+
+    <div class="step">
+      <span class="step-num">5</span>
+      <strong>Execute</strong><br>
+      Clique no botão azul "Run" no canto superior direito
+    </div>
+
+    <div class="step">
+      <span class="step-num">6</span>
+      <strong>Volte ao terminal</strong><br>
+      Execute: <code>node testar-sessoes-extras.js</code>
+    </div>
+  </div>
+
+  <h2>SQL para Executar</h2>
+
+  <div class="sql-box">
+    <button class="copy-btn" onclick="copiarSQL()">📋 Copiar</button>
+    <pre id="sql-content">CREATE TABLE IF NOT EXISTS creditos_sessao (
+  id BIGSERIAL PRIMARY KEY,
+  pacote_id UUID NOT NULL UNIQUE,
+  email VARCHAR NOT NULL,
+  payment_id VARCHAR DEFAULT NULL,
+  creditos_iniciais INT NOT NULL DEFAULT 3,
+  creditos_restantes INT NOT NULL DEFAULT 3,
+  data_pagamento TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ultima_sessao_id UUID DEFAULT NULL,
+  data_ultima_sessao TIMESTAMPTZ DEFAULT NULL,
+  expira_em TIMESTAMPTZ NOT NULL,
+  ativo BOOLEAN DEFAULT true,
+  criado_em TIMESTAMPTZ DEFAULT NOW(),
+  atualizado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_creditos_email ON creditos_sessao(email);
+CREATE INDEX IF NOT EXISTS idx_creditos_ativo ON creditos_sessao(ativo);
+CREATE INDEX IF NOT EXISTS idx_creditos_expiracao ON creditos_sessao(expira_em);
+CREATE INDEX IF NOT EXISTS idx_creditos_payment ON creditos_sessao(payment_id);
+
+CREATE TABLE IF NOT EXISTS resumos_sessoes (
+  id BIGSERIAL PRIMARY KEY,
+  email VARCHAR NOT NULL,
+  session_id UUID NOT NULL,
+  resumo TEXT NOT NULL,
+  temas VARCHAR DEFAULT NULL,
+  data_sessao TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ativo BOOLEAN DEFAULT true,
+  criado_em TIMESTAMPTZ DEFAULT NOW(),
+  atualizado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_resumos_email ON resumos_sessoes(email);
+CREATE INDEX IF NOT EXISTS idx_resumos_data ON resumos_sessoes(data_sessao DESC);
+CREATE INDEX IF NOT EXISTS idx_resumos_session ON resumos_sessoes(session_id);
+
+CREATE TABLE IF NOT EXISTS pedidos_sessoes_extras_pendentes (
+  id BIGSERIAL PRIMARY KEY,
+  referencia VARCHAR NOT NULL UNIQUE,
+  nome VARCHAR DEFAULT NULL,
+  email VARCHAR NOT NULL,
+  cpf VARCHAR DEFAULT NULL,
+  criado_em TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pedidos_se_referencia ON pedidos_sessoes_extras_pendentes(referencia);
+CREATE INDEX IF NOT EXISTS idx_pedidos_se_email ON pedidos_sessoes_extras_pendentes(email);</pre>
+  </div>
+
+  <div class="url">
+    🔗 <strong>Link direto:</strong> <a href="https://app.supabase.com" target="_blank">Abrir Supabase Dashboard</a>
+  </div>
+
+  <div class="success">
+    ✅ <strong>O que será criado:</strong>
+    <ul style="margin: 10px 0; padding-left: 20px;">
+      <li><code>creditos_sessao</code> — Tabela de créditos dos pacotes</li>
+      <li><code>resumos_sessoes</code> — Tabela de resumos para memória de jornada</li>
+      <li><code>pedidos_sessoes_extras_pendentes</code> — Tabela de pedidos pendentes (MercadoPago)</li>
+      <li>9 índices para otimização</li>
+    </ul>
+  </div>
+
+  <div class="next">
+    ⏭️ <strong>Após executar o SQL:</strong><br>
+    Abra o terminal e execute: <code>node testar-sessoes-extras.js</code>
+  </div>
+
+  <div class="warning">
+    ⏱️ <strong>Tempo estimado:</strong> 10-20 segundos para executar o SQL no Supabase
+  </div>
+</div>
+
+<script>
+function copiarSQL() {
+  const sql = document.getElementById('sql-content').innerText;
+  navigator.clipboard.writeText(sql).then(() => {
+    const btn = event.target;
+    btn.innerText = '✅ Copiado!';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerText = '📋 Copiar';
+      btn.classList.remove('copied');
+    }, 2000);
+  }).catch(err => {
+    console.error('Erro ao copiar:', err);
+  });
+}

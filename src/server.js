@@ -13,7 +13,10 @@ const livroChatRouter = require('./routes/livroChat');
 const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
+const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupons');
+const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
+const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -675,6 +678,27 @@ async function gerarEEnviarRelatorio(sessionId) {
 
   await sendEmail(session.email, session.name, pdfPath, cupom);
   await triggerMake(session.name, session.email, reportText.slice(0, 1200));
+
+  // ── MEMÓRIA DE JORNADA (background) ──────────────────
+  // Gerar e salvar resumo da sessão para continuidade futura
+  // Executado em background — não falha o fluxo principal
+  setTimeout(async () => {
+    try {
+      const resumo = await gerarResumoSessao(session);
+      if (resumo) {
+        await salvarResumoSessao({
+          email: session.email,
+          sessionId,
+          resumo,
+          session
+        });
+      }
+    } catch (err) {
+      console.error('[MEMORIA] Erro ao processar memória de jornada:', err.message);
+      // Não propaga o erro — é background
+    }
+  }, 1000);
+  // ────────────────────────────────────────────────────
 }
 async function consultarPedidoMercadoPago(pedidoId) {
   const mpRes = await fetch(`https://api.mercadopago.com/v1/orders/${pedidoId}`, {
@@ -773,6 +797,28 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
   const acesso = await criarAcesso({ livroId: pedido.livroId, email: pedido.email, cpf: pedido.cpf, paymentId });
   await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm);
   return acesso;
+}
+
+async function criarPacoteSessoesSeAplicavel(order, paymentId) {
+  const referencia = order.external_reference;
+  if (!referencia || !referencia.startsWith('se')) return null;
+
+  const pedido = await buscarPedidoPendenteSE(referencia);
+  if (!pedido) return null;
+
+  const isPaid = order.status === 'approved' ||
+                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
+  if (!isPaid) return null;
+
+  const pacote = await criarPacoteSessoes({ email: pedido.email, paymentId });
+
+  try {
+    await deletarPedidoPendenteSE(referencia);
+  } catch (err) {
+    console.error('[WEBHOOK] Erro ao deletar pedido pendente:', err.message);
+  }
+
+  return pacote;
 }
 
 app.get('/api/livros/catalogo/:livroId', (req, res) => {
@@ -993,6 +1039,90 @@ app.get('/api/checkout/livro/session-status', async (req, res) => {
 app.use('/', livroChatRouter);
 // ─────────────────────────────────────────────────────────────────
 
+// ═════════════════════════════════════════════════════════════════
+// SESSÕES EXTRAS — Pacotes de 3 Sessões com Crédito
+// ═════════════════════════════════════════════════════════════════
+
+app.post('/api/checkout/sessoes-extras/preference', async (req, res) => {
+  try {
+    const { name, email, cpf } = req.body;
+
+    if (!name || !email || !cpf) {
+      return res.status(400).json({ error: 'Nome, email e CPF são obrigatórios.' });
+    }
+
+    if (!mpClient) {
+      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+    const frontendUrl = process.env.FRONTEND_URL;
+    const externalReference = await criarPedidoPendenteSE({ nome: name, email, cpf });
+
+    const preference = new Preference(mpClient);
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            id: 'sessoes-extras',
+            title: `Sessões Extras — ${SESSOES_POR_PACOTE} sessões com continuidade de jornada`,
+            quantity: 1,
+            unit_price: PREÇO_PACOTE,
+            currency_id: 'BRL'
+          }
+        ],
+        payer: {
+          name: firstName,
+          surname: lastName,
+          email,
+          identification: { type: 'CPF', number: cpf }
+        },
+        external_reference: externalReference,
+        back_urls: {
+          success: `${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=aprovado`,
+          pending: `${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=pendente`,
+          failure: `${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&erro=1`
+        },
+        ...(frontendUrl?.startsWith('https://') ? { auto_return: 'approved' } : {})
+      }
+    });
+
+    return res.json({ init_point: result.init_point });
+  } catch (error) {
+    console.error('Erro ao criar preferência (Sessões Extras):', error);
+    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
+  }
+});
+
+app.get('/api/sessoes-extras/status', async (req, res) => {
+  try {
+    const { email } = req.query;
+
+    if (!email) {
+      return res.status(400).json({ temCreditos: false });
+    }
+
+    const pacote = await buscarPacoteAtivo(email);
+
+    return res.json({
+      temCreditos: Boolean(pacote),
+      pacote: pacote ? {
+        pacoteId: pacote.pacote_id,
+        creditosRestantes: pacote.creditos_restantes,
+        creditosIniciais: pacote.creditos_iniciais,
+        expiraEm: new Date(pacote.expira_em),
+        diasRestantes: Math.ceil((new Date(pacote.expira_em).getTime() - Date.now()) / (24 * 60 * 60 * 1000))
+      } : null
+    });
+  } catch (error) {
+    console.error('Erro em /api/sessoes-extras/status:', error);
+    return res.status(500).json({ temCreditos: false });
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────
+
 app.get('/api/mercadopago/public-key', (req, res) => {
   const publicKey = process.env.MERCADOPAGO_PUBLIC_KEY;
 
@@ -1175,6 +1305,11 @@ app.post('/api/pagamento/webhook', async (req, res) => {
       } catch (err) {
         console.error('[WEBHOOK] Erro ao liberar acesso a livro:', err.message);
       }
+      try {
+        await criarPacoteSessoesSeAplicavel(order, dataId);
+      } catch (err) {
+        console.error('[WEBHOOK] Erro ao criar pacote de sessões extras:', err.message);
+      }
       if (pago) {
         console.log(`[WEBHOOK] Pagamento confirmado — pedido ${dataId}`);
       }
@@ -1185,6 +1320,11 @@ app.post('/api/pagamento/webhook', async (req, res) => {
         await criarAcessoLivroSeAplicavel(payment, dataId);
       } catch (err) {
         console.error('[WEBHOOK] Erro ao liberar acesso a livro:', err.message);
+      }
+      try {
+        await criarPacoteSessoesSeAplicavel(payment, dataId);
+      } catch (err) {
+        console.error('[WEBHOOK] Erro ao criar pacote de sessões extras:', err.message);
       }
       if (pago) {
         console.log(`[WEBHOOK] Pagamento confirmado — pagamento ${dataId}`);
@@ -1294,7 +1434,41 @@ app.post('/api/chat', async (req, res) => {
       { role: 'user', content: `${message}${contextBlock}` }
     ];
 
-    const responseText = await generateClaudeResponse(messagesParaClaude, SYSTEM_PROMPT);
+    // ── CRÉDITOS DE SESSÕES EXTRAS ──────────────────────────
+    // Verificar se cliente tem pacote de "Sessões Extras" ativo
+    let systemPromptFinal = SYSTEM_PROMPT;
+    let pacoteAtivo = null;
+
+    if (session.email) {
+      pacoteAtivo = await buscarPacoteAtivo(session.email);
+
+      if (pacoteAtivo) {
+        // Consumir crédito e marcar sessão como paga via pacote
+        try {
+          await consumirCredito(pacoteAtivo.pacote_id, sessionId);
+          session.pacote_id = pacoteAtivo.pacote_id;
+          session.paid = true; // Sessão está paga (via pacote)
+
+          // Injetar contexto do pacote (memória de jornada DENTRO do pacote)
+          const resumosDoPacote = await buscarResumosDoPacko(pacoteAtivo.pacote_id, 5);
+          if (resumosDoPacote.length > 0) {
+            systemPromptFinal = injetarContextoPacko(SYSTEM_PROMPT, resumosDoPacote);
+            console.log(`[CREDITOS] Contexto do pacote injetado: ${resumosDoPacote.length} resumos`);
+          }
+
+          console.log(`[CREDITOS] Sessão usando crédito: ${pacoteAtivo.pacote_id} (${session.email})`);
+        } catch (err) {
+          console.error(`[CREDITOS] Erro ao consumir crédito:`, err.message);
+          // Não falha a sessão — continua sem memória
+        }
+      } else if (MEMORIA_ATIVA) {
+        // Sem pacote ativo, tentar memória global se flag ativa
+        systemPromptFinal = await injetarContextoJornada(SYSTEM_PROMPT, session.email, session.name);
+      }
+    }
+    // ────────────────────────────────────────────────────────
+
+    const responseText = await generateClaudeResponse(messagesParaClaude, systemPromptFinal);
     const audioBase64 = await textToSpeechBase64(responseText);
 
     session.history.push({ role: 'user', message });
