@@ -383,9 +383,7 @@
     <div style="font-family:'Playfair Display',serif;color:#D4AF37;font-size:14px;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:14px;">Como usar esta sessão</div>
     <p style="margin-bottom:11px;">🖊️ <strong>Escrever:</strong> digite sua mensagem no campo abaixo e pressione <strong>➤</strong> ou <strong>Enter</strong>.</p>
     <p style="margin-bottom:11px;">🎤 <strong>Falar:</strong> toque no <strong>microfone</strong> para iniciar a gravação, fale sua mensagem com calma, e toque novamente no microfone para parar. O texto aparecerá automaticamente no campo de mensagem — verifique antes de enviar.</p>
-    <p style="margin-bottom:11px;">⏳ <strong>Aguarde a resposta:</strong> após enviar sua mensagem, o Mentor leva alguns segundos para responder. Isso é normal — ele está processando sua mensagem com atenção. Não envie novamente.</p>
-    <p style="margin-bottom:11px;">🔊 <strong>Ouvir respostas:</strong> toque no ícone <strong>🔊</strong> ao final de cada resposta para ouvir. Toque novamente para pausar.</p>
-    <p style="margin-bottom:16px;">📖 <strong>Prefere só ler?</strong> Sem problema — todas as respostas aparecem na tela. O áudio é opcional.</p>
+    <p style="margin-bottom:16px;">⏳ <strong>Aguarde a resposta:</strong> após enviar sua mensagem, o Mentor leva alguns segundos para responder. Isso é normal — ele está processando sua mensagem com atenção. Não envie novamente.</p>
     <div style="border-top:1px solid rgba(212,175,55,0.25);padding-top:11px;font-size:12px;color:#aaa;font-family:'Inter',sans-serif;font-style:italic;">Esta mensagem desaparecerá quando você enviar sua primeira pergunta.</div>
   </div>
 </div>
@@ -415,16 +413,10 @@
     if (!sessionId) { window.location.href = '/checkout.html'; }
 
     let currentAudio = null;
-    let currentPlayBtn = null;
-
-    const ROTULO_OUVIR = '<span aria-hidden="true">🔊</span> Ouvir resposta';
-    const ROTULO_PAUSAR = '<span aria-hidden="true">⏸</span> Pausar áudio';
 
     function stopCurrentAudio() {
       if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-      if (currentPlayBtn) { currentPlayBtn.innerHTML = ROTULO_OUVIR; currentPlayBtn.classList.remove('playing'); }
       currentAudio = null;
-      currentPlayBtn = null;
     }
 
     function addMsg(role, text) {
@@ -445,29 +437,10 @@
       const acoes = document.createElement('div');
       acoes.className = 'acoes-resposta';
 
-      const playBtn = document.createElement('button');
-      playBtn.className = 'play-btn';
-      playBtn.title = 'Ouvir a resposta em áudio';
-      playBtn.innerHTML = ROTULO_OUVIR;
-
       const jaLiBtn = document.createElement('button');
       jaLiBtn.className = 'btn-ja-li';
       jaLiBtn.title = 'Prefiro só ler — parar o áudio';
       jaLiBtn.innerHTML = '<span aria-hidden="true">✓</span> Já li, obrigado';
-
-      playBtn.addEventListener('click', () => {
-        if (currentAudio === audioEl) {
-          stopCurrentAudio();
-        } else {
-          stopCurrentAudio();
-          audioEl.currentTime = 0;
-          audioEl.play().catch(() => {});
-          currentAudio = audioEl;
-          currentPlayBtn = playBtn;
-          playBtn.innerHTML = ROTULO_PAUSAR;
-          playBtn.classList.add('playing');
-        }
-      });
 
       jaLiBtn.addEventListener('click', () => {
         if (currentAudio === audioEl) {
@@ -476,24 +449,17 @@
       });
 
       audioEl.addEventListener('ended', () => {
-        if (currentPlayBtn === playBtn) {
-          playBtn.innerHTML = ROTULO_OUVIR;
-          playBtn.classList.remove('playing');
+        if (currentAudio === audioEl) {
           currentAudio = null;
-          currentPlayBtn = null;
         }
       });
 
-      acoes.appendChild(playBtn);
       acoes.appendChild(jaLiBtn);
       msgDiv.appendChild(acoes);
 
       stopCurrentAudio();
       audioEl.play().then(() => {
         currentAudio = audioEl;
-        currentPlayBtn = playBtn;
-        playBtn.innerHTML = ROTULO_PAUSAR;
-        playBtn.classList.add('playing');
       }).catch(() => {});
     }
 
