@@ -491,11 +491,6 @@ addMsg('user', msg);
           document.getElementById('cnt').textContent = contador;
           if (data.audio) {
             attachAudio(msgDiv, data.audio);
-          } else {
-            const semAudio = document.createElement('span');
-            semAudio.textContent = '🔇 Áudio indisponível';
-            semAudio.style.cssText = 'display:block;font-size:11px;color:#999;margin-top:8px;';
-            msgDiv.appendChild(semAudio);
           }
           if (data.sessaoEncerrada) {
             document.getElementById('input-mensagem').disabled = true;
