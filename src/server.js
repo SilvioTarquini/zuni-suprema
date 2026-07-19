@@ -392,6 +392,9 @@ function buildCancelUrl() {
 }
 
 async function textToSpeechBase64(text) {
+  // Integração ElevenLabs pausada propositalmente (2026-07-19) para evitar consumo de créditos
+  // enquanto a feature de áudio não está em uso. Remover a linha abaixo para reativar.
+  return '';
   try {
     const voiceId = process.env.ELEVENLABS_VOICE_ID;
     const apiKey = process.env.ELEVENLABS_API_KEY;
