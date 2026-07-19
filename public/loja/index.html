@@ -312,5 +312,21 @@
   ZUNI Suprema — acesso liberado por tempo determinado após a confirmação do pagamento.
 </footer>
 
+<script>
+  // Propaga o ?cupom= da URL da loja para os links "Comprar" de cada
+  // livro, para que o desconto seja pré-preenchido no checkout sem o
+  // cliente precisar digitar o código manualmente.
+  (function () {
+    var cupom = new URLSearchParams(window.location.search).get('cupom');
+    if (!cupom) return;
+
+    document.querySelectorAll('a.comprar').forEach(function (link) {
+      var url = new URL(link.href, window.location.origin);
+      url.searchParams.set('cupom', cupom);
+      link.href = url.pathname + url.search;
+    });
+  })();
+</script>
+
 </body>
 </html>
