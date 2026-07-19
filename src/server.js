@@ -13,6 +13,7 @@ const livroChatRouter = require('./routes/livroChat');
 const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
+const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupons');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -574,7 +575,7 @@ async function generatePdf(reportText, sessionId, userName) {
   });
 }
 
-async function sendEmail(email, name, pdfPath) {
+async function sendEmail(email, name, pdfPath, cupom) {
   try {
     const sgMail = require('@sendgrid/mail');
     const fs = require('fs');
@@ -583,23 +584,33 @@ async function sendEmail(email, name, pdfPath) {
 
     const pdfAttachment = fs.readFileSync(pdfPath).toString('base64');
 
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
+    const blocoCupom = cupom ? `
+          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d9c68f; border-radius:8px; background:#faf7ef;">
+            <p style="margin:0 0 8px; font-size:14px; color:#2c2c2c;">Como agradecimento por concluir sua sessão, você ganhou <strong>30% de desconto</strong> em qualquer livro da coleção "Os Bastidores da Mente":</p>
+            <p style="margin:0 0 8px; font-size:20px; letter-spacing:1px; color:#B8963E;"><strong>${cupom.codigo}</strong></p>
+            <p style="margin:0 0 14px; font-size:12px; color:#777;">Válido até ${cupom.expiraEm.toLocaleDateString('pt-BR')}.</p>
+            <a href="${frontendUrl}/loja?cupom=${encodeURIComponent(cupom.codigo)}" style="display:inline-block; padding:10px 18px; background:#B8963E; color:#0f0f0f; text-decoration:none; border-radius:6px; font-weight:bold; font-size:13px;">Ver livros com desconto</a>
+          </div>
+    ` : '';
+
     const msg = {
       to: email,
       from: process.env.SENDGRID_FROM_EMAIL,
       subject: `${name}, seu Mapa Integrativo ZUNI Suprema está pronto`,
       html: `
-        
+
           Olá, ${name}!
           Sua sessão com o Mentor ZUNI Suprema foi concluída.
 
           Em anexo você encontra o seu **Mapa Integrativo** — um relatório personalizado com os insights da sua jornada.
 
-          
+          ${blocoCupom}
 
           ZUNI Suprema — A ciência da excelência humana
 www.zunisuprema.com.br
 
-        
+
       `,
       attachments: [
         {
@@ -654,7 +665,15 @@ async function gerarEEnviarRelatorio(sessionId) {
 
   const reportText = await generateReportText(session);
   const pdfPath = await generatePdf(reportText, sessionId, session.name);
-  await sendEmail(session.email, session.name, pdfPath);
+
+  let cupom = null;
+  try {
+    cupom = await criarCupomSessao({ email: session.email });
+  } catch (err) {
+    console.error(`[CUPOM] Falha ao gerar cupom de sessão para ${sessionId}:`, err.message);
+  }
+
+  await sendEmail(session.email, session.name, pdfPath, cupom);
   await triggerMake(session.name, session.email, reportText.slice(0, 1200));
 }
 async function consultarPedidoMercadoPago(pedidoId) {
@@ -761,12 +780,49 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
   if (!livro) {
     return res.status(404).json({ error: 'Livro não encontrado.' });
   }
-  return res.json({ livroId: req.params.livroId, titulo: livro.titulo, preco: livro.preco });
+  return res.json({ livroId: req.params.livroId, titulo: livro.titulo, preco: livro.preco, categoria: livro.categoria });
+});
+
+app.get('/api/validar-cupom', async (req, res) => {
+  try {
+    const { codigo, livroId } = req.query;
+    if (!codigo) {
+      return res.status(400).json({ valido: false, error: 'Código de cupom é obrigatório.' });
+    }
+
+    const cupom = await validarCupom(codigo);
+    if (!cupom) {
+      return res.status(404).json({ valido: false, error: 'Cupom inválido ou expirado.' });
+    }
+
+    if (!livroId) {
+      return res.json({ valido: true, tipo: cupom.tipo, percentual: cupom.percentual, teto_reais: cupom.teto_reais });
+    }
+
+    const livro = buscarLivro(livroId);
+    if (!livro) {
+      return res.status(404).json({ valido: false, error: 'Livro não encontrado.' });
+    }
+
+    const { precoOriginal, desconto, precoFinal } = calcularDesconto(livro, cupom);
+    return res.json({
+      valido: true,
+      tipo: cupom.tipo,
+      percentual: cupom.percentual,
+      teto_reais: cupom.teto_reais,
+      precoOriginal,
+      desconto,
+      precoFinal
+    });
+  } catch (error) {
+    console.error('Erro em /api/validar-cupom:', error);
+    return res.status(500).json({ valido: false, error: 'Erro ao validar cupom.' });
+  }
 });
 
 app.post('/api/checkout/livro/preference', async (req, res) => {
   try {
-    const { livroId, name, email, cpf } = req.body;
+    const { livroId, name, email, cpf, cupom } = req.body;
 
     if (!livroId || !name || !email || !cpf) {
       return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
@@ -779,6 +835,14 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
 
     if (!mpClient) {
       return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    let precoFinal = livro.preco;
+    if (cupom) {
+      const cupomValidado = await validarCupom(cupom);
+      if (cupomValidado) {
+        precoFinal = calcularDesconto(livro, cupomValidado).precoFinal;
+      }
     }
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
@@ -794,7 +858,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
             id: livroId,
             title: livro.titulo,
             quantity: 1,
-            unit_price: livro.preco,
+            unit_price: precoFinal,
             currency_id: 'BRL'
           }
         ],
@@ -824,7 +888,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
 
 app.post('/api/checkout/livro', async (req, res) => {
   try {
-    const { livroId, name, email, cpf } = req.body;
+    const { livroId, name, email, cpf, cupom } = req.body;
 
     if (!livroId || !name || !email || !cpf) {
       return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
@@ -835,10 +899,18 @@ app.post('/api/checkout/livro', async (req, res) => {
       return res.status(404).json({ error: 'Livro não encontrado.' });
     }
 
+    let precoFinal = livro.preco;
+    if (cupom) {
+      const cupomValidado = await validarCupom(cupom);
+      if (cupomValidado) {
+        precoFinal = calcularDesconto(livro, cupomValidado).precoFinal;
+      }
+    }
+
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
     const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf });
-    const valorFormatado = livro.preco.toFixed(2);
+    const valorFormatado = precoFinal.toFixed(2);
 
     const orderBody = {
       type: 'online',

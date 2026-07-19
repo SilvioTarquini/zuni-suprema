@@ -122,6 +122,60 @@
   .ajuda-whatsapp { margin-top: 14px; text-align: center; font-size: 0.9rem; }
   .ajuda-whatsapp a { color: var(--texto-suave); text-decoration: underline; }
   .ajuda-whatsapp a:hover { color: var(--dourado-suave); }
+
+  .preco-original {
+    text-align: center;
+    font-size: 0.95rem;
+    color: var(--texto-suave);
+    text-decoration: line-through;
+    margin-bottom: 2px;
+    display: none;
+  }
+  .cupom-bloco {
+    margin: 4px 0 18px;
+    text-align: center;
+  }
+  .cupom-toggle {
+    background: none;
+    border: none;
+    color: var(--texto-suave);
+    font-size: 0.72rem;
+    text-decoration: underline;
+    cursor: pointer;
+    font-family: Arial, sans-serif;
+    padding: 2px;
+  }
+  .cupom-toggle:hover { color: var(--dourado-suave); }
+  .cupom-form {
+    display: none;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .cupom-form input {
+    margin-bottom: 0;
+    flex: 1;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    padding: 9px 10px;
+  }
+  .cupom-form button {
+    flex-shrink: 0;
+    padding: 0 14px;
+    border: 1px solid var(--dourado);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--dourado-suave);
+    font-family: Arial, sans-serif;
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+  .cupom-status {
+    font-size: 0.75rem;
+    margin-top: 6px;
+    min-height: 1em;
+  }
+  .cupom-status.valido { color: #7fae6e; }
+  .cupom-status.invalido { color: #e0716a; }
 </style>
 </head>
 <body>
@@ -132,7 +186,16 @@
   <p class="subtitulo">ZUNI Suprema — Loja de Livros</p>
 
   <div class="card" id="card-formulario">
+    <p class="preco-original" id="preco-original">—</p>
     <p class="preco" id="preco-livro">—</p>
+    <div class="cupom-bloco">
+      <button type="button" class="cupom-toggle" id="cupom-toggle" onclick="mostrarFormCupom()">Tenho um cupom de desconto</button>
+      <div class="cupom-form" id="cupom-form">
+        <input type="text" id="cupom-input" placeholder="Código do cupom" maxlength="20" />
+        <button type="button" onclick="aplicarCupomManual()">Aplicar</button>
+      </div>
+      <p class="cupom-status" id="cupom-status"></p>
+    </div>
     <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
     <p class="aviso-digital">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
 
@@ -175,6 +238,8 @@
   const livroId = params.get('livro');
   let metodoPagamento = null;
   let pollingInterval = null;
+  let livroAtual = null;
+  let cupomAplicado = null;
 
   function formatarCPF(valor) {
     return valor.replace(/\D/g, '').slice(0, 11)
@@ -208,14 +273,76 @@
       const res = await fetch(`/api/livros/catalogo/${encodeURIComponent(livroId)}`);
       if (!res.ok) throw new Error();
       const livro = await res.json();
+      livroAtual = livro;
       document.getElementById('titulo-livro').textContent = livro.titulo;
       document.getElementById('preco-livro').textContent = `R$ ${livro.preco.toFixed(2).replace('.', ',')}`;
       atualizarLinkWhatsapp(livro.titulo);
+
+      const cupomDaUrl = params.get('cupom');
+      if (cupomDaUrl) {
+        document.getElementById('cupom-input').value = cupomDaUrl;
+        mostrarFormCupom();
+        await aplicarCupom(cupomDaUrl);
+      }
     } catch {
       document.getElementById('titulo-livro').textContent = 'Livro indisponível';
       document.getElementById('card-formulario').style.display = 'none';
       atualizarLinkWhatsapp(null);
     }
+  }
+
+  function mostrarFormCupom() {
+    document.getElementById('cupom-form').style.display = 'flex';
+    document.getElementById('cupom-toggle').style.display = 'none';
+  }
+
+  function exibirPrecoComDesconto(precoOriginal, precoFinal) {
+    const original = document.getElementById('preco-original');
+    original.textContent = `R$ ${precoOriginal.toFixed(2).replace('.', ',')}`;
+    original.style.display = 'block';
+    document.getElementById('preco-livro').textContent = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
+  }
+
+  function limparDesconto() {
+    document.getElementById('preco-original').style.display = 'none';
+    if (livroAtual) {
+      document.getElementById('preco-livro').textContent = `R$ ${livroAtual.preco.toFixed(2).replace('.', ',')}`;
+    }
+  }
+
+  async function aplicarCupom(codigo) {
+    const statusEl = document.getElementById('cupom-status');
+    statusEl.className = 'cupom-status';
+    statusEl.textContent = 'Validando cupom…';
+
+    try {
+      const res = await fetch(`/api/validar-cupom?codigo=${encodeURIComponent(codigo)}&livroId=${encodeURIComponent(livroId)}`);
+      const data = await res.json();
+
+      if (!res.ok || !data.valido) {
+        cupomAplicado = null;
+        limparDesconto();
+        statusEl.className = 'cupom-status invalido';
+        statusEl.textContent = data.error || 'Cupom inválido ou expirado.';
+        return;
+      }
+
+      cupomAplicado = codigo.trim().toUpperCase();
+      exibirPrecoComDesconto(data.precoOriginal, data.precoFinal);
+      statusEl.className = 'cupom-status valido';
+      statusEl.textContent = `Cupom aplicado — você economiza R$ ${data.desconto.toFixed(2).replace('.', ',')}.`;
+    } catch {
+      cupomAplicado = null;
+      limparDesconto();
+      statusEl.className = 'cupom-status invalido';
+      statusEl.textContent = 'Não foi possível validar o cupom agora.';
+    }
+  }
+
+  function aplicarCupomManual() {
+    const codigo = document.getElementById('cupom-input').value.trim();
+    if (!codigo) return;
+    aplicarCupom(codigo);
   }
 
   function selecionarMetodo(metodo) {
@@ -242,7 +369,7 @@
         const res = await fetch('/api/checkout/livro/preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cpf })
+          body: JSON.stringify({ livroId, name, email, cpf, cupom: cupomAplicado })
         });
         const data = await res.json();
         if (!res.ok || !data.init_point) throw new Error(data.error || 'Erro ao gerar link de pagamento.');
@@ -251,7 +378,7 @@
         const res = await fetch('/api/checkout/livro', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cpf })
+          body: JSON.stringify({ livroId, name, email, cpf, cupom: cupomAplicado })
         });
         const data = await res.json();
         if (!res.ok || !data.qrCodeText) throw new Error(data.error || 'Erro ao gerar QR Code PIX.');

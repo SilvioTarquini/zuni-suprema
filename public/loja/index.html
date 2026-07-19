@@ -178,6 +178,45 @@
     font-size: 0.8rem;
     border-top: 1px solid var(--borda);
   }
+
+  .faixa-mentor {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 20px 24px 0;
+  }
+  .faixa-mentor .cartao {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: var(--fundo-carta);
+    border: 1px solid var(--borda);
+    border-radius: 8px;
+    padding: 18px 22px;
+  }
+  .faixa-mentor p {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--texto-suave);
+    max-width: 640px;
+  }
+  .faixa-mentor a.btn-mentor {
+    flex-shrink: 0;
+    display: inline-block;
+    padding: 11px 20px;
+    background: var(--dourado);
+    color: #0f0f0f;
+    text-decoration: none;
+    font-size: 0.82rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-radius: 4px;
+    font-family: Arial, sans-serif;
+    font-weight: bold;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -188,6 +227,13 @@
   <p>Após a confirmação do pagamento, cada livro fica disponível por um prazo determinado para leitura na tela, download e impressão.</p>
   <p class="aviso-digital">Produto 100% digital — não há envio de exemplar físico. O acesso é liberado por link, direto após a confirmação do pagamento.</p>
 </header>
+
+<div class="faixa-mentor">
+  <div class="cartao">
+    <p>Quer uma orientação personalizada, feita por IA a partir do que você está vivendo agora? Converse com o Mentor ZUNI — e ainda garanta 30% de desconto em qualquer livro da loja.</p>
+    <a class="btn-mentor" href="/checkout.html">Conversar com o Mentor</a>
+  </div>
+</div>
 
 <main>
   <div class="grade" id="grade-livros">
