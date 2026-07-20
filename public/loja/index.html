@@ -134,12 +134,44 @@
     line-height: 1.35;
   }
 
-  .info p.desc {
+  .info p.resumo {
     font-size: 0.85rem;
     color: var(--texto-suave);
     line-height: 1.5;
     margin: 0 0 18px;
     flex: 1;
+  }
+
+  .info .descricao-expandida {
+    display: none;
+    font-size: 0.82rem;
+    color: var(--texto-suave);
+    line-height: 1.6;
+    margin: 0 0 18px;
+    padding: 12px 0;
+    border-top: 1px solid var(--borda);
+  }
+
+  .info .descricao-expandida.ativa {
+    display: block;
+  }
+
+  .info button.expandir {
+    background: none;
+    border: none;
+    color: var(--dourado-suave);
+    font-size: 0.75rem;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 0;
+    margin: 0 0 12px;
+    font-family: Arial, sans-serif;
+    transition: color 0.2s ease;
+  }
+
+  .info button.expandir:hover {
+    color: var(--dourado);
   }
 
   .info .preco {
@@ -237,74 +269,7 @@
 
 <main>
   <div class="grade" id="grade-livros">
-    <!-- Cada livro é um bloco .livro. Duplique este modelo para cada título. -->
-
-    <article class="livro">
-      <div class="capa"><img src="/loja/capas/os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal.png" alt="Capa — Os Bastidores da Mente, Volume I: A Origem de Todo Bem e de Todo Mal" loading="lazy"></div>
-      <div class="info">
-        <h2>Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal</h2>
-        <p class="desc">Sentimentos, emoções e reações instintivas — um guia para reconhecer as forças ocultas que nos levam à ação.</p>
-        <p class="preco">R$ 57,90</p>
-        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-        <a class="comprar" href="/checkout-livro.html?livro=os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal">Comprar</a>
-      </div>
-    </article>
-
-    <article class="livro">
-      <div class="capa"><img src="/loja/capas/os-bastidores-da-mente-2-o-antidoto.png" alt="Capa — Os Bastidores da Mente, Volume II: O Antídoto" loading="lazy"></div>
-      <div class="info">
-        <h2>Os Bastidores da Mente — Volume II: O Antídoto</h2>
-        <p class="desc">A arte de atravessar embates sem se tornar aquilo que se combate.</p>
-        <p class="preco">R$ 57,90</p>
-        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-        <a class="comprar" href="/checkout-livro.html?livro=os-bastidores-da-mente-2-o-antidoto">Comprar</a>
-      </div>
-    </article>
-
-    <article class="livro">
-      <div class="capa"><img src="/loja/capas/os-bastidores-da-mente-3-a-bussola-humana.png" alt="Capa — Os Bastidores da Mente, Volume III: A Bússola Humana" loading="lazy"></div>
-      <div class="info">
-        <h2>Os Bastidores da Mente — Volume III: A Bússola Humana</h2>
-        <p class="desc">A arte de navegar a diversidade humana — as correntes que movem as pessoas, os mares que as separam e o norte que guia a travessia entre elas.</p>
-        <p class="preco">R$ 57,90</p>
-        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-        <a class="comprar" href="/checkout-livro.html?livro=os-bastidores-da-mente-3-a-bussola-humana">Comprar</a>
-      </div>
-    </article>
-
-    <article class="livro">
-      <div class="capa"><img src="/loja/capas/os-bastidores-da-mente-4-a-travessia.png" alt="Capa — Os Bastidores da Mente, Volume IV: A Travessia" loading="lazy"></div>
-      <div class="info">
-        <h2>Os Bastidores da Mente — Volume IV: A Travessia</h2>
-        <p class="desc">O propósito maior por trás dos bastidores da mente.</p>
-        <p class="preco">R$ 57,90</p>
-        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-        <a class="comprar" href="/checkout-livro.html?livro=os-bastidores-da-mente-4-a-travessia">Comprar</a>
-      </div>
-    </article>
-
-    <article class="livro">
-      <div class="capa"><img src="/loja/capas/os-bastidores-da-mente-5-a-escada.png" alt="Capa — Os Bastidores da Mente, Volume V: A Escada e o Plano" loading="lazy"></div>
-      <div class="info">
-        <h2>Os Bastidores da Mente — Volume V: A Escada e o Plano</h2>
-        <p class="desc">Da ancestralidade da consciência ao Plano Maior — o volume final da série, sobre o sentido por trás da própria existência.</p>
-        <p class="preco">R$ 57,90</p>
-        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-        <a class="comprar" href="/checkout-livro.html?livro=os-bastidores-da-mente-5-a-escada">Comprar</a>
-      </div>
-    </article>
-
-    <article class="livro">
-      <div class="capa"><img src="/loja/capas/os-bastidores-da-mente-6-o-designio.png" alt="Capa — Os Bastidores da Mente, Volume VI: O Grande Desígnio" loading="lazy"></div>
-      <div class="info">
-        <h2>Os Bastidores da Mente — Volume VI: O Grande Desígnio</h2>
-        <p class="desc">Paralelos entre o universo vivo e a jornada do peregrino — o desfecho da série, da criação eterna ao despertar da alma.</p>
-        <p class="preco">R$ 57,90</p>
-        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-        <a class="comprar" href="/checkout-livro.html?livro=os-bastidores-da-mente-6-o-designio">Comprar</a>
-      </div>
-    </article>
-
+    <!-- Cards dos livros serão renderizados aqui dinamicamente -->
   </div>
 </main>
 
@@ -313,19 +278,95 @@
 </footer>
 
 <script>
-  // Propaga o ?cupom= da URL da loja para os links "Comprar" de cada
-  // livro, para que o desconto seja pré-preenchido no checkout sem o
-  // cliente precisar digitar o código manualmente.
-  (function () {
-    var cupom = new URLSearchParams(window.location.search).get('cupom');
-    if (!cupom) return;
+  // Catálogo de livros (centralizado de src/lib/catalogoLivros.js)
+  const CATALOGO = {
+    'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal': {
+      titulo: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal',
+      preco: 57.90,
+      categoria: 'principal',
+      resumo: 'Sentimentos, emoções e reações instintivas — um guia para reconhecer as forças ocultas que nos levam à ação.',
+      descricao: 'Neste volume inaugural, explore a arquitetura profunda dos sentimentos e emoções que governam nosso comportamento. Entenda como as reações instintivas moldam nossas vidas, quais são as forças que operam por trás dos bastidores da mente, e como reconhecê-las é o primeiro passo para a verdadeira liberdade de escolha.'
+    },
+    'os-bastidores-da-mente-2-o-antidoto': {
+      titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
+      preco: 57.90,
+      categoria: 'principal',
+      resumo: 'A arte de atravessar embates sem se tornar aquilo que se combate.',
+      descricao: 'Descubra como responder às adversidades da vida sem perder sua integridade. Este volume revela as estratégias que permitem ao ser humano manter-se firme em seus princípios enquanto enfrenta conflitos externos e internos, transformando obstáculos em oportunidades de crescimento genuíno.'
+    },
+    'os-bastidores-da-mente-3-a-bussola-humana': {
+      titulo: 'Os Bastidores da Mente — Volume III: A Bússola Humana',
+      preco: 57.90,
+      categoria: 'principal',
+      resumo: 'A arte de navegar a diversidade humana — as correntes que movem as pessoas, os mares que as separam e o norte que guia a travessia entre elas.',
+      descricao: 'Compreenda os padrões universais que atravessam a natureza humana. Navegue pela diversidade de temperamentos, motivações e valores que coexistem. Aprenda a encontrar o norte autêntico que orienta a convivência genuína e a comunicação que transforma relacionamentos.'
+    },
+    'os-bastidores-da-mente-4-a-travessia': {
+      titulo: 'Os Bastidores da Mente — Volume IV: A Travessia',
+      preco: 57.90,
+      categoria: 'principal',
+      resumo: 'O propósito maior por trás dos bastidores da mente.',
+      descricao: 'Chegue ao cerne da jornada humana. Este volume revela o propósito profundo que move a existência — aquilo que anima cada escolha, cada dilema, cada crescimento. Entenda como a travessia pessoal conecta-se a um designio maior que transcende o individual.'
+    },
+    'os-bastidores-da-mente-5-a-escada': {
+      titulo: 'Os Bastidores da Mente — Volume V: A Escada e o Plano',
+      preco: 57.90,
+      categoria: 'principal',
+      resumo: 'Da ancestralidade da consciência ao Plano Maior — o volume final da série, sobre o sentido por trás da própria existência.',
+      descricao: 'Suba os degraus finais da compreensão. Explore a ancestralidade da consciência, os fios invisíveis que conectam gerações, e o Plano Maior que subjaz à existência. Este penúltimo volume prepara o caminho para a verdade derradeira sobre quem somos e por que estamos aqui.'
+    },
+    'os-bastidores-da-mente-6-o-designio': {
+      titulo: 'Os Bastidores da Mente — Volume VI: O Grande Desígnio',
+      preco: 57.90,
+      categoria: 'principal',
+      resumo: 'Paralelos entre o universo vivo e a jornada do peregrino — o desfecho da série, da criação eterna ao despertar da alma.',
+      descricao: 'O volume derradeiro une todos os fios. Descubra os paralelos entre a estrutura do universo e a jornada da consciência individual. Compreenda a criação eterna, a progressão do ser humano rumo à iluminação, e o despertar da alma que é, afinal, o verdadeiro destino de toda a travessia.'
+    }
+  };
 
-    document.querySelectorAll('a.comprar').forEach(function (link) {
-      var url = new URL(link.href, window.location.origin);
-      url.searchParams.set('cupom', cupom);
-      link.href = url.pathname + url.search;
+  // Renderizar cards dos livros
+  function renderizarLivros() {
+    const gradiLivros = document.getElementById('grade-livros');
+    const cupom = new URLSearchParams(window.location.search).get('cupom');
+
+    Object.entries(CATALOGO).forEach(([livroId, livro]) => {
+      const urlCompra = `/checkout-livro.html?livro=${encodeURIComponent(livroId)}${cupom ? `&cupom=${encodeURIComponent(cupom)}` : ''}`;
+      const urlCapa = `/loja/capas/${livroId}.png`;
+
+      const card = document.createElement('article');
+      card.className = 'livro';
+      card.innerHTML = `
+        <div class="capa"><img src="${urlCapa}" alt="Capa — ${livro.titulo}" loading="lazy"></div>
+        <div class="info">
+          <h2>${livro.titulo}</h2>
+          <p class="resumo">${livro.resumo}</p>
+          <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
+          <div class="descricao-expandida" role="region">
+            <p>${livro.descricao}</p>
+          </div>
+          <p class="preco">R$ ${livro.preco.toFixed(2)}</p>
+          <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
+          <a class="comprar" href="${urlCompra}">Comprar</a>
+        </div>
+      `;
+
+      gradiLivros.appendChild(card);
+
+      // Funcionalidade de expandir/colapsar
+      const btnExpandir = card.querySelector('.expandir');
+      const descExpandida = card.querySelector('.descricao-expandida');
+
+      btnExpandir.addEventListener('click', function () {
+        const estaAberta = descExpandida.classList.contains('ativa');
+        descExpandida.classList.toggle('ativa');
+        btnExpandir.setAttribute('aria-expanded', !estaAberta);
+        btnExpandir.textContent = estaAberta ? '+ Leia mais' : '- Fechar';
+      });
     });
-  })();
+  }
+
+  // Renderizar ao carregar
+  document.addEventListener('DOMContentLoaded', renderizarLivros);
 </script>
 
 </body>
