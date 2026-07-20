@@ -43,6 +43,9 @@ function normalizeSessionRow(row) {
     counter: row.message_count ?? 0,
     paid: row.paid ?? false,
     relatorioGerado: row.relatorio_gerado || false,
+    birthDate: row.birth_date || null,
+    birthTime: row.birth_time || null,
+    birthLocation: row.birth_location || null,
     createdAt: row.created_at ? new Date(row.created_at) : null,
     updatedAt: row.updated_at ? new Date(row.updated_at) : null,
   };
@@ -77,6 +80,9 @@ async function upsertSession(session) {
     message_count: session.counter ?? 0,
     history: session.history ?? [],
     relatorio_gerado: session.relatorioGerado ?? false,
+    birth_date: session.birthDate || null,
+    birth_time: session.birthTime || null,
+    birth_location: session.birthLocation || null,
     created_at: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
     updated_at: new Date().toISOString()
   };
@@ -1635,6 +1641,182 @@ app.post('/api/transcrever', upload.single('audio'), async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/transcrever:', error);
     return res.status(500).json({ erro: 'Erro interno ao transcrever.' });
+  }
+});
+
+// ── MAPA ASTRAL: checkout com dados de nascimento ────────────────
+app.post('/api/checkout/mapa-astral', async (req, res) => {
+  try {
+    const { name, email, cpf, birthDate, birthTime, birthLocation, metodoPagamento } = req.body;
+
+    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name,
+      email,
+      birthDate,
+      birthTime,
+      birthLocation,
+      history: [],
+      counter: 0,
+      paid: false,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+
+    const paymentMethod = { id: 'pix', type: 'bank_transfer' };
+    const payment = {
+      amount: '29.90',
+      payment_method: paymentMethod
+    };
+
+    const orderBody = {
+      type: 'online',
+      total_amount: '29.90',
+      external_reference: sessionId,
+      processing_mode: 'automatic',
+      transactions: {
+        payments: [payment]
+      },
+      payer: {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        identification: { type: 'CPF', number: cpf }
+      }
+    };
+
+    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': uuidv4()
+      },
+      body: JSON.stringify(orderBody)
+    });
+
+    if (!mpRes.ok) {
+      const errText = await mpRes.text();
+      const requestId = mpRes.headers.get('x-request-id');
+      console.error('Erro Mercado Pago (mapa-astral):', mpRes.status, errText, '| x-request-id:', requestId);
+      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
+    }
+
+    const order = await mpRes.json();
+    const paymentResponse = order.transactions?.payments?.[0];
+
+    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
+    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
+
+    if (!qrCodeText) {
+      console.error('Mercado Pago não retornou QR Code PIX (mapa-astral):', JSON.stringify(order));
+      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
+    }
+
+    return res.json({ sessionId, pedidoId: order.id, qrCodeText, qrCodeImage });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-astral:', error);
+    return res.status(500).json({ error: 'Erro ao criar pedido.' });
+  }
+});
+
+app.get('/api/checkout/mapa-astral/status/:pedidoId', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const order = await consultarPedidoMercadoPago(pedidoId);
+    const pago = await marcarPagoSeAprovado(order);
+    return res.json({ pago });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-astral/status:', error);
+    return res.status(500).json({ pago: false });
+  }
+});
+
+app.post('/api/checkout/mapa-astral/preference', async (req, res) => {
+  try {
+    const { name, email, cpf, birthDate, birthTime, birthLocation } = req.body;
+
+    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    if (!mpClient) {
+      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name,
+      email,
+      birthDate,
+      birthTime,
+      birthLocation,
+      history: [],
+      counter: 0,
+      paid: false,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    const preference = new Preference(mpClient);
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            id: 'leitura-mapa-astral',
+            title: 'Leitura de Mapa Astral',
+            quantity: 1,
+            unit_price: 29.90,
+            currency_id: 'BRL'
+          }
+        ],
+        payer: {
+          name: firstName,
+          surname: lastName,
+          email,
+          identification: { type: 'CPF', number: cpf }
+        },
+        external_reference: sessionId,
+        back_urls: {
+          success: `${frontendUrl}/checkout-mapa-astral.html?sessionId=${sessionId}&status=retorno`,
+          pending: `${frontendUrl}/checkout-mapa-astral.html?sessionId=${sessionId}&status=retorno`,
+          failure: `${frontendUrl}/checkout-mapa-astral.html?erro=1`
+        },
+        ...(frontendUrl.startsWith('https://') ? { auto_return: 'approved' } : {})
+      }
+    });
+
+    return res.json({ sessionId, init_point: result.init_point });
+  } catch (error) {
+    console.error('Erro ao criar preferência Mercado Pago (mapa-astral):', error);
+    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
+  }
+});
+
+app.get('/api/checkout/mapa-astral/session-status/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await getSession(sessionId);
+    if (!session) return res.status(404).json({ pago: false });
+    return res.json({ pago: Boolean(session.paid) });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-astral/session-status:', error);
+    return res.status(500).json({ pago: false });
   }
 });
 

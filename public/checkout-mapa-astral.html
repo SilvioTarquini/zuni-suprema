@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leitura de Mapa Astral — ZUNI Suprema</title>
+  <!-- Meta Pixel Code -->
+  <script>
+  !function(f,b,e,v,n,t,s)
+  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+  n.queue=[];t=b.createElement(e);t.async=!0;
+  t.src=v;s=b.getElementsByTagName(e)[0];
+  s.parentNode.insertBefore(t,s)}(window, document,'script',
+  'https://connect.facebook.net/en_US/fbevents.js');
+  fbq('init', '840645502240564');
+  fbq('track', 'PageView');
+  </script>
+  <noscript><img height="1" width="1" style="display:none"
+  src="https://www.facebook.com/tr?id=840645502240564&ev=PageView&noscript=1"
+  /></noscript>
+  <!-- End Meta Pixel Code -->
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 28px;
+      color: #ffffff;
+      margin-bottom: 8px;
+      font-weight: normal;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 40px;
+      font-style: italic;
+    }
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 40px 32px;
+    }
+    .price-block {
+      margin-bottom: 32px;
+    }
+    .price {
+      font-size: 42px;
+      color: #c9a84c;
+      font-weight: bold;
+    }
+    .price span { font-size: 20px; }
+    .price-desc {
+      font-size: 13px;
+      color: #666;
+      margin-top: 4px;
+    }
+    .features {
+      list-style: none;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+    .features li {
+      padding: 8px 0;
+      border-bottom: 1px solid #1e1e1e;
+      font-size: 14px;
+      color: #bbb;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .features li::before {
+      content: '✦';
+      color: #c9a84c;
+      font-size: 10px;
+    }
+    .field-label {
+      display: block;
+      text-align: left;
+      font-size: 15px;
+      font-weight: bold;
+      color: #ccc;
+      margin-bottom: 6px;
+      margin-top: 14px;
+    }
+    .field-label:first-of-type { margin-top: 0; }
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .field-row.full { grid-template-columns: 1fr; }
+    input, select {
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 14px 16px;
+      color: #f0f0f0;
+      font-size: 17px;
+      margin-bottom: 12px;
+      outline: none;
+      transition: border-color 0.2s;
+      font-family: 'Georgia', serif;
+    }
+    input:focus, select:focus { border-color: #c9a84c; }
+    input::placeholder { color: #555; }
+    select { font-size: 16px; cursor: pointer; }
+    option { background: #1a1a1a; color: #f0f0f0; }
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #c9a84c, #e8c96a);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 8px;
+      padding: 18px;
+      font-size: 19px;
+      font-weight: bold;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .error {
+      color: #e74c3c;
+      font-size: 13px;
+      margin-top: 8px;
+      display: none;
+    }
+    .footer {
+      margin-top: 24px;
+      font-size: 12px;
+      color: #444;
+    }
+    .privacy-note {
+      font-size: 12px;
+      font-style: italic;
+      color: #8a7a52;
+      text-align: center;
+      margin-bottom: 20px;
+      letter-spacing: 0.3px;
+    }
+    .progress-indicator {
+      font-size: 13px;
+      letter-spacing: 1px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .method-note {
+      font-size: 12px;
+      color: #888;
+      text-align: left;
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+    .security-note {
+      font-size: 13px;
+      color: #8a7a52;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .ajuda-whatsapp {
+      font-size: 15px;
+      text-align: center;
+      margin-top: 14px;
+    }
+    .ajuda-whatsapp a {
+      color: #888;
+      text-decoration: underline;
+    }
+    .ajuda-whatsapp a:hover {
+      color: #c9a84c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">ZUNI Suprema</div>
+    <h1>Leitura de Mapa Astral</h1>
+    <p class="subtitle">Revelando seu destino cósmico</p>
+    <p class="progress-indicator">Seu perfil astrológico</p>
+    <div class="card">
+      <div class="price-block">
+        <div class="price"><span>R$</span> 29,90</div>
+        <div class="price-desc">leitura completa em tempo real</div>
+      </div>
+      <ul class="features">
+        <li>Análise profunda do seu mapa astral</li>
+        <li>Interpretação dos planetas e signos</li>
+        <li>Insights sobre sua jornada cósmica</li>
+        <li>Conversa ao vivo com o Mentor ZUNI</li>
+      </ul>
+      <p class="privacy-note">Para uma leitura precisa, precisamos dos dados exatos de seu nascimento.</p>
+
+      <label for="name" class="field-label">Nome completo</label>
+      <input type="text" id="name" name="name" autocomplete="name" placeholder="Ex: Maria da Silva" />
+
+      <label for="email" class="field-label">E-mail</label>
+      <input type="email" id="email" name="email" autocomplete="email" placeholder="Ex: maria@email.com" />
+
+      <label for="cpf" class="field-label">CPF</label>
+      <input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+
+      <label for="birthDate" class="field-label">Data de nascimento</label>
+      <input type="date" id="birthDate" name="birthDate" />
+
+      <label for="birthTime" class="field-label">Hora de nascimento (aproximada)</label>
+      <input type="time" id="birthTime" name="birthTime" />
+
+      <label for="birthLocation" class="field-label">Local de nascimento (cidade, país)</label>
+      <input type="text" id="birthLocation" name="birthLocation" placeholder="Ex: São Paulo, Brasil" />
+
+      <div style="display:flex; gap:10px; margin-bottom:12px; margin-top:20px;">
+        <button type="button" id="btn-pix" onclick="selecionarMetodo('PIX')" style="flex:1; padding:12px; border-radius:8px; border:2px solid #333; background:#1a1a1a; color:#f0f0f0; cursor:pointer; width:auto; margin-top:0;">PIX</button>
+        <button type="button" id="btn-cartao" onclick="pagarComCartao()" style="flex:1; padding:12px; border-radius:8px; border:2px solid #333; background:#1a1a1a; color:#f0f0f0; cursor:pointer; width:auto; margin-top:0;">Cartão / Outros</button>
+      </div>
+      <p class="method-note">PIX: pague na hora, sem sair desta página. Cartão: você será redirecionado ao ambiente seguro do Mercado Pago e voltará automaticamente para cá assim que o pagamento for concluído.</p>
+      <button id="btn" onclick="iniciarCheckout()">Descobrir meu destino →</button>
+      <p class="ajuda-whatsapp">
+        <a href="https://wa.me/5515996088895?text=Ol%C3%A1%2C%20estou%20com%20d%C3%BAvida%2Fproblema%20no%20pagamento%20da%20leitura%20de%20mapa%20astral." target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
+      </p>
+      <p class="security-note">🔒 Pagamento 100% seguro via Mercado Pago</p>
+      <p class="error" id="error">Preencha todos os campos para continuar.</p>
+    </div>
+    <div id="pix-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:#c9a84c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pague via PIX</p>
+      <img id="qr-img" src="" alt="QR Code PIX" style="width:200px; height:200px; border-radius:8px; background:#fff; padding:8px;" />
+      <p style="font-size:13px; color:#888; margin:16px 0 8px;">Prefere colar direto no app do banco? Copie o código abaixo.</p>
+      <input id="qr-text" readonly style="font-size:11px; text-align:center; margin-bottom:8px; cursor:text;" />
+      <button type="button" id="btn-copiar-pix" onclick="copiarPix()" style="background:#1a1a1a; color:#c9a84c; border:1px solid #c9a84c; width:100%; margin-bottom:16px; margin-top:0;">Copiar código PIX</button>
+      <p style="font-size:12px; color:#666; margin-bottom:16px;">Após o pagamento, a confirmação é automática. Ou clique em "Já paguei" para verificar agora.</p>
+      <button type="button" onclick="verificarPagamento()" style="background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; width:100%; margin-top:0;">✓ Já paguei</button>
+    </div>
+    <div id="pix-timeout-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:#e74c3c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pagamento ainda não confirmado</p>
+      <p style="font-size:13px; color:#888; margin-bottom:20px;">Não conseguimos confirmar seu pagamento via PIX. Se você já pagou, aguarde alguns minutos — a confirmação pode demorar um pouco. Caso o problema persista, fale com nosso suporte.</p>
+      <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20PIX%20na%20leitura%20de%20mapa%20astral%20ZUNI%20Suprema%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
+    </div>
+    <div id="card-pending-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:#c9a84c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Confirmando seu pagamento</p>
+      <p style="font-size:13px; color:#888;">Aguarde enquanto validamos seu pagamento com o Mercado Pago. Isso pode levar alguns segundos.</p>
+    </div>
+    <div id="card-timeout-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:#e74c3c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pagamento ainda não confirmado</p>
+      <p style="font-size:13px; color:#888; margin-bottom:20px;">Seu pagamento pode ainda estar em processamento, ou não foi aprovado. Se você já pagou, aguarde alguns minutos e recarregue esta página. Caso o problema persista, fale com nosso suporte.</p>
+      <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20na%20leitura%20de%20mapa%20astral%20ZUNI%20Suprema%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
+    </div>
+    <div class="footer">Pagamento seguro via Mercado Pago · ZUNI Suprema © 2025</div>
+  </div>
+  <script>
+    let metodoPagamento = null;
+    let pedidoId = null;
+    let sessionIdCheckout = null;
+    let pollingInterval = null;
+    let pixTentativas = 0;
+    const MAX_TENTATIVAS_PIX = 36;
+
+    function formatarCPF(valor) {
+      return valor
+        .replace(/\D/g, '')
+        .slice(0, 11)
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+    }
+    document.getElementById('cpf').addEventListener('input', (e) => {
+      e.target.value = formatarCPF(e.target.value);
+    });
+
+    async function selecionarMetodo(metodo) {
+      metodoPagamento = metodo;
+      document.getElementById('btn-pix').style.borderColor = metodo === 'PIX' ? '#c9a84c' : '#333';
+      document.getElementById('btn').style.display = 'block';
+      document.getElementById('error').style.display = 'none';
+    }
+
+    async function pagarComCartao() {
+      const dados = validarFormulario();
+      if (!dados) return;
+
+      const error = document.getElementById('error');
+      const btnCartao = document.getElementById('btn-cartao');
+      error.style.display = 'none';
+      btnCartao.disabled = true;
+      btnCartao.textContent = 'Aguarde...';
+
+      try {
+        const res = await fetch('/api/checkout/mapa-astral/preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(dados)
+        });
+        const data = await res.json();
+
+        if (!res.ok || !data.init_point) {
+          throw new Error(data.error || 'Erro ao gerar link de pagamento.');
+        }
+
+        window.location.href = data.init_point;
+      } catch (e) {
+        btnCartao.disabled = false;
+        btnCartao.textContent = 'Cartão / Outros';
+        error.textContent = e.message || 'Erro ao processar. Tente novamente.';
+        error.style.display = 'block';
+      }
+    }
+
+    function validarFormulario() {
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const cpf = document.getElementById('cpf').value.trim().replace(/\D/g, '');
+      const birthDate = document.getElementById('birthDate').value;
+      const birthTime = document.getElementById('birthTime').value;
+      const birthLocation = document.getElementById('birthLocation').value.trim();
+      const error = document.getElementById('error');
+
+      if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
+        error.textContent = 'Preencha todos os campos para continuar.';
+        error.style.display = 'block';
+        return null;
+      }
+
+      return { name, email, cpf, birthDate, birthTime, birthLocation };
+    }
+
+    async function verificarRetornoCartao() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionIdRetorno = params.get('sessionId');
+      const status = params.get('status');
+      const erro = params.get('erro');
+
+      if (erro) {
+        document.getElementById('error').textContent = 'Pagamento não concluído. Tente novamente.';
+        document.getElementById('error').style.display = 'block';
+        return;
+      }
+
+      if (status !== 'retorno' || !sessionIdRetorno) return;
+
+      document.querySelector('.card').style.display = 'none';
+      document.getElementById('card-pending-container').style.display = 'block';
+
+      const MAX_TENTATIVAS = 60;
+      let tentativas = 0;
+
+      pollingInterval = setInterval(async () => {
+        tentativas++;
+        try {
+          const res = await fetch(`/api/checkout/mapa-astral/session-status/${sessionIdRetorno}`);
+          const data = await res.json();
+          if (data.pago) {
+            clearInterval(pollingInterval);
+            fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+            window.location.href = `/chat.html?sessionId=${sessionIdRetorno}`;
+            return;
+          }
+        } catch (e) {}
+
+        if (tentativas >= MAX_TENTATIVAS) {
+          clearInterval(pollingInterval);
+          document.getElementById('card-pending-container').style.display = 'none';
+          document.getElementById('card-timeout-container').style.display = 'block';
+        }
+      }, 3000);
+    }
+    verificarRetornoCartao();
+
+    async function iniciarCheckout() {
+      const dados = validarFormulario();
+      if (!dados) return;
+      if (!metodoPagamento) {
+        document.getElementById('error').textContent = 'Escolha PIX ou Cartão para continuar.';
+        document.getElementById('error').style.display = 'block';
+        return;
+      }
+
+      document.getElementById('error').style.display = 'none';
+      const btn = document.getElementById('btn');
+      btn.disabled = true;
+      btn.textContent = 'Aguarde...';
+
+      try {
+        const res = await fetch('/api/checkout/mapa-astral', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...dados, metodoPagamento })
+        });
+        const data = await res.json();
+
+        if (data.qrCodeText) {
+          pedidoId = data.pedidoId;
+          sessionIdCheckout = data.sessionId;
+          if (data.qrCodeImage) {
+            document.getElementById('qr-img').src = `data:image/png;base64,${data.qrCodeImage}`;
+            document.getElementById('qr-img').style.display = 'block';
+          } else {
+            document.getElementById('qr-img').style.display = 'none';
+          }
+          document.getElementById('qr-text').value = data.qrCodeText;
+          document.querySelector('.card').style.display = 'none';
+          document.getElementById('pix-container').style.display = 'block';
+          pixTentativas = 0;
+          pollingInterval = setInterval(verificarPagamento, 5000);
+        } else {
+          throw new Error(data.error || 'Erro ao gerar QR Code PIX.');
+        }
+      } catch (e) {
+        btn.disabled = false;
+        btn.textContent = 'Descobrir meu destino →';
+        document.getElementById('error').textContent = e.message || 'Erro ao processar. Tente novamente.';
+        document.getElementById('error').style.display = 'block';
+      }
+    }
+
+    async function verificarPagamento() {
+      if (!pedidoId || !sessionIdCheckout) return;
+      pixTentativas++;
+      try {
+        const res = await fetch(`/api/checkout/mapa-astral/status/${pedidoId}`);
+        const data = await res.json();
+        if (data.pago) {
+          clearInterval(pollingInterval);
+          fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+          window.location.href = `/chat.html?sessionId=${sessionIdCheckout}`;
+          return;
+        }
+      } catch (e) {}
+
+      if (pixTentativas >= MAX_TENTATIVAS_PIX) {
+        clearInterval(pollingInterval);
+        document.getElementById('pix-container').style.display = 'none';
+        document.getElementById('pix-timeout-container').style.display = 'block';
+      }
+    }
+
+    function copiarPix() {
+      const txt = document.getElementById('qr-text').value;
+      const btn = document.getElementById('btn-copiar-pix');
+      const mostrarConfirmacao = () => {
+        if (!btn) return;
+        const textoOriginal = btn.textContent;
+        btn.textContent = '✓ Código copiado!';
+        setTimeout(() => { btn.textContent = textoOriginal; }, 2000);
+      };
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(txt)
+          .then(mostrarConfirmacao)
+          .catch(() => { document.getElementById('qr-text').select(); document.execCommand('copy'); mostrarConfirmacao(); });
+      } else {
+        document.getElementById('qr-text').select();
+        document.execCommand('copy');
+        mostrarConfirmacao();
+      }
+    }
+  </script>
+</body>
+</html>
