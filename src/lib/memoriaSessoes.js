@@ -222,11 +222,46 @@ Ao responder nesta sessão, reconheça implicitamente essa continuidade. Conecte
   return `${systemPromptBase}\n${blocoContexto}`;
 }
 
+function injetarContextoMapaAstral(systemPromptBase, birthData) {
+  if (!birthData || (!birthData.birthDate && !birthData.birthTime && !birthData.birthLocation)) {
+    return systemPromptBase;
+  }
+
+  const dataFormatada = birthData.birthDate ? new Date(birthData.birthDate).toLocaleDateString('pt-BR') : 'data não informada';
+  const horaFormatada = birthData.birthTime || 'hora não informada';
+  const localFormatado = birthData.birthLocation || 'local não informado';
+
+  const blocoContexto = `
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXTO ASTROLÓGICO — LEITURA DE MAPA ASTRAL
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Você está fazendo uma Leitura de Mapa Astral para este cliente. Aqui estão seus dados de nascimento:
+
+📅 **Data de Nascimento:** ${dataFormatada}
+🕐 **Hora de Nascimento:** ${horaFormatada}
+📍 **Local de Nascimento:** ${localFormatado}
+
+Utilize estes dados para fazer uma leitura astrológica profunda e personalizada. Explore:
+- O signo solar, lunar e ascendente (com a hora e local, você pode calcular o ascendente com precisão)
+- Os planetas e suas posições no momento de nascimento
+- As casas astrológicas e sua influência na jornada de vida
+- Padrões cármicos e lições de vida revelados pelo mapa astral
+
+Seja específico ao fazer conexões com a vida do cliente. Use a linguagem de astrologia integrativa para revelar insights sobre personalidade, propósito cósmico e o momento atual de sua jornada.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+
+  return `${systemPromptBase}\n${blocoContexto}`;
+}
+
 module.exports = {
   gerarResumoSessao,
   salvarResumoSessao,
   buscarResumosAnteriores,
   injetarContextoJornada,
   injetarContextoPacko,
+  injetarContextoMapaAstral,
   MEMORIA_ATIVA: ATIVA
 };

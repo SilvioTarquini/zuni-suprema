@@ -15,7 +15,7 @@ const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupons');
-const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
+const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
@@ -1440,10 +1440,19 @@ app.post('/api/chat', async (req, res) => {
       { role: 'user', content: `${message}${contextBlock}` }
     ];
 
-    // ── CRÉDITOS DE SESSÕES EXTRAS ──────────────────────────
-    // Verificar se cliente tem pacote de "Sessões Extras" ativo
+    // ── INJEÇÃO DE CONTEXTOS (Mapa Astral, Pacote, Jornada) ──
     let systemPromptFinal = SYSTEM_PROMPT;
     let pacoteAtivo = null;
+
+    // Injetar contexto de Mapa Astral se dados de nascimento disponíveis
+    if (session.birthDate || session.birthTime || session.birthLocation) {
+      systemPromptFinal = injetarContextoMapaAstral(systemPromptFinal, {
+        birthDate: session.birthDate,
+        birthTime: session.birthTime,
+        birthLocation: session.birthLocation
+      });
+      console.log(`[MAPA_ASTRAL] Contexto astrológico injetado para sessão ${sessionId}`);
+    }
 
     if (session.email) {
       pacoteAtivo = await buscarPacoteAtivo(session.email);
@@ -1458,7 +1467,7 @@ app.post('/api/chat', async (req, res) => {
           // Injetar contexto do pacote (memória de jornada DENTRO do pacote)
           const resumosDoPacote = await buscarResumosDoPacko(pacoteAtivo.pacote_id, 5);
           if (resumosDoPacote.length > 0) {
-            systemPromptFinal = injetarContextoPacko(SYSTEM_PROMPT, resumosDoPacote);
+            systemPromptFinal = injetarContextoPacko(systemPromptFinal, resumosDoPacote);
             console.log(`[CREDITOS] Contexto do pacote injetado: ${resumosDoPacote.length} resumos`);
           }
 
@@ -1469,7 +1478,7 @@ app.post('/api/chat', async (req, res) => {
         }
       } else if (MEMORIA_ATIVA) {
         // Sem pacote ativo, tentar memória global se flag ativa
-        systemPromptFinal = await injetarContextoJornada(SYSTEM_PROMPT, session.email, session.name);
+        systemPromptFinal = await injetarContextoJornada(systemPromptFinal, session.email, session.name);
       }
     }
     // ────────────────────────────────────────────────────────
