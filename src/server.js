@@ -18,6 +18,9 @@ const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupo
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
 const { calcularMapaNatal } = require('./lib/astro');
+const { calcularNumerologia } = require('./lib/numerologia');
+const { validarCodigo, registrarAcesso } = require('./lib/codigosExperimente');
+const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturasExperimente');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -2216,6 +2219,106 @@ app.get('/api/checkout/mapa-integrado/session-status/:sessionId', async (req, re
     console.error('Erro em /api/checkout/mapa-integrado/session-status:', error);
     return res.status(500).json({ pago: false });
   }
+});
+
+// ========================
+// ENDPOINTS EXPERIMENTE A ZUNI
+// ========================
+
+/**
+ * POST /api/experimente-validar-codigo
+ * Valida um código-convite de acesso à landing
+ */
+app.post('/api/experimente-validar-codigo', async (req, res) => {
+  try {
+    const { codigo } = req.body;
+
+    if (!codigo) {
+      return res.status(400).json({ valido: false, mensagem: 'Código não fornecido.' });
+    }
+
+    const validacao = await validarCodigo(codigo);
+
+    // Registrar acesso (para métricas)
+    const ipOrigem = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    registrarAcesso(codigo, ipOrigem);
+
+    return res.json(validacao);
+  } catch (error) {
+    console.error('Erro ao validar código:', error);
+    return res.status(500).json({ valido: false, mensagem: 'Erro ao validar código.' });
+  }
+});
+
+/**
+ * POST /api/experimente-calcular-numerologia
+ * Calcula numerologia (Caminho de Vida + Essência) para um visitante
+ */
+app.post('/api/experimente-calcular-numerologia', async (req, res) => {
+  try {
+    const { nomeCompleto, dataNascimento } = req.body;
+
+    if (!nomeCompleto || !dataNascimento) {
+      return res.status(400).json({ error: 'Nome e data de nascimento são obrigatórios.' });
+    }
+
+    const resultado = await calcularNumerologia(nomeCompleto, dataNascimento);
+
+    return res.json(resultado);
+  } catch (error) {
+    console.error('Erro ao calcular numerologia:', error);
+    return res.status(500).json({ error: 'Erro ao calcular numerologia.' });
+  }
+});
+
+/**
+ * POST /api/experimente-capturar-lead
+ * Captura e-mail, envia resultado via SendGrid, registra no banco
+ */
+app.post('/api/experimente-capturar-lead', async (req, res) => {
+  try {
+    const { nomeCompleto, dataNascimento, email, caminhoDeVida, essencia, codigo } = req.body;
+
+    if (!email || !nomeCompleto) {
+      return res.status(400).json({ sucesso: false, mensagem: 'E-mail e nome são obrigatórios.' });
+    }
+
+    // Validação básica de e-mail
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ sucesso: false, mensagem: 'E-mail inválido.' });
+    }
+
+    const resultado = { caminhoDeVida, essencia, interpretacao: '' };
+
+    // Enviar e-mail
+    const respostaEmail = await enviarResultadoNumerologia(email, nomeCompleto, resultado);
+
+    if (!respostaEmail.sucesso) {
+      return res.status(500).json(respostaEmail);
+    }
+
+    // Registrar captura no banco
+    await registrarCaptura(nomeCompleto, dataNascimento, email, resultado, codigo);
+
+    // Registrar que e-mail foi capturado (para métrica de código)
+    const ipOrigem = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    if (codigo) {
+      registrarAcesso(codigo, ipOrigem, email);
+    }
+
+    return res.json({ sucesso: true, mensagem: 'E-mail enviado com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao capturar lead:', error);
+    return res.status(500).json({ sucesso: false, mensagem: 'Erro ao processar sua solicitação.' });
+  }
+});
+
+/**
+ * GET /experimente
+ * Serve a página de landing
+ */
+app.get('/experimente', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/experimente.html'));
 });
 
 // Servir arquivos estáticos — deve ficar DEPOIS de rotas explícitas

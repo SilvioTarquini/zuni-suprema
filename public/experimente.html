@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Experimente a ZUNI — Degustação Gratuita</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0f0f1e 0%, #1a1a3e 100%);
+      color: #333;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 20px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 50px;
+    }
+
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      color: #d4af37;
+      margin-bottom: 20px;
+    }
+
+    .header h1 {
+      font-size: 48px;
+      margin-bottom: 15px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    .header p {
+      font-size: 18px;
+      color: #d4af37;
+    }
+
+    /* Seção de Código-convite */
+    .codigo-section {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 40px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .codigo-section h2 {
+      color: #1a1a3e;
+      margin-bottom: 20px;
+      font-size: 24px;
+    }
+
+    .codigo-input-group {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .codigo-input-group input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #d4af37;
+      border-radius: 6px;
+      font-size: 16px;
+    }
+
+    .codigo-input-group button {
+      background: #d4af37;
+      color: #1a1a3e;
+      border: none;
+      padding: 12px 30px;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .codigo-input-group button:hover {
+      background: #c9a02a;
+    }
+
+    .codigo-status {
+      display: none;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-weight: 500;
+    }
+
+    .codigo-status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .codigo-status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    /* Módulo A */
+    .modulo {
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    }
+
+    .modulo.bloqueado {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    .modulo h2 {
+      color: #1a1a3e;
+      margin-bottom: 20px;
+      font-size: 28px;
+      border-bottom: 3px solid #d4af37;
+      padding-bottom: 15px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      color: #1a1a3e;
+      font-weight: 600;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 16px;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    .btn-calcular {
+      background: #d4af37;
+      color: #1a1a3e;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+    }
+
+    .btn-calcular:hover {
+      background: #c9a02a;
+    }
+
+    .resultado {
+      display: none;
+      background: linear-gradient(135deg, #f9f9f9 0%, #f0f0f0 100%);
+      padding: 30px;
+      border-radius: 8px;
+      margin-top: 30px;
+      border-left: 4px solid #d4af37;
+    }
+
+    .resultado.mostrar {
+      display: block;
+    }
+
+    .numero-box {
+      background: white;
+      padding: 20px;
+      margin: 15px 0;
+      border-radius: 6px;
+      border-left: 4px solid #d4af37;
+    }
+
+    .numero-label {
+      color: #666;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .numero-valor {
+      font-size: 48px;
+      font-weight: bold;
+      color: #1a1a3e;
+    }
+
+    .numero-descricao {
+      color: #666;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* Captura de E-mail */
+    .email-section {
+      display: none;
+      background: #f0f8ff;
+      padding: 25px;
+      border-radius: 8px;
+      margin-top: 25px;
+      border: 2px solid #d4af37;
+    }
+
+    .email-section.mostrar {
+      display: block;
+    }
+
+    .email-section h3 {
+      color: #1a1a3e;
+      margin-bottom: 15px;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .checkbox-group input[type="checkbox"] {
+      margin-top: 4px;
+      cursor: pointer;
+    }
+
+    .checkbox-group label {
+      cursor: pointer;
+      margin: 0;
+      font-weight: normal;
+    }
+
+    .checkbox-group a {
+      color: #d4af37;
+      text-decoration: none;
+    }
+
+    .checkbox-group a:hover {
+      text-decoration: underline;
+    }
+
+    .btn-enviar {
+      background: #d4af37;
+      color: #1a1a3e;
+      padding: 14px 30px;
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .btn-enviar:hover {
+      background: #c9a02a;
+    }
+
+    .btn-enviar:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+    }
+
+    /* Status de Envio */
+    .email-status {
+      display: none;
+      padding: 15px;
+      border-radius: 6px;
+      margin-top: 15px;
+      font-weight: 500;
+    }
+
+    .email-status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+
+    .email-status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+
+    /* Bloco de Oferta */
+    .oferta-section {
+      display: none;
+      background: linear-gradient(135deg, #d4af37 0%, #c9a02a 100%);
+      color: #1a1a3e;
+      padding: 40px;
+      border-radius: 12px;
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .oferta-section.mostrar {
+      display: block;
+    }
+
+    .oferta-section h2 {
+      font-size: 32px;
+      margin-bottom: 15px;
+    }
+
+    .oferta-section p {
+      font-size: 18px;
+      margin-bottom: 25px;
+      opacity: 0.9;
+    }
+
+    .cta-links {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .cta-link {
+      background: #1a1a3e;
+      color: #d4af37;
+      padding: 14px 25px;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+
+    .cta-link:hover {
+      background: #0f0f1e;
+    }
+
+    /* Loading */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+
+    .loading.mostrar {
+      display: block;
+    }
+
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #d4af37;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      color: #999;
+      font-size: 12px;
+      margin-top: 50px;
+      padding-top: 30px;
+      border-top: 1px solid rgba(212, 175, 55, 0.2);
+    }
+
+    .footer a {
+      color: #d4af37;
+      text-decoration: none;
+    }
+
+    .footer a:hover {
+      text-decoration: underline;
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .header h1 {
+        font-size: 32px;
+      }
+
+      .modulo h2 {
+        font-size: 20px;
+      }
+
+      .numero-valor {
+        font-size: 36px;
+      }
+
+      .cta-links {
+        flex-direction: column;
+      }
+
+      .codigo-input-group {
+        flex-direction: column;
+      }
+
+      .codigo-input-group button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">✨ ZUNI SUPREMA</div>
+      <h1>Experimente a ZUNI</h1>
+      <p>Descubra os 4 pilares do nosso ecossistema — gratuitamente</p>
+    </div>
+
+    <!-- Código-convite -->
+    <div class="codigo-section">
+      <h2>🔑 Seu Tíquete de Acesso</h2>
+      <p style="color: #666; margin-bottom: 15px;">
+        Você recebeu um código-convite? Insira aqui para desbloquear a experiência completa.
+      </p>
+      <div class="codigo-input-group">
+        <input type="text" id="codigoInput" placeholder="Ex: EXPERIMENTE" />
+        <button onclick="validarCodigo()">Validar</button>
+      </div>
+      <div class="codigo-status" id="codigoStatus"></div>
+    </div>
+
+    <!-- Módulo A: Numerologia -->
+    <div class="modulo bloqueado" id="moduloA">
+      <h2>🔢 Módulo A — Seu Perfil Numerológico</h2>
+      <p style="color: #666; margin-bottom: 25px;">
+        Descubra seu Caminho de Vida e a Essência numérica que define sua energia.
+      </p>
+
+      <div class="form-group">
+        <label for="nomeCompleto">Nome Completo</label>
+        <input type="text" id="nomeCompleto" placeholder="Seu nome completo" />
+      </div>
+
+      <div class="form-group">
+        <label for="dataNascimento">Data de Nascimento</label>
+        <input type="date" id="dataNascimento" />
+      </div>
+
+      <button class="btn-calcular" onclick="calcularNumerologia()">
+        Calcular Meu Perfil
+      </button>
+
+      <!-- Loading -->
+      <div class="loading" id="loadingNumerologia">
+        <div class="spinner"></div>
+        <p>Calculando sua numerologia...</p>
+      </div>
+
+      <!-- Resultado -->
+      <div class="resultado" id="resultadoNumerologia">
+        <div class="numero-box">
+          <div class="numero-label">Caminho de Vida</div>
+          <div class="numero-valor" id="caminhoDeVidaValor">-</div>
+          <div class="numero-descricao" id="caminhoDeVidaDesc">
+            Este é o número que define seu propósito e jornada nesta vida.
+          </div>
+        </div>
+
+        <div class="numero-box">
+          <div class="numero-label">Número da Essência</div>
+          <div class="numero-valor" id="essenciaValor">-</div>
+          <div class="numero-descricao" id="essenciaDesc">
+            Representa a sua energia fundamental e características inatas.
+          </div>
+        </div>
+
+        <!-- Captura de E-mail -->
+        <div class="email-section" id="emailSection">
+          <h3>📧 Receba Seu Resultado por E-mail</h3>
+          <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
+            Guarde este resultado e receba dicas exclusivas sobre sua numerologia.
+          </p>
+
+          <div class="form-group">
+            <label for="email">Seu E-mail</label>
+            <input type="email" id="email" placeholder="seu@email.com" />
+          </div>
+
+          <div class="checkbox-group">
+            <input type="checkbox" id="consentimento" />
+            <label for="consentimento">
+              Concordo em receber informações sobre numerologia e os produtos ZUNI.
+              <a href="https://zunisuprema.com.br/privacidade" target="_blank">Veja nossa política</a>.
+            </label>
+          </div>
+
+          <button class="btn-enviar" id="btnEnviar" onclick="enviarResultado()" disabled>
+            Enviar Meu Resultado
+          </button>
+
+          <div class="email-status" id="emailStatus"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloco de Oferta -->
+    <div class="oferta-section" id="ofertaSection">
+      <h2>✨ Gostou? Aprofunde a Experiência</h2>
+      <p>Conheça os outros pilares do ecossistema ZUNI com preço real e transparente.</p>
+      <div class="cta-links">
+        <a href="https://zunisuprema.com.br/mentor" class="cta-link">💬 Chat com Mentor (R$ 29,90)</a>
+        <a href="https://zunisuprema.com.br/loja/livros" class="cta-link">📚 Livros Vivos (R$ 57,90)</a>
+        <a href="https://zunisuprema.com.br/mapa-integrado" class="cta-link">🌟 Mapa Integrado</a>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>© 2026 ZUNI Suprema. Explorando astrologia, numerologia e autoconhecimento.</p>
+      <p>
+        <a href="https://zunisuprema.com.br/privacidade">Privacidade</a> |
+        <a href="https://zunisuprema.com.br/termos">Termos</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/js/experimente-client.js"></script>
+</body>
+</html>
