@@ -381,8 +381,12 @@ Se usar qualquer palavra que o público possa não conhecer, explique logo em se
 
 const app = express();
 app.use(cors());
-app.use(express.static(path.join(__dirname, '../public')));
-app.use('/', livrosRouter);
+app.use(express.json());
+
+// Rota raiz — landing page
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/chat.html'));
@@ -395,7 +399,8 @@ app.get('/checkout', (req, res) => {
 app.get('/obrigado', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/obrigado.html'));
 });
-app.use(express.json());
+
+app.use('/', livrosRouter);
 
 function buildSuccessUrl(sessionId) {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -1913,6 +1918,9 @@ app.post('/api/checkout/mapa-astral/test', async (req, res) => {
     return res.status(500).json({ error: 'Erro ao criar sessão de teste.' });
   }
 });
+
+// Servir arquivos estáticos — deve ficar DEPOIS de rotas explícitas
+app.use(express.static(path.join(__dirname, '../public')));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
