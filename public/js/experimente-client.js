@@ -15,7 +15,7 @@ let estadoSessao = {
 async function validarCodigo() {
   const codigo = document.getElementById('codigoInput').value.trim();
   const statusDiv = document.getElementById('codigoStatus');
-  const moduloA = document.getElementById('moduloA');
+  const moduloA = document.getElementById('modulo-numerologia');
 
   if (!codigo) {
     mostrarStatus(statusDiv, 'Por favor, insira um código.', 'error');
@@ -155,6 +155,10 @@ function atualizarEstadoBotaoEnvio() {
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('email').addEventListener('input', atualizarEstadoBotaoEnvio);
   document.getElementById('consentimento').addEventListener('change', atualizarEstadoBotaoEnvio);
+
+  // Scroll suave e destaque de módulo ativo
+  atualizarNavbarAtiva();
+  window.addEventListener('scroll', atualizarNavbarAtiva);
 });
 
 /**
@@ -237,6 +241,51 @@ async function enviarResultado() {
 function mostrarStatus(div, mensagem, tipo) {
   div.textContent = mensagem;
   div.className = `${tipo === 'error' ? 'codigo-status error' : 'codigo-status success'}`;
+}
+
+/**
+ * Scroll suave até um módulo
+ */
+function scrollToModule(moduloId, event) {
+  event.preventDefault();
+  const elemento = document.getElementById(moduloId);
+  if (elemento) {
+    elemento.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+/**
+ * Atualiza qual item da navbar está ativo baseado no scroll
+ */
+function atualizarNavbarAtiva() {
+  const modulos = document.querySelectorAll('[data-modulo]');
+  const navItems = document.querySelectorAll('.navbar-item');
+
+  let moduloAtivo = null;
+  let menorDistancia = Infinity;
+
+  // Encontrar qual módulo está mais próximo do topo da viewport
+  modulos.forEach(modulo => {
+    const rect = modulo.getBoundingClientRect();
+    const distancia = Math.abs(rect.top);
+
+    if (distancia < menorDistancia) {
+      menorDistancia = distancia;
+      moduloAtivo = modulo.getAttribute('data-modulo');
+    }
+  });
+
+  // Remover classe active de todos e adicionar ao módulo ativo
+  navItems.forEach(item => {
+    item.classList.remove('active');
+  });
+
+  if (moduloAtivo) {
+    const itemAtivo = document.querySelector(`.navbar-item[href="#modulo-${moduloAtivo}"]`);
+    if (itemAtivo) {
+      itemAtivo.classList.add('active');
+    }
+  }
 }
 
 /**

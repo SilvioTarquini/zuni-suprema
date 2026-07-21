@@ -49,6 +49,59 @@
       color: #d4af37;
     }
 
+    /* Barra de Navegação Fixa */
+    .navbar {
+      position: sticky;
+      top: 0;
+      background: rgba(26, 26, 62, 0.95);
+      backdrop-filter: blur(10px);
+      border-bottom: 2px solid #d4af37;
+      padding: 15px 0;
+      margin-bottom: 40px;
+      z-index: 1000;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    .navbar-content {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      gap: 20px;
+      padding: 0 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .navbar-item {
+      color: #d4af37;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 4px;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+
+    .navbar-item:hover {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: #d4af37;
+    }
+
+    .navbar-item.active {
+      background: #d4af37;
+      color: #1a1a3e;
+      border-color: #d4af37;
+    }
+
+    .navbar-icon {
+      font-size: 18px;
+    }
+
     /* Seção de Código-convite */
     .codigo-section {
       background: white;
@@ -442,6 +495,28 @@
       <p>Descubra os 4 pilares do nosso ecossistema — gratuitamente</p>
     </div>
 
+    <!-- Barra de Navegação -->
+    <div class="navbar">
+      <div class="navbar-content">
+        <a href="#modulo-numerologia" class="navbar-item active" onclick="scrollToModule('modulo-numerologia', event)">
+          <span class="navbar-icon">🔢</span>
+          Numerologia
+        </a>
+        <a href="#modulo-astrologia" class="navbar-item" onclick="scrollToModule('modulo-astrologia', event)">
+          <span class="navbar-icon">🌙</span>
+          Astrologia
+        </a>
+        <a href="#modulo-chat" class="navbar-item" onclick="scrollToModule('modulo-chat', event)">
+          <span class="navbar-icon">💬</span>
+          Chat
+        </a>
+        <a href="#modulo-livro" class="navbar-item" onclick="scrollToModule('modulo-livro', event)">
+          <span class="navbar-icon">📚</span>
+          Livro Vivo
+        </a>
+      </div>
+    </div>
+
     <!-- Código-convite -->
     <div class="codigo-section">
       <h2>🔑 Seu Tíquete de Acesso</h2>
@@ -456,7 +531,7 @@
     </div>
 
     <!-- Módulo A: Numerologia -->
-    <div class="modulo bloqueado" id="moduloA">
+    <div class="modulo bloqueado" id="modulo-numerologia" data-modulo="numerologia">
       <h2>🔢 Módulo A — Seu Perfil Numerológico</h2>
       <p style="color: #666; margin-bottom: 25px;">
         Descubra seu Caminho de Vida e a Essência numérica que define sua energia.
@@ -526,6 +601,42 @@
 
           <div class="email-status" id="emailStatus"></div>
         </div>
+      </div>
+    </div>
+
+    <!-- Módulo B: Astrologia (Placeholder) -->
+    <div class="modulo" id="modulo-astrologia" data-modulo="astrologia" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); text-align: center; padding: 60px 30px;">
+      <h2 style="color: #1a1a3e; margin-bottom: 20px;">🌙 Módulo B — Amostra Astrológica</h2>
+      <p style="color: #666; font-size: 18px; margin-bottom: 30px;">
+        Descubra seu Signo Solar e as características que o definem.
+      </p>
+      <div style="background: white; padding: 40px; border-radius: 8px; display: inline-block; border-left: 4px solid #d4af37;">
+        <p style="color: #999; font-size: 16px;">⏳ Em desenvolvimento</p>
+        <p style="color: #666; font-size: 14px; margin-top: 10px;">Este módulo será lançado em breve.</p>
+      </div>
+    </div>
+
+    <!-- Módulo C: Chat Limitado (Placeholder) -->
+    <div class="modulo" id="modulo-chat" data-modulo="chat" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); text-align: center; padding: 60px 30px;">
+      <h2 style="color: #1a1a3e; margin-bottom: 20px;">💬 Módulo C — Chat de Demonstração</h2>
+      <p style="color: #666; font-size: 18px; margin-bottom: 30px;">
+        Converse com o Mentor ZUNI — até 5 trocas gratuitas.
+      </p>
+      <div style="background: white; padding: 40px; border-radius: 8px; display: inline-block; border-left: 4px solid #d4af37;">
+        <p style="color: #999; font-size: 16px;">⏳ Em desenvolvimento</p>
+        <p style="color: #666; font-size: 14px; margin-top: 10px;">Este módulo será lançado em breve.</p>
+      </div>
+    </div>
+
+    <!-- Módulo D: Livro Vivo (Placeholder) -->
+    <div class="modulo" id="modulo-livro" data-modulo="livro" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); text-align: center; padding: 60px 30px;">
+      <h2 style="color: #1a1a3e; margin-bottom: 20px;">📚 Módulo D — Degustação de Livro Vivo</h2>
+      <p style="color: #666; font-size: 18px; margin-bottom: 30px;">
+        Leia o primeiro capítulo e converse com a obra.
+      </p>
+      <div style="background: white; padding: 40px; border-radius: 8px; display: inline-block; border-left: 4px solid #d4af37;">
+        <p style="color: #999; font-size: 16px;">⏳ Em desenvolvimento</p>
+        <p style="color: #666; font-size: 14px; margin-top: 10px;">Este módulo será lançado em breve.</p>
       </div>
     </div>
 
