@@ -13,16 +13,25 @@ function assertSupabase() {
 
 /**
  * Valida um código-convite
+ * Validação case-insensitive: aceita "Experimente", "experimente", "EXPERIMENTE"
  * Retorna: { valido: bool, ativo: bool, mensagem: string, validadeAte?: date }
  */
 async function validarCodigo(codigo) {
   try {
     const db = assertSupabase();
-    const { data, error } = await db
+    // Buscar todos os códigos e fazer comparação case-insensitive em memória
+    // (Supabase RLS pode usar ILIKE, mas direct eq + toLowerCase é mais simples)
+    const { data: todosCodigos, error: erroLista } = await db
       .from('codigos_experimente')
-      .select('*')
-      .eq('codigo', codigo.toUpperCase().trim())
-      .single();
+      .select('*');
+
+    if (erroLista) {
+      throw erroLista;
+    }
+
+    // Buscar código correspondente (case-insensitive)
+    const codigoNormalizado = codigo.toLowerCase().trim();
+    const data = todosCodigos.find(c => c.codigo.toLowerCase() === codigoNormalizado);
 
     if (error || !data) {
       return {
@@ -74,12 +83,13 @@ async function registrarAcesso(codigo, ipOrigem, emailCapturado = null) {
   try {
     const db = assertSupabase();
 
-    // Encontrar código para obter ID
-    const { data: codigoData } = await db
+    // Buscar código (case-insensitive)
+    const { data: todosCodigos } = await db
       .from('codigos_experimente')
-      .select('id, total_acessos, emails_capturados')
-      .eq('codigo', codigo.toUpperCase().trim())
-      .single();
+      .select('id, total_acessos, emails_capturados, codigo');
+
+    const codigoNormalizado = codigo.toLowerCase().trim();
+    const codigoData = todosCodigos?.find(c => c.codigo.toLowerCase() === codigoNormalizado);
 
     if (!codigoData) {
       console.warn(`Código ${codigo} não encontrado para registrar acesso`);
@@ -148,15 +158,28 @@ async function criarCodigo(codigo, validadeAte, origem = null) {
 }
 
 /**
- * Desativa um código-convite (admin)
+ * Desativa um código-convite (admin) - case-insensitive
  */
 async function desativarCodigo(codigo) {
   try {
     const db = assertSupabase();
+
+    // Buscar código (case-insensitive)
+    const { data: todosCodigos } = await db
+      .from('codigos_experimente')
+      .select('id, codigo');
+
+    const codigoNormalizado = codigo.toLowerCase().trim();
+    const codigoData = todosCodigos?.find(c => c.codigo.toLowerCase() === codigoNormalizado);
+
+    if (!codigoData) {
+      throw new Error('Código não encontrado');
+    }
+
     const { data, error } = await db
       .from('codigos_experimente')
       .update({ ativo: false, atualizado_em: new Date().toISOString() })
-      .eq('codigo', codigo.toUpperCase().trim())
+      .eq('id', codigoData.id)
       .select()
       .single();
 
