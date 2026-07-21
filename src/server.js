@@ -1926,10 +1926,22 @@ app.post('/api/checkout/mapa-astral/test', async (req, res) => {
 
 app.post('/api/checkout/mapa-integrado', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, metodoPagamento } = req.body;
+    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, metodoPagamento, cupom } = req.body;
 
     if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    // Validar e calcular desconto se cupom fornecido
+    let precoFinal = 147.00;
+    if (cupom) {
+      const cupomValido = await validarCupom(cupom);
+      if (!cupomValido) {
+        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
+      }
+      const desconto = precoFinal * (cupomValido.percentual / 100);
+      precoFinal = Math.max(0, precoFinal - desconto);
+      console.log(`[MAPA-INTEGRADO] Cupom ${cupom} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
     }
 
     // Validar formato de data e hora
@@ -1981,19 +1993,35 @@ app.post('/api/checkout/mapa-integrado', async (req, res) => {
 
     await upsertSession(session);
 
+    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
+    if (precoFinal === 0) {
+      console.log(`[MAPA-INTEGRADO] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
+      session.paid = true;
+      await upsertSession(session);
+
+      return res.json({
+        sessionId,
+        pedidoId: `CUPOM-100-${sessionId}`,
+        qrCodeText: 'CUPOM 100% DESCONTO - PAGAMENTO AUTOMÁTICO',
+        qrCodeImage: '',
+        mapaNatal: mapaNatal.mapaNatal,
+        cupom100: true
+      });
+    }
+
     // Criar pedido no Mercado Pago
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
 
     const paymentMethod = { id: 'pix', type: 'bank_transfer' };
     const payment = {
-      amount: '49.90',
+      amount: precoFinal.toFixed(2),
       payment_method: paymentMethod
     };
 
     const orderBody = {
       type: 'online',
-      total_amount: '49.90',
+      total_amount: precoFinal.toFixed(2),
       external_reference: sessionId,
       processing_mode: 'automatic',
       transactions: {
@@ -2064,10 +2092,22 @@ app.get('/api/checkout/mapa-integrado/status/:pedidoId', async (req, res) => {
 
 app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull } = req.body;
+    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, cupom } = req.body;
 
     if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    // Validar e calcular desconto se cupom fornecido
+    let precoFinal = 147.00;
+    if (cupom) {
+      const cupomValido = await validarCupom(cupom);
+      if (!cupomValido) {
+        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
+      }
+      const desconto = precoFinal * (cupomValido.percentual / 100);
+      precoFinal = Math.max(0, precoFinal - desconto);
+      console.log(`[MAPA-INTEGRADO-PREF] Cupom ${cupom} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
     }
 
     if (!mpClient) {
@@ -2112,6 +2152,19 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
 
     await upsertSession(session);
 
+    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
+    if (precoFinal === 0) {
+      console.log(`[MAPA-INTEGRADO-PREF] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
+      session.paid = true;
+      await upsertSession(session);
+
+      return res.json({
+        sessionId,
+        init_point: `${process.env.FRONTEND_URL}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno&cupom100=true`,
+        cupom100: true
+      });
+    }
+
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
     const frontendUrl = process.env.FRONTEND_URL;
@@ -2124,7 +2177,7 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
             id: 'mapa-integrado',
             title: 'Mapa Integrado — Mapa Astral com Análise Astrológica',
             quantity: 1,
-            unit_price: 49.90,
+            unit_price: precoFinal,
             currency_id: 'BRL'
           }
         ],

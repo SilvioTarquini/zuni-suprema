@@ -8,6 +8,7 @@
 
 const { createClient } = require('@supabase/supabase-js');
 const Anthropic = require('@anthropic-ai/sdk');
+const { calcularPosicoes, formatarPosicaoAstrologica } = require('./calculosAstrologicos');
 
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
@@ -222,7 +223,7 @@ Ao responder nesta sessão, reconheça implicitamente essa continuidade. Conecte
   return `${systemPromptBase}\n${blocoContexto}`;
 }
 
-function injetarContextoMapaAstral(systemPromptBase, birthData) {
+function injetarContextoMapaAstral(systemPromptBase, birthData, coordenadas) {
   if (!birthData || (!birthData.birthDate && !birthData.birthTime && !birthData.birthLocation)) {
     return systemPromptBase;
   }
@@ -231,9 +232,9 @@ function injetarContextoMapaAstral(systemPromptBase, birthData) {
   const horaFormatada = birthData.birthTime || 'hora não informada';
   const localFormatado = birthData.birthLocation || 'local não informado';
 
-  const blocoContexto = `
+  let blocoContexto = `
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-CONTEXTO ASTROLÓGICO — LEITURA DE MAPA ASTRAL
+CONTEXTO ASTROLÓGICO — LEITURA DE MAPA ASTRAL (COM CÁLCULOS REAIS)
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 Você está fazendo uma Leitura de Mapa Astral para este cliente. Aqui estão seus dados de nascimento:
@@ -241,9 +242,30 @@ Você está fazendo uma Leitura de Mapa Astral para este cliente. Aqui estão se
 📅 **Data de Nascimento:** ${dataFormatada}
 🕐 **Hora de Nascimento:** ${horaFormatada}
 📍 **Local de Nascimento:** ${localFormatado}
+`;
+
+  // Se coordenadas e cálculos foram fornecidos
+  if (coordenadas && coordenadas.posicoes) {
+    const pos = coordenadas.posicoes;
+
+    blocoContexto += `
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+POSIÇÕES ASTRONÔMICAS CALCULADAS (Efemérides Reais)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+☀️  SOL: ${formatarPosicaoAstrologica(pos.sol)} (${pos.sol.longitude}°)
+🌙 LUA: ${formatarPosicaoAstrologica(pos.lua)} (${pos.lua.longitude}°)
+⬆️  ASCENDENTE: ${formatarPosicaoAstrologica(pos.ascendente)} (${pos.ascendente.longitude}°)
+
+Use EXATAMENTE estes valores na sua leitura.
+`;
+  }
+
+  blocoContexto += `
 
 Utilize estes dados para fazer uma leitura astrológica profunda e personalizada. Explore:
-- O signo solar, lunar e ascendente (com a hora e local, você pode calcular o ascendente com precisão)
+- O signo solar, lunar e ascendente
 - Os planetas e suas posições no momento de nascimento
 - As casas astrológicas e sua influência na jornada de vida
 - Padrões cármicos e lições de vida revelados pelo mapa astral

@@ -13,6 +13,7 @@
     "@google/generative-ai": "^0.24.1",
     "@sendgrid/mail": "^8.1.6",
     "@supabase/supabase-js": "^2.25.0",
+    "astronomy-engine": "^2.1.19",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "elevenlabs": "^1.59.0",

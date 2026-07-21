@@ -240,12 +240,21 @@
     <div id="form-section">
       <div class="header">
         <div class="logo">ZUNI Suprema</div>
-        <div class="subtitle">Mapa Integrado — Astral + Astrologia</div>
+        <div class="subtitle">Mapa Integrado — Astrologia + Numerologia</div>
       </div>
 
       <div class="info-box">
-        <strong>Mapa Integrado (R$ 49,90)</strong><br>
-        Seu mapa astral calculado via AstroWay + análise astrológica profunda no chat com o Mentor ZUNI.
+        <strong>Mapa Integrado ZUNI — R$ 147,00</strong><br><br>
+        <strong>Astrologia e numerologia, unidas em uma leitura só.</strong><br><br>
+        O Mapa Integrado ZUNI cruza o simbolismo astrológico do momento do seu nascimento com a estrutura numerológica do seu nome — não como duas leituras separadas, mas como uma única interpretação, tecida pela metodologia própria da ZUNI Suprema.<br><br>
+        <strong>Você recebe, automaticamente por e-mail em PDF:</strong>
+        <ul style="margin: 10px 0 10px 20px; color: #d9c68f;">
+          <li>Seu mapa astral (Sol, Lua, Ascendente e principais posições planetárias)</li>
+          <li>Seu perfil numerológico (Caminho de Vida, Expressão e demais números essenciais)</li>
+          <li>Uma leitura integrada de temperamento, tendências e potenciais</li>
+          <li>Recomendações de desenvolvimento, em linguagem clara e sem jargões</li>
+        </ul>
+        <p style="font-size: 12px; color: #b6ab93; margin-top: 10px;">Este relatório apresenta tendências e padrões simbólicos, não previsões determinísticas, e não substitui aconselhamento profissional.</p>
       </div>
 
       <form id="checkout-form">
@@ -268,16 +277,20 @@
           </div>
         </div>
 
-        <!-- Dados de Nascimento -->
-        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">Data de Nascimento</h3>
+        <!-- ASTROLOGIA: Dados de Nascimento -->
+        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">📍 Astrologia: Dados de Nascimento</h3>
+        <div class="info-box" style="background: rgba(184, 150, 62, 0.05); border-color: #5a5a50; margin-bottom: 20px;">
+          <strong>Informe quando e onde você nasceu.</strong><br>
+          Essas informações são usadas para calcular seu mapa astral — as posições planetárias no momento exato do seu nascimento.
+        </div>
 
         <div class="form-row">
           <div class="form-group">
-            <label for="birthDate">Data (YYYY-MM-DD) *</label>
+            <label for="birthDate">Data de Nascimento (YYYY-MM-DD) *</label>
             <input type="date" id="birthDate" name="birthDate" required>
           </div>
           <div class="form-group">
-            <label for="birthTime">Hora (HH:MM) *</label>
+            <label for="birthTime">Hora de Nascimento (HH:MM) *</label>
             <input type="time" id="birthTime" name="birthTime" required>
           </div>
         </div>
@@ -287,10 +300,27 @@
           <input type="text" id="birthLocation" name="birthLocation" placeholder="São Paulo, Rio de Janeiro, etc." required>
         </div>
 
-        <div class="form-group">
-          <label for="birthNameFull">Nome de Nascimento (opcional)</label>
-          <input type="text" id="birthNameFull" name="birthNameFull" placeholder="Seu nome de solteira/maiden name (se aplicável)">
+        <!-- NUMEROLOGIA: Nome de Nascimento -->
+        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">🔢 Numerologia: Nome de Nascimento</h3>
+        <div class="info-box" style="background: rgba(184, 150, 62, 0.05); border-color: #5a5a50; margin-bottom: 20px;">
+          <strong>Seu nome de nascimento pode ser diferente do seu nome atual.</strong><br>
+          Se você é mulher casada/divorciada, use seu sobrenome de solteira. Se adotada ou mudou de nome legalmente, use o nome da sua certidão de nascimento. Essa informação é essencial para a precisão do cálculo numerológico.
         </div>
+
+        <div class="form-group">
+          <label for="birthNameFull">Nome Completo de Nascimento *</label>
+          <input type="text" id="birthNameFull" name="birthNameFull" placeholder="Ex: Maria Silva Santos (seu nome original de nascimento)" required>
+        </div>
+
+        <!-- Cupom de Desconto (Opcional) -->
+        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">Cupom de Desconto (Opcional)</h3>
+
+        <div class="form-group">
+          <label for="cupom">Código do cupom</label>
+          <input type="text" id="cupom" name="cupom" placeholder="Ex: TEST100" style="text-transform: uppercase;">
+        </div>
+
+        <div id="cupom-status" style="font-size: 13px; margin-bottom: 20px;"></div>
 
         <!-- Método de Pagamento -->
         <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">Método de Pagamento</h3>
@@ -407,6 +437,33 @@
       }
     });
 
+    // Validar cupom ao desfocar
+    document.getElementById('cupom').addEventListener('blur', async (e) => {
+      const codigo = e.target.value.trim().toUpperCase();
+      const statusDiv = document.getElementById('cupom-status');
+
+      if (!codigo) {
+        statusDiv.textContent = '';
+        return;
+      }
+
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/validar-cupom?codigo=${encodeURIComponent(codigo)}`);
+        const data = await response.json();
+
+        if (data.valido) {
+          statusDiv.textContent = `✓ Cupom válido (${data.percentual}% desconto)`;
+          statusDiv.style.color = '#7fae6e';
+        } else {
+          statusDiv.textContent = '✗ Cupom inválido ou expirado';
+          statusDiv.style.color = '#e0716a';
+        }
+      } catch (error) {
+        statusDiv.textContent = 'Erro ao validar cupom';
+        statusDiv.style.color = '#e0716a';
+      }
+    });
+
     // Enviar formulário
     document.getElementById('checkout-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -419,7 +476,8 @@
         birthTime: document.getElementById('birthTime').value,
         birthLocation: document.getElementById('birthLocation').value.trim(),
         birthNameFull: document.getElementById('birthNameFull').value.trim() || null,
-        metodoPagamento: document.getElementById('metodoPagamento').value
+        metodoPagamento: document.getElementById('metodoPagamento').value,
+        cupom: document.getElementById('cupom').value.trim().toUpperCase() || null
       };
 
       // Validações
@@ -459,6 +517,14 @@
       pedidoId = data.pedidoId;
       sessionId = data.sessionId;
 
+      // Se cupom 100% desconto, marcar como pago automaticamente
+      if (data.cupom100) {
+        console.log('[CHECKOUT] Cupom 100% desconto: indo direto para sucesso');
+        exibirMapaNatalFinal(sessionId);
+        mostrarSecao('success-section');
+        return;
+      }
+
       // Exibir mapa
       exibirMapaNatal(data.mapaNatal);
 
@@ -486,6 +552,14 @@
 
       const data = await response.json();
       sessionId = data.sessionId;
+
+      // Se cupom 100% desconto, ir direto para sucesso
+      if (data.cupom100) {
+        console.log('[CHECKOUT] Cupom 100% desconto: indo direto para sucesso');
+        exibirMapaNatalFinal(sessionId);
+        mostrarSecao('success-section');
+        return;
+      }
 
       // Redirecionar para Mercado Pago
       if (data.init_point) {

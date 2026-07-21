@@ -207,6 +207,13 @@ async function calcularMapaNatal(dados) {
       mapaPorIndice[p.name.toLowerCase()] = longitudeParaSigno(p.longitude);
     });
 
+    // Extrair Ascendente de casas (não está em planetas)
+    const casas = mapaNatal.data.houses || {};
+    const ascendenteLongitude = casas.ascendant !== undefined ? casas.ascendant : null;
+    const ascendenteCalculado = ascendenteLongitude !== null
+      ? longitudeParaSigno(ascendenteLongitude)
+      : { sign: 'Unknown', degree: 0 };
+
     return {
       sucesso: true,
       nome,
@@ -217,7 +224,7 @@ async function calcularMapaNatal(dados) {
       mapaNatal: {
         sol: mapaPorIndice['sun'] || { sign: 'Unknown', degree: 0 },
         lua: mapaPorIndice['moon'] || { sign: 'Unknown', degree: 0 },
-        ascendente: mapaPorIndice['asc'] || mapaPorIndice['ascendant'] || { sign: 'Unknown', degree: 0 },
+        ascendente: ascendenteCalculado,
         mercurio: mapaPorIndice['mercury'] || { sign: 'Unknown', degree: 0 },
         venus: mapaPorIndice['venus'] || { sign: 'Unknown', degree: 0 },
         marte: mapaPorIndice['mars'] || { sign: 'Unknown', degree: 0 },
