@@ -46,6 +46,9 @@ function normalizeSessionRow(row) {
     birthDate: row.birth_date || null,
     birthTime: row.birth_time || null,
     birthLocation: row.birth_location || null,
+    birthNameFull: row.birth_name_full || null,
+    productType: row.product_type || 'mapa-astral',
+    includeNumerology: row.include_numerology || false,
     createdAt: row.created_at ? new Date(row.created_at) : null,
     updatedAt: row.updated_at ? new Date(row.updated_at) : null,
   };
@@ -83,6 +86,9 @@ async function upsertSession(session) {
     birth_date: session.birthDate || null,
     birth_time: session.birthTime || null,
     birth_location: session.birthLocation || null,
+    birth_name_full: session.birthNameFull || null,
+    product_type: session.productType || 'mapa-astral',
+    include_numerology: session.includeNumerology || false,
     created_at: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
     updated_at: new Date().toISOString()
   };
@@ -515,14 +521,23 @@ async function generateReportText(session) {
       .map(h => `${h.role === 'user' ? 'Usuário' : 'Mentor'}: ${h.message}`)
       .join('\n');
 
+    let systemPrompt = REPORT_PROMPT;
+    let userContent = `Nome: ${session.name}\nEmail: ${session.email}\n\nHistórico da sessão:\n${historico}`;
+
+    // Se incluir numerologia, adicionar instrução especial para 2 seções
+    if (session.includeNumerology) {
+      systemPrompt += `\n\n--- INSTRUÇÕES ESPECIAIS ---\nEste é um relatório DUAL (Mapa Astral + Numerologia). Estruture o documento com DUAS SEÇÕES CLARAMENTE SEPARADAS:\n1. Seção de Mapa Astral (análise astrológica)\n2. Seção de Numerologia (análise numerológica baseada em ${session.birthNameFull || session.name})\nMantenha ambas as análises coerentes e integradas ao mesmo tempo, mas com seções distintas.`;
+      userContent += `\n\nNome de nascimento/solteira para numerologia: ${session.birthNameFull || session.name}`;
+    }
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
       max_tokens: 4096,
-      system: REPORT_PROMPT,
+      system: systemPrompt,
       messages: [
         {
           role: 'user',
-          content: `Nome: ${session.name}\nEmail: ${session.email}\n\nHistórico da sessão:\n${historico}`
+          content: userContent
         }
       ]
     });
@@ -1446,7 +1461,7 @@ app.post('/api/chat', async (req, res) => {
       { role: 'user', content: `${message}${contextBlock}` }
     ];
 
-    // ── INJEÇÃO DE CONTEXTOS (Mapa Astral, Pacote, Jornada) ──
+    // ── INJEÇÃO DE CONTEXTOS (Mapa Astral, Numerologia, Pacote, Jornada) ──
     let systemPromptFinal = SYSTEM_PROMPT;
     let pacoteAtivo = null;
 
@@ -1458,6 +1473,23 @@ app.post('/api/chat', async (req, res) => {
         birthLocation: session.birthLocation
       });
       console.log(`[MAPA_ASTRAL] Contexto astrológico injetado para sessão ${sessionId}`);
+    }
+
+    // Injetar contexto de Numerologia se incluído no produto
+    if (session.includeNumerology && session.birthNameFull) {
+      const knowledgeNumerologia = await searchKnowledge(`numerologia ${session.name} ${session.birthNameFull}`);
+      if (knowledgeNumerologia.length > 0) {
+        const contextoBlocoNum = `\n\n--- CONTEXTO NUMEROLÓGICO ---\n${knowledgeNumerologia.join('\n\n')}`;
+        systemPromptFinal += contextoBlocoNum;
+        console.log(`[NUMEROLOGIA] Contexto numerológico injetado para sessão ${sessionId}`);
+      }
+    } else if (session.includeNumerology) {
+      const knowledgeNumerologia = await searchKnowledge(`numerologia ${session.name}`);
+      if (knowledgeNumerologia.length > 0) {
+        const contextoBlocoNum = `\n\n--- CONTEXTO NUMEROLÓGICO ---\n${knowledgeNumerologia.join('\n\n')}`;
+        systemPromptFinal += contextoBlocoNum;
+        console.log(`[NUMEROLOGIA] Contexto numerológico injetado para sessão ${sessionId}`);
+      }
     }
 
     if (session.email) {
@@ -1662,7 +1694,7 @@ app.post('/api/transcrever', upload.single('audio'), async (req, res) => {
 // ── MAPA ASTRAL: checkout com dados de nascimento ────────────────
 app.post('/api/checkout/mapa-astral', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, metodoPagamento } = req.body;
+    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology, metodoPagamento } = req.body;
 
     if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
@@ -1676,6 +1708,9 @@ app.post('/api/checkout/mapa-astral', async (req, res) => {
       birthDate,
       birthTime,
       birthLocation,
+      birthNameFull: birthNameFull || null,
+      productType: productType || 'mapa-astral',
+      includeNumerology: includeNumerology || false,
       history: [],
       counter: 0,
       paid: false,
@@ -1758,7 +1793,7 @@ app.get('/api/checkout/mapa-astral/status/:pedidoId', async (req, res) => {
 
 app.post('/api/checkout/mapa-astral/preference', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation } = req.body;
+    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology } = req.body;
 
     if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
@@ -1776,6 +1811,9 @@ app.post('/api/checkout/mapa-astral/preference', async (req, res) => {
       birthDate,
       birthTime,
       birthLocation,
+      birthNameFull: birthNameFull || null,
+      productType: productType || 'mapa-astral',
+      includeNumerology: includeNumerology || false,
       history: [],
       counter: 0,
       paid: false,

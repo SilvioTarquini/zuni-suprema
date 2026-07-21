@@ -202,15 +202,15 @@
 <body>
   <div class="container">
     <div class="logo">ZUNI Suprema</div>
-    <h1>Leitura de Mapa Astral</h1>
-    <p class="subtitle">Revelando seu destino cósmico</p>
-    <p class="progress-indicator">Seu perfil astrológico</p>
+    <h1 id="titulo-produto">Leitura de Mapa Astral</h1>
+    <p class="subtitle" id="subtitulo-produto">Revelando seu destino cósmico</p>
+    <p class="progress-indicator" id="progress-produto">Seu perfil astrológico</p>
     <div class="card">
       <div class="price-block">
-        <div class="price"><span>R$</span> 29,90</div>
-        <div class="price-desc">leitura completa em tempo real</div>
+        <div class="price"><span>R$</span> <span id="preco-produto">29,90</span></div>
+        <div class="price-desc" id="desc-preco">leitura completa em tempo real</div>
       </div>
-      <ul class="features">
+      <ul class="features" id="features-produto">
         <li>Análise profunda do seu mapa astral</li>
         <li>Interpretação dos planetas e signos</li>
         <li>Insights sobre sua jornada cósmica</li>
@@ -235,6 +235,9 @@
 
       <label for="birthLocation" class="field-label">Local de nascimento (cidade, país)</label>
       <input type="text" id="birthLocation" name="birthLocation" placeholder="Ex: São Paulo, Brasil" />
+
+      <label for="birthNameFull" class="field-label" id="label-birthNameFull" style="display:none;">Nome completo de nascimento / de solteira <span style="font-size:12px;color:#888;">(opcional)</span></label>
+      <input type="text" id="birthNameFull" name="birthNameFull" placeholder="Ex: Maria da Silva Santos (apenas se diferente do nome acima)" style="display:none;" />
 
       <div style="display:flex; gap:10px; margin-bottom:12px; margin-top:20px;">
         <button type="button" id="btn-pix" onclick="selecionarMetodo('PIX')" style="flex:1; padding:12px; border-radius:8px; border:2px solid #333; background:#1a1a1a; color:#f0f0f0; cursor:pointer; width:auto; margin-top:0;">PIX</button>
@@ -280,6 +283,38 @@
     let pollingInterval = null;
     let pixTentativas = 0;
     const MAX_TENTATIVAS_PIX = 36;
+
+    // ── PARAMETRIZAÇÃO DE TIPO DE PRODUTO ──
+    const params = new URLSearchParams(window.location.search);
+    const tipoCheckout = params.get('type') || 'mapa-astral';
+    let preco = 29.90;
+    let productType = 'mapa-astral';
+    let includeNumerology = false;
+
+    if (tipoCheckout === 'numerologia-astral') {
+      productType = 'mapa-astral+numerologia';
+      includeNumerology = true;
+      preco = 49.90;
+
+      document.getElementById('titulo-produto').textContent = 'Mapa Astral + Numerologia';
+      document.getElementById('subtitulo-produto').textContent = 'Revelando seu destino cósmico e pessoal';
+      document.getElementById('progress-produto').textContent = 'Seu perfil astrológico e numerológico';
+      document.getElementById('preco-produto').textContent = '49,90';
+      document.getElementById('desc-preco').textContent = 'leitura completa em tempo real (astrologia + numerologia)';
+
+      const featuresProduto = document.getElementById('features-produto');
+      featuresProduto.innerHTML = `
+        <li>Análise profunda do seu mapa astral</li>
+        <li>Interpretação dos planetas e signos</li>
+        <li>Análise numerológica personalizada</li>
+        <li>Insights sobre sua jornada cósmica e pessoal</li>
+        <li>Conversa ao vivo com o Mentor ZUNI (2 perspectivas)</li>
+      `;
+
+      document.getElementById('label-birthNameFull').style.display = 'block';
+      document.getElementById('birthNameFull').style.display = 'block';
+    }
+    // ────────────────────────────────────────────────
 
     function formatarCPF(valor) {
       return valor
@@ -338,15 +373,16 @@
       const birthDate = document.getElementById('birthDate').value;
       const birthTime = document.getElementById('birthTime').value;
       const birthLocation = document.getElementById('birthLocation').value.trim();
+      const birthNameFull = document.getElementById('birthNameFull').value.trim() || null;
       const error = document.getElementById('error');
 
       if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
-        error.textContent = 'Preencha todos os campos para continuar.';
+        error.textContent = 'Preencha todos os campos obrigatórios para continuar.';
         error.style.display = 'block';
         return null;
       }
 
-      return { name, email, cpf, birthDate, birthTime, birthLocation };
+      return { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology };
     }
 
     async function verificarRetornoCartao() {
@@ -376,7 +412,7 @@
           const data = await res.json();
           if (data.pago) {
             clearInterval(pollingInterval);
-            fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+            fbq('track', 'Purchase', { value: preco, currency: 'BRL' });
             window.location.href = `/chat.html?sessionId=${sessionIdRetorno}`;
             return;
           }
@@ -427,6 +463,7 @@
           document.getElementById('pix-container').style.display = 'block';
           pixTentativas = 0;
           pollingInterval = setInterval(verificarPagamento, 5000);
+          fbq('track', 'Purchase', { value: preco, currency: 'BRL' });
         } else {
           throw new Error(data.error || 'Erro ao gerar QR Code PIX.');
         }
@@ -446,7 +483,7 @@
         const data = await res.json();
         if (data.pago) {
           clearInterval(pollingInterval);
-          fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+          fbq('track', 'Purchase', { value: preco, currency: 'BRL' });
           window.location.href = `/chat.html?sessionId=${sessionIdCheckout}`;
           return;
         }

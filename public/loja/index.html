@@ -269,6 +269,11 @@
 </div>
 
 <main>
+  <div class="grade" id="grade-servicos">
+    <!-- Cards de serviços (Mapa Astral) serão renderizados aqui -->
+  </div>
+
+  <h2 style="margin-top: 56px; margin-bottom: 28px; font-size: 1.4rem; font-weight: normal; letter-spacing: 0.5px; color: var(--dourado-suave);">Livros</h2>
   <div class="grade" id="grade-livros">
     <!-- Cards dos livros serão renderizados aqui dinamicamente -->
   </div>
@@ -332,6 +337,61 @@
     }
   };
 
+  // Renderizar serviços (Mapa Astral)
+  function renderizarServicos() {
+    const gradeServicos = document.getElementById('grade-servicos');
+
+    const servicos = [
+      {
+        id: 'mapa-astral',
+        titulo: 'Leitura de Mapa Astral',
+        preco: 29.90,
+        resumo: 'Análise profunda do seu mapa astral com conversa ao vivo com o Mentor ZUNI.',
+        descricao: 'Receba uma leitura personalizada que interpreta os planetas, signos e aspectos do seu mapa astral, revelando insights sobre sua jornada cósmica.',
+        url: '/checkout-mapa-astral.html'
+      },
+      {
+        id: 'mapa-astral-numerologia',
+        titulo: 'Mapa Astral + Numerologia',
+        preco: 49.90,
+        resumo: 'Análise combinada de astrologia e numerologia — duas perspectivas sobre seu destino.',
+        descricao: 'Explore simultaneamente seu mapa astral e sua análise numerológica. O Mentor ZUNI integra as duas visões para uma compreensão mais completa de quem você é e seu caminho nesta vida.',
+        url: '/checkout-mapa-astral.html?type=numerologia-astral'
+      }
+    ];
+
+    servicos.forEach(servico => {
+      const card = document.createElement('article');
+      card.className = 'livro';
+      card.innerHTML = `
+        <div class="capa" style="background: linear-gradient(160deg, #2a2416, #0d0c0a); color: var(--dourado); font-size: 2.2rem; font-weight: bold; letter-spacing: 0; text-transform: none;">✦</div>
+        <div class="info">
+          <h2>${servico.titulo}</h2>
+          <p class="resumo">${servico.resumo}</p>
+          <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
+          <div class="descricao-expandida" role="region">
+            <p>${servico.descricao}</p>
+          </div>
+          <p class="preco">R$ ${servico.preco.toFixed(2)}</p>
+          <p class="etiqueta-digital">Sessão ao vivo · consulta personalizada</p>
+          <a class="comprar" href="${servico.url}">Começar sessão</a>
+        </div>
+      `;
+
+      gradeServicos.appendChild(card);
+
+      const btnExpandir = card.querySelector('.expandir');
+      const descExpandida = card.querySelector('.descricao-expandida');
+
+      btnExpandir.addEventListener('click', function () {
+        const estaAberta = descExpandida.classList.contains('ativa');
+        descExpandida.classList.toggle('ativa');
+        btnExpandir.setAttribute('aria-expanded', !estaAberta);
+        btnExpandir.textContent = estaAberta ? '+ Leia mais' : '- Fechar';
+      });
+    });
+  }
+
   // Renderizar cards dos livros
   function renderizarLivros() {
     const gradiLivros = document.getElementById('grade-livros');
@@ -374,7 +434,10 @@
   }
 
   // Renderizar ao carregar
-  document.addEventListener('DOMContentLoaded', renderizarLivros);
+  document.addEventListener('DOMContentLoaded', () => {
+    renderizarServicos();
+    renderizarLivros();
+  });
 </script>
 
 </body>
