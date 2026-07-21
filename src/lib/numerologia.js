@@ -144,7 +144,7 @@ async function calcularNumerologia(nomeCompleto, dataNascimento) {
   const essenciaTexto = await buscarInterpretacaoEssencia(essencia);
 
   // Gancho inspirador para levar ao Mapa Integrado
-  const gancho = `Estes números que você acabou de descobrir são apenas os primeiros passos de uma jornada numerológica muito mais profunda. O Mapa Integrado ZUNI revela 8 camadas adicionais de sua essência numérica — números mestres, ciclos pessoais, desafios e talentos ocultos que definem sua trajetória completa. Cada camada adiciona contexto e precisão, transformando um retrato em uma verdadeira radiografia da sua alma.`;
+  const gancho = `Estes números que você acabou de descobrir são apenas os primeiros passos de uma jornada numerológica muito mais profunda. O Mapa Integrado ZUNI revela 8 camadas adicionais de sua essência numérica — números mestres, ciclos pessoais, desafios e talentos ocultos que definem sua trajetória completa. Cada camada adiciona contexto e significado, transformando um primeiro encontro em um retrato profundo e multidimensional da sua verdadeira essência.`;
 
   // Interpretação combinada para exibição única
   const interpretacao = `**Seu Caminho de Vida (${caminhoDeVida}):**\n${caminhoDeVidaTexto}\n\n**Seu Número da Essência (${essencia}):**\n${essenciaTexto}\n\n**Próximo Passo:**\n${gancho}`;
