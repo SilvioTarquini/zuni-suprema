@@ -199,6 +199,7 @@ async function enviarResultado() {
         email,
         caminhoDeVida: estadoSessao.resultado.caminhoDeVida,
         essencia: estadoSessao.resultado.essencia,
+        interpretacao: estadoSessao.resultado.interpretacao,
         codigo
       })
     });

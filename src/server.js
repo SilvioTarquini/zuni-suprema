@@ -2277,7 +2277,7 @@ app.post('/api/experimente-calcular-numerologia', async (req, res) => {
  */
 app.post('/api/experimente-capturar-lead', async (req, res) => {
   try {
-    const { nomeCompleto, dataNascimento, email, caminhoDeVida, essencia, codigo } = req.body;
+    const { nomeCompleto, dataNascimento, email, caminhoDeVida, essencia, interpretacao, codigo } = req.body;
 
     if (!email || !nomeCompleto) {
       return res.status(400).json({ sucesso: false, mensagem: 'E-mail e nome são obrigatórios.' });
@@ -2288,7 +2288,7 @@ app.post('/api/experimente-capturar-lead', async (req, res) => {
       return res.status(400).json({ sucesso: false, mensagem: 'E-mail inválido.' });
     }
 
-    const resultado = { caminhoDeVida, essencia, interpretacao: '' };
+    const resultado = { caminhoDeVida, essencia, interpretacao };
 
     // Enviar e-mail
     const respostaEmail = await enviarResultadoNumerologia(email, nomeCompleto, resultado);

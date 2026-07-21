@@ -47,7 +47,7 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
   <div class="container">
     <div class="header">
       <h1>✨ Seu Perfil Numerológico</h1>
-      <p>Descobri a energia que flui através de você</p>
+      <p>Descubra a energia que flui através de você</p>
     </div>
 
     <div class="content">
@@ -67,8 +67,8 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
       </div>
 
       <div class="interpretacao">
-        <strong>Sobre você:</strong>
-        <p>${interpretacao}</p>
+        <strong>Sua essência numerológica:</strong>
+        <p>${interpretacao || 'Número singular com potencial único.'}</p>
       </div>
 
       <div class="cta-section">
