@@ -31,9 +31,9 @@ async function validarCodigo(codigo) {
 
     // Buscar código correspondente (case-insensitive)
     const codigoNormalizado = codigo.toLowerCase().trim();
-    const data = todosCodigos.find(c => c.codigo.toLowerCase() === codigoNormalizado);
+    const data = todosCodigos?.find(c => c.codigo.toLowerCase() === codigoNormalizado);
 
-    if (error || !data) {
+    if (!data) {
       return {
         valido: false,
         ativo: false,
