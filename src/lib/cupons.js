@@ -124,7 +124,7 @@ async function validarCupom(codigo) {
  * Calcula o preço final de um livro dado um cupom já validado.
  * Regra: 'sessao' = percentual sem teto em qualquer categoria;
  * 'campanha' = percentual sem teto em 'compacta', com teto_reais em
- * 'principal' (ou qualquer categoria que não seja 'compacta').
+ * 'principal' e 'saude-longevidade'.
  *
  * @param {{preco: number, categoria: string}} livro
  * @param {{tipo: string, percentual: number, teto_reais: number|null}} cupom
