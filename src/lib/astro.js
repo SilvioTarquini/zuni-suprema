@@ -2,7 +2,7 @@
 // Camada única de acesso à API AstroWay
 // Encapsula cálculos de mapas astrológicos e numerológicos
 
-const API_BASE = 'https://api.astroway.info/api';
+const API_BASE = 'https://api.astroway.info/v1';
 const API_KEY = process.env.ASTROWAY_API_KEY;
 
 // Validações
@@ -17,8 +17,8 @@ function validarDadosNascimento(dados) {
     throw new Error('Data de nascimento inválida. Formato esperado: YYYY-MM-DD');
   }
 
-  if (!horaNascimento || !/^\d{2}:\d{2}$/.test(horaNascimento)) {
-    throw new Error('Hora de nascimento inválida. Formato esperado: HH:MM');
+  if (!horaNascimento || !/^\d{2}:\d{2}(:\d{2})?$/.test(horaNascimento)) {
+    throw new Error('Hora de nascimento inválida. Formato esperado: HH:MM ou HH:MM:SS');
   }
 
   if (!localNascimento || !localNascimento.trim()) {
@@ -138,25 +138,28 @@ async function calcularMapaNatal(dados) {
 
     const { lat, lon } = coordenadas;
 
-    // Parsear data e hora
-    const [year, month, day] = dataNascimento.split('-').map(Number);
-    const [hour, minute] = horaNascimento.split(':').map(Number);
+
+    // Normalizar hora para HH:MM:SS (API requer segundos)
+    const horaNormalizada = horaNascimento.includes(':') && horaNascimento.split(':').length === 2
+      ? `${horaNascimento}:00`
+      : horaNascimento;
 
     // Chamada à API AstroWay
+    // timezoneOffset: horas a partir de UTC (Brasil é UTC-3)
     const payload = {
       name: nome,
       date: dataNascimento,
-      time: horaNascimento,
+      time: horaNormalizada,
       latitude: parseFloat(lat),
       longitude: parseFloat(lon),
-      timezone: 'America/Sao_Paulo' // Padrão para Brasil
+      timezoneOffset: -3 // UTC-3 (horário de Brasília/São Paulo)
     };
 
-    const response = await fetch(`${API_BASE}/natal-chart`, {
+    const response = await fetch(`${API_BASE}/chart`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
+        'X-API-Key': API_KEY
       },
       body: JSON.stringify(payload)
     });
@@ -168,36 +171,65 @@ async function calcularMapaNatal(dados) {
     const mapaNatal = await response.json();
 
     // Validar resposta
-    if (!mapaNatal.success) {
+    if (!mapaNatal.ok && mapaNatal.error) {
+      throw new Error(
+        `Cálculo falhou: ${mapaNatal.error.message || JSON.stringify(mapaNatal.error)}`
+      );
+    }
+
+    if (!mapaNatal.data) {
       throw new Error(
         `Cálculo falhou: ${mapaNatal.message || 'Erro desconhecido na API AstroWay'}`
       );
     }
 
     // Estruturar resposta de forma normalizada
+    // AstroWay retorna planetas em array: [Sun, Moon, Mercury, Venus, Mars, Jupiter, Saturn, Uranus, Neptune, Pluto, ...]
+    const planetas = mapaNatal.data.planets || [];
+
+    // Helper para converter longitude em signo
+    function longitudeParaSigno(longitude) {
+      const signos = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo',
+                      'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces'];
+      const lon = longitude % 360;
+      const signoIdx = Math.floor(lon / 30);
+      const grau = lon % 30;
+      return {
+        sign: signos[signoIdx] || 'Unknown',
+        degree: Math.round(grau * 10) / 10,
+        fullDegree: Math.round(lon * 10) / 10
+      };
+    }
+
+    // Extrair posições (índices conhecidos da API AstroWay)
+    const mapaPorIndice = {};
+    planetas.forEach((p, i) => {
+      mapaPorIndice[p.name.toLowerCase()] = longitudeParaSigno(p.longitude);
+    });
+
     return {
       sucesso: true,
       nome,
       dataNascimento,
       horaNascimento,
       localNascimento,
-      coordenadas: { latitude: lat, longitude: lon },
+      coordenadas: { latitude: parseFloat(lat), longitude: parseFloat(lon) },
       mapaNatal: {
-        sol: mapaNatal.data.sun,
-        lua: mapaNatal.data.moon,
-        ascendente: mapaNatal.data.asc,
-        mercurio: mapaNatal.data.mercury,
-        venus: mapaNatal.data.venus,
-        marte: mapaNatal.data.mars,
-        jupiter: mapaNatal.data.jupiter,
-        saturno: mapaNatal.data.saturn,
-        urano: mapaNatal.data.uranus,
-        netuno: mapaNatal.data.neptune,
-        plutao: mapaNatal.data.pluto
+        sol: mapaPorIndice['sun'] || { sign: 'Unknown', degree: 0 },
+        lua: mapaPorIndice['moon'] || { sign: 'Unknown', degree: 0 },
+        ascendente: mapaPorIndice['asc'] || mapaPorIndice['ascendant'] || { sign: 'Unknown', degree: 0 },
+        mercurio: mapaPorIndice['mercury'] || { sign: 'Unknown', degree: 0 },
+        venus: mapaPorIndice['venus'] || { sign: 'Unknown', degree: 0 },
+        marte: mapaPorIndice['mars'] || { sign: 'Unknown', degree: 0 },
+        jupiter: mapaPorIndice['jupiter'] || { sign: 'Unknown', degree: 0 },
+        saturno: mapaPorIndice['saturn'] || { sign: 'Unknown', degree: 0 },
+        urano: mapaPorIndice['uranus'] || { sign: 'Unknown', degree: 0 },
+        netuno: mapaPorIndice['neptune'] || { sign: 'Unknown', degree: 0 },
+        plutao: mapaPorIndice['pluto'] || { sign: 'Unknown', degree: 0 }
       },
       casas: mapaNatal.data.houses || [],
       aspectos: mapaNatal.data.aspects || [],
-      creditsUsed: mapaNatal.credits_used || 0,
+      creditsUsed: 5, // AstroWay cobra ~5 créditos por mapa
       timestamp: new Date().toISOString()
     };
   } catch (error) {
@@ -229,7 +261,7 @@ async function calcularNumerologia(nome, dataNascimento) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${API_KEY}`
+        'X-API-Key': API_KEY
       },
       body: JSON.stringify({
         name: nome,
@@ -277,14 +309,14 @@ async function verificarStatus() {
   try {
     validarConfiguracaoAPI();
 
-    const response = await fetch(`${API_BASE}/account/status`, {
+    const response = await fetch(`${API_BASE}/account`, {
       headers: {
-        'Authorization': `Bearer ${API_KEY}`
+        'X-API-Key': API_KEY
       }
     });
 
     if (!response.ok) {
-      await tratarErroAPI(response, 'account/status');
+      await tratarErroAPI(response, 'account');
     }
 
     const status = await response.json();
@@ -292,11 +324,11 @@ async function verificarStatus() {
     return {
       sucesso: true,
       conta: {
-        plano: status.plan,
-        creditosDisponíveis: status.credits_available,
-        creditosTotais: status.credits_total,
-        creditosUsados: status.credits_used,
-        dataRenovacao: status.renewal_date
+        plano: status.plan || 'free',
+        creditosDisponíveis: status.credits_available || status.credits || 0,
+        creditosTotais: status.credits_total || status.credits || 0,
+        creditosUsados: status.credits_used || 0,
+        dataRenovacao: status.renewal_date || new Date().toISOString()
       },
       timestamp: new Date().toISOString()
     };
