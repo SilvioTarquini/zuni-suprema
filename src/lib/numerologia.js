@@ -6,10 +6,15 @@ const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
 
 /**
  * Calcula o número pitagórico (número de raiz única)
- * Reduz iterativamente até chegar a um dígito (1-9)
+ * Reduz iterativamente até chegar a um dígito (1-9) ou número-mestre (11, 22, 33)
  */
 function reduzirAoDigito(num) {
   while (num >= 10) {
+    // Se é número-mestre, pára aqui
+    if (num === 11 || num === 22 || num === 33) {
+      return num;
+    }
+    // Senão, continua reduzindo
     num = Math.floor(num / 10) + (num % 10);
   }
   return num;
