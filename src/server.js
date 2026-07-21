@@ -1873,6 +1873,47 @@ app.get('/api/checkout/mapa-astral/session-status/:sessionId', async (req, res) 
   }
 });
 
+// ── TESTE: criar sessão mapa-astral já paga (apenas com ADMIN_TEST_KEY) ──
+app.post('/api/checkout/mapa-astral/test', async (req, res) => {
+  try {
+    const adminKey = req.headers['x-admin-key'];
+    if (!adminKey || adminKey !== process.env.ADMIN_TEST_KEY) {
+      return res.status(401).json({ error: 'Chave de acesso inválida.' });
+    }
+
+    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology } = req.body;
+
+    if (!name || !email || !birthDate || !birthTime || !birthLocation) {
+      return res.status(400).json({ error: 'Campos obrigatórios: name, email, birthDate, birthTime, birthLocation' });
+    }
+
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name,
+      email,
+      birthDate,
+      birthTime,
+      birthLocation,
+      birthNameFull: birthNameFull || null,
+      productType: productType || 'mapa-astral',
+      includeNumerology: includeNumerology || false,
+      history: [],
+      counter: 0,
+      paid: true,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+
+    console.log(`[TEST] Sessão de teste criada: ${sessionId} (produto: ${productType})`);
+    return res.json({ sessionId, chatUrl: `/chat.html?sessionId=${sessionId}` });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-astral/test:', error);
+    return res.status(500).json({ error: 'Erro ao criar sessão de teste.' });
+  }
+});
+
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Servidor ZUNI Suprema escutando na porta ${PORT}`);
