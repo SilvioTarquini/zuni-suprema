@@ -1358,6 +1358,12 @@ app.get('/api/checkout/status/:pedidoId', async (req, res) => {
 
 app.post('/api/sessao/iniciar', async (req, res) => {
   try {
+    // Validar chave de admin/teste
+    const adminKey = req.headers['x-admin-key'];
+    if (!adminKey || adminKey !== process.env.ADMIN_TEST_KEY) {
+      return res.status(401).json({ error: 'Chave de acesso inválida ou ausente.' });
+    }
+
     const { name, email } = req.body;
 
     if (!name || !email) {
