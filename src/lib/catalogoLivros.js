@@ -56,6 +56,7 @@ const CATALOGO = {
     volume: 2,
     preco: 57.90,
     categoria: 'saude-longevidade',
+    capa: '/loja/capas/arquitetura-excelencia-humana-ii.png',
     resumo: 'Uma jornada pela arquitetura biológica que sustenta a energia, a clareza mental e a longevidade — para quem busca entender as causas por trás do cansaço, da mente nebulosa e da perda de vitalidade, e não apenas tratar os sintomas.',
     descricao: 'O corpo nunca funcionou em compartimentos isolados. Em dezenove capítulos, esta obra conecta energia celular, hormônios, metabolismo, inflamação, sono e longevidade em uma única arquitetura biológica — mostrando por que tratar sintomas isolados raramente resolve, e como recuperar clareza mental, energia e propósito compreendendo o sistema como um todo.'
   },
