@@ -13,6 +13,25 @@ if (process.env.SENDGRID_API_KEY) {
  * Envia e-mail via SendGrid com resultado da numerologia
  * E-mail contém: Caminho de Vida, Essência, Interpretação, links para produtos
  */
+/**
+ * Converte markdown simples para HTML
+ */
+function markdownParaHTML(texto) {
+  if (!texto) return '';
+
+  return texto
+    // Negrito: **texto** → <strong>texto</strong>
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    // Quebras de linha duplas: \n\n → fechamento de parágrafo
+    .split('\n\n')
+    .map(paragrafo => {
+      // Quebras de linha simples dentro do parágrafo
+      const comQuebras = paragrafo.replace(/\n/g, '<br/>');
+      return `<p style="margin: 16px 0; line-height: 1.8; color: #555;">${comQuebras}</p>`;
+    })
+    .join('');
+}
+
 async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
   if (!process.env.SENDGRID_API_KEY) {
     console.warn('SENDGRID_API_KEY não configurada; e-mail não será enviado');
@@ -22,17 +41,8 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
   try {
     const { caminhoDeVida, essencia, interpretacao } = resultado;
 
-    // Processar interpretação para HTML (quebras de linha e negrito)
-    const interpretacaoHTML = interpretacao
-      ? interpretacao
-          .split('\n\n')
-          .map(paragrafo => {
-            return `<p style="margin: 16px 0; line-height: 1.7;">${paragrafo
-              .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
-              .replace(/\n/g, '<br/>')}</p>`;
-          })
-          .join('')
-      : '<p>Número singular com potencial único.</p>';
+    // Processar interpretação para HTML (markdown → HTML)
+    const interpretacaoHTML = markdownParaHTML(interpretacao);
 
     const htmlContent = `
 <!DOCTYPE html>
@@ -51,14 +61,17 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
     .numero-box { background: white; border-left: 4px solid #d4af37; padding: 20px; margin: 20px 0; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
     .numero-label { color: #d4af37; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 8px; }
     .numero-valor { font-size: 42px; color: #1a1a3e; font-weight: bold; margin-bottom: 12px; }
-    .numero-texto { color: #555; font-size: 14px; line-height: 1.8; }
+    .numero-conteudo { color: #555; font-size: 14px; line-height: 1.8; }
+    .numero-conteudo p { margin: 12px 0; }
+    .numero-conteudo strong { color: #1a1a3e; font-weight: 700; }
     .proximo-passo { background: linear-gradient(135deg, #f5f9ff 0%, #f0f7ff 100%); border-left: 4px solid #d4af37; padding: 20px; margin-top: 25px; border-radius: 6px; }
     .proximo-passo-label { color: #d4af37; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; font-weight: 700; margin-bottom: 10px; }
-    .proximo-passo-texto { color: #555; font-size: 14px; line-height: 1.8; font-style: italic; }
+    .proximo-passo-conteudo { color: #555; font-size: 14px; line-height: 1.8; }
+    .proximo-passo-conteudo p { margin: 12px 0; font-style: italic; }
+    .proximo-passo-conteudo strong { color: #1a1a3e; font-weight: 700; }
     .cta-section { margin-top: 30px; text-align: center; padding-top: 20px; border-top: 1px solid #e0e0e0; }
     .cta-section p { color: #1a1a3e; font-weight: 600; margin-bottom: 15px; }
-    .cta-button { display: inline-block; background: #d4af37; color: #1a1a3e; padding: 12px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; margin: 8px 5px; font-size: 14px; transition: background 0.3s; }
-    .cta-button:hover { background: #c9a02a; }
+    .cta-button { display: inline-block; background: #d4af37; color: #1a1a3e; padding: 12px 28px; text-decoration: none; border-radius: 4px; font-weight: 600; margin: 8px 5px; font-size: 14px; }
     .footer { text-align: center; color: #999; font-size: 12px; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e0e0e0; }
     .footer a { color: #d4af37; text-decoration: none; }
   </style>
@@ -77,18 +90,24 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
       <div class="numero-box">
         <div class="numero-label">Seu Caminho de Vida</div>
         <div class="numero-valor">${caminhoDeVida}</div>
-        <div class="numero-texto">${interpretacao ? interpretacao.split('\n\n')[0] : 'Seu caminho de vida e propósito.'}</div>
+        <div class="numero-conteudo">
+          ${markdownParaHTML(interpretacao ? interpretacao.split('\n\n')[0] : 'Seu caminho de vida e propósito.')}
+        </div>
       </div>
 
       <div class="numero-box">
         <div class="numero-label">Seu Número da Essência</div>
         <div class="numero-valor">${essencia}</div>
-        <div class="numero-texto">${interpretacao ? interpretacao.split('\n\n')[1] : 'Sua energia fundamental.'}</div>
+        <div class="numero-conteudo">
+          ${markdownParaHTML(interpretacao ? interpretacao.split('\n\n')[1] : 'Sua energia fundamental.')}
+        </div>
       </div>
 
       <div class="proximo-passo">
         <div class="proximo-passo-label">Próximo Passo</div>
-        <div class="proximo-passo-texto">${interpretacao ? interpretacao.split('\n\n')[2] : 'Descubra as camadas adicionais de sua essência no Mapa Integrado ZUNI.'}</div>
+        <div class="proximo-passo-conteudo">
+          ${markdownParaHTML(interpretacao ? interpretacao.split('\n\n')[2] : 'Descubra as camadas adicionais de sua essência no Mapa Integrado ZUNI.')}
+        </div>
       </div>
 
       <div class="cta-section">
