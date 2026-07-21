@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa Integrado — ZUNI Suprema</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0f0f0f;
+      color: #f2ead9;
+      font-family: Georgia, 'Times New Roman', serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 600px;
+      width: 100%;
+      background: #1a1a1a;
+      border: 1px solid #2a2620;
+      border-radius: 8px;
+      padding: 40px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .logo {
+      font-size: 32px;
+      font-weight: bold;
+      color: #B8963E;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #b6ab93;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #d9c68f;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 12px;
+      background: #0f0f0f;
+      border: 1px solid #2a2620;
+      border-radius: 4px;
+      color: #f2ead9;
+      font-family: Georgia, serif;
+      font-size: 14px;
+      transition: border-color 0.3s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: #B8963E;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+
+    .info-box {
+      background: rgba(184, 150, 62, 0.1);
+      border: 1px solid #B8963E;
+      border-radius: 4px;
+      padding: 15px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      line-height: 1.6;
+      color: #d9c68f;
+    }
+
+    .info-box strong {
+      color: #B8963E;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      background: #B8963E;
+      color: #0f0f0f;
+      border: none;
+      border-radius: 4px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-family: Georgia, serif;
+    }
+
+    button:hover {
+      background: #d9c68f;
+    }
+
+    button:disabled {
+      background: #666;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      text-align: center;
+      margin: 40px 0;
+    }
+
+    .spinner {
+      border: 3px solid #2a2620;
+      border-top: 3px solid #B8963E;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .qr-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    .qr-code {
+      max-width: 300px;
+      margin: 20px auto;
+    }
+
+    .qr-text {
+      font-size: 12px;
+      color: #b6ab93;
+      word-break: break-all;
+      margin-top: 15px;
+      padding: 15px;
+      background: #0f0f0f;
+      border-radius: 4px;
+      border: 1px solid #2a2620;
+    }
+
+    .copy-btn {
+      padding: 10px 20px;
+      font-size: 13px;
+      margin-top: 10px;
+      background: #666;
+    }
+
+    .copy-btn:hover {
+      background: #888;
+    }
+
+    .error {
+      background: #4a2020;
+      border: 1px solid #8b4444;
+      color: #ffb3b3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .success {
+      background: #204a20;
+      border: 1px solid #448b44;
+      color: #b3ffb3;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .status-message {
+      text-align: center;
+      color: #d9c68f;
+      margin: 20px 0;
+      font-size: 14px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .map-summary {
+      background: rgba(184, 150, 62, 0.05);
+      border: 1px solid #2a2620;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+      font-size: 13px;
+    }
+
+    .map-summary h4 {
+      color: #d9c68f;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+
+    .planet {
+      display: flex;
+      justify-content: space-between;
+      padding: 5px 0;
+      color: #b6ab93;
+    }
+
+    .planet-name {
+      width: 60px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- FORMULÁRIO -->
+    <div id="form-section">
+      <div class="header">
+        <div class="logo">ZUNI Suprema</div>
+        <div class="subtitle">Mapa Integrado — Astral + Astrologia</div>
+      </div>
+
+      <div class="info-box">
+        <strong>Mapa Integrado (R$ 49,90)</strong><br>
+        Seu mapa astral calculado via AstroWay + análise astrológica profunda no chat com o Mentor ZUNI.
+      </div>
+
+      <form id="checkout-form">
+        <!-- Dados Pessoais -->
+        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">Dados Pessoais</h3>
+
+        <div class="form-group">
+          <label for="name">Nome Completo *</label>
+          <input type="text" id="name" name="name" required>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="email">Email *</label>
+            <input type="email" id="email" name="email" required>
+          </div>
+          <div class="form-group">
+            <label for="cpf">CPF (apenas números) *</label>
+            <input type="text" id="cpf" name="cpf" placeholder="12345678900" required>
+          </div>
+        </div>
+
+        <!-- Dados de Nascimento -->
+        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">Data de Nascimento</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="birthDate">Data (YYYY-MM-DD) *</label>
+            <input type="date" id="birthDate" name="birthDate" required>
+          </div>
+          <div class="form-group">
+            <label for="birthTime">Hora (HH:MM) *</label>
+            <input type="time" id="birthTime" name="birthTime" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="birthLocation">Local de Nascimento (Cidade) *</label>
+          <input type="text" id="birthLocation" name="birthLocation" placeholder="São Paulo, Rio de Janeiro, etc." required>
+        </div>
+
+        <div class="form-group">
+          <label for="birthNameFull">Nome de Nascimento (opcional)</label>
+          <input type="text" id="birthNameFull" name="birthNameFull" placeholder="Seu nome de solteira/maiden name (se aplicável)">
+        </div>
+
+        <!-- Método de Pagamento -->
+        <h3 style="margin-top: 30px; margin-bottom: 15px; color: #d9c68f; font-size: 16px;">Método de Pagamento</h3>
+
+        <div class="form-group">
+          <label for="metodoPagamento">Selecione o método *</label>
+          <select id="metodoPagamento" name="metodoPagamento" required>
+            <option value="">-- Escolha um método --</option>
+            <option value="pix">PIX (QR Code)</option>
+            <option value="mercadopago">Cartão de Crédito (via Mercado Pago)</option>
+          </select>
+        </div>
+
+        <div id="error-message" class="error hidden"></div>
+
+        <button type="submit" id="submit-btn">Calcular Mapa e Pagar</button>
+      </form>
+    </div>
+
+    <!-- SEÇÃO DE CÁLCULO (Loading) -->
+    <div id="calculating-section" class="hidden">
+      <div class="header">
+        <div class="logo">ZUNI Suprema</div>
+        <div class="subtitle">Calculando seu mapa astral...</div>
+      </div>
+      <div class="loading">
+        <div class="spinner"></div>
+        <p style="margin-top: 20px; color: #b6ab93;">Conectando ao AstroWay e calculando posições planetárias...</p>
+      </div>
+    </div>
+
+    <!-- SEÇÃO DE PAGAMENTO PIX -->
+    <div id="pix-section" class="hidden">
+      <div class="header">
+        <div class="logo">ZUNI Suprema</div>
+        <div class="subtitle">Seu Mapa Astral foi Calculado!</div>
+      </div>
+
+      <div id="map-display" class="map-summary"></div>
+
+      <div class="info-box" style="margin-top: 30px;">
+        <strong>Próximo passo: Pague via PIX</strong><br>
+        Escaneie o QR code abaixo com seu celular ou copie o código para seu app bancário.
+      </div>
+
+      <div class="qr-container">
+        <img id="qr-image" src="" alt="QR Code PIX" class="qr-code">
+        <div class="qr-text">
+          <strong>Copia e Cola:</strong><br>
+          <span id="qr-text" style="display: block; margin-top: 10px;"></span>
+        </div>
+        <button type="button" class="copy-btn" onclick="copiarCodigo()">Copiar Código PIX</button>
+      </div>
+
+      <div class="status-message">
+        <p id="payment-status">Aguardando pagamento...</p>
+        <p style="font-size: 12px; color: #999; margin-top: 10px;">A confirmação pode levar alguns segundos após o pagamento.</p>
+      </div>
+
+      <button type="button" onclick="verificarPagamento()" style="margin-top: 20px;">Verificar Pagamento</button>
+    </div>
+
+    <!-- SEÇÃO DE SUCESSO -->
+    <div id="success-section" class="hidden">
+      <div class="header">
+        <div class="logo">✓ ZUNI Suprema</div>
+        <div class="subtitle">Pagamento Confirmado!</div>
+      </div>
+
+      <div class="success" style="margin-top: 30px;">
+        Seu mapa astral foi calculado e o pagamento foi confirmado!
+      </div>
+
+      <div id="final-map-display" class="map-summary"></div>
+
+      <div class="info-box" style="margin-top: 30px;">
+        <strong>Próximos passos:</strong><br>
+        1. Acesse o chat com o Mentor ZUNI<br>
+        2. Seu mapa astral estará disponível para análise profunda<br>
+        3. Receba um relatório personalizado ao fim da sessão
+      </div>
+
+      <button type="button" onclick="irParaChat()">Ir para o Chat do Mentor</button>
+    </div>
+
+    <!-- SEÇÃO DE ERRO -->
+    <div id="error-section" class="hidden">
+      <div class="header">
+        <div class="logo">⚠ ZUNI Suprema</div>
+        <div class="subtitle">Ocorreu um Erro</div>
+      </div>
+
+      <div id="error-details" class="error" style="margin-top: 30px;"></div>
+
+      <button type="button" onclick="localizacao.reload()">Tentar Novamente</button>
+    </div>
+  </div>
+
+  <script>
+    const BACKEND_URL = window.location.protocol + '//' + window.location.host;
+    let pedidoId = null;
+    let sessionId = null;
+    let verificarIntervalo = null;
+
+    // Verificar status ao carregar (se voltar da pagina de retorno)
+    window.addEventListener('load', async () => {
+      const params = new URLSearchParams(window.location.search);
+      sessionId = params.get('sessionId');
+      const status = params.get('status');
+
+      if (sessionId && status === 'retorno') {
+        mostrarSecao('calculating-section');
+        await verificarStatusSessao(sessionId);
+      }
+    });
+
+    // Enviar formulário
+    document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        cpf: document.getElementById('cpf').value.replace(/\D/g, ''),
+        birthDate: document.getElementById('birthDate').value,
+        birthTime: document.getElementById('birthTime').value,
+        birthLocation: document.getElementById('birthLocation').value.trim(),
+        birthNameFull: document.getElementById('birthNameFull').value.trim() || null,
+        metodoPagamento: document.getElementById('metodoPagamento').value
+      };
+
+      // Validações
+      if (formData.cpf.length !== 11) {
+        mostrarErro('CPF deve ter 11 dígitos.');
+        return;
+      }
+
+      mostrarSecao('calculating-section');
+      document.getElementById('error-message').classList.add('hidden');
+
+      try {
+        if (formData.metodoPagamento === 'pix') {
+          await criarCheckoutPIX(formData);
+        } else {
+          await criarCheckoutMercadoPago(formData);
+        }
+      } catch (error) {
+        mostrarErro(error.message);
+        mostrarSecao('form-section');
+      }
+    });
+
+    async function criarCheckoutPIX(formData) {
+      const response = await fetch(`${BACKEND_URL}/api/checkout/mapa-integrado`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao criar pedido.');
+      }
+
+      const data = await response.json();
+      pedidoId = data.pedidoId;
+      sessionId = data.sessionId;
+
+      // Exibir mapa
+      exibirMapaNatal(data.mapaNatal);
+
+      // Exibir QR Code
+      document.getElementById('qr-image').src = `data:image/png;base64,${data.qrCodeImage}`;
+      document.getElementById('qr-text').textContent = data.qrCodeText;
+
+      mostrarSecao('pix-section');
+
+      // Verificar pagamento a cada 5 segundos
+      verificarIntervalo = setInterval(() => verificarPagamento(), 5000);
+    }
+
+    async function criarCheckoutMercadoPago(formData) {
+      const response = await fetch(`${BACKEND_URL}/api/checkout/mapa-integrado/preference`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao criar preferência.');
+      }
+
+      const data = await response.json();
+      sessionId = data.sessionId;
+
+      // Redirecionar para Mercado Pago
+      if (data.init_point) {
+        window.location.href = data.init_point;
+      }
+    }
+
+    async function verificarPagamento() {
+      if (!pedidoId) return;
+
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/checkout/mapa-integrado/status/${pedidoId}`);
+        const data = await response.json();
+
+        if (data.pago) {
+          clearInterval(verificarIntervalo);
+          await verificarStatusSessao(sessionId);
+        }
+      } catch (error) {
+        console.error('Erro ao verificar pagamento:', error);
+      }
+    }
+
+    async function verificarStatusSessao(id) {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/checkout/mapa-integrado/session-status/${id}`);
+        const data = await response.json();
+
+        if (data.pago) {
+          // Recuperar dados da sessão para exibir mapa
+          exibirMapaNatalFinal(id);
+          clearInterval(verificarIntervalo);
+          mostrarSecao('success-section');
+        }
+      } catch (error) {
+        console.error('Erro ao verificar sessão:', error);
+      }
+    }
+
+    function exibirMapaNatal(mapa) {
+      let html = '<h4>Seu Mapa Astral</h4>';
+      if (mapa.sol) html += `<div class="planet"><span class="planet-name">☀️ Sol:</span> <span>${mapa.sol.sign} ${Math.round(mapa.sol.degree)}°</span></div>`;
+      if (mapa.lua) html += `<div class="planet"><span class="planet-name">🌙 Lua:</span> <span>${mapa.lua.sign} ${Math.round(mapa.lua.degree)}°</span></div>`;
+      if (mapa.ascendente) html += `<div class="planet"><span class="planet-name">↑ ASC:</span> <span>${mapa.ascendente.sign} ${Math.round(mapa.ascendente.degree)}°</span></div>`;
+
+      document.getElementById('map-display').innerHTML = html;
+    }
+
+    function exibirMapaNatalFinal(sessionId) {
+      // Aqui você poderia buscar os dados da sessão completos
+      let html = '<h4>Seu Mapa Astral Confirmado</h4>';
+      html += '<p style="color: #b6ab93; font-size: 12px; margin-top: 10px;">Detalhes completos disponíveis no chat com o Mentor ZUNI.</p>';
+      document.getElementById('final-map-display').innerHTML = html;
+    }
+
+    function mostrarErro(mensagem) {
+      const errorDiv = document.getElementById('error-message');
+      errorDiv.textContent = mensagem;
+      errorDiv.classList.remove('hidden');
+    }
+
+    function mostrarSecao(secaoId) {
+      document.getElementById('form-section').classList.add('hidden');
+      document.getElementById('calculating-section').classList.add('hidden');
+      document.getElementById('pix-section').classList.add('hidden');
+      document.getElementById('success-section').classList.add('hidden');
+      document.getElementById('error-section').classList.add('hidden');
+
+      document.getElementById(secaoId).classList.remove('hidden');
+    }
+
+    function copiarCodigo() {
+      const texto = document.getElementById('qr-text').textContent;
+      navigator.clipboard.writeText(texto).then(() => {
+        alert('Código PIX copiado!');
+      });
+    }
+
+    function irParaChat() {
+      if (sessionId) {
+        window.location.href = `/chat.html?sessionId=${sessionId}`;
+      }
+    }
+  </script>
+</body>
+</html>

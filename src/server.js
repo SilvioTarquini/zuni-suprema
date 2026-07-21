@@ -17,6 +17,7 @@ const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscar
 const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
+const { calcularMapaNatal } = require('./lib/astro');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -1916,6 +1917,251 @@ app.post('/api/checkout/mapa-astral/test', async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/checkout/mapa-astral/test:', error);
     return res.status(500).json({ error: 'Erro ao criar sessão de teste.' });
+  }
+});
+
+// ═════════════════════════════════════════════════════════════════
+// MAPA INTEGRADO — Mapa Astral com cálculo via AstroWay
+// ═════════════════════════════════════════════════════════════════
+
+app.post('/api/checkout/mapa-integrado', async (req, res) => {
+  try {
+    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, metodoPagamento } = req.body;
+
+    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    // Validar formato de data e hora
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+      return res.status(400).json({ error: 'Data inválida. Formato: YYYY-MM-DD' });
+    }
+
+    if (!/^\d{2}:\d{2}$/.test(birthTime)) {
+      return res.status(400).json({ error: 'Hora inválida. Formato: HH:MM' });
+    }
+
+    // Calcular mapa astral via AstroWay
+    console.log(`[MAPA-INTEGRADO] Calculando mapa para ${name}...`);
+
+    const mapaNatal = await calcularMapaNatal({
+      nome: name,
+      dataNascimento: birthDate,
+      horaNascimento: birthTime,
+      localNascimento: birthLocation
+    });
+
+    if (!mapaNatal.sucesso) {
+      console.error(`[MAPA-INTEGRADO] Erro ao calcular: ${mapaNatal.erro}`);
+      return res.status(400).json({ error: `Erro ao calcular mapa: ${mapaNatal.erro}` });
+    }
+
+    console.log(`[MAPA-INTEGRADO] Mapa calculado com sucesso. Créditos: ${mapaNatal.creditsUsed}`);
+
+    // Criar sessão com dados do mapa
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name,
+      email,
+      birthDate,
+      birthTime,
+      birthLocation,
+      birthNameFull: birthNameFull || null,
+      productType: 'mapa-integrado',
+      includeNumerology: false,
+      mapaNatal: mapaNatal.mapaNatal,
+      coordenadas: mapaNatal.coordenadas,
+      creditsUsed: mapaNatal.creditsUsed,
+      history: [],
+      counter: 0,
+      paid: false,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+
+    // Criar pedido no Mercado Pago
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+
+    const paymentMethod = { id: 'pix', type: 'bank_transfer' };
+    const payment = {
+      amount: '49.90',
+      payment_method: paymentMethod
+    };
+
+    const orderBody = {
+      type: 'online',
+      total_amount: '49.90',
+      external_reference: sessionId,
+      processing_mode: 'automatic',
+      transactions: {
+        payments: [payment]
+      },
+      payer: {
+        email,
+        first_name: firstName,
+        last_name: lastName,
+        identification: { type: 'CPF', number: cpf }
+      }
+    };
+
+    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
+        'Content-Type': 'application/json',
+        'X-Idempotency-Key': uuidv4()
+      },
+      body: JSON.stringify(orderBody)
+    });
+
+    if (!mpRes.ok) {
+      const errText = await mpRes.text();
+      const requestId = mpRes.headers.get('x-request-id');
+      console.error('Erro Mercado Pago (mapa-integrado):', mpRes.status, errText, '| x-request-id:', requestId);
+      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
+    }
+
+    const order = await mpRes.json();
+    const paymentResponse = order.transactions?.payments?.[0];
+
+    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
+    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
+
+    if (!qrCodeText) {
+      console.error('Mercado Pago não retornou QR Code PIX (mapa-integrado):', JSON.stringify(order));
+      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
+    }
+
+    console.log(`[MAPA-INTEGRADO] Pedido criado: ${order.id} (sessão: ${sessionId})`);
+
+    return res.json({
+      sessionId,
+      pedidoId: order.id,
+      qrCodeText,
+      qrCodeImage,
+      mapaNatal: mapaNatal.mapaNatal
+    });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-integrado:', error);
+    return res.status(500).json({ error: 'Erro ao criar pedido.' });
+  }
+});
+
+app.get('/api/checkout/mapa-integrado/status/:pedidoId', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const order = await consultarPedidoMercadoPago(pedidoId);
+    const pago = await marcarPagoSeAprovado(order);
+    return res.json({ pago });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-integrado/status:', error);
+    return res.status(500).json({ pago: false });
+  }
+});
+
+app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
+  try {
+    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull } = req.body;
+
+    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
+      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
+    }
+
+    if (!mpClient) {
+      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
+    }
+
+    // Calcular mapa astral via AstroWay
+    console.log(`[MAPA-INTEGRADO-PREF] Calculando mapa para ${name}...`);
+
+    const mapaNatal = await calcularMapaNatal({
+      nome: name,
+      dataNascimento: birthDate,
+      horaNascimento: birthTime,
+      localNascimento: birthLocation
+    });
+
+    if (!mapaNatal.sucesso) {
+      console.error(`[MAPA-INTEGRADO-PREF] Erro ao calcular: ${mapaNatal.erro}`);
+      return res.status(400).json({ error: `Erro ao calcular mapa: ${mapaNatal.erro}` });
+    }
+
+    // Criar sessão com mapa
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name,
+      email,
+      birthDate,
+      birthTime,
+      birthLocation,
+      birthNameFull: birthNameFull || null,
+      productType: 'mapa-integrado',
+      includeNumerology: false,
+      mapaNatal: mapaNatal.mapaNatal,
+      coordenadas: mapaNatal.coordenadas,
+      creditsUsed: mapaNatal.creditsUsed,
+      history: [],
+      counter: 0,
+      paid: false,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+
+    const [firstName, ...restName] = name.trim().split(/\s+/);
+    const lastName = restName.join(' ') || firstName;
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    const preference = new Preference(mpClient);
+    const result = await preference.create({
+      body: {
+        items: [
+          {
+            id: 'mapa-integrado',
+            title: 'Mapa Integrado — Mapa Astral com Análise Astrológica',
+            quantity: 1,
+            unit_price: 49.90,
+            currency_id: 'BRL'
+          }
+        ],
+        payer: {
+          name: firstName,
+          surname: lastName,
+          email,
+          identification: { type: 'CPF', number: cpf }
+        },
+        external_reference: sessionId,
+        back_urls: {
+          success: `${frontendUrl}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno`,
+          pending: `${frontendUrl}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno`,
+          failure: `${frontendUrl}/checkout-mapa-integrado.html?erro=1`
+        },
+        ...(frontendUrl?.startsWith('https://') ? { auto_return: 'approved' } : {})
+      }
+    });
+
+    console.log(`[MAPA-INTEGRADO-PREF] Preferência criada: ${sessionId}`);
+
+    return res.json({ sessionId, init_point: result.init_point });
+  } catch (error) {
+    console.error('Erro ao criar preferência Mercado Pago (mapa-integrado):', error);
+    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
+  }
+});
+
+app.get('/api/checkout/mapa-integrado/session-status/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+    const session = await getSession(sessionId);
+    if (!session) return res.status(404).json({ pago: false });
+    return res.json({ pago: Boolean(session.paid) });
+  } catch (error) {
+    console.error('Erro em /api/checkout/mapa-integrado/session-status:', error);
+    return res.status(500).json({ pago: false });
   }
 });
 
