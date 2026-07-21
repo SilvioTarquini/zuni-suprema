@@ -17,7 +17,6 @@ const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscar
 const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
-const { calcularPosicoes, formatarPosicaoAstrologica } = require('./lib/calculosAstrologicos');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -299,96 +298,6 @@ Prefira frases curtas. Uma ideia por vez.
 
 Se usar qualquer palavra que o público possa não conhecer, explique logo em seguida, entre parênteses ou na frase seguinte.`;
 
-// ── SYSTEM_PROMPT ESPECÍFICO PARA MAPA ASTRAL (com estrutura progressiva) ──
-const SYSTEM_PROMPT_MAPA_ASTRAL = `Você é o Mentor ZUNI Suprema — especialista em Leitura de Mapa Astral.
-
-Você é firme, inteligente, profundo e genuinamente humano. Fala como um mentor experiente que já viu muitas histórias humanas e sabe que por trás de cada comportamento há uma raiz.
-
-Você é um mentor que sabe e que entrega — cada vez que a pessoa fala, você processa o que ela trouxe e devolve algo de valor real: uma interpretação, uma conexão, um símbolo preciso para o que está vivendo.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-REGRAS DE ENTREGA EM CADA MENSAGEM
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-PRIMEIRA MENSAGEM: Acolha com presença genuína e faça UMA pergunta sobre a vida da pessoa neste momento — o que a trouxe até a leitura hoje.
-
-DA SEGUNDA MENSAGEM EM DIANTE: Toda resposta ENTREGA valor real. Em cada mensagem:
-1. Interprete o que foi trazido — não repita, traduza para um nível de compreensão nova
-2. Nomeie o padrão ou símbolo com precisão
-3. Ofereça uma perspectiva que amplie a compreensão sobre si mesma
-4. Se necessário aprofundar, feche com NO MÁXIMO uma pergunta
-
-Cada resposta deve deixar a pessoa sabendo algo sobre si mesma que ela não sabia antes.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-USO DA BASE DE CONHECIMENTO ASTROLÓGICO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-O contexto entre <contexto_zuni>...</contexto_zuni> é sua fonte primária. Incorpore o conhecimento astrológico de forma fluida e autorizada — nunca cite "de acordo com o documento" ou "a tradição diz", apenas fale com naturalidade, como um especialista.
-
-Use linguagem que conecte o astrológico ao humano: "Esse padrão que você está vivendo, na tradição astrológica, reflete...", "Os antigos viam nesse símbolo uma qualidade de...", "Seu mapa revela um chamado para..."
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ESTRUTURA PROGRESSIVA DA SESSÃO (até 15 trocas)
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-FASE 1: ACOLHIMENTO E CONTEXTO (Trocas 1-2)
-Acolha genuinamente. Ouça onde a pessoa está na vida agora. Sua próxima pergunta pode tocar em como ela se vê, ou o que espera da leitura.
-
-FASE 2: LUMINARES — SOL E LUA (Trocas 3-7)
-Introduza o Sol (essência, vontade de ser) e a Lua (emoções, necessidades internas). Estes são os dois pilares. Conecte-os com o que a pessoa trouxe sobre sua vida. A pessoa começará a se reconhecer nessas imagens.
-
-FASE 3: ASCENDENTE E CASAS (Trocas 8-12)
-Trabalhe o Ascendente (como a pessoa é vista, sua presença no mundo) e explore as casas relevantes (relacionamentos, carreira, saúde, espiritualidade). Amplie a visão de como ela se estrutura na vida.
-
-FASE 4: SÍNTESE E PADRÃO GERAL (Trocas 13-14)
-Conecte os pontos. Mostre como Sol, Lua e Ascendente dialogam. Revele o padrão maior — o "fio condutor" do mapa desta pessoa específica.
-
-FASE 5: ENCERRAMENTO (Troca 15)
-Sinalize que a sessão está chegando ao fim. Ofereça um resumo do que foi revelado — não como lista, mas como narrativa. Anuncie que o Mapa Integrativo (relatório personalizado) será gerado e enviado por email.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-TOM E LINGUAGEM ASTROLÓGICA
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Use linguagem simples, acessível. Evite jargão técnico.
-
-Substitua sempre por palavras do dia a dia:
-- "aspectos planetários" → "relacionamento entre energias"
-- "trígono" → "uma harmonia, uma facilidade"
-- "quadratura" → "um atrito, uma tensão criativa"
-- "conjunção" → "uma fusão, um encontro"
-- "signo" → "um tipo de energia"
-- "casa" → "uma área da vida"
-
-Use comparações poéticas: "Seu Sol está em um signo que...", "A Lua traz essa qualidade de...", "Seu Ascendente funciona como um filtro..."
-
-Nunca seja fatalista. Sempre abra para a possibilidade: "Esse padrão oferece a oportunidade de..."
-
-LIMITES INVIOLÁVEIS:
-- Nunca prediga o futuro de forma absoluta ("você vai...")
-- Nunca feche significados em interpretações únicas — sempre mostre o poder de escolha
-- Nunca minimize ou amplifique os desafios — seja preciso e compassivo
-- Se precisar mencionar suporte profissional, refira-se ao WhatsApp ZUNI
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-FILOSOFIA CENTRAL
-━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-O mapa não determina — revela. Sua tarefa é revelar, a cada troca, algo real sobre quem a pessoa é e o padrão maior que conecta sua vida. Não é prognóstico. É autoconhecimento através do símbolo.`;
-
-// ── FASE 4: NUMEROLOGIA (injeta-se condicionalmente se includeNumerology = true) ──
-const SYSTEM_PROMPT_MAPA_ASTRAL_FASE4_NUMEROLOGIA = `
-
-FASE 4: NUMEROLOGIA — CAMINHO DE VIDA E ANO PESSOAL
-A leitura astrológica agora se complementa com a numerologia. O Caminho de Vida (derivado da data de nascimento) revela o propósito maior. O Ano Pessoal mostra o ciclo atual.
-
-Trabalhe a numerologia com a mesma profundidade: conecte os números com o que já foi revelado do mapa astral. Mostre como Astrologia e Numerologia contam a mesma história sobre esta pessoa, mas através de linguagens diferentes.
-
-Use o mesmo tom poético e humanizado: "O número de seu Caminho revela...", "Este é um ano de..."
-
-Integre ambas as leituras organicamente — não as separe como "agora a astrologia, agora a numerologia". Mostre como dialogam.`;
-
 const REPORT_PROMPT = `Você é o sistema de geração do Mapa Integrativo ZUNI Suprema — o relatório personalizado entregue ao final de cada sessão de mentoria.
 
 Com base no histórico completo da sessão, gere um documento profundo, preciso e genuinamente personalizado. Este não é um relatório genérico — é o espelho da jornada desta pessoa específica, escrito com a linguagem e a filosofia da ZUNI Suprema.
@@ -472,14 +381,9 @@ Se usar qualquer palavra que o público possa não conhecer, explique logo em se
 
 const app = express();
 app.use(cors());
-app.use(express.json());
+app.use(express.static(path.join(__dirname, '../public')));
+app.use('/', livrosRouter);
 
-// Rota raiz — landing page
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-// Rotas de páginas HTML
 app.get('/chat', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/chat.html'));
 });
@@ -491,12 +395,7 @@ app.get('/checkout', (req, res) => {
 app.get('/obrigado', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/obrigado.html'));
 });
-
-// Router de livros (loja e acesso a conteúdo)
-app.use('/', livrosRouter);
-
-// Arquivos estáticos — deve ficar DEPOIS de rotas explícitas para não conflitar
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.json());
 
 function buildSuccessUrl(sessionId) {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
@@ -574,38 +473,6 @@ async function generateClaudeResponse(messages, systemPrompt) {
     console.error('Erro em generateClaudeResponse:', error);
     return 'Desculpe, ocorreu um erro ao processar sua mensagem.';
   }
-}
-
-// Banco de dados de cidades + coordenadas (Brasil)
-const COORDENADAS_CIDADES = {
-  'caieiras': { lat: -23.6517, lon: -46.7522, nome: 'Caieiras, São Paulo' },
-  'são paulo': { lat: -23.5505, lon: -46.6333, nome: 'São Paulo' },
-  'rio de janeiro': { lat: -22.9068, lon: -43.1729, nome: 'Rio de Janeiro' },
-  'belo horizonte': { lat: -19.8267, lon: -43.9516, nome: 'Belo Horizonte' },
-  'brasília': { lat: -15.8267, lon: -47.8644, nome: 'Brasília' },
-  'curitiba': { lat: -25.4284, lon: -49.2733, nome: 'Curitiba' },
-  'salvador': { lat: -13.0044, lon: -38.9693, nome: 'Salvador' },
-  'fortaleza': { lat: -3.7319, lon: -38.5267, nome: 'Fortaleza' },
-  'manaus': { lat: -3.1190, lon: -60.0217, nome: 'Manaus' },
-  'recife': { lat: -8.0476, lon: -34.8770, nome: 'Recife' },
-  'porto alegre': { lat: -30.0346, lon: -51.2177, nome: 'Porto Alegre' },
-  'campinas': { lat: -22.9101, lon: -47.0626, nome: 'Campinas' }
-};
-
-function extrairCoordenadas(localNascimento) {
-  if (!localNascimento) return null;
-
-  const local = localNascimento.toLowerCase().trim();
-
-  // Tentar correspondência exata
-  for (const [chave, coords] of Object.entries(COORDENADAS_CIDADES)) {
-    if (local.includes(chave)) {
-      return coords;
-    }
-  }
-
-  // Se não encontrar, retornar null (requer geocodificação manual)
-  return null;
 }
 
 async function searchKnowledge(query) {
@@ -1598,56 +1465,30 @@ app.post('/api/chat', async (req, res) => {
     let systemPromptFinal = SYSTEM_PROMPT;
     let pacoteAtivo = null;
 
-    // SELECIONAR SYSTEM_PROMPT BASE: Mapa Astral ou genérico
-    if (session.productType === 'mapa-astral' || session.productType === 'mapa-astral+numerologia') {
-      systemPromptFinal = SYSTEM_PROMPT_MAPA_ASTRAL;
-      console.log(`[MAPA_ASTRAL] Usando SYSTEM_PROMPT estruturado para sessão ${sessionId}`);
-
-      // Injetar Fase 4 (Numerologia) condicionalmente
-      if (session.includeNumerology) {
-        systemPromptFinal += SYSTEM_PROMPT_MAPA_ASTRAL_FASE4_NUMEROLOGIA;
-        console.log(`[NUMEROLOGIA] Fase 4 injetada para sessão ${sessionId}`);
-      }
-    }
-
-    // Injetar contexto de Mapa Astral com cálculos astronômicos reais
+    // Injetar contexto de Mapa Astral se dados de nascimento disponíveis
     if (session.birthDate || session.birthTime || session.birthLocation) {
-      let coordenadas = null;
-
-      // Tentar calcular posições astronômicas
-      if (session.birthDate && session.birthTime && session.birthLocation) {
-        try {
-          const coords = extrairCoordenadas(session.birthLocation);
-          if (coords) {
-            const posicoes = calcularPosicoes(session.birthDate, session.birthTime, coords.lat, coords.lon);
-            coordenadas = { ...coords, posicoes };
-            console.log(`[MAPA_ASTRAL] Posições astronômicas calculadas: Sol ${posicoes.sol.signo}, Lua ${posicoes.lua.signo}, ASC ${posicoes.ascendente.signo}`);
-          } else {
-            console.warn(`[MAPA_ASTRAL] Não conseguiu geocodificar: ${session.birthLocation}`);
-          }
-        } catch (err) {
-          console.error(`[MAPA_ASTRAL] Erro ao calcular posições:`, err.message);
-        }
-      }
-
       systemPromptFinal = injetarContextoMapaAstral(systemPromptFinal, {
         birthDate: session.birthDate,
         birthTime: session.birthTime,
         birthLocation: session.birthLocation
-      }, coordenadas);
+      });
       console.log(`[MAPA_ASTRAL] Contexto astrológico injetado para sessão ${sessionId}`);
     }
 
-    // Injetar contexto RAG de Numerologia se incluído no produto
-    if (session.includeNumerology) {
-      const queryNumerologia = session.birthNameFull
-        ? `numerologia ${session.name} ${session.birthNameFull}`
-        : `numerologia ${session.name}`;
-      const knowledgeNumerologia = await searchKnowledge(queryNumerologia);
+    // Injetar contexto de Numerologia se incluído no produto
+    if (session.includeNumerology && session.birthNameFull) {
+      const knowledgeNumerologia = await searchKnowledge(`numerologia ${session.name} ${session.birthNameFull}`);
       if (knowledgeNumerologia.length > 0) {
-        const contextoBlocoNum = `\n\n--- CONTEXTO RAG NUMEROLÓGICO ---\n${knowledgeNumerologia.join('\n\n')}`;
+        const contextoBlocoNum = `\n\n--- CONTEXTO NUMEROLÓGICO ---\n${knowledgeNumerologia.join('\n\n')}`;
         systemPromptFinal += contextoBlocoNum;
-        console.log(`[NUMEROLOGIA] Contexto RAG numerológico injetado para sessão ${sessionId}`);
+        console.log(`[NUMEROLOGIA] Contexto numerológico injetado para sessão ${sessionId}`);
+      }
+    } else if (session.includeNumerology) {
+      const knowledgeNumerologia = await searchKnowledge(`numerologia ${session.name}`);
+      if (knowledgeNumerologia.length > 0) {
+        const contextoBlocoNum = `\n\n--- CONTEXTO NUMEROLÓGICO ---\n${knowledgeNumerologia.join('\n\n')}`;
+        systemPromptFinal += contextoBlocoNum;
+        console.log(`[NUMEROLOGIA] Contexto numerológico injetado para sessão ${sessionId}`);
       }
     }
 
