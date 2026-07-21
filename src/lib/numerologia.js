@@ -60,32 +60,55 @@ function calcularEssencia(nomeCompleto) {
 
 /**
  * Busca interpretação textual da base RAG de numerologia
- * Tenta buscar em tabela "documentos" ou similar com filtro por número + tipo
+ * Consulta tabela interpretacoes_numerologia para texto substancial
  */
-async function buscarInterpretacao(numeroEssencia) {
+async function buscarInterpretacaoCaminhoDeVida(numero) {
   if (!supabase) {
-    console.warn('Supabase não configurado; retornando interpretação genérica');
-    return obterInterpretacaoGenerica(numeroEssencia);
+    console.warn('Supabase não configurado; retornando genérica');
+    return obterInterpretacaoGenerica(numero);
   }
 
   try {
     const { data, error } = await supabase
-      .from('documentos')
-      .select('conteudo')
-      .eq('tipo', 'numerologia')
-      .eq('numero', numeroEssencia)
-      .limit(1)
+      .from('interpretacoes_numerologia')
+      .select('caminho_de_vida')
+      .eq('numero', numero)
       .single();
 
     if (error) {
-      console.warn(`Erro ao buscar interpretação: ${error.message}`);
-      return obterInterpretacaoGenerica(numeroEssencia);
+      console.warn(`Erro ao buscar Caminho de Vida ${numero}: ${error.message}`);
+      return obterInterpretacaoGenerica(numero);
     }
 
-    return data?.conteudo || obterInterpretacaoGenerica(numeroEssencia);
+    return data?.caminho_de_vida || obterInterpretacaoGenerica(numero);
   } catch (err) {
-    console.error('Erro ao buscar interpretação numerológica:', err);
-    return obterInterpretacaoGenerica(numeroEssencia);
+    console.error('Erro ao buscar interpretação Caminho de Vida:', err);
+    return obterInterpretacaoGenerica(numero);
+  }
+}
+
+async function buscarInterpretacaoEssencia(numero) {
+  if (!supabase) {
+    console.warn('Supabase não configurado; retornando genérica');
+    return obterInterpretacaoGenerica(numero);
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('interpretacoes_numerologia')
+      .select('essencia')
+      .eq('numero', numero)
+      .single();
+
+    if (error) {
+      console.warn(`Erro ao buscar Essência ${numero}: ${error.message}`);
+      return obterInterpretacaoGenerica(numero);
+    }
+
+    return data?.essencia || obterInterpretacaoGenerica(numero);
+  } catch (err) {
+    console.error('Erro ao buscar interpretação Essência:', err);
+    return obterInterpretacaoGenerica(numero);
   }
 }
 
@@ -110,19 +133,29 @@ function obterInterpretacaoGenerica(numero) {
 
 /**
  * Calcula numerologia completa para um visitante
- * Retorna: { caminhoDeVida, essencia, interpretacao }
+ * Retorna: { caminhoDeVida, caminhoDeVidaTexto, essencia, essenciaTexto, interpretacao, gancho }
  */
 async function calcularNumerologia(nomeCompleto, dataNascimento) {
   const caminhoDeVida = calcularCaminhoDeVida(dataNascimento);
   const essencia = calcularEssencia(nomeCompleto);
 
-  // Por enquanto, usa interpretação genérica. Após indexar base RAG, trocar por buscarInterpretacao()
-  const interpretacao = obterInterpretacaoGenerica(essencia);
+  // Buscar interpretações substanciais da base RAG
+  const caminhoDeVidaTexto = await buscarInterpretacaoCaminhoDeVida(caminhoDeVida);
+  const essenciaTexto = await buscarInterpretacaoEssencia(essencia);
+
+  // Gancho inspirador para levar ao Mapa Integrado
+  const gancho = `Estes números que você acabou de descobrir são apenas os primeiros passos de uma jornada numerológica muito mais profunda. O Mapa Integrado ZUNI revela 8 camadas adicionais de sua essência numérica — números mestres, ciclos pessoais, desafios e talentos ocultos que definem sua trajetória completa. Cada camada adiciona contexto e precisão, transformando um retrato em uma verdadeira radiografia da sua alma.`;
+
+  // Interpretação combinada para exibição única
+  const interpretacao = `**Seu Caminho de Vida (${caminhoDeVida}):**\n${caminhoDeVidaTexto}\n\n**Seu Número da Essência (${essencia}):**\n${essenciaTexto}\n\n**Próximo Passo:**\n${gancho}`;
 
   return {
     caminhoDeVida,
+    caminhoDeVidaTexto,
     essencia,
-    interpretacao
+    essenciaTexto,
+    interpretacao,
+    gancho
   };
 }
 
@@ -130,6 +163,7 @@ module.exports = {
   calcularNumerologia,
   calcularCaminhoDeVida,
   calcularEssencia,
-  buscarInterpretacao,
+  buscarInterpretacaoCaminhoDeVida,
+  buscarInterpretacaoEssencia,
   reduzirAoDigito
 };

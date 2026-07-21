@@ -54,21 +54,8 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
       <p>Olá <strong>${nomeCompleto}</strong>,</p>
       <p>Obrigado por experimentar a ZUNI Suprema! Aqui está sua análise numerológica:</p>
 
-      <div class="numero-box">
-        <div class="numero-label">Caminho de Vida</div>
-        <div class="numero-valor">${caminhoDeVida}</div>
-        <p>Este é o número que define seu propósito e jornada nesta vida.</p>
-      </div>
-
-      <div class="numero-box">
-        <div class="numero-label">Número da Essência</div>
-        <div class="numero-valor">${essencia}</div>
-        <p>Representa a sua energia fundamental e características inatas.</p>
-      </div>
-
-      <div class="interpretacao">
-        <strong>Sua essência numerológica:</strong>
-        <p>${interpretacao || 'Número singular com potencial único.'}</p>
+      <div class="interpretacao" style="white-space: pre-line; line-height: 1.8;">
+        ${interpretacao || 'Número singular com potencial único.'}
       </div>
 
       <div class="cta-section">

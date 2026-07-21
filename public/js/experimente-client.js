@@ -118,11 +118,15 @@ async function calcularNumerologia() {
 
     // Exibir resultado
     document.getElementById('caminhoDeVidaValor').textContent = data.caminhoDeVida;
-    document.getElementById('caminhoDeVidaDesc').textContent =
-      `Número ${data.caminhoDeVida} — sua jornada de vida e propósito.`;
+    document.getElementById('caminhoDeVidaDesc').innerHTML =
+      `<strong>Caminho de Vida ${data.caminhoDeVida}:</strong><br/>${data.caminhoDeVidaTexto || 'Número que define seu propósito.'}`;
 
     document.getElementById('essenciaValor').textContent = data.essencia;
-    document.getElementById('essenciaDesc').textContent = data.interpretacao;
+    document.getElementById('essenciaDesc').innerHTML =
+      `<strong>Essência ${data.essencia}:</strong><br/>${data.essenciaTexto || 'Sua energia fundamental.'}`;
+
+    document.getElementById('ganhoTexto').textContent =
+      data.gancho || 'Descubra mais sobre sua numerologia completa.';
 
     // Mostrar resultado e seção de e-mail
     loading.classList.remove('mostrar');
