@@ -108,16 +108,21 @@ async function buscarInterpretacaoSigno(nomeSigno) {
     // Procurar em todos os documentos pelo padrão [SIGNO - ...]
     let textoExtraido = null;
 
+    // Normalizar nome do signo: remover acentos para match com a base
+    const normalizarAcentos = (str) => str.normalize('NFD').replace(/[̀-ͯ]/g, '');
+    const signoNormalizado = normalizarAcentos(nomeSigno).toUpperCase();
+
     for (const doc of data) {
       const corpo = doc.corpo;
 
-      // Procurar por padrão case-insensitive
-      const padraoInicio = `[${nomeSigno.toUpperCase()}`;
-      const indiceInicio = corpo.toUpperCase().indexOf(padraoInicio);
+      // Procurar por padrão case-insensitive, usando versão normalizada
+      const padraoInicio = `[${signoNormalizado}`;
+      const corpoNormalizado = normalizarAcentos(corpo).toUpperCase();
+      const indiceInicio = corpoNormalizado.indexOf(padraoInicio);
 
       if (indiceInicio !== -1) {
-        // Encontrar o ponto de início real (case-sensitive)
-        const inicioReal = corpo.indexOf('[', indiceInicio);
+        // Encontrar o ponto de início real no corpo original (preserva acentos)
+        const inicioReal = corpo.toUpperCase().indexOf('[', indiceInicio);
 
         // Encontrar fim do bloco (próximo ==========)
         const blocosApos = corpo.substring(inicioReal);
