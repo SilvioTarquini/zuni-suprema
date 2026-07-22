@@ -21,6 +21,7 @@ const { calcularMapaNatal } = require('./lib/astro');
 const { calcularNumerologia } = require('./lib/numerologia');
 const { validarCodigo, registrarAcesso } = require('./lib/codigosExperimente');
 const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturasExperimente');
+const { calcularAstrologiaB } = require('./lib/astrologia-b');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -2310,6 +2311,27 @@ app.post('/api/experimente-capturar-lead', async (req, res) => {
   } catch (error) {
     console.error('Erro ao capturar lead:', error);
     return res.status(500).json({ sucesso: false, mensagem: 'Erro ao processar sua solicitação.' });
+  }
+});
+
+/**
+ * POST /api/experimente-calcular-astrologia-b
+ * Calcula Signo Solar (Módulo B - Astrologia)
+ */
+app.post('/api/experimente-calcular-astrologia-b', async (req, res) => {
+  try {
+    const { dataNascimento } = req.body;
+
+    if (!dataNascimento) {
+      return res.status(400).json({ error: 'Data de nascimento é obrigatória.' });
+    }
+
+    const resultado = await calcularAstrologiaB(dataNascimento);
+
+    return res.json(resultado);
+  } catch (error) {
+    console.error('Erro ao calcular astrologia Módulo B:', error);
+    return res.status(500).json({ error: 'Erro ao calcular signo solar.' });
   }
 });
 

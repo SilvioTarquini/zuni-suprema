@@ -611,15 +611,51 @@
       </div>
     </div>
 
-    <!-- Módulo B: Astrologia (Placeholder) -->
-    <div class="modulo" id="modulo-astrologia" data-modulo="astrologia" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); text-align: center; padding: 60px 30px;">
-      <h2 style="color: #1a1a3e; margin-bottom: 20px;">🌙 Módulo B — Amostra Astrológica</h2>
-      <p style="color: #666; font-size: 18px; margin-bottom: 30px;">
+    <!-- Módulo B: Astrologia -->
+    <div class="modulo" id="modulo-astrologia" data-modulo="astrologia">
+      <h2>🌙 Módulo B — Amostra Astrológica</h2>
+      <p style="color: #666; margin-bottom: 25px;">
         Descubra seu Signo Solar e as características que o definem.
       </p>
-      <div style="background: white; padding: 40px; border-radius: 8px; display: inline-block; border-left: 4px solid #d4af37;">
-        <p style="color: #999; font-size: 16px;">⏳ Em desenvolvimento</p>
-        <p style="color: #666; font-size: 14px; margin-top: 10px;">Este módulo será lançado em breve.</p>
+
+      <div class="form-group">
+        <label for="dataNascimentoAstro">Data de Nascimento</label>
+        <input type="date" id="dataNascimentoAstro" />
+      </div>
+
+      <button class="btn-calcular" onclick="calcularSignoSolar()">
+        Descobrir Signo
+      </button>
+
+      <!-- Loading -->
+      <div class="loading" id="loadingAstrologia">
+        <div class="spinner"></div>
+        <p>Calculando seu signo solar...</p>
+      </div>
+
+      <!-- Resultado -->
+      <div class="resultado" id="resultadoAstrologia">
+        <div class="numero-box">
+          <div class="numero-label">Seu Signo Solar</div>
+          <div class="numero-valor" id="signoValor">-</div>
+          <div class="numero-descricao" id="signoDesc">
+            Carregando...
+          </div>
+        </div>
+
+        <div class="numero-box">
+          <div class="numero-label">Período</div>
+          <div class="numero-descricao" id="periodoDesc">
+            Carregando...
+          </div>
+        </div>
+
+        <div class="numero-box" style="background: #fafbfc; border-left: 4px solid #d4af37;">
+          <div class="numero-label" style="color: #d4af37;">Próximo Passo</div>
+          <div class="numero-descricao" id="ganhoAstroTexto" style="color: #666; font-style: italic;">
+            Carregando...
+          </div>
+        </div>
       </div>
     </div>
 

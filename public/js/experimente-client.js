@@ -259,6 +259,64 @@ function scrollToModule(moduloId, event) {
 }
 
 /**
+ * Calcula signo solar (Módulo B)
+ */
+async function calcularSignoSolar() {
+  const dataNascimento = document.getElementById('dataNascimentoAstro').value;
+  const loading = document.getElementById('loadingAstrologia');
+  const resultado = document.getElementById('resultadoAstrologia');
+
+  if (!dataNascimento) {
+    alert('Por favor, insira sua data de nascimento.');
+    return;
+  }
+
+  // Validar formato de data
+  const dataObj = new Date(dataNascimento);
+  if (isNaN(dataObj.getTime())) {
+    alert('Data de nascimento inválida.');
+    return;
+  }
+
+  // Não permitir futuro
+  if (dataObj > new Date()) {
+    alert('A data de nascimento não pode ser no futuro.');
+    return;
+  }
+
+  try {
+    loading.classList.add('mostrar');
+    resultado.classList.remove('mostrar');
+
+    const response = await fetch('/api/experimente-calcular-astrologia-b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ dataNascimento })
+    });
+
+    if (!response.ok) {
+      throw new Error(`Erro: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    // Exibir resultado
+    document.getElementById('signoValor').textContent = `${data.signo.emoji} ${data.signo.nome}`;
+    document.getElementById('signoDesc').innerHTML = data.interpretacao;
+    document.getElementById('periodoDesc').textContent = data.signo.periodo;
+    document.getElementById('ganhoAstroTexto').textContent = data.gancho;
+
+    // Mostrar resultado
+    loading.classList.remove('mostrar');
+    resultado.classList.add('mostrar');
+  } catch (err) {
+    console.error('Erro ao calcular signo solar:', err);
+    loading.classList.remove('mostrar');
+    alert('Erro ao calcular seu signo. Tente novamente.');
+  }
+}
+
+/**
  * Atualiza qual item da navbar está ativo baseado no scroll
  */
 function atualizarNavbarAtiva() {
