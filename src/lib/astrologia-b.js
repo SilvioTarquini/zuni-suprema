@@ -85,7 +85,8 @@ function calcularSignoSolar(dia, mes) {
 /**
  * Busca interpretação do signo na base RAG
  * A base contém todos os 12 signos em um único documento estruturado
- * Padrão: [SIGNO - TEMPERAMENTO E ENERGIA] ...texto... ==========
+ * Padrão: [SIGNO - TEMPERAMENTO E ENERGIA] ...texto completo... ==========
+ * Extrai o texto completo (3-5 frases) do signo especificado
  */
 async function buscarInterpretacaoSigno(nomeSigno) {
   if (!supabase) {
@@ -94,44 +95,55 @@ async function buscarInterpretacaoSigno(nomeSigno) {
   }
 
   try {
-    // Buscar documentos que contenham a base de signos (padrão [SIGNO - TEMPERAMENTO E ENERGIA])
+    // Buscar documentos que contenham a base de signos
     const { data, error } = await supabase
       .from('documentos')
-      .select('corpo')
-      .ilike('corpo', `%[${nomeSigno.toUpperCase()}%`)
-      .limit(1);
+      .select('corpo');
 
     if (error || !data || data.length === 0) {
-      console.warn(`Signo ${nomeSigno} não encontrado; usando genérico`);
+      console.warn(`Base astrológica não encontrada; usando genérico`);
       return obterInterpretacaoGenericaSigno(nomeSigno);
     }
 
-    // Extrair bloco do signo (entre [SIGNO - ...] e próximo ==========)
-    const corpo = data[0].corpo;
-    const padraoInicio = `[${nomeSigno.toUpperCase()}`;
-    const indiceInicio = corpo.indexOf(padraoInicio);
+    // Procurar em todos os documentos pelo padrão [SIGNO - ...]
+    let textoExtraido = null;
 
-    if (indiceInicio === -1) {
-      return obterInterpretacaoGenericaSigno(nomeSigno);
+    for (const doc of data) {
+      const corpo = doc.corpo;
+
+      // Procurar por padrão case-insensitive
+      const padraoInicio = `[${nomeSigno.toUpperCase()}`;
+      const indiceInicio = corpo.toUpperCase().indexOf(padraoInicio);
+
+      if (indiceInicio !== -1) {
+        // Encontrar o ponto de início real (case-sensitive)
+        const inicioReal = corpo.indexOf('[', indiceInicio);
+
+        // Encontrar fim do bloco (próximo ==========)
+        const blocosApos = corpo.substring(inicioReal);
+        const indiceFim = blocosApos.indexOf('==========');
+
+        let textoBloco;
+        if (indiceFim !== -1) {
+          textoBloco = blocosApos.substring(0, indiceFim);
+        } else {
+          textoBloco = blocosApos;
+        }
+
+        // Limpar padrão [SIGNO - TEMPERAMENTO E ENERGIA]
+        textoExtraido = textoBloco
+          .replace(/^\[.*?\]\s*/, '') // Remove [SIGNO - TEMPERAMENTO E ENERGIA]
+          .trim();
+
+        // Se encontrou texto válido (mais de 50 caracteres), retornar
+        if (textoExtraido && textoExtraido.length > 50) {
+          return textoExtraido;
+        }
+      }
     }
 
-    // Encontrar fim do bloco (próximo ========== ou fim do documento)
-    const blocosApos = corpo.substring(indiceInicio);
-    const indiceFim = blocosApos.indexOf('==========');
-
-    let textoBloco;
-    if (indiceFim !== -1) {
-      textoBloco = blocosApos.substring(0, indiceFim);
-    } else {
-      textoBloco = blocosApos;
-    }
-
-    // Limpar padrão [SIGNO - ...] do início
-    const textoLimpo = textoBloco
-      .replace(/^\[.*?\]\s*/, '') // Remove [SIGNO - TEMPERAMENTO E ENERGIA]
-      .trim();
-
-    return textoLimpo || obterInterpretacaoGenericaSigno(nomeSigno);
+    // Se não encontrou, usar genérico
+    return obterInterpretacaoGenericaSigno(nomeSigno);
   } catch (err) {
     console.error(`Erro ao buscar interpretação de ${nomeSigno}:`, err);
     return obterInterpretacaoGenericaSigno(nomeSigno);
@@ -180,7 +192,7 @@ async function calcularAstrologiaB(dataNascimento) {
   const interpretacao = await buscarInterpretacaoSigno(signo.nome);
 
   // Gancho para próximo passo
-  const gancho = `O Signo Solar que você descobriu é apenas uma camada de seu mapa astrológico. O Mapa Integrado ZUNI revela seu Ascendente, Lua, casas e aspectos planetários — um retrato completo e preciso de sua essência cósmica. Cada detalhe adiciona profundidade e nuance, transformando uma amostra em uma verdadeira radiografia de sua jornada.`;
+  const gancho = `O Signo Solar que você descobriu é apenas uma camada de seu mapa astrológico. O Mapa Integrado ZUNI revela seu Ascendente, Lua, casas e aspectos planetários — um retrato completo e preciso de sua essência cósmica. Cada detalhe adiciona profundidade e nuance, transformando uma amostra em um retrato completo da sua verdadeira essência.`;
 
   return {
     signo,
