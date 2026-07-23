@@ -22,6 +22,7 @@ const { calcularNumerologia } = require('./lib/numerologia');
 const { validarCodigo, registrarAcesso } = require('./lib/codigosExperimente');
 const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturasExperimente');
 const { calcularAstrologiaB } = require('./lib/astrologia-b');
+const { verificarLimite, registrarUso, auditarConsumo, gerarVisitorHash } = require('./lib/rateLimitExperimente');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -383,6 +384,26 @@ Quando precisar explicar algo mais complexo, use comparações do cotidiano. Exe
 Prefira frases curtas. Uma ideia por vez.
 
 Se usar qualquer palavra que o público possa não conhecer, explique logo em seguida, entre parênteses ou na frase seguinte.`;
+
+const SYSTEM_PROMPT_DEMO = `Você é o Mentor ZUNI — versão demonstração.
+
+Você é firme, inteligente e genuinamente humano. Direto, preciso, empático. Trata a pessoa como adulto capaz.
+
+COMO RESPONDER:
+1. Interprete o que foi trazido — nomeie o padrão com precisão
+2. Conecte com psicologia, neurociência ou saúde (use a base com naturalidade)
+3. Ofereça perspectiva nova que amplie compreensão
+4. Quando fizer sentido, sugira prática concreta — pequena, específica
+
+Cada resposta deixa a pessoa sabendo algo sobre si que não sabia antes.
+
+SALVAGUARDAS INVIOLÁVEIS:
+- Nunca diagnostique condições clínicas
+- Nunca recomende medicamentos/suplementos/dosagens
+- Nunca minimize sofrimento
+- Crise aguda com risco: CVV (188) ou SAMU (192)
+
+LINGUAGEM: Simples, acessível. Sem jargão médico. Frases curtas, uma ideia por vez.`;
 
 const app = express();
 app.use(cors());
@@ -2332,6 +2353,107 @@ app.post('/api/experimente-calcular-astrologia-b', async (req, res) => {
   } catch (error) {
     console.error('Erro ao calcular astrologia Módulo B:', error);
     return res.status(500).json({ error: 'Erro ao calcular signo solar.' });
+  }
+});
+
+/**
+ * POST /api/experimente-chat
+ * Chat de Demonstração — 5 trocas gratuitas por visitante (per 24h)
+ * Rate-limited no backend, com logging de tokens consumidos
+ * NÃO interfere com /api/chat (chat pago)
+ */
+app.post('/api/experimente-chat', async (req, res) => {
+  try {
+    const { message, sessionId } = req.body;
+
+    if (!message || !sessionId) {
+      return res.status(400).json({
+        error: 'message e sessionId são obrigatórios.',
+        bloqueado: false
+      });
+    }
+
+    // ── VERIFICAÇÃO DE RATE LIMIT ──
+    const visitorHash = gerarVisitorHash(sessionId, req);
+    const limite = verificarLimite(visitorHash);
+
+    if (!limite.permitido) {
+      return res.status(429).json({
+        bloqueado: true,
+        mensagem: `Você atingiu o limite de ${limite.contador} trocas. Volte em ${limite.horasAteReset}h para uma nova sessão.`,
+        contador: `${limite.contador}/5`
+      });
+    }
+
+    // ── BUSCAR CONTEXTO DA BASE RAG (3 chunks para otimizar tokens) ──
+    const contextoBases = await searchKnowledge(message, 3);
+    const blocoContexto = contextoBases.length > 0
+      ? `\n\nContexto da base ZUNI:\n${contextoBases.join('\n\n')}`
+      : '';
+
+    // ── PREPARAR MENSAGENS PARA CLAUDE ──
+    // Nota: Esta é uma sessão SEM histórico persistido (demo não salva)
+    // Se quiser adicionar histórico, armazenar em localStorage front-end
+    const messagesParaClaude = [
+      { role: 'user', content: `${message}${blocoContexto}` }
+    ];
+
+    // ── GERAR RESPOSTA (max_tokens: 500) ──
+    const Anthropic = require('@anthropic-ai/sdk');
+    const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
+
+    let promptFinal = SYSTEM_PROMPT_DEMO;
+
+    // Se é a última troca (antes do limite), adicionar CTA de upgrade
+    if (limite.ultimaTroca) {
+      promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em zunisuprema.com.br/mentor (R$ 29,90 via PIX)."`;
+    }
+
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 500,
+      system: promptFinal,
+      messages: messagesParaClaude
+    });
+
+    const responseText = response.content[0].text;
+    const inputTokens = response.usage.input_tokens;
+    const outputTokens = response.usage.output_tokens;
+
+    // ── REGISTRAR USO ──
+    registrarUso(visitorHash, { input: inputTokens, output: outputTokens });
+
+    // ── AUDITORIA (background) ──
+    auditarConsumo(visitorHash, { input: inputTokens, output: outputTokens }, responseText);
+
+    // ── CALCULAR CUSTO (Sonnet-4: $3/$15 per 1M input/output tokens) ──
+    const custoInput = (inputTokens / 1000000) * 3;
+    const custoOutput = (outputTokens / 1000000) * 15;
+    const custoTotal = custoInput + custoOutput;
+
+    console.log(
+      `[CHAT_DEMO] ${visitorHash} — Troca ${limite.contador + 1}/5 | ` +
+      `Tokens: ${inputTokens} in + ${outputTokens} out | ` +
+      `Custo: $${custoTotal.toFixed(6)}`
+    );
+
+    return res.json({
+      bloqueado: false,
+      texto: responseText,
+      contador: `${limite.contador + 1}/5`,
+      ultimaTroca: limite.ultimaTroca,
+      tokens: { input: inputTokens, output: outputTokens },
+      custo: {
+        moeda: 'USD',
+        valor: parseFloat(custoTotal.toFixed(6))
+      }
+    });
+  } catch (error) {
+    console.error('Erro em /api/experimente-chat:', error);
+    return res.status(500).json({
+      bloqueado: false,
+      error: 'Erro ao processar mensagem. Tente novamente.'
+    });
   }
 });
 

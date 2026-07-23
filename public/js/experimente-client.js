@@ -317,6 +317,209 @@ async function calcularSignoSolar() {
 }
 
 /**
+ * ─── MÓDULO C: CHAT DE DEMONSTRAÇÃO ───
+ */
+
+// Estado do chat
+let estadoChat = {
+  sessionId: null,
+  historico: [],
+  contador: 0,
+  bloqueado: false,
+  ultimaTroca: false
+};
+
+/**
+ * Gera ou recupera sessionId do visitante
+ */
+function inicializarChat() {
+  let sessionId = localStorage.getItem('experimente_chat_session_id');
+  if (!sessionId) {
+    sessionId = 'exp-' + Math.random().toString(36).substring(2, 15);
+    localStorage.setItem('experimente_chat_session_id', sessionId);
+  }
+  estadoChat.sessionId = sessionId;
+
+  // Recuperar histórico de chat anterior
+  const historico = sessionStorage.getItem(`chat_historico_${sessionId}`);
+  const contador = sessionStorage.getItem(`chat_contador_${sessionId}`);
+
+  if (historico) {
+    estadoChat.historico = JSON.parse(historico);
+    estadoChat.contador = parseInt(contador) || 0;
+    renderizarHistoricoChat();
+    atualizarContadorChat();
+  }
+
+  // Se bloqueado, desabilitar input
+  if (estadoChat.contador >= 5) {
+    estadoChat.bloqueado = true;
+    document.getElementById('btnEnviarChat').disabled = true;
+    document.getElementById('chatInput').disabled = true;
+    document.getElementById('chatLimiteAtingido').style.display = 'block';
+  }
+}
+
+/**
+ * Renderiza todas as mensagens do histórico
+ */
+function renderizarHistoricoChat() {
+  const historico = document.getElementById('chatHistorico');
+  historico.innerHTML = '';
+
+  if (estadoChat.historico.length === 0) {
+    historico.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">Inicie uma conversa com o Mentor...</div>';
+    return;
+  }
+
+  estadoChat.historico.forEach(msg => {
+    const div = document.createElement('div');
+    div.className = `chat-mensagem ${msg.role}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `chat-bubble ${msg.role}`;
+    bubble.innerHTML = msg.role === 'mentor' ? msg.texto : msg.texto;
+
+    div.appendChild(bubble);
+    historico.appendChild(div);
+  });
+
+  // Scroll para o final
+  historico.scrollTop = historico.scrollHeight;
+}
+
+/**
+ * Adiciona uma mensagem ao chat
+ */
+function adicionarMensagemChat(role, texto) {
+  estadoChat.historico.push({ role, texto });
+  sessionStorage.setItem(`chat_historico_${estadoChat.sessionId}`, JSON.stringify(estadoChat.historico));
+
+  const historico = document.getElementById('chatHistorico');
+  if (historico.innerHTML.includes('Inicie uma conversa')) {
+    historico.innerHTML = '';
+  }
+
+  const div = document.createElement('div');
+  div.className = `chat-mensagem ${role}`;
+
+  const bubble = document.createElement('div');
+  bubble.className = `chat-bubble ${role}`;
+  bubble.innerHTML = role === 'mentor' ? texto : texto;
+
+  div.appendChild(bubble);
+  historico.appendChild(div);
+
+  historico.scrollTop = historico.scrollHeight;
+}
+
+/**
+ * Atualiza contador de trocas
+ */
+function atualizarContadorChat() {
+  document.getElementById('chatContador').textContent = `Trocas: ${estadoChat.contador}/5`;
+}
+
+/**
+ * Envia mensagem para o Mentor
+ */
+async function enviarMensagemChat() {
+  const input = document.getElementById('chatInput');
+  const message = input.value.trim();
+
+  if (!message) {
+    alert('Por favor, escreva uma mensagem.');
+    return;
+  }
+
+  if (estadoChat.bloqueado) {
+    alert('Você atingiu o limite de 5 trocas. Volte amanhã ou conheça a Sessão Completa.');
+    return;
+  }
+
+  // Desabilitar input e botão
+  input.disabled = true;
+  document.getElementById('btnEnviarChat').disabled = true;
+  document.getElementById('chatLoading').style.display = 'block';
+
+  try {
+    // Adicionar mensagem do usuário ao histórico
+    adicionarMensagemChat('user', message);
+    input.value = '';
+
+    // Chamar API
+    const response = await fetch('/api/experimente-chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        message,
+        sessionId: estadoChat.sessionId
+      })
+    });
+
+    const data = await response.json();
+
+    if (data.bloqueado) {
+      // Limite atingido
+      estadoChat.bloqueado = true;
+      estadoChat.contador = 5;
+      document.getElementById('chatLoading').style.display = 'none';
+      document.getElementById('chatLimiteAtingido').style.display = 'block';
+      document.getElementById('chatStatus').textContent = data.mensagem;
+      sessionStorage.setItem(`chat_contador_${estadoChat.sessionId}`, '5');
+      return;
+    }
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Erro ao enviar mensagem');
+    }
+
+    // Adicionar resposta do Mentor
+    adicionarMensagemChat('mentor', data.texto);
+
+    // Atualizar contador
+    const partes = data.contador.split('/');
+    estadoChat.contador = parseInt(partes[0]);
+    estadoChat.ultimaTroca = data.ultimaTroca;
+    sessionStorage.setItem(`chat_contador_${estadoChat.sessionId}`, estadoChat.contador);
+    atualizarContadorChat();
+
+    // Log de consumo
+    const custoReal = data.custo?.valor || 0;
+    console.log(
+      `[CHAT_DEMO] Troca ${estadoChat.contador}/5 | ` +
+      `Tokens: ${data.tokens?.input} in + ${data.tokens?.output} out | ` +
+      `Custo real: $${custoReal.toFixed(6)}`
+    );
+
+    // Se é última troca, mostrar CTA
+    if (data.ultimaTroca) {
+      document.getElementById('chatStatus').innerHTML = `
+        ⭐ <strong>Última troca!</strong> Se este diálogo tocou fundo, conheça a
+        <a href="https://zunisuprema.com.br/mentor" style="color: #d4af37; text-decoration: underline;">
+          Sessão Completa do Mentor (R$ 29,90)
+        </a>
+      `;
+    } else if (estadoChat.contador >= 5) {
+      // Desabilitar para próxima tentativa
+      input.disabled = true;
+      document.getElementById('btnEnviarChat').disabled = true;
+      document.getElementById('chatLimiteAtingido').style.display = 'block';
+      document.getElementById('chatStatus').textContent = 'Limite atingido. Volte amanhã.';
+    }
+
+  } catch (err) {
+    console.error('Erro ao enviar mensagem:', err);
+    document.getElementById('chatStatus').textContent = `❌ Erro: ${err.message}`;
+  } finally {
+    document.getElementById('chatLoading').style.display = 'none';
+    input.disabled = false;
+    document.getElementById('btnEnviarChat').disabled = false;
+    input.focus();
+  }
+}
+
+/**
  * Atualiza qual item da navbar está ativo baseado no scroll
  */
 function atualizarNavbarAtiva() {
@@ -361,4 +564,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('dataNascimento')?.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') calcularNumerologia();
   });
+
+  // Inicializar chat
+  inicializarChat();
+
+  // Atualizar navbar ativa ao scroll
+  window.addEventListener('scroll', atualizarNavbarAtiva);
 });
