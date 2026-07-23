@@ -458,6 +458,55 @@
       text-decoration: underline;
     }
 
+    /* Chat Messages */
+    .chat-mensagem {
+      display: flex;
+      margin-bottom: 12px;
+      gap: 10px;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .chat-mensagem.user {
+      justify-content: flex-end;
+    }
+
+    .chat-bubble {
+      max-width: 75%;
+      padding: 12px 15px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .chat-bubble.user {
+      background: #d4af37;
+      color: #1a1a3e;
+      border-bottom-right-radius: 2px;
+    }
+
+    .chat-bubble.mentor {
+      background: #f0f0f0;
+      color: #333;
+      border-bottom-left-radius: 2px;
+    }
+
+    .chat-bubble.mentor strong {
+      color: #d4af37;
+      font-weight: 600;
+    }
+
     /* Responsivo */
     @media (max-width: 768px) {
       .header h1 {
@@ -482,6 +531,10 @@
 
       .codigo-input-group button {
         width: 100%;
+      }
+
+      #chatHistorico {
+        height: 300px !important;
       }
     }
   </style>
@@ -659,15 +712,120 @@
       </div>
     </div>
 
-    <!-- Módulo C: Chat Limitado (Placeholder) -->
-    <div class="modulo" id="modulo-chat" data-modulo="chat" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); text-align: center; padding: 60px 30px;">
-      <h2 style="color: #1a1a3e; margin-bottom: 20px;">💬 Módulo C — Chat de Demonstração</h2>
-      <p style="color: #666; font-size: 18px; margin-bottom: 30px;">
-        Converse com o Mentor ZUNI — até 5 trocas gratuitas.
+    <!-- Módulo C: Chat de Demonstração -->
+    <div class="modulo" id="modulo-chat" data-modulo="chat">
+      <h2>💬 Módulo C — Chat de Demonstração</h2>
+      <p style="color: #666; margin-bottom: 25px;">
+        Converse com o Mentor ZUNI — até 5 trocas gratuitas. Após esgotá-las, conheça a Sessão Completa.
       </p>
-      <div style="background: white; padding: 40px; border-radius: 8px; display: inline-block; border-left: 4px solid #d4af37;">
-        <p style="color: #999; font-size: 16px;">⏳ Em desenvolvimento</p>
-        <p style="color: #666; font-size: 14px; margin-top: 10px;">Este módulo será lançado em breve.</p>
+
+      <!-- Histórico do Chat -->
+      <div id="chatHistorico" style="
+        background: #f9f9f9;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        height: 400px;
+        overflow-y: auto;
+        margin-bottom: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+      ">
+        <div style="text-align: center; color: #999; padding: 20px;">
+          <p>Inicie uma conversa com o Mentor...</p>
+        </div>
+      </div>
+
+      <!-- Input e Botão -->
+      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+        <textarea
+          id="chatInput"
+          placeholder="Escreva sua pergunta ou reflexão..."
+          style="
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+          "
+          onkeydown="if(event.key === 'Enter' && event.ctrlKey) enviarMensagemChat();"
+        ></textarea>
+      </div>
+
+      <button
+        id="btnEnviarChat"
+        class="btn-calcular"
+        onclick="enviarMensagemChat()"
+        style="width: 100%;"
+      >
+        Enviar (Ctrl+Enter)
+      </button>
+
+      <!-- Status e Contador -->
+      <div style="display: flex; gap: 15px; margin-top: 15px; align-items: center;">
+        <div id="chatContador" style="
+          flex: 1;
+          text-align: center;
+          font-weight: 600;
+          color: #d4af37;
+          font-size: 14px;
+        ">
+          Trocas: 0/5
+        </div>
+        <div id="chatStatus" style="
+          flex: 1;
+          text-align: center;
+          font-size: 12px;
+          color: #999;
+        ">
+          Aguardando mensagem...
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="chatLoading" style="
+        display: none;
+        text-align: center;
+        padding: 20px;
+        color: #d4af37;
+      ">
+        <div class="spinner" style="display: inline-block;"></div>
+        <p>Mentor está pensando...</p>
+      </div>
+
+      <!-- Mensagem de Limite Atingido -->
+      <div id="chatLimiteAtingido" style="
+        display: none;
+        background: #fff3cd;
+        border: 1px solid #ffc107;
+        padding: 20px;
+        border-radius: 8px;
+        margin-top: 20px;
+        text-align: center;
+      ">
+        <p style="color: #856404; font-weight: 600; margin-bottom: 10px;">
+          ⏳ Você atingiu o limite de 5 trocas
+        </p>
+        <p style="color: #856404; font-size: 14px; margin-bottom: 15px;">
+          Volte amanhã para uma nova sessão ou conheça a Sessão Completa do Mentor.
+        </p>
+        <a href="https://zunisuprema.com.br/mentor" class="cta-link" style="
+          display: inline-block;
+          background: #d4af37;
+          color: #1a1a3e;
+          padding: 10px 20px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-weight: bold;
+          font-size: 14px;
+        ">
+          🚀 Ir para Sessão Completa (R$ 29,90)
+        </a>
       </div>
     </div>
 
