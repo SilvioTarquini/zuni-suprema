@@ -261,6 +261,13 @@
   <p class="aviso-digital">Produto 100% digital — não há envio de exemplar físico. O acesso é liberado por link, direto após a confirmação do pagamento.</p>
 </header>
 
+<div class="faixa-mentor">
+  <div class="cartao">
+    <p>Quer uma orientação personalizada para o que você está vivendo agora? Converse com o Mentor ZUNI — e ainda garanta 30% de desconto em qualquer livro da loja.</p>
+    <a class="btn-mentor" href="/checkout.html">Conversar com o Mentor</a>
+  </div>
+</div>
+
 <main>
   <div class="grade" id="grade-servicos">
     <!-- Cards de serviços (Mapa Astral) serão renderizados aqui -->
@@ -330,46 +337,58 @@
     }
   };
 
-  // Renderizar serviço: Mapa Integrado ZUNI
+  // Renderizar serviços (Mapa Astral)
   function renderizarServicos() {
     const gradeServicos = document.getElementById('grade-servicos');
 
-    const servico = {
-      id: 'mapa-integrado',
-      titulo: 'Mapa Integrado ZUNI',
-      preco: 147.00,
-      resumo: 'Relatório personalizado que integra astrologia e numerologia, entregue por e-mail em 24-48h.',
-      descricao: 'Receba um mapa completo que une análise astrológica e numerológica, revelando padrões profundos sobre sua personalidade, jornada e potencial. Entregue como relatório detalhado enviado para seu e-mail em até 48 horas após o pagamento.',
-      url: '/checkout-mapa-integrado.html'
-    };
+    const servicos = [
+      {
+        id: 'mapa-astral',
+        titulo: 'Leitura de Mapa Astral',
+        preco: 29.90,
+        resumo: 'Análise profunda do seu mapa astral com conversa ao vivo com o Mentor ZUNI.',
+        descricao: 'Receba uma leitura personalizada que interpreta os planetas, signos e aspectos do seu mapa astral, revelando insights sobre sua jornada cósmica.',
+        url: '/checkout-mapa-astral.html'
+      },
+      {
+        id: 'mapa-astral-numerologia',
+        titulo: 'Mapa Astral + Numerologia',
+        preco: 49.90,
+        resumo: 'Análise combinada de astrologia e numerologia — duas perspectivas sobre seu destino.',
+        descricao: 'Explore simultaneamente seu mapa astral e sua análise numerológica. O Mentor ZUNI integra as duas visões para uma compreensão mais completa de quem você é e seu caminho nesta vida.',
+        url: '/checkout-mapa-astral.html?type=numerologia-astral'
+      }
+    ];
 
-    const card = document.createElement('article');
-    card.className = 'livro';
-    card.innerHTML = `
-      <div class="capa" style="background: linear-gradient(160deg, #2a2416, #0d0c0a); color: var(--dourado); font-size: 2.2rem; font-weight: bold; letter-spacing: 0; text-transform: none;">✦</div>
-      <div class="info">
-        <h2>${servico.titulo}</h2>
-        <p class="resumo">${servico.resumo}</p>
-        <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
-        <div class="descricao-expandida" role="region">
-          <p>${servico.descricao}</p>
+    servicos.forEach(servico => {
+      const card = document.createElement('article');
+      card.className = 'livro';
+      card.innerHTML = `
+        <div class="capa" style="background: linear-gradient(160deg, #2a2416, #0d0c0a); color: var(--dourado); font-size: 2.2rem; font-weight: bold; letter-spacing: 0; text-transform: none;">✦</div>
+        <div class="info">
+          <h2>${servico.titulo}</h2>
+          <p class="resumo">${servico.resumo}</p>
+          <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
+          <div class="descricao-expandida" role="region">
+            <p>${servico.descricao}</p>
+          </div>
+          <p class="preco">R$ ${servico.preco.toFixed(2)}</p>
+          <p class="etiqueta-digital">Sessão ao vivo · consulta personalizada</p>
+          <a class="comprar" href="${servico.url}">Começar sessão</a>
         </div>
-        <p class="preco">R$ ${servico.preco.toFixed(2)}</p>
-        <p class="etiqueta-digital">Relatório assíncrono · entrega por e-mail</p>
-        <a class="comprar" href="${servico.url}">Solicitar meu Mapa</a>
-      </div>
-    `;
+      `;
 
-    gradeServicos.appendChild(card);
+      gradeServicos.appendChild(card);
 
-    const btnExpandir = card.querySelector('.expandir');
-    const descExpandida = card.querySelector('.descricao-expandida');
+      const btnExpandir = card.querySelector('.expandir');
+      const descExpandida = card.querySelector('.descricao-expandida');
 
-    btnExpandir.addEventListener('click', function () {
-      const estaAberta = descExpandida.classList.contains('ativa');
-      descExpandida.classList.toggle('ativa');
-      btnExpandir.setAttribute('aria-expanded', !estaAberta);
-      btnExpandir.textContent = estaAberta ? '+ Leia mais' : '- Fechar';
+      btnExpandir.addEventListener('click', function () {
+        const estaAberta = descExpandida.classList.contains('ativa');
+        descExpandida.classList.toggle('ativa');
+        btnExpandir.setAttribute('aria-expanded', !estaAberta);
+        btnExpandir.textContent = estaAberta ? '+ Leia mais' : '- Fechar';
+      });
     });
   }
 
