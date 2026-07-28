@@ -952,12 +952,11 @@ function renderMarkdownToPDF(doc, texto, opcoes = {}) {
     if (partes.length === 0) {
       doc.fontSize(fontSize).font('Helvetica').text(texto, { width: maxWidth, lineGap });
     } else {
-      // Renderizar com formatação
+      // Renderizar com formatação — NÃO fixar x,y para evitar sobreposição
+      // PDFKit gerencia posição automaticamente quando omitimos x,y
       doc.fontSize(fontSize);
-      let x = doc.x;
-      let y = doc.y;
 
-      partes.forEach((parte) => {
+      partes.forEach((parte, idx) => {
         if (parte.tipo === 'negrito') {
           doc.font('Helvetica-Bold');
         } else if (parte.tipo === 'italico') {
@@ -965,7 +964,9 @@ function renderMarkdownToPDF(doc, texto, opcoes = {}) {
         } else {
           doc.font('Helvetica');
         }
-        doc.text(parte.texto, x, y, { continued: true, width: maxWidth, lineGap });
+        // Usar 'continued' apenas se não for o último segmento
+        const isMostrar = idx < partes.length - 1;
+        doc.text(parte.texto, { continued: isMostrar, width: maxWidth, lineGap });
       });
       doc.moveDown();
     }
