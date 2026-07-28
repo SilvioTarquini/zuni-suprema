@@ -18,7 +18,7 @@ const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupo
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
 const { calcularMapaNatal } = require('./lib/astro');
-const { calcularNumerologia } = require('./lib/numerologia');
+const { calcularNumerologia, calcularCaminhoDeVida, calcularEssencia } = require('./lib/numerologia');
 const { validarCodigo, registrarAcesso } = require('./lib/codigosExperimente');
 const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturasExperimente');
 const { calcularAstrologiaB } = require('./lib/astrologia-b');
@@ -55,6 +55,11 @@ function normalizeSessionRow(row) {
     birthNameFull: row.birth_name_full || null,
     productType: row.product_type || 'mapa-astral',
     includeNumerology: row.include_numerology || false,
+    mapaNatal: row.mapa_natal || null,
+    casas: row.casas || null,
+    aspectos: row.aspectos || null,
+    caminhoDeVida: row.caminho_de_vida || null,
+    essencia: row.essencia || null,
     createdAt: row.created_at ? new Date(row.created_at) : null,
     updatedAt: row.updated_at ? new Date(row.updated_at) : null,
   };
@@ -95,6 +100,11 @@ async function upsertSession(session) {
     birth_name_full: session.birthNameFull || null,
     product_type: session.productType || 'mapa-astral',
     include_numerology: session.includeNumerology || false,
+    mapa_natal: session.mapaNatal || null,
+    casas: session.casas || null,
+    aspectos: session.aspectos || null,
+    caminho_de_vida: session.caminhoDeVida || null,
+    essencia: session.essencia || null,
     created_at: session.createdAt ? new Date(session.createdAt).toISOString() : undefined,
     updated_at: new Date().toISOString()
   };
@@ -304,6 +314,116 @@ Prefira frases curtas. Uma ideia por vez.
 
 Se usar qualquer palavra que o público possa não conhecer, explique logo em seguida, entre parênteses ou na frase seguinte.`;
 
+const MAPA_INTEGRADO_PROMPT = `Você é o sistema de geração do Mapa Integrado ZUNI Suprema — relatório astrológico e numerológico personalizado.
+
+Você está gerando um documento que será entregue por email a uma pessoa que solicitou seu mapa astral e análise numerológica. Este não é um chat, não é uma sessão — é um RELATÓRIO COMPLETO E AUTOSSUFICIENTE que a pessoa lerá para entender a si mesma através dos dados de seu mapa natal e números de vida.
+
+Este relatório deve ser profundo, preciso, genuinamente personalizado, e escrito com a linguagem e filosofia da ZUNI Suprema.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIRETRIZES DE TOM E ESTILO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Tom: firme, empático, inteligente, direto. Sem clichês motivacionais.
+- Linguagem: acessível mas precisa. Nunca superficial.
+- Perspectiva: trate a pessoa pelo nome. Fale diretamente com ela, não sobre ela.
+- Extensão: suficiente para ser substancial, não tão longo que se torne difuso.
+- Contexto: você está interpretando dados astrológicos e numerológicos reais fornecidos — não especule, use esses dados como fundamento.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ESTRUTURA DO MAPA INTEGRADO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TÍTULO (gerado automaticamente)
+Mapa Integrado ZUNI Suprema — Seu Mapa Astral e Numerológico
+
+ABERTURA
+Um parágrafo que honre quem a pessoa é com base em seu mapa. Sem sessão, sem conversa — direto ao ponto do que os dados revelam. Exemplo: "Você nasceu sob um céu específico. Aqui está o que esse céu diz sobre quem você é."
+
+PARTE I — SEU MAPA ASTRAL
+
+**ESTRUTURA NARRATIVA INTEGRADA — NÃO USE TEMPLATE FIXO**
+
+Para cada planeta analisado, **sintetize os 2-3 padrões mais significativos** que emergem quando você considera:
+1. A posição do planeta no signo (qualidade base)
+2. Como os aspectos desse planeta MODIFICAM ou COMPLEXIFICAM essa energia
+3. Como tudo isso se manifesta na vida real da pessoa (baseado no contexto fornecido)
+
+**O QUE FAZER:**
+- Comece cada seção planetária pela essência (o que significa ter aquele planeta ali), mas já considerando aspectos relevantes
+- Explore tensões ou paradoxos: não é "isto é bom / isto é ruim", mas "isto funciona assim E também assim"
+- Use variação de estrutura: cada planeta pode ter um padrão diferente, conforme o que emerge
+- Diversifique temas: não foque apenas em "trabalho/carreira" — explore identidade, relacionamento, criatividade, propósito, padrões emocionais, crescimento
+
+**O QUE NÃO FAZER:**
+- ✗ Estrutura binária repetida: "Dádiva: / Ponto de atenção:" ou "Potencial / Desafio"
+- ✗ Tratamento isolado de planetas sem considerar como os aspectos os modificam
+- ✗ Listas de características genéricas
+- ✗ Foco repetido no mesmo tema (ex: sempre "ambiente de trabalho")
+
+**INCLUA NESTA SEÇÃO (conforme relevância):**
+- Ascendente: como é percebido, presença, impacto inicial
+- Sol: identidade nuclear, vontade consciente, donde surge a exaustão ou criatividade
+- Lua: necessidades emocionais reais (nem sempre óbvias), segurança interna, como sente
+- Mercúrio: pensamento, comunicação, curiosidade, como processa informação
+- Vênus: relacionamento, valores, aquilo que atrai e o que ama
+- Marte: ação, coragem, agressividade saudável (ou falta), como enfrenta desafios
+- Saturno: estrutura, medo, lições de vida, onde há rigidez ou potencial de sabedoria
+- Aspectos principais: use-os para profundidade, não para lista — eles modificam como cada planeta funciona
+
+**TONE:** Genuinamente perspicaz, não mecânico. Esta é uma análise profissional de R$147, não um chatbot.
+
+PARTE II — SUA NUMEROLOGIA
+
+**ESTRUTURA NARRATIVA INTEGRADA — SÍNTESE DOS NÚMEROS**
+
+Explore o Caminho de Vida e Essência não como dois tópicos separados, mas como **duas forças em diálogo**:
+- Caminho de Vida: a jornada, o aprendizado que esta vida escolheu para você
+- Essência: a energia subjacente, os talentos naturais com os quais você já nasce
+- Integração: onde eles se reforçam? Onde criam tensão? O que isso diz sobre sua missão?
+
+Conecte aos dados astrológicos quando relevante — os números frequentemente ecoam ou complexificam o que o mapa astral já revelou.
+
+**TONE:** Mesmo tom perspicaz e narrativo. Não liste "características do número 7", explore o que o número 7 *significa* para ESTA pessoa, nesta vida.
+
+INTEGRAÇÃO FINAL — O QUE OS DOIS MAPAS DIZEM JUNTOS
+Uma síntese narrativa que coloca Astrologia e Numerologia em diálogo. Onde eles concordam? Onde há tensão? O que emerge como o padrão central, o fio condutor que une tudo? Esta seção deve revelar a **arquitetura oculta** do mapa — o que os dados estão realmente dizendo quando vistos em conjunto.
+
+ORIENTAÇÕES PRÁTICAS
+Baseado no mapa integrado, ofereça 3-5 direcionamentos concretos e específicos (não genéricos). Cada um deve ter: o que fazer, por que importa para ESTE mapa, e como começar.
+
+ENCERRAMENTO
+Um parágrafo final que honre o que foi revelado e convide à próxima etapa (sem ser comercial). Reconheça que este é um ponto de partida, não o destino final.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+REGRAS INVIOLÁVEIS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+- Use APENAS os dados de mapa e numerologia fornecidos — não invente posições ou interpretações
+- Nunca diagnostique condições clínicas ou psicológicas formais
+- Nunca recomende medicamentos, suplementos ou tratamentos
+- Tom: sempre direto à pessoa, nunca "sobre" a pessoa
+- Linguagem: acessível, sem jargão astrológico não explicado
+- Se houver sinais de sofrimento severo, oriente para suporte profissional (psicólogo, terapeuta) — não para o Mentor ou outros produtos ZUNI
+- **IMPORTANTE:** NÃO use símbolos astrológicos (☉, ☽, ♀, ☿, ♂, ♃, ♄, ♅, ♆, ♇). Use sempre nomes por extenso: "Sol", "Lua", "Vênus", "Mercúrio", "Marte", "Júpiter", "Saturno", "Urano", "Netuno", "Plutão". PDFKit não renderiza bem esses símbolos Unicode.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CONTEXTO DE GERAÇÃO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Você recebará:
+1. Dados de mapa: Ascendente, Sol, Lua, Mercúrio, Vênus, Marte, Júpiter, Saturno, Urano, Netuno, Plutão (signo + grau)
+2. Casas astrológicas (12 casas com signo + grau)
+3. Aspectos principais (planeta1 + aspecto + planeta2 + orbe)
+4. Caminho de Vida (número 1-9)
+5. Essência (número 1-9)
+6. Histórico da conversa anterior (contexto de quem é a pessoa, o que a trouxe aqui)
+
+**IMPORTANTE — Se o Ascendente recebido for "Unknown" ou inválido:**
+Inclua um parágrafo de aviso no início do relatório (após a Abertura) avisando que o Ascendente não pôde ser calculado com precisão e que a análise da Casa I (casa 1) pode estar aproximada. Recomende consultar um astrólogo profissional com a hora de nascimento exata. Não deixe o usuário sem saber dessa limitação.
+
+USE TODOS ESSES DADOS. Não ignore nenhum deles.`;
+
 const REPORT_PROMPT = `Você é o sistema de geração do Mapa Integrativo ZUNI Suprema — o relatório personalizado entregue ao final de cada sessão de mentoria.
 
 Com base no histórico completo da sessão, gere um documento profundo, preciso e genuinamente personalizado. Este não é um relatório genérico — é o espelho da jornada desta pessoa específica, escrito com a linguagem e a filosofia da ZUNI Suprema.
@@ -385,25 +505,30 @@ Prefira frases curtas. Uma ideia por vez.
 
 Se usar qualquer palavra que o público possa não conhecer, explique logo em seguida, entre parênteses ou na frase seguinte.`;
 
-const SYSTEM_PROMPT_DEMO = `Você é o Mentor ZUNI — versão demonstração.
+const SYSTEM_PROMPT_DEMO = `Você é o Mentor ZUNI Suprema numa conversa de degustação gratuita. Seu papel é dar uma amostra genuína da profundidade da ZUNI: acolher, investigar e orientar com substância, de um jeito que faça a pessoa perceber que está sendo conduzida para uma compreensão real — não recebendo respostas genéricas.
 
-Você é firme, inteligente e genuinamente humano. Direto, preciso, empático. Trata a pessoa como adulto capaz.
+POSTURA (o mais importante)
+- Você é um mentor que INVESTIGA antes de concluir. Diante de uma queixa, nunca despeje um texto pronto como se soubesse tudo. Uma queixa como "não durmo bem" tem dezenas de causas possíveis — e a pessoa merece que você ajude a descobrir a dela, não que receba a explicação padrão.
+- Em cada resposta, faça DUAS coisas juntas: (1) já entregue algo de valor — um mapa das causas possíveis, uma distinção reveladora, uma informação com fundamento; e (2) faça 2 ou 3 perguntas específicas que ajudem a entender melhor a situação daquela pessoa (o corpo, o momento de vida, os hábitos, o histórico). Assim ela percebe que há uma condução acontecendo, rumo a algo mais assertivo.
+- Nunca dê a "respostinha" genérica. Se você se pegar respondendo algo que serviria para qualquer pessoa, pare e aprofunde ou pergunte mais. O valor está na especificidade.
 
-COMO RESPONDER:
-1. Interprete o que foi trazido — nomeie o padrão com precisão
-2. Conecte com psicologia, neurociência ou saúde (use a base com naturalidade)
-3. Ofereça perspectiva nova que amplie compreensão
-4. Quando fizer sentido, sugira prática concreta — pequena, específica
+PROFUNDIDADE E CONTEÚDO
+- Use com generosidade o CONTEXTO fornecido (trechos das obras ZUNI). É o conhecimento proprietário da marca — priorize-o. Aprofunde as ideias com suas palavras.
+- Informação fisiológica com base científica é bem-vinda e desejável: mecanismos hormonais, neurológicos, metabólicos, pesquisas e recursos reconhecidos podem e devem ser citados quando esclarecem a questão. Informar com fundamento é o oposto de genérico.
+- Traga distinções que a pessoa não teria sozinha, correlações entre fatores, os diferentes caminhos possíveis. Ajude-a a enxergar o próprio caso com mais clareza.
 
-Cada resposta deixa a pessoa sabendo algo sobre si que não sabia antes.
+FRONTEIRA (estreita e específica — não sufoque o resto)
+- Você INFORMA e ORIENTA; você não substitui avaliação profissional individual. Pode explicar mecanismos, mapear causas e apontar caminhos gerais. NÃO prescreva conduta pessoal fechada: nada de indicar um medicamento, suplemento ou dose específica como "tome isto". NÃO crave um diagnóstico fechado ("você tem X") — trabalhe com possibilidades a investigar.
+- Nunca minimize o sofrimento. Leve a sério.
+- IMPORTANTE: Não inclua URLs, links, CTAs comerciais ou qualquer direcionamento a produtos/checkouts no texto da resposta. Você orienta; a conversão fica com os botões da interface.
 
-SALVAGUARDAS INVIOLÁVEIS:
-- Nunca diagnostique condições clínicas
-- Nunca recomende medicamentos/suplementos/dosagens
-- Nunca minimize sofrimento
-- Crise aguda com risco: CVV (188) ou SAMU (192)
+FORMATO
+- Escreva em prosa corrida, conversacional. NUNCA use marcação: nada de asteriscos, cerquilhas (#), traços triplos (---), listas com marcadores ou qualquer símbolo de formatação. Apenas parágrafos naturais. As perguntas vêm no fluxo do texto, não como lista.
 
-LINGUAGEM: Simples, acessível. Sem jargão médico. Frases curtas, uma ideia por vez.`;
+FECHAMENTO E ENCAMINHAMENTO
+- Você tem poucas trocas nesta degustação; faça cada uma revelar profundidade. Deixe transparecer, sem soar comercial, que há muito mais na experiência completa.
+- NUNCA escreva URLs, links, endereços ou qualquer forma de direcionamento web no texto. Quando fizer sentido convidar para aprofundar, refira-se aos BOTÕES visíveis na tela — mencione naturalmente que há acesso à Sessão Completa do Mentor, aos Livros Vivos, ao Mapa Integrado ou à equipe multidisciplinar (via WhatsApp) disponíveis nos botões ao lado/abaixo do chat. Use linguagem natural e acessível.
+- Em sinais de crise aguda ou risco à vida, oriente com cuidado a procurar ajuda imediata (no Brasil, CVV 188).`;
 
 const app = express();
 app.use(cors());
@@ -506,7 +631,48 @@ async function generateClaudeResponse(messages, systemPrompt) {
   }
 }
 
-async function searchKnowledge(query) {
+/**
+ * Remove marcação markdown da resposta do Claude
+ * Garante que o usuário não vé símbolos crus na tela
+ */
+function limparMarkdown(texto) {
+  if (!texto) return texto;
+
+  // Remove títulos (# ## ### etc) de início de linha com espaço opcional
+  texto = texto.replace(/^#+\s*/gm, '');
+
+  // Remove negrito (**texto** → texto) — greedy e non-greedy
+  texto = texto.replace(/\*\*(.+?)\*\*/g, '$1');
+
+  // Remove itálico (*texto* → texto) — mas preserva asteriscos soltos
+  texto = texto.replace(/\*([^\s*][^*]*[^\s*])\*/g, '$1');
+  texto = texto.replace(/\*([^\s*])\*/g, '$1');
+
+  // Remove linhas que são só traços (---, ---|, ----|, etc)
+  texto = texto.replace(/^\s*-{2,}\s*$/gm, '');
+  texto = texto.replace(/^\s*_{2,}\s*$/gm, '');
+  texto = texto.replace(/^\s*={2,}\s*$/gm, '');
+
+  // Remove marcadores de lista (- item, * item, + item) do início de linha
+  texto = texto.replace(/^[\s]*[-*+]\s+/gm, '');
+
+  // Substitui setas (→, ->) por "leva a"
+  texto = texto.replace(/\s*→\s*/g, ' leva a ');
+  texto = texto.replace(/\s*->\s*/g, ' leva a ');
+
+  // Remove números de listas ordenadas (1. 2. 3. etc) do início de linha
+  texto = texto.replace(/^\s*\d+\.\s+/gm, '');
+
+  // Colapsa múltiplas quebras de linha em no máximo 2 (um parágrafo vazio)
+  texto = texto.replace(/\n\n\n+/g, '\n\n');
+
+  // Remove espaços em branco no final de cada linha
+  texto = texto.split('\n').map(line => line.trimEnd()).join('\n');
+
+  return texto.trim();
+}
+
+async function searchKnowledge(query, limite = 5) {
   try {
     const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
@@ -528,7 +694,7 @@ async function searchKnowledge(query) {
 
     const { data, error } = await supabase.rpc('buscar_documentos', {
       query_embedding: embedding,
-      limite: 5
+      limite: limite
     });
 
     if (error) {
@@ -548,17 +714,71 @@ async function generateReportText(session) {
     const Anthropic = require('@anthropic-ai/sdk');
     const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+    let ascendenteInvalido = false; // Flag para ser retornada junto com o texto
+
     const historico = session.history
       .map(h => `${h.role === 'user' ? 'Usuário' : 'Mentor'}: ${h.message}`)
       .join('\n');
 
+    // Selecionar prompt baseado no tipo de produto
     let systemPrompt = REPORT_PROMPT;
-    let userContent = `Nome: ${session.name}\nEmail: ${session.email}\n\nHistórico da sessão:\n${historico}`;
+    if (session.productType === 'mapa-integrado') {
+      systemPrompt = MAPA_INTEGRADO_PROMPT;
+    }
 
-    // Se incluir numerologia, adicionar instrução especial para 2 seções
+    // Ajustar conteúdo baseado no tipo de produto
+    let userContent;
+    if (session.productType === 'mapa-integrado') {
+      userContent = `Nome: ${session.name}\nEmail: ${session.email}\n\nContexto (o que a pessoa buscava ao solicitar seu mapa):\n${historico}`;
+    } else {
+      userContent = `Nome: ${session.name}\nEmail: ${session.email}\n\nHistórico da sessão:\n${historico}`;
+    }
+
+    // Se houver dados de mapa natal, incluir informações astrológicas
+    if (session.mapaNatal) {
+      const mapa = session.mapaNatal;
+
+      // VALIDAÇÃO CRÍTICA: Verificar se Ascendente foi calculado corretamente
+      ascendenteInvalido = !mapa.ascendente || mapa.ascendente.sign === 'Unknown';
+      if (ascendenteInvalido) {
+        console.error(`[ALERTA CRÍTICO] Ascendente não foi calculado para ${session.name}. Dados astrológicos podem estar incompletos.`);
+      }
+
+      const dadosAstrais = `\n\n--- DADOS ASTROLÓGICOS CALCULADOS ---
+Ascendente: ${mapa.ascendente?.sign} ${mapa.ascendente?.degree}°
+Sol: ${mapa.sol?.sign} ${mapa.sol?.degree}°
+Lua: ${mapa.lua?.sign} ${mapa.lua?.degree}°
+Mercúrio: ${mapa.mercurio?.sign} ${mapa.mercurio?.degree}°
+Vênus: ${mapa.venus?.sign} ${mapa.venus?.degree}°
+Marte: ${mapa.marte?.sign} ${mapa.marte?.degree}°
+Júpiter: ${mapa.jupiter?.sign} ${mapa.jupiter?.degree}°
+Saturno: ${mapa.saturno?.sign} ${mapa.saturno?.degree}°
+Urano: ${mapa.urano?.sign} ${mapa.urano?.degree}°
+Netuno: ${mapa.netuno?.sign} ${mapa.netuno?.degree}°
+Plutão: ${mapa.plutao?.sign} ${mapa.plutao?.degree}°`;
+
+      userContent += dadosAstrais;
+
+      // Se houver casas, adicionar
+      if (session.casas && Array.isArray(session.casas) && session.casas.length > 0) {
+        userContent += `\n\nCasas Astrológicas:\n${session.casas.map((c, i) => `Casa ${i + 1}: ${c.sign || 'desconhecida'} ${c.degree || 0}°`).join('\n')}`;
+      }
+
+      // Se houver aspectos, adicionar
+      if (session.aspectos && Array.isArray(session.aspectos) && session.aspectos.length > 0) {
+        userContent += `\n\nAspectos Principais:\n${session.aspectos.map(a => `${a.planet1} ${a.aspect} ${a.planet2} (${a.orb}°)`).join('\n')}`;
+      }
+    }
+
+    // Se incluir numerologia, adicionar dados e instruções
     if (session.includeNumerology) {
-      systemPrompt += `\n\n--- INSTRUÇÕES ESPECIAIS ---\nEste é um relatório DUAL (Mapa Astral + Numerologia). Estruture o documento com DUAS SEÇÕES CLARAMENTE SEPARADAS:\n1. Seção de Mapa Astral (análise astrológica)\n2. Seção de Numerologia (análise numerológica baseada em ${session.birthNameFull || session.name})\nMantenha ambas as análises coerentes e integradas ao mesmo tempo, mas com seções distintas.`;
-      userContent += `\n\nNome de nascimento/solteira para numerologia: ${session.birthNameFull || session.name}`;
+      if (session.productType === 'mapa-integrado') {
+        userContent += `\n\nNumerologia (baseada em ${session.birthNameFull || session.name}):\nCaminho de Vida: ${session.caminhoDeVida}`;
+        userContent += `\nEssência: ${session.essencia}`;
+      } else {
+        systemPrompt += `\n\n--- INSTRUÇÕES ESPECIAIS ---\nEste é um relatório DUAL (Mapa Astral + Numerologia). Estruture o documento com DUAS SEÇÕES CLARAMENTE SEPARADAS:\n1. Seção de Mapa Astral (análise astrológica)\n2. Seção de Numerologia (análise numerológica baseada em ${session.birthNameFull || session.name})\nMantenha ambas as análises coerentes e integradas ao mesmo tempo, mas com seções distintas.`;
+        userContent += `\n\nNome de nascimento/solteira para numerologia: ${session.birthNameFull || session.name}`;
+      }
     }
 
     const response = await anthropic.messages.create({
@@ -573,14 +793,185 @@ async function generateReportText(session) {
       ]
     });
 
-    return response.content[0].text;
+    return {
+      text: response.content[0].text,
+      ascendenteInvalido: ascendenteInvalido
+    };
   } catch (error) {
     console.error('Erro em generateReportText:', error);
-    return 'Erro ao gerar relatório.';
+    return {
+      text: 'Erro ao gerar relatório.',
+      ascendenteInvalido: false
+    };
   }
 }
 
-async function generatePdf(reportText, sessionId, userName) {
+// Extrai seções principais para criar índice
+function extrairIndice(texto) {
+  const linhas = texto.split('\n');
+  const secoes = [];
+  let pageNumber = 3; // Começar após capa + página de índice
+
+  linhas.forEach((linha) => {
+    // Capturar TODAS as seções nível 1 (# ...)
+    if (linha.startsWith('# ')) {
+      const titulo = linha.replace(/^# /, '').trim();
+      if (titulo.length > 0) {
+        secoes.push({
+          titulo: titulo,
+          pagina: pageNumber,
+          nivel: 1
+      });
+    }
+  });
+
+  return secoes;
+}
+
+// Renderiza texto com formatação Markdown em PDFKit
+function renderMarkdownToPDF(doc, texto, opcoes = {}) {
+  const fontSize = opcoes.fontSize || 11;
+  const lineGap = opcoes.lineGap || 5;
+  const maxWidth = opcoes.maxWidth || 500;
+
+  const linhas = texto.split('\n');
+  let pageCount = 1;
+
+  linhas.forEach((linha, indice) => {
+    const linhaProxima = linhas[indice + 1] || '';
+
+    // Linha divisória (---)
+    if (linha.trim() === '---') {
+      doc.moveDown(0.5);
+      doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
+      doc.moveDown(0.5);
+      return;
+    }
+
+    // Títulos de Parte (# PARTE)
+    if (linha.startsWith('# PARTE')) {
+      doc.moveDown(1);
+      const titulo = linha.replace(/^# PARTE /, '').trim();
+      doc.fontSize(18).font('Helvetica-Bold').text(titulo, { width: maxWidth });
+      doc.fontSize(fontSize).font('Helvetica');
+      doc.moveDown(0.5);
+      return;
+    }
+
+    // Títulos H1 (# Título)
+    if (linha.startsWith('# ')) {
+      doc.moveDown(1);
+      const titulo = linha.replace(/^# /, '').trim();
+      doc.fontSize(16).font('Helvetica-Bold').text(titulo, { width: maxWidth });
+      doc.fontSize(fontSize).font('Helvetica');
+      doc.moveDown(0.5);
+      return;
+    }
+
+    // Títulos H3 (## Título)
+    if (linha.startsWith('## ')) {
+      doc.moveDown(0.5);
+      const titulo = linha.replace(/^## /, '').trim();
+      doc.fontSize(13).font('Helvetica-Bold').text(titulo, { width: maxWidth });
+      doc.fontSize(fontSize).font('Helvetica');
+      doc.moveDown(0.3);
+      return;
+    }
+
+    // Títulos H3 (### Título)
+    if (linha.startsWith('### ')) {
+      doc.moveDown(0.5);
+      const titulo = linha.replace(/^### /, '').trim();
+      doc.fontSize(12).font('Helvetica-Bold').text(titulo, { width: maxWidth });
+      doc.fontSize(fontSize).font('Helvetica');
+      doc.moveDown(0.3);
+      return;
+    }
+
+    // Linhas vazias
+    if (linha.trim() === '') {
+      doc.moveDown(0.3);
+      return;
+    }
+
+    // Processar **negrito** e *itálico* dentro do texto
+    // ESTRATÉGIA: Construir array de partes com formatação preservando conteúdo
+    const partes = [];
+    let texto = linha;
+
+    // Armazenar markers de negrito e itálico
+    const boldMarkers = [];
+    const italicMarkers = [];
+    let boldCount = 0;
+    let italicCount = 0;
+
+    // PASSO 1: Processar **negrito** PRIMEIRO - substituir por placeholder
+    texto = texto.replace(/\*\*([^*]|\*(?!\*))+?\*\*/g, (match) => {
+      boldMarkers.push(match.slice(2, -2));
+      return `§BOLD${boldCount++}§`;
+    });
+
+    // PASSO 2: Processar *itálico* - substituir por placeholder
+    texto = texto.replace(/\*([^*]+?)\*/g, (match) => {
+      italicMarkers.push(match.slice(1, -1));
+      return `§ITALIC${italicCount++}§`;
+    });
+
+    // PASSO 3: Usar regex global para processar placeholders preservando conteúdo
+    // Processa tanto BOLD quanto ITALIC, capturando tudo entre os § §
+    const regex = /§(BOLD|ITALIC)(\d+)§/g;
+    let ultimoIndex = 0;
+    let match;
+
+    while ((match = regex.exec(texto)) !== null) {
+      // Adicionar texto normal antes do placeholder
+      if (match.index > ultimoIndex) {
+        partes.push({ texto: texto.slice(ultimoIndex, match.index), tipo: 'normal' });
+      }
+
+      // Adicionar conteúdo formatado
+      const tipo = match[1]; // 'BOLD' ou 'ITALIC'
+      const index = parseInt(match[2]);
+
+      if (tipo === 'BOLD') {
+        partes.push({ texto: boldMarkers[index], tipo: 'negrito' });
+      } else if (tipo === 'ITALIC') {
+        partes.push({ texto: italicMarkers[index], tipo: 'italico' });
+      }
+
+      ultimoIndex = match.index + match[0].length;
+    }
+
+    // Adicionar resto do texto após último placeholder
+    if (ultimoIndex < texto.length) {
+      partes.push({ texto: texto.slice(ultimoIndex), tipo: 'normal' });
+    }
+
+    // Se não tem formatação, renderizar normal
+    if (partes.length === 0) {
+      doc.fontSize(fontSize).font('Helvetica').text(texto, { width: maxWidth, lineGap });
+    } else {
+      // Renderizar com formatação
+      doc.fontSize(fontSize);
+      let x = doc.x;
+      let y = doc.y;
+
+      partes.forEach((parte) => {
+        if (parte.tipo === 'negrito') {
+          doc.font('Helvetica-Bold');
+        } else if (parte.tipo === 'italico') {
+          doc.font('Helvetica-Oblique');
+        } else {
+          doc.font('Helvetica');
+        }
+        doc.text(parte.texto, x, y, { continued: true, width: maxWidth, lineGap });
+      });
+      doc.moveDown();
+    }
+  });
+}
+
+async function generatePdf(reportText, sessionId, userName, ascendenteInvalido = false) {
   return new Promise((resolve, reject) => {
     const PDFDocument = require('pdfkit');
     const fs = require('fs');
@@ -593,35 +984,59 @@ async function generatePdf(reportText, sessionId, userName) {
 
     doc.pipe(stream);
 
+    let currentPage = 0;
+    doc.on('pageAdded', () => { currentPage++; });
+
     // Página de capa
-    const capaPath = path.join(__dirname, '../public/capa-pdf.jpg');
+    const capaPath = path.join(__dirname, '../public/capa-astrologia-numerologia.png');
     if (fs.existsSync(capaPath)) {
       doc.image(capaPath, 0, 0, { fit: [595.28, 841.89], align: 'center', valign: 'center' });
       doc.addPage();
     }
 
-    // Cabeçalho
+    // Página de índice
     doc.fontSize(22).font('Helvetica-Bold')
-       .text('ZUNI Suprema', { align: 'center' });
-    doc.fontSize(14).font('Helvetica')
-       .text('Mapa Integrativo — Relatório de Sessão', { align: 'center' });
-    doc.moveDown();
-    doc.fontSize(11).text(`Participante: ${userName}`, { align: 'center' });
-    doc.fontSize(10).text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, { align: 'center' });
-    doc.moveDown(2);
+       .text('ÍNDICE', { align: 'center' });
+    doc.moveDown(1);
 
-    // Linha divisória
-    doc.moveTo(50, doc.y).lineTo(545, doc.y).stroke();
-    doc.moveDown();
+    const secoes = extrairIndice(reportText);
+    secoes.forEach((secao) => {
+      const pontosPerEspaco = 40;
+      const totalEspaco = 500 - secao.titulo.length * 6 - 30;
+      const pontos = '.'.repeat(Math.max(5, Math.floor(totalEspaco / 6)));
 
-    // Conteúdo do relatório
-    doc.fontSize(12).font('Helvetica').text(reportText, { align: 'left', lineGap: 4 });
+      doc.fontSize(11).font('Helvetica')
+         .text(`${secao.titulo} ${pontos} ${secao.pagina}`, { width: 500, align: 'left' });
+    });
 
-    // Rodapé
     doc.moveDown(2);
     doc.fontSize(9).fillColor('gray')
-       .text('ZUNI Suprema — A ciência da excelência humana', { align: 'center' });
-    doc.text('www.zunisuprema.com.br', { align: 'center' });
+       .text('Gerado em: ' + new Date().toLocaleString('pt-BR'), { align: 'center' });
+
+    // Adicionar página para começar conteúdo
+    doc.addPage();
+
+    // SE ASCENDENTE INVÁLIDO: inserir aviso determinístico ANTES do relatório
+    if (ascendenteInvalido) {
+      doc.fontSize(11).font('Helvetica-Bold').fillColor('red');
+      doc.text('⚠️  AVISO TÉCNICO CRÍTICO', { align: 'left' });
+      doc.fillColor('black').font('Helvetica').fontSize(10);
+      doc.text('O Ascendente deste mapa não pôde ser calculado com precisão. A análise da Casa I está aproximada ou indisponível.', { width: 500 });
+      doc.text('Favor consultar um astrólogo profissional para validação do Ascendente. Este relatório deve ser considerado uma orientação inicial.', { width: 500 });
+      doc.moveDown(1);
+    }
+
+    // Renderizar conteúdo com formatação Markdown
+    renderMarkdownToPDF(doc, reportText, { fontSize: 11, lineGap: 4, maxWidth: 500 });
+
+    // Adicionar footer com numeração de página durante rendering
+    let pageNumber = 1;
+    doc.on('pageAdded', () => {
+      doc.fontSize(9).fillColor('gray');
+      doc.text(`Página ${pageNumber}`, 50, doc.page.height - 50, { align: 'center', width: 495 });
+      doc.text('ZUNI Suprema — A ciência da excelência humana', { align: 'center' });
+      pageNumber++;
+    });
 
     doc.end();
 
@@ -718,8 +1133,8 @@ async function gerarEEnviarRelatorio(sessionId) {
   const session = await getSession(sessionId);
   if (!session) throw new Error(`Sessão ${sessionId} não encontrada para gerar relatório.`);
 
-  const reportText = await generateReportText(session);
-  const pdfPath = await generatePdf(reportText, sessionId, session.name);
+  const reportData = await generateReportText(session);
+  const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
 
   let cupom = null;
   try {
@@ -871,6 +1286,31 @@ async function criarPacoteSessoesSeAplicavel(order, paymentId) {
   }
 
   return pacote;
+}
+
+async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
+  const referencia = order.external_reference;
+  if (!referencia || !referencia.startsWith('mi')) return null;
+
+  const session = await getSession(referencia);
+  if (!session || session.productType !== 'mapa-integrado') return null;
+
+  const isPaid = order.status === 'approved' ||
+                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
+  if (!isPaid) return null;
+
+  const reportText = await generateReportText(session);
+
+  try {
+    session.relatorioGerado = true;
+    session.relatorioTexto = reportText;
+    await upsertSession(session);
+    console.log(`[MAPA-INTEGRADO] Relatório gerado para sessão ${referencia}`);
+  } catch (err) {
+    console.error(`[MAPA-INTEGRADO] Erro ao salvar relatório: ${err.message}`);
+  }
+
+  return reportText;
 }
 
 app.get('/api/livros/catalogo/:livroId', (req, res) => {
@@ -1362,6 +1802,11 @@ app.post('/api/pagamento/webhook', async (req, res) => {
       } catch (err) {
         console.error('[WEBHOOK] Erro ao criar pacote de sessões extras:', err.message);
       }
+      try {
+        await gerarRelatorioMapaIntegradoSeAplicavel(order, dataId);
+      } catch (err) {
+        console.error('[WEBHOOK] Erro ao gerar relatório Mapa Integrado:', err.message);
+      }
       if (pago) {
         console.log(`[WEBHOOK] Pagamento confirmado — pedido ${dataId}`);
       }
@@ -1377,6 +1822,11 @@ app.post('/api/pagamento/webhook', async (req, res) => {
         await criarPacoteSessoesSeAplicavel(payment, dataId);
       } catch (err) {
         console.error('[WEBHOOK] Erro ao criar pacote de sessões extras:', err.message);
+      }
+      try {
+        await gerarRelatorioMapaIntegradoSeAplicavel(payment, dataId);
+      } catch (err) {
+        console.error('[WEBHOOK] Erro ao gerar relatório Mapa Integrado:', err.message);
       }
       if (pago) {
         console.log(`[WEBHOOK] Pagamento confirmado — pagamento ${dataId}`);
@@ -1611,10 +2061,10 @@ app.post('/api/relatorio', async (req, res) => {
       return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
     }
 
-    const reportText = await generateReportText(session);
-    const pdfPath = await generatePdf(reportText, sessionId, session.name);
+    const reportData = await generateReportText(session);
+    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
     await sendEmail(session.email, session.name, pdfPath);
-    await triggerMake(session.name, session.email, reportText.slice(0, 1200));
+    await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
     return res.json({ relatório: reportText });
   } catch (error) {
@@ -1635,8 +2085,8 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
       return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
     }
 
-    const reportText = await generateReportText(session);
-    const pdfPath = await generatePdf(reportText, sessionId, session.name);
+    const reportData = await generateReportText(session);
+    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="mapa-integrativo-${session.name.toLowerCase().replace(/\s+/g, '-')}.pdf"`);
@@ -1674,10 +2124,10 @@ app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
       return res.status(403).json({ error: 'Rota de teste indisponível em produção para esta sessão.' });
     }
 
-    const reportText = await generateReportText(session);
-    const pdfPath = await generatePdf(reportText, sessionId, session.name);
+    const reportData = await generateReportText(session);
+    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
     await sendEmail(session.email, session.name, pdfPath);
-    await triggerMake(session.name, session.email, reportText.slice(0, 1200));
+    await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
     return res.json({ relatório: reportText });
   } catch (error) {
@@ -1995,6 +2445,11 @@ app.post('/api/checkout/mapa-integrado', async (req, res) => {
 
     console.log(`[MAPA-INTEGRADO] Mapa calculado com sucesso. Créditos: ${mapaNatal.creditsUsed}`);
 
+    // Calcular numerologia
+    const caminhoDeVida = calcularCaminhoDeVida(birthDate);
+    const essencia = calcularEssencia(birthNameFull || name);
+    console.log(`[MAPA-INTEGRADO] Numerologia calculada: Caminho de Vida ${caminhoDeVida}, Essência ${essencia}`);
+
     // Criar sessão com dados do mapa
     const sessionId = uuidv4();
     const session = {
@@ -2006,8 +2461,12 @@ app.post('/api/checkout/mapa-integrado', async (req, res) => {
       birthLocation,
       birthNameFull: birthNameFull || null,
       productType: 'mapa-integrado',
-      includeNumerology: false,
+      includeNumerology: true,
       mapaNatal: mapaNatal.mapaNatal,
+      casas: mapaNatal.casas,
+      aspectos: mapaNatal.aspectos,
+      caminhoDeVida,
+      essencia,
       coordenadas: mapaNatal.coordenadas,
       creditsUsed: mapaNatal.creditsUsed,
       history: [],
@@ -2154,6 +2613,11 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
       return res.status(400).json({ error: `Erro ao calcular mapa: ${mapaNatal.erro}` });
     }
 
+    // Calcular numerologia
+    const caminhoDeVida2 = calcularCaminhoDeVida(birthDate);
+    const essencia2 = calcularEssencia(birthNameFull || name);
+    console.log(`[MAPA-INTEGRADO-PREF] Numerologia calculada: Caminho de Vida ${caminhoDeVida2}, Essência ${essencia2}`);
+
     // Criar sessão com mapa
     const sessionId = uuidv4();
     const session = {
@@ -2165,8 +2629,12 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
       birthLocation,
       birthNameFull: birthNameFull || null,
       productType: 'mapa-integrado',
-      includeNumerology: false,
+      includeNumerology: true,
       mapaNatal: mapaNatal.mapaNatal,
+      casas: mapaNatal.casas,
+      aspectos: mapaNatal.aspectos,
+      caminhoDeVida: caminhoDeVida2,
+      essencia: essencia2,
       coordenadas: mapaNatal.coordenadas,
       creditsUsed: mapaNatal.creditsUsed,
       history: [],
@@ -2391,6 +2859,12 @@ app.post('/api/experimente-chat', async (req, res) => {
       ? `\n\nContexto da base ZUNI:\n${contextoBases.join('\n\n')}`
       : '';
 
+    // ── LOG RAG: Chunks retornados ──
+    console.log(`[RAG_DEMO] Query: "${message}"\nChunks retornados: ${contextoBases.length}`);
+    contextoBases.forEach((chunk, i) => {
+      console.log(`\n[CHUNK ${i + 1}]\n${chunk.substring(0, 200)}...\n`);
+    });
+
     // ── PREPARAR MENSAGENS PARA CLAUDE ──
     // Nota: Esta é uma sessão SEM histórico persistido (demo não salva)
     // Se quiser adicionar histórico, armazenar em localStorage front-end
@@ -2409,16 +2883,27 @@ app.post('/api/experimente-chat', async (req, res) => {
       promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em zunisuprema.com.br/mentor (R$ 29,90 via PIX)."`;
     }
 
+    // ── LOG: Prompt final completo ──
+    console.log('\n========== PROMPT ENVIADO AO CLAUDE ==========');
+    console.log('[SYSTEM PROMPT]');
+    console.log(promptFinal);
+    console.log('\n[USER MESSAGE COM CONTEXTO]');
+    console.log(messagesParaClaude[0].content);
+    console.log('==========================================\n');
+
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 500,
+      max_tokens: 1000,
       system: promptFinal,
       messages: messagesParaClaude
     });
 
-    const responseText = response.content[0].text;
+    let responseText = response.content[0].text;
     const inputTokens = response.usage.input_tokens;
     const outputTokens = response.usage.output_tokens;
+
+    // ── LIMPEZA DE MARKDOWN ──
+    responseText = limparMarkdown(responseText);
 
     // ── REGISTRAR USO ──
     registrarUso(visitorHash, { input: inputTokens, output: outputTokens });
