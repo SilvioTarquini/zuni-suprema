@@ -821,7 +821,8 @@ function extrairIndice(texto) {
           titulo: titulo,
           pagina: pageNumber,
           nivel: 1
-      });
+        });
+      }
     }
   });
 
