@@ -952,22 +952,50 @@ function renderMarkdownToPDF(doc, texto, opcoes = {}) {
     if (partes.length === 0) {
       doc.fontSize(fontSize).font('Helvetica').text(texto, { width: maxWidth, lineGap });
     } else {
-      // Renderizar com formatação — NÃO fixar x,y para evitar sobreposição
-      // PDFKit gerencia posição automaticamente quando omitimos x,y
+      // Renderizar com formatação — manter estado de fonte após quebras de página
+      // PDFKit pode quebrar página automaticamente, então reaplica fonte após cada segmento
       doc.fontSize(fontSize);
 
+      // Para manter negrito/itálico em texto que cruza página, usar 'continued'
+      // mas apenas entre segmentos que definitivamente caberão na mesma linha
+      let buffer = '';
+      let bufferTipo = 'normal';
+
       partes.forEach((parte, idx) => {
-        if (parte.tipo === 'negrito') {
+        // Acumular segmentos do mesmo tipo para renderizar juntos
+        if (buffer && parte.tipo !== bufferTipo) {
+          // Renderizar buffer acumulado
+          if (bufferTipo === 'negrito') {
+            doc.font('Helvetica-Bold');
+          } else if (bufferTipo === 'italico') {
+            doc.font('Helvetica-Oblique');
+          } else {
+            doc.font('Helvetica');
+          }
+          doc.text(buffer, { width: maxWidth, lineGap });
+          buffer = '';
+        }
+
+        // Acumular texto do mesmo tipo
+        if (!buffer) {
+          bufferTipo = parte.tipo;
+        }
+        buffer += parte.texto;
+      });
+
+      // Renderizar último buffer
+      if (buffer) {
+        if (bufferTipo === 'negrito') {
           doc.font('Helvetica-Bold');
-        } else if (parte.tipo === 'italico') {
+        } else if (bufferTipo === 'italico') {
           doc.font('Helvetica-Oblique');
         } else {
           doc.font('Helvetica');
         }
-        // Usar 'continued' apenas se não for o último segmento
-        const isMostrar = idx < partes.length - 1;
-        doc.text(parte.texto, { continued: isMostrar, width: maxWidth, lineGap });
-      });
+        doc.text(buffer, { width: maxWidth, lineGap });
+      }
+
+      doc.font('Helvetica'); // Reset para fonte normal
       doc.moveDown();
     }
   });
