@@ -60,6 +60,14 @@ const CATALOGO = {
     resumo: 'Uma jornada pela arquitetura biológica que sustenta a energia, a clareza mental e a longevidade — para quem busca entender as causas por trás do cansaço, da mente nebulosa e da perda de vitalidade, e não apenas tratar os sintomas.',
     descricao: 'O corpo nunca funcionou em compartimentos isolados. Em dezenove capítulos, esta obra conecta energia celular, hormônios, metabolismo, inflamação, sono e longevidade em uma única arquitetura biológica — mostrando por que tratar sintomas isolados raramente resolve, e como recuperar clareza mental, energia e propósito compreendendo o sistema como um todo.'
   },
+  'os-bastidores-da-mente-1-degustacao': {
+    titulo: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal (Capítulo 1 - Degustação)',
+    preco: 0,
+    teaser: true,
+    categoria: 'principal',
+    resumo: 'Leia gratuitamente o primeiro capítulo: "O cérebro que reage antes de pensar". Converse com a obra e descubra os mecanismos ocultos por trás de nossas reações automáticas.',
+    descricao: 'Degustação gratuita do Volume I. Explore o primeiro capítulo e converse com a obra via chat baseado em IA. Acesse a versão completa para mergulhar em todos os doze capítulos e quatro partes que revelam os bastidores da mente humana.'
+  },
 };
 
 function buscarLivro(livroId) {

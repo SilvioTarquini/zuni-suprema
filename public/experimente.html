@@ -175,6 +175,7 @@
       border-radius: 12px;
       margin-bottom: 30px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      scroll-margin-top: 120px;
     }
 
     .modulo.bloqueado {
@@ -507,6 +508,38 @@
       font-weight: 600;
     }
 
+    /* Sidebar de Produtos (Desktop) — FORA do container */
+    #chatSidebarProdutos {
+      display: flex !important;
+      flex-direction: column;
+      gap: 14px;
+      min-width: 160px;
+      padding: 0;
+    }
+
+    .produto-btn-sidebar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 14px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 12px;
+      transition: all 0.3s ease;
+      border: 2px solid #d4af37;
+      text-align: center;
+      line-height: 1.4;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    .produto-btn-sidebar:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      transform: translateY(-2px);
+    }
+
     /* Responsivo */
     @media (max-width: 768px) {
       .header h1 {
@@ -535,6 +568,27 @@
 
       #chatHistorico {
         height: 300px !important;
+      }
+
+      /* Chat responsivo — sidebar fica abaixo em linha horizontal */
+      #chatModuloContainer {
+        flex-direction: column !important;
+        gap: 16px;
+      }
+
+      #chatSidebarProdutos {
+        flex-direction: row !important;
+        width: 100%;
+        justify-content: center;
+        gap: 12px;
+        padding: 0;
+      }
+
+      .produto-btn-sidebar {
+        flex: 1;
+        max-width: 130px;
+        padding: 10px 12px;
+        font-size: 11px;
       }
     }
   </style>
@@ -719,52 +773,57 @@
         Converse com o Mentor ZUNI — até 5 trocas gratuitas. Após esgotá-las, conheça a Sessão Completa.
       </p>
 
-      <!-- Histórico do Chat -->
-      <div id="chatHistorico" style="
-        background: #f9f9f9;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 20px;
-        height: 400px;
-        overflow-y: auto;
-        margin-bottom: 20px;
-        display: flex;
-        flex-direction: column;
-        gap: 15px;
-      ">
-        <div style="text-align: center; color: #999; padding: 20px;">
-          <p>Inicie uma conversa com o Mentor...</p>
-        </div>
-      </div>
+      <!-- Container Chat + Sidebar (responsivo) -->
+      <div id="chatModuloContainer" style="display: flex; gap: 20px; align-items: flex-start;">
 
-      <!-- Input e Botão -->
-      <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-        <textarea
-          id="chatInput"
-          placeholder="Escreva sua pergunta ou reflexão..."
-          style="
-            flex: 1;
-            padding: 12px;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            font-family: inherit;
-            resize: vertical;
-            min-height: 80px;
-            transition: border-color 0.3s;
-          "
-          onkeydown="if(event.key === 'Enter' && event.ctrlKey) enviarMensagemChat();"
-        ></textarea>
-      </div>
+        <!-- Chat Principal -->
+        <div style="flex: 1; min-width: 0;">
+          <!-- Histórico do Chat -->
+          <div id="chatHistorico" style="
+            background: #f9f9f9;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+          ">
+            <div style="text-align: center; color: #999; padding: 20px;">
+              <p>Inicie uma conversa com o Mentor...</p>
+            </div>
+          </div>
 
-      <button
-        id="btnEnviarChat"
-        class="btn-calcular"
-        onclick="enviarMensagemChat()"
-        style="width: 100%;"
-      >
-        Enviar (Ctrl+Enter)
-      </button>
+          <!-- Input e Botão -->
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <textarea
+              id="chatInput"
+              placeholder="Escreva sua pergunta ou reflexão..."
+              style="
+                flex: 1;
+                padding: 12px;
+                border: 2px solid #ddd;
+                border-radius: 6px;
+                font-size: 14px;
+                font-family: inherit;
+                resize: vertical;
+                min-height: 80px;
+                transition: border-color 0.3s;
+              "
+              onkeydown="if(event.key === 'Enter' && event.ctrlKey) enviarMensagemChat();"
+            ></textarea>
+          </div>
+
+          <button
+            id="btnEnviarChat"
+            class="btn-calcular"
+            onclick="enviarMensagemChat()"
+            style="width: 100%;"
+          >
+            Enviar (Ctrl+Enter)
+          </button>
 
       <!-- Status e Contador -->
       <div style="display: flex; gap: 15px; margin-top: 15px; align-items: center;">
@@ -787,6 +846,70 @@
         </div>
       </div>
 
+      <!-- Aviso Discreto com CTA WhatsApp -->
+      <div style="
+        background: linear-gradient(135deg, #f0f8ff 0%, rgba(212, 175, 55, 0.08) 100%);
+        border: 2px solid #1a1a3e;
+        border-left: 4px solid #d4af37;
+        border-radius: 8px;
+        padding: 18px;
+        margin-top: 20px;
+        text-align: center;
+      ">
+        <p style="
+          color: #1a1a3e;
+          font-size: 14px;
+          line-height: 1.7;
+          margin: 0 0 14px 0;
+          font-weight: 500;
+        ">
+          A ZUNI Suprema conta com uma equipe multidisciplinar em saúde integrativa e desenvolvimento humano. Se você sente que precisa de uma orientação mais próxima e personalizada, fale conosco — teremos prazer em acolher e indicar o melhor caminho para o seu momento.
+        </p>
+        <a href="#" onclick="abrirWhatsappChat(event)" style="
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          background: #25d366;
+          color: white;
+          padding: 10px 20px;
+          border-radius: 6px;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 600;
+          transition: all 0.3s;
+          cursor: pointer;
+          border: 2px solid #25d366;
+          box-shadow: 0 2px 8px rgba(37, 211, 102, 0.3);
+        "
+        onmouseover="this.style.background='#20ba5a'; this.style.boxShadow='0 4px 16px rgba(37, 211, 102, 0.5)';"
+        onmouseout="this.style.background='#25d366'; this.style.boxShadow='0 2px 8px rgba(37, 211, 102, 0.3)';"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg" style="flex-shrink: 0;">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.272-.099-.47-.148-.67.15-.23.297-.921.967-1.128 1.167-.206.2-.412.223-.71.037-.297-.186-1.256-.463-2.393-1.476-.886-.788-1.481-1.761-1.657-2.059-.098-.168-.01-.257.076-.378.086-.11.19-.272.285-.408.096-.136.128-.232.19-.387.062-.155.031-.29-.015-.405-.046-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.076 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421-7.403h-.004a9.87 9.87 0 00-4.783 1.149c-1.485.741-2.738 1.81-3.556 3.018C2.957 8.5 2.5 10.171 2.5 12c0 1.829.457 3.5 1.228 4.952.818 1.208 2.071 2.277 3.556 3.018 1.48.743 3.154 1.149 4.783 1.149 1.629 0 3.303-.406 4.783-1.149 1.485-.741 2.738-1.81 3.556-3.018.771-1.452 1.228-3.123 1.228-4.952 0-1.829-.457-3.5-1.228-4.952-.818-1.208-2.071-2.277-3.556-3.018a9.87 9.87 0 00-4.783-1.149m5.021 15.268c-.86.609-1.863 1.083-2.952 1.369V2.431c1.089.286 2.092.76 2.952 1.369 1.38.977 2.506 2.367 3.231 3.968.726 1.6 1.094 3.393 1.094 5.232 0 1.839-.368 3.632-1.094 5.232-.725 1.601-1.851 2.991-3.231 3.968z"/>
+          </svg>
+          Falar com a equipe no WhatsApp
+        </a>
+      </div>
+        </div>
+
+        <!-- Sidebar com Botões de Produtos (sempre visível) -->
+        <div id="chatSidebarProdutos" style="display: flex; flex-direction: column; gap: 12px; min-width: 150px;">
+          <a href="https://zunisuprema.com.br/checkout-mapa-integrado" class="produto-btn-sidebar" style="background: #d4af37; color: #1a1a3e;" onmouseover="this.style.background='#c9a02a';" onmouseout="this.style.background='#d4af37';">
+            🌟<br/>Mapa<br/>Integrado
+          </a>
+
+          <a href="https://zunisuprema.com.br/loja" class="produto-btn-sidebar" style="background: transparent; color: #d4af37;" onmouseover="this.style.background='rgba(212, 175, 55, 0.1)';" onmouseout="this.style.background='transparent';">
+            📚<br/>Livros<br/>Vivos
+          </a>
+
+          <a href="https://zunisuprema.com.br/mentor" class="produto-btn-sidebar" style="background: #1a1a3e; color: #d4af37;" onmouseover="this.style.background='#0f0f1e'; this.style.borderColor='#d4af37';" onmouseout="this.style.background='#1a1a3e'; this.style.borderColor='#1a1a3e';">
+            💬<br/>Sessão<br/>Completa<br/><span style="font-size: 9px; font-weight: 400;">R$ 29,90</span>
+          </a>
+        </div>
+
+      </div>
+
       <!-- Loading -->
       <div id="chatLoading" style="
         display: none;
@@ -798,46 +921,177 @@
         <p>Mentor está pensando...</p>
       </div>
 
-      <!-- Mensagem de Limite Atingido -->
+      <!-- Mensagem de Limite Atingido com Botões CTA -->
       <div id="chatLimiteAtingido" style="
         display: none;
-        background: #fff3cd;
-        border: 1px solid #ffc107;
-        padding: 20px;
-        border-radius: 8px;
+        background: linear-gradient(135deg, rgba(26, 26, 62, 0.05) 0%, rgba(212, 175, 55, 0.08) 100%);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        padding: 30px;
+        border-radius: 12px;
         margin-top: 20px;
         text-align: center;
       ">
-        <p style="color: #856404; font-weight: 600; margin-bottom: 10px;">
+        <p style="color: #1a1a3e; font-weight: 600; font-size: 16px; margin-bottom: 8px;">
           ⏳ Você atingiu o limite de 5 trocas
         </p>
-        <p style="color: #856404; font-size: 14px; margin-bottom: 15px;">
-          Volte amanhã para uma nova sessão ou conheça a Sessão Completa do Mentor.
+        <p style="color: #666; font-size: 14px; margin-bottom: 25px;">
+          Volte amanhã para uma nova sessão ou conheça nossos produtos completos.
         </p>
-        <a href="https://zunisuprema.com.br/mentor" class="cta-link" style="
-          display: inline-block;
-          background: #d4af37;
-          color: #1a1a3e;
-          padding: 10px 20px;
-          border-radius: 6px;
-          text-decoration: none;
-          font-weight: bold;
-          font-size: 14px;
-        ">
-          🚀 Ir para Sessão Completa (R$ 29,90)
-        </a>
+
+        <!-- Botões CTA -->
+        <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+          <a href="https://zunisuprema.com.br/mapa-integrado" style="
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #d4af37;
+            color: #1a1a3e;
+            padding: 16px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+            border: 2px solid #d4af37;
+            min-width: 140px;
+            text-align: center;
+          "
+          onmouseover="this.style.background='#c9a02a'; this.style.borderColor='#c9a02a';"
+          onmouseout="this.style.background='#d4af37'; this.style.borderColor='#d4af37';"
+          >
+            🌟 Mapa Integrado
+          </a>
+
+          <a href="https://zunisuprema.com.br/loja/livros" style="
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            color: #d4af37;
+            padding: 16px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+            border: 2px solid #d4af37;
+            min-width: 140px;
+            text-align: center;
+          "
+          onmouseover="this.style.background='rgba(212, 175, 55, 0.1)';"
+          onmouseout="this.style.background='transparent';"
+          >
+            📚 Livros Vivos
+          </a>
+
+          <a href="https://zunisuprema.com.br/mentor" style="
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a3e;
+            color: #d4af37;
+            padding: 16px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 13px;
+            transition: all 0.3s;
+            border: 2px solid #1a1a3e;
+            min-width: 140px;
+            text-align: center;
+          "
+          onmouseover="this.style.background='#0f0f1e'; this.style.borderColor='#d4af37';"
+          onmouseout="this.style.background='#1a1a3e'; this.style.borderColor='#1a1a3e';"
+          >
+            💬 Sessão Completa<br/><span style="font-size: 12px; font-weight: 400;">(R$ 29,90)</span>
+          </a>
+        </div>
       </div>
     </div>
 
-    <!-- Módulo D: Livro Vivo (Placeholder) -->
-    <div class="modulo" id="modulo-livro" data-modulo="livro" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); text-align: center; padding: 60px 30px;">
-      <h2 style="color: #1a1a3e; margin-bottom: 20px;">📚 Módulo D — Degustação de Livro Vivo</h2>
-      <p style="color: #666; font-size: 18px; margin-bottom: 30px;">
-        Leia o primeiro capítulo e converse com a obra.
+    <!-- Módulo D: Livro Vivo Degustação -->
+    <div class="modulo" id="modulo-livro" data-modulo="livro" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); padding: 60px 30px;">
+      <h2 style="color: #1a1a3e; margin-bottom: 20px; text-align: center;">📚 Módulo D — Degustação de Livro Vivo</h2>
+      <p style="color: #666; font-size: 18px; margin-bottom: 30px; text-align: center;">
+        Leia o primeiro capítulo de "Os Bastidores da Mente - Volume I" e converse com a obra.
       </p>
-      <div style="background: white; padding: 40px; border-radius: 8px; display: inline-block; border-left: 4px solid #d4af37;">
-        <p style="color: #999; font-size: 16px;">⏳ Em desenvolvimento</p>
-        <p style="color: #666; font-size: 14px; margin-top: 10px;">Este módulo será lançado em breve.</p>
+
+      <div style="max-width: 900px; margin: 0 auto; background: white; padding: 40px 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+
+        <!-- Texto do Capítulo 1 -->
+        <div id="livro-conteudo" style="line-height: 1.8; font-size: 16px; color: #333; margin-bottom: 40px; border-left: 4px solid #d4af37; padding-left: 20px;">
+          <h3 style="color: #1a1a3e; margin-top: 0;">Capítulo 1 — O cérebro que reage antes de pensar</h3>
+
+          <p>Uma reunião de trabalho. Alguém critica, diante de todos, um projeto que custou semanas de dedicação. Antes de qualquer raciocínio, o rosto esquenta. O coração acelera. As mãos ficam frias. Uma resposta ríspida sobe à garganta — e, muitas vezes, escapa.</p>
+
+          <p>Segundos depois, vem o arrependimento: <em>"Por que respondi daquele jeito?"</em></p>
+
+          <p>A resposta a essa pergunta é o ponto de partida desta obra: <strong>ninguém respondeu daquele jeito. Algo respondeu por nós.</strong> E compreender esse "algo" é o primeiro passo para deixar de ser refém dele.</p>
+
+          <h4 style="color: #666; margin-top: 25px;">As Três Camadas do Cérebro</h4>
+
+          <p>O cérebro humano não foi projetado de uma só vez, como um prédio erguido a partir de uma planta. Ele foi construído ao longo de milhões de anos, camada sobre camada — como uma cidade antiga onde ruas modernas passam por cima de fundações milenares.</p>
+
+          <p>De forma didática, podemos enxergar três grandes camadas:</p>
+
+          <p><strong>1. O cérebro instintivo (o guardião da sobrevivência)</strong> — A camada mais antiga e profunda. Cuida do que mantém o corpo vivo: respiração, batimentos cardíacos, reflexos. Não pensa, não pondera, não conhece ética. Conhece apenas uma pergunta: <em>"Isto é uma ameaça?"</em></p>
+
+          <p><strong>2. O cérebro emocional (o guardião dos vínculos)</strong> — Sobre a camada instintiva, desenvolveu-se o sistema emocional — com destaque para a amígdala. É ela que dispara o medo, a raiva, o alarme. É ela que registra memórias emocionais profundas.</p>
+
+          <p><strong>3. O cérebro racional (o conselheiro que chega atrasado)</strong> — Por fim, a camada mais recente: o córtex pré-frontal, sede da razão, do planejamento, da empatia, do bom-senso.</p>
+
+          <h4 style="color: #666; margin-top: 25px;">O Alarme Dispara Antes do Conselheiro Acordar</h4>
+
+          <p>Há, porém, um detalhe decisivo — e é aqui que mora a chave de quase todos os conflitos humanos: <strong>O alarme dispara antes do conselheiro acordar.</strong></p>
+
+          <p>A informação de uma possível ameaça chega à amígdala <strong>antes</strong> de chegar ao córtex racional. A diferença é de frações de segundo — mas nessas frações, uma palavra ofensiva já foi dita, um punho já se fechou, uma porta já foi batida, um relacionamento já foi ferido.</p>
+
+          <p>O psicólogo Daniel Goleman deu um nome preciso a esse fenômeno: <strong>sequestro da amígdala</strong>. O termo é perfeito, porque descreve exatamente o que ocorre: por alguns instantes, a parte racional do cérebro é <em>sequestrada</em> — colocada fora de operação — enquanto o sistema emocional assume o comando total.</p>
+
+          <p style="margin-top: 20px; padding: 15px; background: #f5f5f5; border-radius: 4px;"><em>Leia o capítulo completo adquirindo o Volume I. Este é apenas um trecho da degustação.</em></p>
+        </div>
+
+        <!-- Leitor de Voz -->
+        <div style="text-align: center; margin-bottom: 30px;">
+          <button id="btn-ouvir-capitulo" style="background: #d4af37; color: #1a1a3e; border: none; padding: 12px 24px; border-radius: 4px; font-weight: bold; cursor: pointer; font-size: 16px;">🔊 Ouvir o Capítulo</button>
+          <span id="ouvindo-status" style="margin-left: 15px; color: #666; display: none;">▶️ Reproduzindo...</span>
+        </div>
+
+        <!-- Chat do Livro -->
+        <div id="livro-chat-container" style="border-top: 1px solid #e0e0e0; padding-top: 30px;">
+          <h4 style="color: #1a1a3e; margin-bottom: 15px;">💬 Converse com o Capítulo</h4>
+
+          <div id="livro-chat-historico" style="background: #f9f9f9; max-height: 300px; overflow-y: auto; padding: 15px; border-radius: 4px; margin-bottom: 15px; font-size: 14px;">
+            <p style="color: #999; font-style: italic;">As suas perguntas e respostas aparecerão aqui...</p>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="livro-pergunta" placeholder="Faça uma pergunta sobre o capítulo..." style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+            <button id="livro-enviar" style="background: #1a1a3e; color: white; border: none; padding: 12px 20px; border-radius: 4px; font-weight: bold; cursor: pointer;">Enviar</button>
+          </div>
+
+          <div id="livro-contador" style="font-size: 13px; color: #666; text-align: right;">
+            <span id="livro-restantes">Carregando...</span>
+          </div>
+
+          <div id="livro-mensagem-limite" style="display: none; background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-top: 15px; color: #856404; font-size: 14px;">
+            <strong>⚠️ Limite atingido</strong> — Você chegou ao máximo de perguntas nesta sessão (5 perguntas por 24h). <br>
+            <a href="https://zunisuprema.com.br/loja/livros" style="color: #856404; font-weight: bold;">Adquira o Volume I completo para acesso ilimitado</a>.
+            <p style="margin-top: 8px; font-size: 12px; color: #7a6b03;">Versão digital — leitura online e download em PDF. Não é um livro físico.</p>
+          </div>
+        </div>
+
+        <!-- CTA de Compra -->
+        <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
+          <h4 style="color: #1a1a3e; margin-bottom: 15px;">🎁 Gostou? Aprofunde a Leitura</h4>
+          <a href="https://zunisuprema.com.br/loja/livros" style="display: inline-block; background: #d4af37; color: #1a1a3e; padding: 14px 30px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 16px;">Adquirir O Volume I Completo — R$ 57,90</a>
+          <p style="color: #666; font-size: 12px; margin-top: 6px;">Versão digital — leitura online e download em PDF. Não é um livro físico.</p>
+          <p style="color: #666; font-size: 14px; margin-top: 12px;">Acesso a todos os 12 capítulos + chat ilimitado + leitor de voz</p>
+        </div>
+
       </div>
     </div>
 

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Teste Frontend - Módulo D Chat</title>
+  <style>
+    body { font-family: monospace; background: #f0f0f0; padding: 20px; }
+    .log { background: white; padding: 20px; border-radius: 4px; line-height: 1.6; border: 1px solid #ddd; max-height: 600px; overflow-y: auto; }
+    .success { color: green; font-weight: bold; }
+    .error { color: red; font-weight: bold; }
+    .info { color: blue; }
+    .divider { border-top: 1px solid #ccc; margin: 15px 0; padding-top: 15px; }
+  </style>
+</head>
+<body>
+  <h1>Diagnóstico Frontend — Módulo D Chat</h1>
+  <div class="log" id="log"></div>
+
+  <script>
+    const logEl = document.getElementById('log');
+
+    function log(msg, type = 'info') {
+      const timestamp = new Date().toLocaleTimeString();
+      const className = type === 'success' ? 'success' : (type === 'error' ? 'error' : 'info');
+      const line = document.createElement('div');
+      line.className = className;
+      line.textContent = `[${timestamp}] ${msg}`;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(`[${type.toUpperCase()}] ${msg}`);
+    }
+
+    async function testarChat() {
+      log('═══ INICIANDO TESTE DO FRONTEND ═══');
+      log('');
+
+      // Verificar se a página carregou completamente
+      log('Verificando DOM...');
+      const inputEl = document.getElementById('livro-pergunta');
+      const buttonEl = document.getElementById('livro-enviar');
+      const historicoEl = document.getElementById('livro-chat-historico');
+
+      if (!inputEl) log('✗ Campo de pergunta NÃO ENCONTRADO', 'error');
+      else log('✓ Campo de pergunta encontrado', 'success');
+
+      if (!buttonEl) log('✗ Botão enviar NÃO ENCONTRADO', 'error');
+      else log('✓ Botão enviar encontrado', 'success');
+
+      if (!historicoEl) log('✗ Histórico NÃO ENCONTRADO', 'error');
+      else log('✓ Histórico encontrado', 'success');
+
+      log('', 'info');
+      log('─── Testando API diretamente ───', 'info');
+
+      const pergunta = 'O que é sequestro da amígdala?';
+      const sessionId = 'test-' + Date.now();
+      const payload = {
+        sessionId,
+        pergunta,
+        historico: []
+      };
+
+      log(`Enviando para /api/experimente-livro-chat...`);
+      log(`SessionId: ${sessionId}`);
+      log(`Pergunta: ${pergunta}`);
+
+      const timeStart = Date.now();
+
+      try {
+        const response = await fetch('/api/experimente-livro-chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const timeEnd = Date.now();
+        const duracao = timeEnd - timeStart;
+
+        log('');
+        log(`✓ Resposta recebida em ${duracao}ms`, 'success');
+        log(`Status HTTP: ${response.status}`, response.ok ? 'success' : 'error');
+
+        const data = await response.json();
+
+        if (data.resposta) {
+          log(`✓ Resposta contém texto (${data.resposta.length} chars)`, 'success');
+          log(`✓ Contador: ${data.contador}`, 'success');
+          log(`✓ ultimaTroca: ${data.ultimaTroca}`, 'success');
+          log(`✓ Bloqueado: ${data.bloqueado}`, 'success');
+        } else {
+          log(`✗ Resposta não contém "resposta" field`, 'error');
+          log(`Corpo: ${JSON.stringify(data)}`, 'error');
+        }
+
+      } catch (err) {
+        log(`✗ ERRO ao fazer fetch: ${err.message}`, 'error');
+        log(`Stack: ${err.stack}`, 'error');
+      }
+
+      log('', 'info');
+      log('═══ FIM DO TESTE ═══');
+    }
+
+    // Executar após carregar
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', testarChat);
+    } else {
+      testarChat();
+    }
+  </script>
+</body>
+</html>

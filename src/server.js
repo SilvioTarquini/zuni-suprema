@@ -10,6 +10,7 @@ require('dotenv').config();
 
 const livrosRouter = require('./routes/livros');
 const livroChatRouter = require('./routes/livroChat');
+const experimenteLivroChatRouter = require('./routes/experimenteLivroChat');
 const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
@@ -155,6 +156,16 @@ Correlações de referência (usar com naturalidade, nunca como lista):
 ## ENCAMINHAMENTO PARA SUPORTE ESPECIALIZADO
 
 Se ao longo da conversa houver sinais consistentes de possível desnutrição, sintomas digestivos/intestinais recorrentes, depleção física crônica, ou qualquer suspeita de problema orgânico que exija avaliação clínica, o Mentor deve, de forma acolhedora e sem alarmismo, recomendar que a pessoa busque acompanhamento da equipe de Saúde Integral da ZUNI Suprema pelo WhatsApp disponível no canto da tela.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+DIRETRIZ DE LINGUAGEM E TOM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Ao explicar causas de sentimentos, comportamentos ou dificuldades, use linguagem direta, acessível e cotidiana — nunca terminologia técnica, científica ou nomes de processos fisiológicos/neurológicos (ex: evite 'sistema límbico', 'cortisol', 'amígdala cerebral', 'resposta de luta ou fuga' e termos equivalentes), mesmo quando precisos.
+
+Em vez de nomear o mecanismo, explique o porquê prático: o que a pessoa sente, por que costuma acontecer, e o que isso revela sobre a situação dela — de forma pragmática e objetiva, sem rodeios e sem soar como uma aula.
+
+Priorize frases curtas e diretas sobre explicações longas e conceituais. O objetivo é que a pessoa pense 'ah, é por isso' rapidamente — não que aprenda um conceito novo.
+
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 IDENTIDADE E TOM DE VOZ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -362,14 +373,40 @@ Para cada planeta analisado, **sintetize os 2-3 padrões mais significativos** q
 - ✗ Foco repetido no mesmo tema (ex: sempre "ambiente de trabalho")
 
 **INCLUA NESTA SEÇÃO (conforme relevância):**
-- Ascendente: como é percebido, presença, impacto inicial
+
+PONTO ANGULAR — Identidade & Presença:
+- Ascendente: como é percebido, primeira impressão, presença, impacto inicial
+
+LUMINARES — Essência Emocional e Consciente:
 - Sol: identidade nuclear, vontade consciente, donde surge a exaustão ou criatividade
 - Lua: necessidades emocionais reais (nem sempre óbvias), segurança interna, como sente
+
+PLANETA PESSOAL — Comunicação, Valores, Ação:
 - Mercúrio: pensamento, comunicação, curiosidade, como processa informação
 - Vênus: relacionamento, valores, aquilo que atrai e o que ama
 - Marte: ação, coragem, agressividade saudável (ou falta), como enfrenta desafios
-- Saturno: estrutura, medo, lições de vida, onde há rigidez ou potencial de sabedoria
-- Aspectos principais: use-os para profundidade, não para lista — eles modificam como cada planeta funciona
+
+PLANETAS SOCIAIS E EXTERNOS — Crescimento, Estrutura, Transformação:
+- Júpiter: expansão, otimismo, crenças filosóficas, donde vem a fé, generosidade, sorte, e onde há excesso
+- Saturno: estrutura, medo, lições de vida, responsabilidade, donde há rigidez ou potencial de sabedoria
+- Urano: inovação, ruptura criativa, onde busca liberdade radical, individualidade genuína, rebeldia
+- Netuno: intuição, espiritualidade, idealismo, compaixão, até que ponto dissolve limites ou perde-se neles
+- Plutão: transformação profunda, poder pessoal, morte e renascimento, taboos que desafia, regeneração
+
+INTEGRAÇÃO CASAS ASTROLÓGICAS:
+- Dados de casas foram fornecidos (Casa I a XII)
+- Quando relevante, mencione BREVEMENTE a casa onde um planeta cai para adicionar contexto
+- Exemplo narrativo: "Seu Vênus em Casa VII (Relacionamentos) amplifica a importância emocional de parcerias genuínas"
+- NUNCA liste as 12 casas como tabela ou lista separada — integre conforme o mapa revelar padrões naturais
+- Foco: adicionar profundidade sem parecer técnico ou mecânico
+
+ASPECTOS PRINCIPAIS:
+- Use aspectos para profundidade, não para lista — eles modificam como cada planeta funciona
+- Trígonos (120°): fluxo natural, talentos inatos
+- Quadraturas (90°): tensão criativa, crescimento através de desafio
+- Oposições (180°): paradoxo, integração de forças opostas
+- Conjunções (0°): fusão, intensificação de energia
+- Sextis (60°): oportunidade, apoio suave
 
 **TONE:** Genuinamente perspicaz, não mecânico. Esta é uma análise profissional de R$147, não um chatbot.
 
@@ -549,6 +586,10 @@ app.get('/checkout', (req, res) => {
 
 app.get('/obrigado', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/obrigado.html'));
+});
+
+app.get('/questionario-timidez', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/questionario-timidez.html'));
 });
 
 app.use('/', livrosRouter);
@@ -952,48 +993,32 @@ function renderMarkdownToPDF(doc, texto, opcoes = {}) {
     if (partes.length === 0) {
       doc.fontSize(fontSize).font('Helvetica').text(texto, { width: maxWidth, lineGap });
     } else {
-      // Renderizar com formatação — manter estado de fonte após quebras de página
-      // PDFKit pode quebrar página automaticamente, então reaplica fonte após cada segmento
+      // Renderizar com formatação — texto flui naturalmente entre segmentos
+      // PDFKit: 'continued: true' mantém cursor na mesma posição Y, permitindo fluxo contínuo
+      // Regra: usar continued: true em TODOS os segmentos EXCETO o último
       doc.fontSize(fontSize);
 
-      // Para manter negrito/itálico em texto que cruza página, usar 'continued'
-      // mas apenas entre segmentos que definitivamente caberão na mesma linha
-      let buffer = '';
-      let bufferTipo = 'normal';
-
       partes.forEach((parte, idx) => {
-        // Acumular segmentos do mesmo tipo para renderizar juntos
-        if (buffer && parte.tipo !== bufferTipo) {
-          // Renderizar buffer acumulado
-          if (bufferTipo === 'negrito') {
-            doc.font('Helvetica-Bold');
-          } else if (bufferTipo === 'italico') {
-            doc.font('Helvetica-Oblique');
-          } else {
-            doc.font('Helvetica');
-          }
-          doc.text(buffer, { width: maxWidth, lineGap });
-          buffer = '';
-        }
-
-        // Acumular texto do mesmo tipo
-        if (!buffer) {
-          bufferTipo = parte.tipo;
-        }
-        buffer += parte.texto;
-      });
-
-      // Renderizar último buffer
-      if (buffer) {
-        if (bufferTipo === 'negrito') {
+        // Aplicar fonte apropriada para este segmento
+        if (parte.tipo === 'negrito') {
           doc.font('Helvetica-Bold');
-        } else if (bufferTipo === 'italico') {
+        } else if (parte.tipo === 'italico') {
           doc.font('Helvetica-Oblique');
         } else {
           doc.font('Helvetica');
         }
-        doc.text(buffer, { width: maxWidth, lineGap });
-      }
+
+        // Determinar se este é o último segmento
+        const isUltimo = idx === partes.length - 1;
+
+        // Renderizar com continued: true para todos EXCETO o último
+        // Isso faz o texto fluir naturalmente, quebrando linha apenas na margem
+        doc.text(parte.texto, {
+          continued: !isUltimo,
+          width: maxWidth,
+          lineGap
+        });
+      });
 
       doc.font('Helvetica'); // Reset para fonte normal
       doc.moveDown();
@@ -1559,6 +1584,7 @@ app.get('/api/checkout/livro/session-status', async (req, res) => {
 });
 
 app.use('/', livroChatRouter);
+app.use('/', experimenteLivroChatRouter);
 // ─────────────────────────────────────────────────────────────────
 
 // ═════════════════════════════════════════════════════════════════
@@ -2199,6 +2225,100 @@ app.post('/api/transcrever', upload.single('audio'), async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/transcrever:', error);
     return res.status(500).json({ erro: 'Erro interno ao transcrever.' });
+  }
+});
+
+// ── QUESTIONÁRIO DE TIMIDEZ/COMUNICAÇÃO ────────────────
+const { gerarRespostaA, gerarRespostaB } = require('./lib/questionarioTimidez');
+
+app.post('/api/questionario/salvar-respostas', async (req, res) => {
+  try {
+    const { sessionId, tema, respostas } = req.body;
+
+    if (!sessionId || !tema || !respostas) {
+      return res.status(400).json({ error: 'sessionId, tema e respostas são obrigatórios.' });
+    }
+
+    const supabaseClient = assertSupabase();
+
+    // Gera a Resposta A (mensagem de abertura do Mentor)
+    let respostaA = '';
+    try {
+      respostaA = await gerarRespostaA(respostas);
+      console.log(`[QUESTIONÁRIO] Resposta A gerada para sessão ${sessionId}:`, respostaA.substring(0, 100) + '...');
+    } catch (err) {
+      console.error('[QUESTIONÁRIO] Erro ao gerar Resposta A:', err.message);
+      return res.status(500).json({ error: 'Erro ao gerar resposta de abertura.' });
+    }
+
+    // Persiste as respostas + Resposta A no Supabase
+    const { error } = await supabaseClient.from('respostas_questionario').insert({
+      sessao_id: sessionId,
+      tema,
+      respostas,
+      resposta_a_gerada: respostaA,
+      created_at: new Date().toISOString()
+    });
+
+    if (error) {
+      console.error('[QUESTIONÁRIO] Erro ao salvar no Supabase:');
+      console.error('  Código:', error.code);
+      console.error('  Mensagem:', error.message);
+      console.error('  Detalhes:', error.details);
+      console.error('  Objeto completo:', JSON.stringify(error, null, 2));
+      return res.status(500).json({ error: 'Erro ao salvar respostas.' });
+    }
+
+    return res.json({
+      success: true,
+      respostaA,
+      message: 'Respostas salvas com sucesso.'
+    });
+  } catch (error) {
+    console.error('[QUESTIONÁRIO] Erro em /api/questionario/salvar-respostas:', error);
+    return res.status(500).json({ error: 'Erro interno ao salvar respostas.' });
+  }
+});
+
+app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'sessionId é obrigatório.' });
+    }
+
+    const supabaseClient = assertSupabase();
+
+    // Busca as respostas do questionário para esta sessão
+    const { data, error } = await supabaseClient
+      .from('respostas_questionario')
+      .select('respostas')
+      .eq('sessao_id', sessionId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return res.status(404).json({ error: 'Nenhum questionário encontrado para esta sessão.' });
+    }
+
+    // Gera a Resposta B (resumo técnico para a equipe)
+    let respostaB = '';
+    try {
+      respostaB = await gerarRespostaB(data.respostas);
+      console.log(`[QUESTIONÁRIO] Resposta B gerada para sessão ${sessionId}:`, respostaB.substring(0, 100) + '...');
+    } catch (err) {
+      console.error('[QUESTIONÁRIO] Erro ao gerar Resposta B:', err.message);
+      return res.status(500).json({ error: 'Erro ao gerar resumo técnico.' });
+    }
+
+    return res.json({
+      success: true,
+      respostaB,
+      message: 'Resumo técnico gerado com sucesso (apenas para uso interno).'
+    });
+  } catch (error) {
+    console.error('[QUESTIONÁRIO] Erro em /api/questionario/gerar-resposta-b:', error);
+    return res.status(500).json({ error: 'Erro interno ao gerar resumo técnico.' });
   }
 });
 

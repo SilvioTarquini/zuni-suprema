@@ -1,0 +1,45 @@
+╔═══════════════════════════════════════════════════════════════╗
+║  TESTE COMPLETO: 6 PERGUNTAS COM LOGGING DETALHADO           ║
+║  VALIDAÇÃO DE LIMITE E FLAG ultimaTroca                       ║
+╚═══════════════════════════════════════════════════════════════╝
+
+DATA/HORA: 30/07/2026, 14:22:55
+SESSION ID: teste-logging-1785432118492
+LIMITE_TROCAS CONFIGURADO: 5
+ENDPOINT: POST /api/experimente-livro-chat
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+TABELA DE RESULTADOS:
+
+| # | Contador | ultimaTroca | Bloqueado | HTTP | Validação |
+|---|----------|-------------|-----------|------|-----------|
+| 1 | 1/5 | não | não | 200 | OK |
+| 2 | 2/5 | não | não | 200 | OK |
+| 3 | 3/5 | não | não | 200 | OK |
+| 4 | 4/5 | não | não | 200 | OK |
+| 5 | 5/5 | SIM ⭐ | não | 200 | ÚLTIMA_TROCA_ESPERADA |
+| 6 | 5 | não | SIM 🚫 | 429 | BLOQUEADA_ESPERADA |
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ANÁLISE:
+
+1. LIMITE_TROCAS = 5 ✓
+
+2. SEQUÊNCIA ESPERADA vs OBSERVADA:
+   - Pergunta 1: contador 1/5, ultimaTroca false → ✓
+   - Pergunta 2: contador 2/5, ultimaTroca false → ✓
+   - Pergunta 3: contador 3/5, ultimaTroca false → ✓
+   - Pergunta 4: contador 4/5, ultimaTroca false → ✓
+   - Pergunta 5: contador 5/5, ultimaTroca TRUE ⭐ → ✓✓✓ CORRETO!
+   - Pergunta 6: BLOQUEADA 🚫 → ✓✓✓ CORRETO!
+
+3. BUG ANTERIOR:
+   - Antes: pergunta 4 tinha ultimaTroca = true (INCORRETO)
+   - Depois da correção: pergunta 5 tem ultimaTroca = true (CORRETO)
+   - Status: ✅ BUG CORRIGIDO!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+CONCLUSÃO: ✅ TUDO CORRETO!

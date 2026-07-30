@@ -415,7 +415,15 @@
   <script>
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get('sessionId');
+    const fromQuestionnaire = params.get('fromQuestionnaire') === 'true';
+    const testQuestionario = params.get('testQuestionario') === 'true';
     let contador = 0;
+
+    // Redireciona para questionário se ?testQuestionario=true
+    if (testQuestionario && !fromQuestionnaire) {
+      window.location.href = `/questionario-timidez.html?sessionId=${sessionId}`;
+    }
+
     if (!sessionId) { window.location.href = '/checkout.html'; }
 
     let currentAudio = null;
@@ -435,6 +443,17 @@
         div.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }, 100);
       return div;
+    }
+
+    // Injeta a Resposta A do questionário, se vindo do mesmo
+    if (fromQuestionnaire) {
+      const respostaA = sessionStorage.getItem('respostaA');
+      if (respostaA) {
+        setTimeout(() => {
+          addMsg('assistant', respostaA);
+          sessionStorage.removeItem('respostaA');
+        }, 500);
+      }
     }
 
     function attachAudio(msgDiv, base64) {

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Questionário — ZUNI Suprema</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 520px;
+      width: 100%;
+    }
+
+    .logo {
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 26px;
+      color: #ffffff;
+      margin-bottom: 20px;
+      font-weight: normal;
+      text-align: center;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 40px 32px;
+    }
+
+    /* ===== FASE 1: ORIENTAÇÃO ===== */
+    .orientation-section {
+      display: none;
+    }
+
+    .orientation-section.active {
+      display: block;
+    }
+
+    .orientation-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #ccc;
+      margin-bottom: 32px;
+      text-align: left;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      flex-direction: row;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 14px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Georgia', serif;
+      text-transform: uppercase;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #c9a84c;
+      border: 1px solid #c9a84c;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(201, 168, 76, 0.1);
+    }
+
+    .btn-primary {
+      background: #c9a84c;
+      color: #0a0a0a;
+    }
+
+    .btn-primary:hover {
+      background: #d9b85c;
+    }
+
+    .btn-primary:disabled {
+      background: #666;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    /* ===== FASE 2: FORMULÁRIO ===== */
+    .form-section {
+      display: none;
+    }
+
+    .form-section.active {
+      display: block;
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: #222;
+      margin-bottom: 30px;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: #c9a84c;
+      transition: width 0.3s ease;
+    }
+
+    .question-group {
+      margin-bottom: 32px;
+      display: none;
+    }
+
+    .question-group.active {
+      display: block;
+    }
+
+    .question-title {
+      font-size: 16px;
+      color: #ffffff;
+      margin-bottom: 16px;
+      font-weight: 600;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #1e1e1e;
+    }
+
+    .option:last-child {
+      border-bottom: none;
+    }
+
+    .option input[type="radio"] {
+      margin-right: 12px;
+      cursor: pointer;
+      width: 18px;
+      height: 18px;
+      accent-color: #c9a84c;
+    }
+
+    .option label {
+      flex: 1;
+      font-size: 14px;
+      color: #bbb;
+      cursor: pointer;
+    }
+
+    .option input[type="radio"]:hover + label {
+      color: #ffffff;
+    }
+
+    .option-text-input {
+      display: none;
+      margin-top: 12px;
+    }
+
+    .option-text-input.active {
+      display: block;
+    }
+
+    .option-text-input input {
+      width: 100%;
+      padding: 10px 12px;
+      background: #0a0a0a;
+      border: 1px solid #2a2a2a;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+      font-size: 14px;
+      border-radius: 4px;
+    }
+
+    .option-text-input input:focus {
+      outline: none;
+      border-color: #c9a84c;
+    }
+
+    .form-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 32px;
+      justify-content: space-between;
+    }
+
+    .btn-prev {
+      flex: 0 0 auto;
+      padding: 12px 24px;
+      background: transparent;
+      color: #c9a84c;
+      border: 1px solid #c9a84c;
+    }
+
+    .btn-prev:hover {
+      background: rgba(201, 168, 76, 0.1);
+    }
+
+    .btn-prev:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    .btn-next {
+      flex: 1;
+      padding: 12px 24px;
+      background: #c9a84c;
+      color: #0a0a0a;
+    }
+
+    .btn-next:hover {
+      background: #d9b85c;
+    }
+
+    .btn-next:disabled {
+      background: #666;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .btn-submit {
+      flex: 1;
+      padding: 14px 24px;
+      background: #c9a84c;
+      color: #0a0a0a;
+      font-weight: 600;
+    }
+
+    .btn-submit:hover {
+      background: #d9b85c;
+    }
+
+    .btn-submit:disabled {
+      background: #666;
+      color: #999;
+      cursor: not-allowed;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #c9a84c;
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(201, 168, 76, 0.3);
+      border-top-color: #c9a84c;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background: #4a1a1a;
+      border: 1px solid #c41e1e;
+      color: #ff6b6b;
+      padding: 12px 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">ZUNI SUPREMA</div>
+
+    <div class="card">
+      <!-- FASE 1: ORIENTAÇÃO -->
+      <div class="orientation-section active" id="orientationPhase">
+        <h1>Antes de começar</h1>
+
+        <div class="orientation-text">
+          Algumas perguntas rápidas ajudam o Mentor ZUNI a entender sua situação com mais clareza — assim a conversa já começa mais direto ao ponto, sem você precisar repetir tudo. Leva menos de 1 minuto.
+          <br><br>
+          Suas respostas também podem ajudar, caso mais tarde você opte por conversar com nossa equipe de profissionais — elas ficam disponíveis a ela apenas se você pedir esse encaminhamento.
+        </div>
+
+        <div class="button-group">
+          <button class="btn btn-secondary" onclick="skipQuestionnaire()">Pular esta etapa</button>
+          <button class="btn btn-primary" onclick="startQuestionnaire()">Começar</button>
+        </div>
+      </div>
+
+      <!-- FASE 2: FORMULÁRIO -->
+      <div class="form-section" id="formPhase">
+        <h1>Sua situação</h1>
+
+        <div id="errorMessage"></div>
+
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+
+        <!-- Q1 -->
+        <div class="question-group active" data-question="1">
+          <div class="question-title">O que mais te incomoda hoje?</div>
+          <div class="option">
+            <input type="radio" id="q1_1" name="q1" value="Falar em público/apresentações">
+            <label for="q1_1">Falar em público/apresentações</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q1_2" name="q1" value="Puxar conversa ou me aproximar de pessoas novas">
+            <label for="q1_2">Puxar conversa ou me aproximar de pessoas novas</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q1_3" name="q1" value="Expressar minha opinião mesmo com quem já conheço">
+            <label for="q1_3">Expressar minha opinião mesmo com quem já conheço</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q1_4" name="q1" value="Situações sociais em grupo">
+            <label for="q1_4">Situações sociais em grupo</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q1_5" name="q1" value="outro">
+            <label for="q1_5">Outro</label>
+          </div>
+          <div class="option-text-input" id="q1_outro">
+            <input type="text" id="q1_outro_text" placeholder="Qual seria?">
+          </div>
+        </div>
+
+        <!-- Q2 -->
+        <div class="question-group" data-question="2">
+          <div class="question-title">Há quanto tempo isso te acompanha?</div>
+          <div class="option">
+            <input type="radio" id="q2_1" name="q2" value="Sempre foi assim">
+            <label for="q2_1">Sempre foi assim</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q2_2" name="q2" value="Começou na adolescência">
+            <label for="q2_2">Começou na adolescência</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q2_3" name="q2" value="Começou na vida adulta">
+            <label for="q2_3">Começou na vida adulta</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q2_4" name="q2" value="É recente (últimos meses)">
+            <label for="q2_4">É recente (últimos meses)</label>
+          </div>
+        </div>
+
+        <!-- Q3 -->
+        <div class="question-group" data-question="3">
+          <div class="question-title">O que você sente fisicamente nessas horas?</div>
+          <div class="option">
+            <input type="radio" id="q3_1" name="q3" value="Nó na garganta/trava a fala">
+            <label for="q3_1">Nó na garganta/trava a fala</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q3_2" name="q3" value="Coração acelerado, mãos suando">
+            <label for="q3_2">Coração acelerado, mãos suando</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q3_3" name="q3" value="Vontade de sumir/evitar">
+            <label for="q3_3">Vontade de sumir/evitar</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q3_4" name="q3" value="Não sinto nada físico, é mais mental">
+            <label for="q3_4">Não sinto nada físico, é mais mental</label>
+          </div>
+        </div>
+
+        <!-- Q4 -->
+        <div class="question-group" data-question="4">
+          <div class="question-title">O que você já tentou para lidar com isso?</div>
+          <div class="option">
+            <input type="radio" id="q4_1" name="q4" value="Nada ainda">
+            <label for="q4_1">Nada ainda</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q4_2" name="q4" value="Já tentei sozinho(a)">
+            <label for="q4_2">Já tentei sozinho(a)</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q4_3" name="q4" value="Já fiz terapia/acompanhamento antes">
+            <label for="q4_3">Já fiz terapia/acompanhamento antes</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q4_4" name="q4" value="Evito completamente">
+            <label for="q4_4">Evito completamente</label>
+          </div>
+        </div>
+
+        <!-- Q5 -->
+        <div class="question-group" data-question="5">
+          <div class="question-title">O que você espera encontrar aqui hoje?</div>
+          <div class="option">
+            <input type="radio" id="q5_1" name="q5" value="Entender por que sou assim">
+            <label for="q5_1">Entender por que sou assim</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q5_2" name="q5" value="Ferramentas práticas">
+            <label for="q5_2">Ferramentas práticas</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q5_3" name="q5" value="Só desabafar e ser ouvido(a)">
+            <label for="q5_3">Só desabafar e ser ouvido(a)</label>
+          </div>
+          <div class="option">
+            <input type="radio" id="q5_4" name="q5" value="Ainda não sei, quero explorar">
+            <label for="q5_4">Ainda não sei, quero explorar</label>
+          </div>
+        </div>
+
+        <div class="form-buttons">
+          <button class="btn btn-prev" id="btnPrev" onclick="previousQuestion()" disabled>Anterior</button>
+          <button class="btn btn-next" id="btnNext" onclick="nextQuestion()">Próxima</button>
+          <button class="btn btn-submit" id="btnSubmit" onclick="submitQuestionnaire()" style="display: none; flex: 1;">Enviar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentQuestion = 1;
+    const totalQuestions = 5;
+    const answers = {};
+
+    function updateProgress() {
+      const percentage = (currentQuestion / totalQuestions) * 100;
+      document.getElementById('progressFill').style.width = percentage + '%';
+    }
+
+    function showQuestion(questionNum) {
+      document.querySelectorAll('.question-group').forEach(el => el.classList.remove('active'));
+      document.querySelector(`[data-question="${questionNum}"]`).classList.add('active');
+      updateProgress();
+
+      document.getElementById('btnPrev').disabled = questionNum === 1;
+      if (questionNum === totalQuestions) {
+        document.getElementById('btnNext').style.display = 'none';
+        document.getElementById('btnSubmit').style.display = 'block';
+      } else {
+        document.getElementById('btnNext').style.display = 'block';
+        document.getElementById('btnSubmit').style.display = 'none';
+      }
+    }
+
+    function skipQuestionnaire() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('sessionId');
+      window.location.href = `/chat.html?sessionId=${sessionId}`;
+    }
+
+    function startQuestionnaire() {
+      document.getElementById('orientationPhase').classList.remove('active');
+      document.getElementById('formPhase').classList.add('active');
+      showQuestion(1);
+    }
+
+    function nextQuestion() {
+      if (isCurrentQuestionAnswered()) {
+        saveCurrentAnswer();
+        if (currentQuestion < totalQuestions) {
+          currentQuestion++;
+          showQuestion(currentQuestion);
+          window.scrollTo(0, 0);
+        }
+      }
+    }
+
+    function previousQuestion() {
+      if (currentQuestion > 1) {
+        saveCurrentAnswer();
+        currentQuestion--;
+        showQuestion(currentQuestion);
+        window.scrollTo(0, 0);
+      }
+    }
+
+    function isCurrentQuestionAnswered() {
+      const checked = document.querySelector(`input[name="q${currentQuestion}"]:checked`);
+      if (!checked) {
+        alert('Por favor, selecione uma opção para continuar.');
+        return false;
+      }
+      return true;
+    }
+
+    function saveCurrentAnswer() {
+      const checked = document.querySelector(`input[name="q${currentQuestion}"]:checked`);
+      if (checked) {
+        let value = checked.value;
+        if (value === 'outro') {
+          const otherText = document.getElementById(`q${currentQuestion}_outro_text`).value;
+          value = otherText || 'Outro (vazio)';
+        }
+        answers[`q${currentQuestion}`] = value;
+      }
+    }
+
+    // Setup radio listeners para mostrar/esconder input de texto para "Outro"
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('input[name="q1"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+          const otherInput = document.getElementById('q1_outro');
+          if (this.value === 'outro') {
+            otherInput.classList.add('active');
+          } else {
+            otherInput.classList.remove('active');
+          }
+        });
+      });
+    });
+
+    async function submitQuestionnaire() {
+      if (!isCurrentQuestionAnswered()) return;
+
+      saveCurrentAnswer();
+
+      const submitBtn = document.getElementById('btnSubmit');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<div class="loading"><div class="spinner"></div> Enviando...</div>';
+
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get('sessionId');
+
+      try {
+        const response = await fetch('/api/questionario/salvar-respostas', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sessionId,
+            tema: 'timidez_comunicacao',
+            respostas: answers
+          })
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'Erro ao enviar formulário');
+        }
+
+        const data = await response.json();
+        sessionStorage.setItem('respostaA', data.respostaA);
+        window.location.href = `/chat.html?sessionId=${sessionId}&fromQuestionnaire=true`;
+      } catch (error) {
+        console.error('Erro:', error);
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = 'Erro ao enviar formulário: ' + error.message;
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Enviar';
+      }
+    }
+  </script>
+</body>
+</html>
