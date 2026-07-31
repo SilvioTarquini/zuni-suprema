@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seu Estudo Integrativo — ZUNI Suprema</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #1a1a3e 0%, #3d3d66 100%);
+      color: #333;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+      max-width: 600px;
+      width: 100%;
+      padding: 40px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .header h1 {
+      font-size: 32px;
+      color: #1a1a3e;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: #d4af37;
+      margin-bottom: 16px;
+    }
+
+    .header .subtitle {
+      font-size: 14px;
+      color: #666;
+      line-height: 1.8;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #1a1a3e;
+      font-size: 14px;
+    }
+
+    .form-group input,
+    .form-group select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color 0.3s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #d4af37;
+      box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.1);
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 480px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .form-info {
+      background: #f5f9ff;
+      border-left: 4px solid #d4af37;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .form-info strong {
+      color: #1a1a3e;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+    }
+
+    .button-group button {
+      flex: 1;
+      padding: 14px 24px;
+      font-size: 16px;
+      font-weight: 600;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+
+    .button-submit {
+      background: #d4af37;
+      color: #1a1a3e;
+    }
+
+    .button-submit:hover:not(:disabled) {
+      background: #b8963e;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(212, 175, 55, 0.3);
+    }
+
+    .button-submit:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .button-cancel {
+      background: #e8e8e8;
+      color: #333;
+    }
+
+    .button-cancel:hover {
+      background: #d0d0d0;
+    }
+
+    .message {
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 24px;
+      display: none;
+      font-size: 14px;
+    }
+
+    .message.error {
+      background: #fee;
+      color: #c33;
+      border-left: 4px solid #c33;
+    }
+
+    .message.success {
+      background: #efe;
+      color: #3c3;
+      border-left: 4px solid #3c3;
+    }
+
+    .message.warning {
+      background: #ffa;
+      color: #663;
+      border-left: 4px solid #ff6;
+    }
+
+    .message.info {
+      background: #eef;
+      color: #36c;
+      border-left: 4px solid #36c;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #d4af37;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .already-claimed {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .already-claimed p {
+      font-size: 16px;
+      color: #666;
+      margin-bottom: 24px;
+      line-height: 1.8;
+    }
+
+    .already-claimed .back-link {
+      display: inline-block;
+      color: #d4af37;
+      text-decoration: none;
+      font-weight: 600;
+      padding: 12px 28px;
+      border: 2px solid #d4af37;
+      border-radius: 6px;
+      transition: all 0.3s;
+    }
+
+    .already-claimed .back-link:hover {
+      background: #d4af37;
+      color: #1a1a3e;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #e0e0e0;
+      font-size: 12px;
+      color: #999;
+    }
+
+    .footer a {
+      color: #d4af37;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ESTADO: Validando token -->
+    <div id="validating" class="loading">
+      <div class="spinner"></div>
+      <p>Validando seu acesso...</p>
+    </div>
+
+    <!-- ESTADO: Token inválido/expirado -->
+    <div id="invalid-token" style="display: none; text-align: center; padding: 40px 20px;">
+      <h2 style="color: #c33; margin-bottom: 16px;">❌ Acesso Inválido</h2>
+      <p style="margin-bottom: 24px;">Este link de brinde expirou ou não é válido. Por favor, verifique se você recebeu um e-mail recente de confirmação.</p>
+      <a href="/" style="display: inline-block; color: #d4af37; text-decoration: none; font-weight: 600; padding: 12px 28px; border: 2px solid #d4af37; border-radius: 6px;">Voltar para ZUNI</a>
+    </div>
+
+    <!-- ESTADO: Já resgatado -->
+    <div id="already-claimed" style="display: none;" class="already-claimed">
+      <h2 style="color: #1a1a3e; margin-bottom: 24px;">✨ Seu Estudo já foi Resgatado</h2>
+      <p>Você já recebeu seu estudo — ele é único e não muda com o tempo, então não é possível gerar um novo. Fica registrado com carinho.</p>
+      <a href="/" class="back-link">Voltar para ZUNI</a>
+    </div>
+
+    <!-- ESTADO: Formulário principal -->
+    <div id="form-section" style="display: none;">
+      <div class="header">
+        <h1>✨ Seu Estudo Integrativo</h1>
+        <p>Astrologia + Numerologia</p>
+        <div class="subtitle">
+          Complete o formulário abaixo com seus dados de nascimento.<br>
+          <strong>Campos obrigatórios:</strong> nome, data, hora e local de nascimento.
+        </div>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <form id="brinde-form">
+        <div class="form-group">
+          <label for="email">E-mail *</label>
+          <input type="email" id="email" name="email" required disabled style="background: #f5f5f5; cursor: not-allowed;">
+          <small style="color: #999; margin-top: 4px; display: block;">Este é seu e-mail de acesso (não pode ser alterado)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="nome">Nome Completo *</label>
+          <input type="text" id="nome" name="nome" required placeholder="Ex: Maria Silva">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="data-nascimento">Data de Nascimento *</label>
+            <input type="date" id="data-nascimento" name="data-nascimento" required>
+          </div>
+          <div class="form-group">
+            <label for="hora-nascimento">Hora de Nascimento *</label>
+            <input type="time" id="hora-nascimento" name="hora-nascimento" required placeholder="HH:MM">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="cidade">Cidade de Nascimento *</label>
+          <input type="text" id="cidade" name="cidade" required placeholder="Ex: São Paulo">
+        </div>
+
+        <div class="form-group">
+          <label for="pais">País de Nascimento *</label>
+          <select id="pais" name="pais" required>
+            <option value="">-- Selecione um país --</option>
+            <option value="Brasil">Brasil</option>
+            <option value="Argentina">Argentina</option>
+            <option value="Chile">Chile</option>
+            <option value="Colômbia">Colômbia</option>
+            <option value="México">México</option>
+            <option value="Portugal">Portugal</option>
+            <option value="Espanha">Espanha</option>
+            <option value="França">França</option>
+            <option value="Alemanha">Alemanha</option>
+            <option value="Itália">Itália</option>
+            <option value="Reino Unido">Reino Unido</option>
+            <option value="Estados Unidos">Estados Unidos</option>
+            <option value="Canadá">Canadá</option>
+            <option value="Outro">Outro</option>
+          </select>
+        </div>
+
+        <div class="form-info">
+          <strong>📍 Por quê esses dados?</strong><br>
+          Hora e local de nascimento são essenciais para calcular o Ascendente e as Casas astrológicas — componentes únicos que personalizam seu mapa.
+        </div>
+
+        <div class="button-group">
+          <button type="submit" class="button-submit" id="submit-btn">Gerar Meu Estudo</button>
+          <button type="button" class="button-cancel" id="cancel-btn">Cancelar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- ESTADO: Processando -->
+    <div id="processing" class="loading" style="display: none;">
+      <div class="spinner"></div>
+      <p>Gerando seu estudo integrativo...<br><small>Isso pode levar alguns segundos.</small></p>
+    </div>
+
+    <!-- ESTADO: Sucesso -->
+    <div id="success-section" style="display: none; text-align: center;">
+      <h2 style="color: #3c3; margin-bottom: 16px;">✅ Seu Estudo foi Gerado!</h2>
+      <p style="color: #666; margin-bottom: 24px;">Seu estudo integrativo foi criado e enviado para seu e-mail.<br>Verifique sua caixa de entrada (e spam se necessário) nos próximos minutos.</p>
+      <a href="/" style="display: inline-block; color: #d4af37; text-decoration: none; font-weight: 600; padding: 12px 28px; border: 2px solid #d4af37; border-radius: 6px;">Voltar para ZUNI</a>
+    </div>
+
+    <div class="footer">
+      <p>© 2026 ZUNI Suprema. A ciência da excelência humana.</p>
+      <p><a href="/privacidade">Política de Privacidade</a> | <a href="/termos">Termos de Uso</a></p>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = window.location.origin || 'https://www.zunisuprema.com.br';
+
+    // ─ Extrair parâmetros de URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const email = urlParams.get('email');
+
+    // ─ Elementos DOM
+    const validatingDiv = document.getElementById('validating');
+    const invalidTokenDiv = document.getElementById('invalid-token');
+    const alreadyClaimedDiv = document.getElementById('already-claimed');
+    const formSection = document.getElementById('form-section');
+    const processingDiv = document.getElementById('processing');
+    const successDiv = document.getElementById('success-section');
+    const messageDiv = document.getElementById('message');
+    const form = document.getElementById('brinde-form');
+    const emailInput = document.getElementById('email');
+    const submitBtn = document.getElementById('submit-btn');
+    const cancelBtn = document.getElementById('cancel-btn');
+
+    // ─ Função: Mostrar mensagem
+    function showMessage(text, type = 'info') {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      messageDiv.style.display = 'block';
+    }
+
+    // ─ Função: Ocultar mensagem
+    function hideMessage() {
+      messageDiv.style.display = 'none';
+    }
+
+    // ─ Função: Mostrar seção
+    function showSection(section) {
+      validatingDiv.style.display = 'none';
+      invalidTokenDiv.style.display = 'none';
+      alreadyClaimedDiv.style.display = 'none';
+      formSection.style.display = 'none';
+      processingDiv.style.display = 'none';
+      successDiv.style.display = 'none';
+      if (section) section.style.display = 'block';
+    }
+
+    // ─ Validar token na inicialização
+    async function validateAccess() {
+      if (!token || !email) {
+        showSection(invalidTokenDiv);
+        return;
+      }
+
+      try {
+        // Validar token HMAC junto com status de resgate
+        const response = await fetch(
+          `${API_BASE}/api/brinde/status/${encodeURIComponent(email)}?token=${encodeURIComponent(token)}`
+        );
+
+        if (response.status === 401) {
+          // Token inválido ou expirado
+          showSection(invalidTokenDiv);
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.resgatado) {
+          showSection(alreadyClaimedDiv);
+          return;
+        }
+
+        // Token validado e resgate não foi feito — mostrar formulário
+        emailInput.value = email;
+        showSection(formSection);
+
+      } catch (err) {
+        console.error('Erro ao validar acesso:', err);
+        showSection(invalidTokenDiv);
+      }
+    }
+
+    // ─ Cancelar
+    cancelBtn.addEventListener('click', () => {
+      if (confirm('Tem certeza que deseja cancelar?')) {
+        window.location.href = '/';
+      }
+    });
+
+    // ─ Enviar formulário
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      hideMessage();
+
+      const nome = document.getElementById('nome').value.trim();
+      const dataNascimento = document.getElementById('data-nascimento').value;
+      const horaNascimento = document.getElementById('hora-nascimento').value;
+      const cidade = document.getElementById('cidade').value.trim();
+      const pais = document.getElementById('pais').value.trim();
+
+      // Validar preenchimento
+      if (!nome || !dataNascimento || !horaNascimento || !cidade || !pais) {
+        showMessage('Por favor, preencha todos os campos.', 'error');
+        return;
+      }
+
+      // Validar data de nascimento não é no futuro
+      const birthDate = new Date(`${dataNascimento}T00:00:00`);
+      if (birthDate > new Date()) {
+        showMessage('Data de nascimento não pode ser no futuro.', 'error');
+        return;
+      }
+
+      // Validar tamanho do nome
+      if (nome.length < 3) {
+        showMessage('Nome deve ter pelo menos 3 caracteres.', 'error');
+        return;
+      }
+
+      const localNascimento = `${cidade}, ${pais}`;
+
+      // Mostrar processamento
+      showSection(processingDiv);
+      submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(`${API_BASE}/api/brinde/gerar`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            token, // ← Token HMAC (obrigatório, vem da URL)
+            nomeCompleto: nome,
+            dataNascimento,
+            horaNascimento: `${horaNascimento}:00`, // Formato HH:MM:SS
+            localNascimento
+          })
+        });
+
+        const result = await response.json();
+
+        // Tratamento de status específicos
+        if (response.status === 409) {
+          // Já resgatado
+          showSection(alreadyClaimedDiv);
+          return;
+        }
+
+        if (response.status === 401) {
+          // Token inválido/expirado
+          showSection(invalidTokenDiv);
+          return;
+        }
+
+        if (response.status === 429) {
+          // Rate limited
+          showSection(formSection);
+          const minutos = result.minutosAteReset || 60;
+          showMessage(`Muitas tentativas. Tente novamente em ${minutos} minuto(s).`, 'warning');
+          submitBtn.disabled = false;
+          return;
+        }
+
+        if (!response.ok || !result.sucesso) {
+          throw new Error(result.erro || 'Erro ao processar o brinde');
+        }
+
+        // Sucesso!
+        showSection(successDiv);
+
+      } catch (err) {
+        console.error('Erro ao gerar brinde:', err);
+        showSection(formSection);
+        showMessage(err.message || 'Erro ao gerar seu estudo. Tente novamente.', 'error');
+        submitBtn.disabled = false;
+      }
+    });
+
+    // ─ Inicializar
+    validateAccess();
+  </script>
+</body>
+</html>

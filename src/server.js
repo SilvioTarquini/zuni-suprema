@@ -834,8 +834,15 @@ Plutão: ${mapa.plutao?.sign} ${mapa.plutao?.degree}°`;
       ]
     });
 
+    // Adicionar texto introdutório no início do relatório (conforme copy de Etapa 5)
+    const introducao = `Este relatório é o registro desta conversa. Vale guardar o e-mail e/ou baixar o PDF — cada sessão fecha um momento diferente, e juntos eles contam a sequência da jornada.
+
+---
+
+`;
+
     return {
-      text: response.content[0].text,
+      text: introducao + response.content[0].text,
       ascendenteInvalido: ascendenteInvalido
     };
   } catch (error) {
@@ -1104,12 +1111,14 @@ async function sendEmail(email, name, pdfPath, cupom) {
   try {
     const sgMail = require('@sendgrid/mail');
     const fs = require('fs');
+    const { gerarTokenBrinde } = require('./lib/brinde');
 
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
     const pdfAttachment = fs.readFileSync(pdfPath).toString('base64');
 
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
+
     const blocoCupom = cupom ? `
           <div style="margin:24px 0; padding:18px 20px; border:1px solid #d9c68f; border-radius:8px; background:#faf7ef;">
             <p style="margin:0 0 8px; font-size:14px; color:#2c2c2c;">Como agradecimento por concluir sua sessão, você ganhou <strong>30% de desconto</strong> em qualquer livro da coleção "Os Bastidores da Mente":</p>
@@ -1118,6 +1127,17 @@ async function sendEmail(email, name, pdfPath, cupom) {
             <a href="${frontendUrl}/loja?cupom=${encodeURIComponent(cupom.codigo)}" style="display:inline-block; padding:10px 18px; background:#B8963E; color:#0f0f0f; text-decoration:none; border-radius:6px; font-weight:bold; font-size:13px;">Ver livros com desconto</a>
           </div>
     ` : '';
+
+    const tokenBrinde = gerarTokenBrinde(email);
+    const linkBrinde = `${frontendUrl}/brinde?token=${encodeURIComponent(tokenBrinde)}&email=${encodeURIComponent(email)}`;
+
+    const blocobrinde = `
+          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#faf9f0;">
+            <p style="margin:0 0 8px; font-size:14px; color:#2c2c2c;"><strong>✨ Presente para você:</strong> Ao completar sua sessão, você ganhou um <strong>Estudo Integrativo</strong> exclusivo — uma análise combinada de astrologia e numerologia, única e personalizada.</p>
+            <p style="margin:0 0 14px; font-size:12px; color:#777;">Este estudo é determinístico (nunca muda), portanto é enviado apenas uma vez por cliente.</p>
+            <a href="${linkBrinde}" style="display:inline-block; padding:10px 18px; background:#d4af37; color:#1a1a3e; text-decoration:none; border-radius:6px; font-weight:bold; font-size:13px;">Acessar Meu Estudo</a>
+          </div>
+    `;
 
     const msg = {
       to: email,
@@ -1131,6 +1151,7 @@ async function sendEmail(email, name, pdfPath, cupom) {
           Em anexo você encontra o seu **Mapa Integrativo** — um relatório personalizado com os insights da sua jornada.
 
           ${blocoCupom}
+          ${blocobrinde}
 
           ZUNI Suprema — A ciência da excelência humana
 www.zunisuprema.com.br
@@ -1275,10 +1296,15 @@ async function marcarPagoSeAprovado(order) {
 async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
   try {
     const sgMail = require('@sendgrid/mail');
+    const { gerarTokenBrinde } = require('./lib/brinde');
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
     const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
     const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
+
+    const tokenBrinde = gerarTokenBrinde(email);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
+    const linkBrinde = `${frontendUrl}/brinde?token=${encodeURIComponent(tokenBrinde)}&email=${encodeURIComponent(email)}`;
 
     const msg = {
       to: email,
@@ -1291,6 +1317,13 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
           <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
           <p><a href="${linkAcesso}" style="color:#B8963E;font-weight:bold;">Acessar meu livro</a></p>
           <p style="color:#b6ab93;font-size:0.85rem;">O acesso fica disponível até ${expiraFormatado}.</p>
+
+          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#2a2620;">
+            <p style="margin:0 0 8px; font-size:13px; color:#f2ead9;"><strong>✨ Presente para você:</strong> Ganhou também um <strong>Estudo Integrativo</strong> exclusivo — astrologia + numerologia personalizada!</p>
+            <p style="margin:0 0 12px; font-size:11px; color:#b6ab93;">Único e determinístico — enviado uma única vez.</p>
+            <a href="${linkBrinde}" style="display:inline-block; padding:8px 16px; background:#d4af37; color:#1a1a3e; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px;">Acessar Meu Estudo</a>
+          </div>
+
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>
       `
@@ -3098,6 +3131,248 @@ app.post('/api/experimente-chat', async (req, res) => {
  */
 app.get('/experimente', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/experimente.html'));
+});
+
+// ========================
+// ENDPOINTS BRINDE (Astrologia + Numerologia)
+// ========================
+
+/**
+ * GET /brinde
+ * Serve página de acesso ao brinde
+ */
+app.get('/brinde', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/brinde.html'));
+});
+
+/**
+ * GET /api/brinde/status/:email
+ * Verifica se cliente já resgatou brinde
+ * SEGURANÇA: exige token HMAC válido (passado em query string)
+ * Retorna: { resgatado, data?, mensagem? } ou erro 401
+ */
+app.get('/api/brinde/status/:email', async (req, res) => {
+  try {
+    const { email } = req.params;
+    const { token } = req.query;
+
+    // Validações
+    if (!email || !email.includes('@')) {
+      return res.status(400).json({ resgatado: false, erro: 'Email inválido.' });
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        resgatado: false,
+        erro: 'Token ausente. Acesse através do link do e-mail.'
+      });
+    }
+
+    const { validarTokenHMAC, verificarJaResgatado } = require('./lib/brinde');
+
+    // Validar HMAC token (CRÍTICO: sem token válido, rejeita)
+    if (!validarTokenHMAC(email, token)) {
+      console.warn(`[BRINDE] Token HMAC inválido para email ${email.substring(0, 5)}***`);
+      return res.status(401).json({
+        resgatado: false,
+        erro: 'Token expirado ou inválido. Gere um novo link no seu e-mail.'
+      });
+    }
+
+    // Se token é válido, verificar status de resgate
+    const status = await verificarJaResgatado(email);
+    return res.json(status);
+
+  } catch (error) {
+    console.error('[BRINDE] Erro em /api/brinde/status:', error);
+    return res.status(500).json({
+      resgatado: false,
+      erro: error.message
+    });
+  }
+});
+
+/**
+ * POST /api/brinde/gerar
+ * Gera estudo brinde (1 por cliente)
+ *
+ * Body: {
+ *   email,
+ *   token,              ← HMAC token (obrigatório, gerado no servidor)
+ *   nomeCompleto,
+ *   dataNascimento,
+ *   horaNascimento,
+ *   localNascimento
+ * }
+ *
+ * SEGURANÇA:
+ * - Valida token HMAC (enviado na URL do e-mail)
+ * - Rate limiting: máx 5 tentativas/hora por IP+email
+ * - Verifica resgate anterior
+ *
+ * Retorna: { sucesso, mensagem?, erro? }
+ */
+app.post('/api/brinde/gerar', async (req, res) => {
+  try {
+    const {
+      email,
+      token,
+      nomeCompleto,
+      dataNascimento,
+      horaNascimento,
+      localNascimento
+    } = req.body;
+
+    // Extrair IP do cliente (suporta proxy reverso)
+    const clientIp = (req.headers['x-forwarded-for'] || '').split(',')[0].trim()
+      || req.connection.remoteAddress
+      || 'unknown';
+
+    // ──────────────────────────────────────────────────────────────
+    // VALIDAÇÕES BÁSICAS
+    // ──────────────────────────────────────────────────────────────
+    if (!email || !nomeCompleto || !dataNascimento || !horaNascimento || !localNascimento) {
+      return res.status(400).json({
+        sucesso: false,
+        erro: 'Email, nome, data, hora e local de nascimento são obrigatórios.'
+      });
+    }
+
+    if (!token) {
+      return res.status(401).json({
+        sucesso: false,
+        erro: 'Token HMAC inválido. Acesse através do link do e-mail.'
+      });
+    }
+
+    const {
+      validarTokenHMAC,
+      verificarRateLimit,
+      limparRateLimit,
+      verificarJaResgatado,
+      gerarEstudoCompleto,
+      gerarPdfBrinde,
+      registrarResgate,
+      enviarBrindeEmail
+    } = require('./lib/brinde');
+
+    // ──────────────────────────────────────────────────────────────
+    // RATE LIMITING (5/hora por IP+email)
+    // ──────────────────────────────────────────────────────────────
+    const rateLimitStatus = verificarRateLimit(clientIp, email, 5, 1);
+    if (rateLimitStatus.bloqueado) {
+      console.warn(`[BRINDE] Rate limit atingido para ${email} (IP: ${clientIp}). Tentativas: ${rateLimitStatus.tentativas}/${rateLimitStatus.maxTentativas}`);
+      return res.status(429).json({
+        sucesso: false,
+        erro: `Muitas tentativas. Tente novamente em ${rateLimitStatus.minutosAteReset} minuto(s).`,
+        proximaTentativaEm: rateLimitStatus.proximaTentativaEm
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // VALIDAÇÃO HMAC (CRÍTICO)
+    // ──────────────────────────────────────────────────────────────
+    if (!validarTokenHMAC(email, token)) {
+      console.warn(`[BRINDE] Token HMAC inválido ou expirado para ${email}`);
+      return res.status(401).json({
+        sucesso: false,
+        erro: 'Token expirado ou inválido. Gere um novo link no seu e-mail.'
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // VERIFICAR RESGATE ANTERIOR
+    // ──────────────────────────────────────────────────────────────
+    const statusResgate = await verificarJaResgatado(email);
+    if (statusResgate.resgatado) {
+      console.log(`[BRINDE] ${email} tentou resgatar novamente (já resgatado em ${statusResgate.data})`);
+      return res.status(409).json({
+        sucesso: false,
+        jáResgatado: true,
+        mensagem: statusResgate.mensagem
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // GERAR ESTUDO
+    // ──────────────────────────────────────────────────────────────
+    console.log(`[BRINDE] Iniciando geração para ${email} (IP: ${clientIp})...`);
+    const estudo = await gerarEstudoCompleto(
+      nomeCompleto,
+      dataNascimento,
+      horaNascimento,
+      localNascimento
+    );
+
+    // ──────────────────────────────────────────────────────────────
+    // GERAR PDF
+    // ──────────────────────────────────────────────────────────────
+    console.log(`[BRINDE] Gerando PDF para ${email}...`);
+    const pdfPath = await gerarPdfBrinde(estudo.interpretacao, nomeCompleto, email);
+
+    // ──────────────────────────────────────────────────────────────
+    // ENVIAR E-MAIL (com novo token no link)
+    // ──────────────────────────────────────────────────────────────
+    console.log(`[BRINDE] Enviando e-mail para ${email}...`);
+    const resultadoEmail = await enviarBrindeEmail(email, nomeCompleto, pdfPath);
+
+    if (!resultadoEmail.sucesso) {
+      // Registrar com status erro (permite retry)
+      await registrarResgate(
+        email,
+        nomeCompleto,
+        dataNascimento,
+        horaNascimento,
+        localNascimento,
+        estudo,
+        'erro',
+        resultadoEmail.erro
+      );
+      return res.status(500).json({
+        sucesso: false,
+        erro: 'Falha ao enviar e-mail. Tente novamente.'
+      });
+    }
+
+    // ──────────────────────────────────────────────────────────────
+    // REGISTRAR SUCESSO
+    // ──────────────────────────────────────────────────────────────
+    await registrarResgate(
+      email,
+      nomeCompleto,
+      dataNascimento,
+      horaNascimento,
+      localNascimento,
+      estudo,
+      'enviado'
+    );
+
+    // Limpar rate limit após sucesso (permite novo brinde em conta diferente)
+    limparRateLimit(clientIp, email);
+
+    // Limpar PDF do temp (background)
+    setTimeout(() => {
+      const fs = require('fs');
+      try {
+        fs.unlinkSync(pdfPath);
+      } catch (err) {
+        console.warn(`[BRINDE] Não foi possível limpar temp: ${pdfPath}`);
+      }
+    }, 5000);
+
+    console.log(`[BRINDE] ✅ Brinde completado para ${email}`);
+    return res.json({
+      sucesso: true,
+      mensagem: 'Seu estudo foi gerado com sucesso! Verifique seu e-mail.'
+    });
+
+  } catch (error) {
+    console.error('[BRINDE] Erro em /api/brinde/gerar:', error);
+    return res.status(500).json({
+      sucesso: false,
+      erro: error.message || 'Erro ao processar o brinde.'
+    });
+  }
 });
 
 // Servir arquivos estáticos — deve ficar DEPOIS de rotas explícitas
