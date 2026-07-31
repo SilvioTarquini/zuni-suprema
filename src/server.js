@@ -1111,7 +1111,7 @@ async function sendEmail(email, name, pdfPath, cupom) {
   try {
     const sgMail = require('@sendgrid/mail');
     const fs = require('fs');
-    const { gerarTokenBrinde } = require('./lib/brinde');
+    const { gerarTokenHMAC } = require('./lib/brinde');
 
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
@@ -1128,7 +1128,7 @@ async function sendEmail(email, name, pdfPath, cupom) {
           </div>
     ` : '';
 
-    const tokenBrinde = gerarTokenBrinde(email);
+    const tokenBrinde = gerarTokenHMAC(email);
     const linkBrinde = `${frontendUrl}/brinde?token=${encodeURIComponent(tokenBrinde)}&email=${encodeURIComponent(email)}`;
 
     const blocobrinde = `
@@ -1296,15 +1296,15 @@ async function marcarPagoSeAprovado(order) {
 async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
   try {
     const sgMail = require('@sendgrid/mail');
-    const { gerarTokenBrinde } = require('./lib/brinde');
+    const { gerarTokenHMAC } = require('./lib/brinde');
     sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
     const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
     const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
 
-    const tokenBrinde = gerarTokenBrinde(email);
+    const tokenBrinde = gerarTokenHMAC(email);
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
-    const linkBrinde = `${frontendUrl}/brinde?token=${encodeURIComponent(tokenBrinde)}&email=${encodeURIComponent(email)}`;
+    const linkBrinde = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(tokenBrinde)}`;
 
     const msg = {
       to: email,
@@ -1338,6 +1338,46 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
   }
 }
 
+async function enviarEmailConfirmacaoSessoesExtras(email, nomeCliente, pacoteId) {
+  try {
+    const sgMail = require('@sendgrid/mail');
+    const { gerarTokenHMAC } = require('./lib/brinde');
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
+    const tokenBrinde = gerarTokenHMAC(email);
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
+    const linkBrinde = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(tokenBrinde)}`;
+
+    const msg = {
+      to: email,
+      from: process.env.SENDGRID_FROM_EMAIL,
+      subject: '✨ Seu pacote de 3 Sessões Extras foi liberado',
+      html: `
+        <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
+          <p>Olá ${nomeCliente}!</p>
+          <p>Seu pagamento foi confirmado. Você agora tem <strong>3 sessões extras</strong> disponíveis, válidas por 30 dias.</p>
+          <p><a href="${frontendUrl}/mentor" style="color:#B8963E;font-weight:bold;">Agendar Sessão</a></p>
+
+          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#2a2620;">
+            <p style="margin:0 0 8px; font-size:13px; color:#f2ead9;"><strong>✨ Presente para você:</strong> Ganhou também um <strong>Estudo Integrativo</strong> exclusivo — astrologia + numerologia personalizada!</p>
+            <p style="margin:0 0 12px; font-size:11px; color:#b6ab93;">Único e determinístico — enviado uma única vez.</p>
+            <a href="${linkBrinde}" style="display:inline-block; padding:8px 16px; background:#d4af37; color:#1a1a3e; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px;">Acessar Meu Estudo</a>
+          </div>
+
+          <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
+        </div>
+      `
+    };
+
+    await sgMail.send(msg);
+    console.log(`E-mail de confirmação de Sessões Extras enviado para ${email}`);
+    return true;
+  } catch (error) {
+    console.error('Erro ao enviar e-mail de Sessões Extras:', error?.response?.body || error.message);
+    return false;
+  }
+}
+
 async function criarAcessoLivroSeAplicavel(order, paymentId) {
   const referencia = order.external_reference;
   if (!referencia || !referencia.startsWith('lv')) return null;
@@ -1366,6 +1406,14 @@ async function criarPacoteSessoesSeAplicavel(order, paymentId) {
   if (!isPaid) return null;
 
   const pacote = await criarPacoteSessoes({ email: pedido.email, paymentId });
+
+  // Enviar e-mail de confirmação com brinde
+  try {
+    await enviarEmailConfirmacaoSessoesExtras(pedido.email, pedido.nome, pacote.pacoteId);
+  } catch (err) {
+    console.error('[WEBHOOK] Erro ao enviar e-mail Sessões Extras:', err.message);
+    // Não propaga — pacote já foi criado
+  }
 
   try {
     await deletarPedidoPendenteSE(referencia);
