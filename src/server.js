@@ -588,8 +588,31 @@ app.get('/obrigado', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/obrigado.html'));
 });
 
-app.get('/questionario-timidez', (req, res) => {
+app.get('/api/questionario/catalogo', (req, res) => {
+  res.json({
+    categorias: catalogoQuestionarios.categorias,
+    cabecalhosComSobreposicao: catalogoQuestionarios.cabecalhosComSobreposicao,
+    questionarios: catalogoQuestionarios.questionarios
+  });
+});
+
+app.get('/api/questionario/catalogo/:tema', (req, res) => {
+  const { tema } = req.params;
+  const questionario = catalogoQuestionarios.questionarios.find(q => q.tema === tema);
+
+  if (!questionario) {
+    return res.status(404).json({ error: 'Questionário não encontrado para este tema' });
+  }
+
+  res.json(questionario);
+});
+
+app.get('/questionario/:tema', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/questionario-timidez.html'));
+});
+
+app.get('/questionario-timidez', (req, res) => {
+  res.redirect('/questionario/timidez_comunicacao');
 });
 
 app.use('/', livrosRouter);
@@ -2311,6 +2334,7 @@ app.post('/api/transcrever', upload.single('audio'), async (req, res) => {
 
 // ── QUESTIONÁRIO DE TIMIDEZ/COMUNICAÇÃO ────────────────
 const { gerarRespostaA, gerarRespostaB } = require('./lib/questionarioTimidez');
+const catalogoQuestionarios = require('./lib/catalogoQuestionarios');
 
 app.post('/api/questionario/salvar-respostas', async (req, res) => {
   try {
@@ -2322,10 +2346,14 @@ app.post('/api/questionario/salvar-respostas', async (req, res) => {
 
     const supabaseClient = assertSupabase();
 
+    // Busca o título do tema no catálogo
+    const questionario = catalogoQuestionarios.questionarios.find(q => q.tema === tema);
+    const titulo = questionario ? questionario.titulo : tema;
+
     // Gera a Resposta A (mensagem de abertura do Mentor)
     let respostaA = '';
     try {
-      respostaA = await gerarRespostaA(respostas);
+      respostaA = await gerarRespostaA(respostas, tema, titulo);
       console.log(`[QUESTIONÁRIO] Resposta A gerada para sessão ${sessionId}:`, respostaA.substring(0, 100) + '...');
     } catch (err) {
       console.error('[QUESTIONÁRIO] Erro ao gerar Resposta A:', err.message);

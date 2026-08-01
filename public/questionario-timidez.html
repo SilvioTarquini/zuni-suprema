@@ -326,117 +326,8 @@
           <div class="progress-fill" id="progressFill"></div>
         </div>
 
-        <!-- Q1 -->
-        <div class="question-group active" data-question="1">
-          <div class="question-title">O que mais te incomoda hoje?</div>
-          <div class="option">
-            <input type="radio" id="q1_1" name="q1" value="Falar em público/apresentações">
-            <label for="q1_1">Falar em público/apresentações</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q1_2" name="q1" value="Puxar conversa ou me aproximar de pessoas novas">
-            <label for="q1_2">Puxar conversa ou me aproximar de pessoas novas</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q1_3" name="q1" value="Expressar minha opinião mesmo com quem já conheço">
-            <label for="q1_3">Expressar minha opinião mesmo com quem já conheço</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q1_4" name="q1" value="Situações sociais em grupo">
-            <label for="q1_4">Situações sociais em grupo</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q1_5" name="q1" value="outro">
-            <label for="q1_5">Outro</label>
-          </div>
-          <div class="option-text-input" id="q1_outro">
-            <input type="text" id="q1_outro_text" placeholder="Qual seria?">
-          </div>
-        </div>
-
-        <!-- Q2 -->
-        <div class="question-group" data-question="2">
-          <div class="question-title">Há quanto tempo isso te acompanha?</div>
-          <div class="option">
-            <input type="radio" id="q2_1" name="q2" value="Sempre foi assim">
-            <label for="q2_1">Sempre foi assim</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q2_2" name="q2" value="Começou na adolescência">
-            <label for="q2_2">Começou na adolescência</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q2_3" name="q2" value="Começou na vida adulta">
-            <label for="q2_3">Começou na vida adulta</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q2_4" name="q2" value="É recente (últimos meses)">
-            <label for="q2_4">É recente (últimos meses)</label>
-          </div>
-        </div>
-
-        <!-- Q3 -->
-        <div class="question-group" data-question="3">
-          <div class="question-title">O que você sente fisicamente nessas horas?</div>
-          <div class="option">
-            <input type="radio" id="q3_1" name="q3" value="Nó na garganta/trava a fala">
-            <label for="q3_1">Nó na garganta/trava a fala</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q3_2" name="q3" value="Coração acelerado, mãos suando">
-            <label for="q3_2">Coração acelerado, mãos suando</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q3_3" name="q3" value="Vontade de sumir/evitar">
-            <label for="q3_3">Vontade de sumir/evitar</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q3_4" name="q3" value="Não sinto nada físico, é mais mental">
-            <label for="q3_4">Não sinto nada físico, é mais mental</label>
-          </div>
-        </div>
-
-        <!-- Q4 -->
-        <div class="question-group" data-question="4">
-          <div class="question-title">O que você já tentou para lidar com isso?</div>
-          <div class="option">
-            <input type="radio" id="q4_1" name="q4" value="Nada ainda">
-            <label for="q4_1">Nada ainda</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q4_2" name="q4" value="Já tentei sozinho(a)">
-            <label for="q4_2">Já tentei sozinho(a)</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q4_3" name="q4" value="Já fiz terapia/acompanhamento antes">
-            <label for="q4_3">Já fiz terapia/acompanhamento antes</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q4_4" name="q4" value="Evito completamente">
-            <label for="q4_4">Evito completamente</label>
-          </div>
-        </div>
-
-        <!-- Q5 -->
-        <div class="question-group" data-question="5">
-          <div class="question-title">O que você espera encontrar aqui hoje?</div>
-          <div class="option">
-            <input type="radio" id="q5_1" name="q5" value="Entender por que sou assim">
-            <label for="q5_1">Entender por que sou assim</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q5_2" name="q5" value="Ferramentas práticas">
-            <label for="q5_2">Ferramentas práticas</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q5_3" name="q5" value="Só desabafar e ser ouvido(a)">
-            <label for="q5_3">Só desabafar e ser ouvido(a)</label>
-          </div>
-          <div class="option">
-            <input type="radio" id="q5_4" name="q5" value="Ainda não sei, quero explorar">
-            <label for="q5_4">Ainda não sei, quero explorar</label>
-          </div>
-        </div>
+        <!-- Perguntas renderizadas dinamicamente -->
+        <div id="questionsContainer"></div>
 
         <div class="form-buttons">
           <button class="btn btn-prev" id="btnPrev" onclick="previousQuestion()" disabled>Anterior</button>
@@ -449,8 +340,96 @@
 
   <script>
     let currentQuestion = 1;
-    const totalQuestions = 5;
+    let totalQuestions = 5;
     const answers = {};
+    let temaCatalogo = null;
+
+    function extractTemaFromUrl() {
+      const pathParts = window.location.pathname.split('/');
+      const ultimoSegmento = pathParts[pathParts.length - 1];
+
+      // Se o último segmento for vazio, ou parecer um arquivo estático
+      // (contém ponto, ex: "questionario-timidez.html"), ou for o nome
+      // antigo da rota sem tema, cai no fallback do piloto original.
+      if (!ultimoSegmento || ultimoSegmento.includes('.') || ultimoSegmento === 'questionario-timidez') {
+        return 'timidez_comunicacao';
+      }
+
+      return ultimoSegmento;
+    }
+
+    async function carregarCatalogo() {
+      const tema = extractTemaFromUrl();
+      try {
+        const response = await fetch(`/api/questionario/catalogo/${tema}`);
+        if (!response.ok) {
+          throw new Error('Questionário não encontrado');
+        }
+        temaCatalogo = await response.json();
+        totalQuestions = temaCatalogo.perguntas.length;
+        renderizarPerguntas();
+      } catch (error) {
+        console.error('Erro ao carregar catálogo:', error);
+        const container = document.getElementById('questionsContainer');
+        container.innerHTML = '<div class="error-message">Erro ao carregar questionário. Você ainda pode pular esta etapa.</div>';
+      }
+    }
+
+    function renderizarPerguntas() {
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+
+      temaCatalogo.perguntas.forEach((pergunta, index) => {
+        const questionNum = index + 1;
+        const isActive = questionNum === 1 ? 'active' : '';
+
+        let questionHtml = `
+          <div class="question-group ${isActive}" data-question="${questionNum}">
+            <div class="question-title">${pergunta.texto}</div>
+        `;
+
+        pergunta.opcoes.forEach((opcao, opcaoIndex) => {
+          const optionId = `q${questionNum}_${opcaoIndex + 1}`;
+          questionHtml += `
+            <div class="option">
+              <input type="radio" id="${optionId}" name="q${questionNum}" value="${opcao}">
+              <label for="${optionId}">${opcao}</label>
+            </div>
+          `;
+
+          if (opcao === 'Outro' || opcao === 'outro') {
+            questionHtml += `
+              <div class="option-text-input" id="q${questionNum}_outro">
+                <input type="text" id="q${questionNum}_outro_text" placeholder="Qual seria?">
+              </div>
+            `;
+          }
+        });
+
+        questionHtml += '</div>';
+        container.innerHTML += questionHtml;
+      });
+
+      attachOtherListeners();
+    }
+
+    function attachOtherListeners() {
+      for (let i = 1; i <= totalQuestions; i++) {
+        const radios = document.querySelectorAll(`input[name="q${i}"]`);
+        radios.forEach(radio => {
+          radio.addEventListener('change', function() {
+            const otherInput = document.getElementById(`q${i}_outro`);
+            if (otherInput) {
+              if (this.value === 'Outro' || this.value === 'outro') {
+                otherInput.classList.add('active');
+              } else {
+                otherInput.classList.remove('active');
+              }
+            }
+          });
+        });
+      }
+    }
 
     function updateProgress() {
       const percentage = (currentQuestion / totalQuestions) * 100;
@@ -517,27 +496,13 @@
       const checked = document.querySelector(`input[name="q${currentQuestion}"]:checked`);
       if (checked) {
         let value = checked.value;
-        if (value === 'outro') {
+        if (value === 'Outro' || value === 'outro') {
           const otherText = document.getElementById(`q${currentQuestion}_outro_text`).value;
           value = otherText || 'Outro (vazio)';
         }
         answers[`q${currentQuestion}`] = value;
       }
     }
-
-    // Setup radio listeners para mostrar/esconder input de texto para "Outro"
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelectorAll('input[name="q1"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-          const otherInput = document.getElementById('q1_outro');
-          if (this.value === 'outro') {
-            otherInput.classList.add('active');
-          } else {
-            otherInput.classList.remove('active');
-          }
-        });
-      });
-    });
 
     async function submitQuestionnaire() {
       if (!isCurrentQuestionAnswered()) return;
@@ -550,6 +515,7 @@
 
       const params = new URLSearchParams(window.location.search);
       const sessionId = params.get('sessionId');
+      const tema = extractTemaFromUrl();
 
       try {
         const response = await fetch('/api/questionario/salvar-respostas', {
@@ -557,7 +523,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             sessionId,
-            tema: 'timidez_comunicacao',
+            tema,
             respostas: answers
           })
         });
@@ -579,6 +545,8 @@
         submitBtn.textContent = 'Enviar';
       }
     }
+
+    document.addEventListener('DOMContentLoaded', carregarCatalogo);
   </script>
 </body>
 </html>
