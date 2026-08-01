@@ -13,16 +13,14 @@ const client = new Anthropic({
  * respostas do formulário. Essa mensagem aparecerá como a primeira fala
  * do Mentor no chat, como se ele já tivesse entendido a situação.
  *
- * @param {Object} respostas - objeto com as 5 respostas do formulário
- * @param {string} respostas.q1 - O que mais te incomoda hoje
- * @param {string} respostas.q2 - Há quanto tempo isso te acompanha
- * @param {string} respostas.q3 - O que você sente fisicamente
- * @param {string} respostas.q4 - O que você já tentou
- * @param {string} respostas.q5 - O que você espera encontrar aqui
+ * @param {Object} respostas - objeto com as respostas do questionário
+ * @param {string} tema - tema/slug do questionário (ex: 'timidez_comunicacao', 'bullying')
+ * @param {string} titulo - título do questionário (ex: 'Timidez e Comunicação')
  * @returns {Promise<string>} - a mensagem de abertura do Mentor
  */
-async function gerarRespostaA(respostas) {
-  const promptSistema = `Com base nas respostas do formulário abaixo, gere a mensagem de abertura do Mentor ZUNI para esta pessoa. Não mencione que houve um formulário. Fale como se já tivesse entendido a situação dela. Use tom acolhedor, direto, sem termos técnicos ou fisiológicos. Termine convidando a pessoa a continuar a partir daí.
+async function gerarRespostaA(respostas, tema = null, titulo = null) {
+  const tituloDoTema = titulo || 'este tema';
+  const promptSistema = `Com base nas respostas do formulário abaixo sobre "${tituloDoTema}", gere a mensagem de abertura do Mentor ZUNI para esta pessoa. Não mencione que houve um formulário. Fale como se já tivesse entendido a situação dela. Use tom acolhedor, direto, sem termos técnicos ou fisiológicos. Termine convidando a pessoa a continuar a partir daí.
 
 Respostas fornecidas (em JSON):
 ${JSON.stringify(respostas, null, 2)}
@@ -30,7 +28,7 @@ ${JSON.stringify(respostas, null, 2)}
 Gere uma mensagem natural, como se fosse a saudação genuína do Mentor ao iniciar a conversa.`;
 
   const message = await client.messages.create({
-    model: 'claude-opus-5',
+    model: 'claude-sonnet-4-6',
     max_tokens: 1200,
     system: promptSistema,
     messages: [
@@ -57,11 +55,14 @@ Gere uma mensagem natural, como se fosse a saudação genuína do Mentor ao inic
  * acompanhamento profissional. NUNCA deve ser exposto ao cliente.
  * Chamada sob demanda (quando cliente pedir encaminhamento humano).
  *
- * @param {Object} respostas - objeto com as 5 respostas do formulário
+ * @param {Object} respostas - objeto com as respostas do questionário
+ * @param {string} tema - tema/slug do questionário (ex: 'timidez_comunicacao', 'bullying')
+ * @param {string} titulo - título do questionário (ex: 'Timidez e Comunicação')
  * @returns {Promise<string>} - o resumo técnico estruturado
  */
-async function gerarRespostaB(respostas) {
-  const promptSistema = `Gere um resumo técnico estruturado das respostas abaixo, para uso interno da equipe de acompanhamento humano. NÃO gere diagnóstico nem parecer clínico definitivo — gere pontos de observação e hipóteses a investigar, com base apenas nos dados fornecidos.
+async function gerarRespostaB(respostas, tema = null, titulo = null) {
+  const tituloDoTema = titulo || 'este tema';
+  const promptSistema = `Gere um resumo técnico estruturado das respostas abaixo sobre "${tituloDoTema}", para uso interno da equipe de acompanhamento humano. NÃO gere diagnóstico nem parecer clínico definitivo — gere pontos de observação e hipóteses a investigar, com base apenas nos dados fornecidos.
 
 Formato esperado (adapte conforme necessário):
 - Tema central e intensidade percebida
@@ -78,7 +79,7 @@ ${JSON.stringify(respostas, null, 2)}
 Evite qualquer linguagem de diagnóstico. O objetivo é acelerar a escuta qualificada do profissional, não substituí-la.`;
 
   const message = await client.messages.create({
-    model: 'claude-opus-5',
+    model: 'claude-sonnet-4-6',
     max_tokens: 800,
     system: promptSistema,
     messages: [
