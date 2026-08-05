@@ -1507,26 +1507,34 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
 
 app.get('/api/validar-cupom', async (req, res) => {
   try {
+    console.log('[VALIDAR-CUPOM] Requisição recebida:', req.query);
     const { codigo, livroId } = req.query;
     if (!codigo) {
       return res.status(400).json({ valido: false, error: 'Código de cupom é obrigatório.' });
     }
 
+    console.log('[VALIDAR-CUPOM] [1] Validando cupom:', codigo);
     const cupom = await validarCupomSemMarcar(codigo);
+    console.log('[VALIDAR-CUPOM] [1] Resultado da validação:', cupom);
     if (!cupom) {
       return res.status(404).json({ valido: false, error: 'Cupom inválido ou expirado.' });
     }
 
     if (!livroId) {
+      console.log('[VALIDAR-CUPOM] [2] Sem livroId, retornando cupom válido');
       return res.json({ valido: true, tipo: cupom.tipo, percentual: cupom.percentual, teto_reais: cupom.teto_reais });
     }
 
+    console.log('[VALIDAR-CUPOM] [3] Buscando livro:', livroId);
     const livro = buscarLivro(livroId);
+    console.log('[VALIDAR-CUPOM] [3] Resultado da busca de livro:', livro);
     if (!livro) {
       return res.status(404).json({ valido: false, error: 'Livro não encontrado.' });
     }
 
+    console.log('[VALIDAR-CUPOM] [4] Calculando desconto');
     const { precoOriginal, desconto, precoFinal } = calcularDesconto(livro, cupom);
+    console.log('[VALIDAR-CUPOM] [4] Desconto calculado:', { precoOriginal, desconto, precoFinal });
     return res.json({
       valido: true,
       tipo: cupom.tipo,
@@ -1537,7 +1545,9 @@ app.get('/api/validar-cupom', async (req, res) => {
       precoFinal
     });
   } catch (error) {
-    console.error('Erro em /api/validar-cupom:', error);
+    console.error('[VALIDAR-CUPOM] ❌ ERRO CAPTURADO:', error.message);
+    console.error('[VALIDAR-CUPOM] Stack trace:', error.stack);
+    console.error('[VALIDAR-CUPOM] Tipo de erro:', error.constructor.name);
     return res.status(500).json({ valido: false, error: 'Erro ao validar cupom.' });
   }
 });

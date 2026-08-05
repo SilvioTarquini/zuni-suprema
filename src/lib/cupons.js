@@ -80,18 +80,14 @@ async function criarCupomSessao({ email }) {
 }
 
 /**
- * Valida um código de cupom: existe e não expirou (cupons sem expira_em,
- * como campanhas, não expiram). Marca usado_em na primeira validação
- * bem-sucedida, só para fins de auditoria — não bloqueia reuso.
+ * Validação interna: busca e valida cupom sem efeitos colaterais.
+ * Retorna null se inválido ou expirado.
  *
- * @param {string} codigo
+ * @param {string} codigoNormalizado
  * @returns {Promise<{codigo: string, tipo: string, percentual: number, teto_reais: number|null}|null>}
  */
-async function validarCupom(codigo) {
-  if (!codigo || typeof codigo !== 'string') return null;
+async function validarCupomInterno(codigoNormalizado) {
   const supabaseClient = assertSupabase();
-  const codigoNormalizado = codigo.trim().toUpperCase();
-  if (!codigoNormalizado) return null;
 
   const { data, error } = await supabaseClient
     .from('cupons_desconto')
@@ -105,13 +101,6 @@ async function validarCupom(codigo) {
     return null;
   }
 
-  if (!data.usado_em) {
-    await supabaseClient
-      .from('cupons_desconto')
-      .update({ usado_em: new Date().toISOString() })
-      .eq('codigo', codigoNormalizado);
-  }
-
   return {
     codigo: data.codigo,
     tipo: data.tipo,
@@ -121,19 +110,73 @@ async function validarCupom(codigo) {
 }
 
 /**
+ * Valida um código de cupom: existe e não expirou (cupons sem expira_em,
+ * como campanhas, não expiram). Marca usado_em na primeira validação
+ * bem-sucedida (atomicamente) para fins de auditoria.
+ * Use esta função quando o cupom for DE FATO CONSUMIDO (checkout confirmado).
+ *
+ * @param {string} codigo
+ * @returns {Promise<{codigo: string, tipo: string, percentual: number, teto_reais: number|null}|null>}
+ */
+async function validarCupom(codigo) {
+  if (!codigo || typeof codigo !== 'string') return null;
+  const supabaseClient = assertSupabase();
+  const codigoNormalizado = codigo.trim().toUpperCase();
+  if (!codigoNormalizado) return null;
+
+  const cupom = await validarCupomInterno(codigoNormalizado);
+  if (!cupom) return null;
+
+  // UPDATE atômico: só marca se ainda não tiver sido marcado (usado_em IS NULL)
+  const { data, error } = await supabaseClient
+    .from('cupons_desconto')
+    .update({ usado_em: new Date().toISOString() })
+    .eq('codigo', codigoNormalizado)
+    .is('usado_em', null)
+    .select();
+
+  if (error) {
+    console.error(`[CUPOM] Erro ao marcar cupom como usado (${codigoNormalizado}):`, error.message);
+  }
+
+  if (data && data.length === 0) {
+    console.warn(`[CUPOM] Possível uso concorrente detectado para ${codigoNormalizado}`);
+  }
+
+  return cupom;
+}
+
+/**
+ * Valida um código de cupom SEM marcar como usado.
+ * Use esta função apenas para PRÉ-VISUALIZAÇÃO de desconto (ex: /api/validar-cupom).
+ * Não use no checkout confirmado — use validarCupom() em vez disso.
+ *
+ * @param {string} codigo
+ * @returns {Promise<{codigo: string, tipo: string, percentual: number, teto_reais: number|null}|null>}
+ */
+async function validarCupomSemMarcar(codigo) {
+  if (!codigo || typeof codigo !== 'string') return null;
+  const codigoNormalizado = codigo.trim().toUpperCase();
+  if (!codigoNormalizado) return null;
+
+  return validarCupomInterno(codigoNormalizado);
+}
+
+/**
  * Calcula o preço final de um livro dado um cupom já validado.
  * Regra: 'sessao' = percentual sem teto em qualquer categoria;
  * 'campanha' = percentual sem teto em 'compacta', com teto_reais em
  * 'principal' e 'saude-longevidade'.
+ * Serviços (categoria undefined) recebem desconto sem teto (tratados como tipo='sessao').
  *
- * @param {{preco: number, categoria: string}} livro
+ * @param {{preco: number, categoria: string|undefined}} livro
  * @param {{tipo: string, percentual: number, teto_reais: number|null}} cupom
  * @returns {{precoOriginal: number, desconto: number, precoFinal: number}}
  */
 function calcularDesconto(livro, cupom) {
   const descontoIntegral = livro.preco * (cupom.percentual / 100);
 
-  const semTeto = cupom.tipo === 'sessao' || livro.categoria === 'compacta';
+  const semTeto = cupom.tipo === 'sessao' || livro.categoria === 'compacta' || livro.categoria === undefined;
   const desconto = semTeto || cupom.teto_reais === null
     ? descontoIntegral
     : Math.min(descontoIntegral, cupom.teto_reais);
@@ -147,4 +190,4 @@ function calcularDesconto(livro, cupom) {
   };
 }
 
-module.exports = { criarCupomSessao, validarCupom, calcularDesconto, DIAS_VALIDADE_CUPOM_SESSAO };
+module.exports = { criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto, DIAS_VALIDADE_CUPOM_SESSAO };
