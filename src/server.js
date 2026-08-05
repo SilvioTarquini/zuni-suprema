@@ -15,7 +15,7 @@ const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
-const { criarCupomSessao, validarCupom, calcularDesconto } = require('./lib/cupons');
+const { criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
 const { calcularMapaNatal } = require('./lib/astro');
@@ -50,6 +50,7 @@ function normalizeSessionRow(row) {
     counter: row.message_count ?? 0,
     paid: row.paid ?? false,
     relatorioGerado: row.relatorio_gerado || false,
+    temaQuestionario: row.tema_questionario || null,
     birthDate: row.birth_date || null,
     birthTime: row.birth_time || null,
     birthLocation: row.birth_location || null,
@@ -95,6 +96,7 @@ async function upsertSession(session) {
     message_count: session.counter ?? 0,
     history: session.history ?? [],
     relatorio_gerado: session.relatorioGerado ?? false,
+    tema_questionario: session.temaQuestionario || null,
     birth_date: session.birthDate || null,
     birth_time: session.birthTime || null,
     birth_location: session.birthLocation || null,
@@ -608,7 +610,7 @@ app.get('/api/questionario/catalogo/:tema', (req, res) => {
 });
 
 app.get('/questionario/:tema', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/questionario-timidez.html'));
+  res.sendFile(path.join(__dirname, '../public/questionario-triagem.html'));
 });
 
 app.get('/questionario-timidez', (req, res) => {
@@ -736,7 +738,7 @@ function limparMarkdown(texto) {
   return texto.trim();
 }
 
-async function searchKnowledge(query, limite = 5) {
+async function searchKnowledge(query, limite = 5, tema = null) {
   try {
     const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
@@ -756,10 +758,33 @@ async function searchKnowledge(query, limite = 5) {
     const { createClient } = require('@supabase/supabase-js');
     const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-    const { data, error } = await supabase.rpc('buscar_documentos', {
-      query_embedding: embedding,
-      limite: limite
-    });
+    let rpcResult;
+
+    if (tema) {
+      // ── Busca Híbrida: Prioriza tema, complementa com conteúdo geral
+      // Distribuição padrão: 60% para tema-específico, 40% para geral
+      const limiteTema = Math.ceil(limite * 0.6);
+      const limiteGeral = limite - limiteTema;
+
+      console.log(`[RAG_HIBRIDO] Query: "${query}" | Tema: "${tema}" | Limite tema: ${limiteTema}, Limite geral: ${limiteGeral}`);
+
+      rpcResult = await supabase.rpc('buscar_documentos_hibrido', {
+        query_embedding: embedding,
+        limite_tema: limiteTema,
+        limite_geral: limiteGeral,
+        p_tema: tema
+      });
+    } else {
+      // ── Busca Padrão (retrocompatível com comportamento antigo)
+      console.log(`[RAG_GENERICO] Query: "${query}" | Limite: ${limite}`);
+
+      rpcResult = await supabase.rpc('buscar_documentos', {
+        query_embedding: embedding,
+        limite: limite
+      });
+    }
+
+    const { data, error } = rpcResult;
 
     if (error) {
       console.error('Erro RAG Supabase:', error);
@@ -1379,7 +1404,7 @@ async function enviarEmailConfirmacaoSessoesExtras(email, nomeCliente, pacoteId)
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
           <p>Olá ${nomeCliente}!</p>
           <p>Seu pagamento foi confirmado. Você agora tem <strong>3 sessões extras</strong> disponíveis, válidas por 30 dias.</p>
-          <p><a href="${frontendUrl}/mentor" style="color:#B8963E;font-weight:bold;">Agendar Sessão</a></p>
+          <p><a href="${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=aprovado" style="color:#B8963E;font-weight:bold;">Agendar Sessão</a></p>
 
           <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#2a2620;">
             <p style="margin:0 0 8px; font-size:13px; color:#f2ead9;"><strong>✨ Presente para você:</strong> Ganhou também um <strong>Estudo Integrativo</strong> exclusivo — astrologia + numerologia personalizada!</p>
@@ -1487,7 +1512,7 @@ app.get('/api/validar-cupom', async (req, res) => {
       return res.status(400).json({ valido: false, error: 'Código de cupom é obrigatório.' });
     }
 
-    const cupom = await validarCupom(codigo);
+    const cupom = await validarCupomSemMarcar(codigo);
     if (!cupom) {
       return res.status(404).json({ valido: false, error: 'Cupom inválido ou expirado.' });
     }
@@ -1773,6 +1798,47 @@ app.get('/api/sessoes-extras/status', async (req, res) => {
   }
 });
 
+app.post('/api/sessoes-extras/iniciar-sessao', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Email é obrigatório.' });
+    }
+
+    // Verificar se existe pacote ativo para este email
+    const pacote = await buscarPacoteAtivo(email);
+    if (!pacote) {
+      return res.status(404).json({ error: 'Nenhum pacote ativo encontrado para este email.' });
+    }
+
+    // Criar uma nova sessão para este cliente
+    const sessionId = uuidv4();
+    const session = {
+      sessionId,
+      name: 'Cliente de Sessões Extras', // Nome genérico — será preenchido via API ou deixado assim
+      email,
+      history: [],
+      counter: 0,
+      paid: true, // Sessão é paga (via pacote)
+      pacote_id: pacote.pacote_id,
+      createdAt: new Date().toISOString()
+    };
+
+    await upsertSession(session);
+    console.log(`[SESSOES_EXTRAS] Sessão criada: ${sessionId} (email: ${email}, pacote: ${pacote.pacote_id})`);
+
+    // Retornar sessionId e pacoteId (se ainda não respondeu questionário)
+    return res.json({
+      sessionId,
+      pacoteId: pacote.questionario_respondido ? null : pacote.pacote_id
+    });
+  } catch (error) {
+    console.error('Erro em /api/sessoes-extras/iniciar-sessao:', error);
+    return res.status(500).json({ error: 'Erro ao iniciar sessão.' });
+  }
+});
+
 // ─────────────────────────────────────────────────────────────────
 
 app.get('/api/mercadopago/public-key', (req, res) => {
@@ -1787,7 +1853,7 @@ app.get('/api/mercadopago/public-key', (req, res) => {
 
 app.post('/api/checkout/preference', async (req, res) => {
   try {
-    const { name, email, cpf } = req.body;
+    const { name, email, cpf, cupom } = req.body;
 
     if (!name || !email || !cpf) {
       return res.status(400).json({ error: 'Nome, email e CPF são obrigatórios.' });
@@ -1797,6 +1863,17 @@ app.post('/api/checkout/preference', async (req, res) => {
       return res.status(500).json({ error: 'Mercado Pago não configurado.' });
     }
 
+    // Validar e calcular desconto se cupom fornecido
+    let unitPrice = 29.90;
+    if (cupom) {
+      const cupomValidado = await validarCupom(cupom);
+      if (!cupomValidado) {
+        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
+      }
+      const desconto = calcularDesconto({ preco: 29.90, categoria: undefined }, cupomValidado);
+      unitPrice = desconto.precoFinal;
+    }
+
     const sessionId = uuidv4();
     const session = {
       sessionId,
@@ -1804,11 +1881,22 @@ app.post('/api/checkout/preference', async (req, res) => {
       email,
       history: [],
       counter: 0,
-      paid: false,
+      paid: unitPrice === 0,
       createdAt: new Date().toISOString()
     };
 
     await upsertSession(session);
+
+    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
+    if (unitPrice === 0) {
+      console.log(`[CHECKOUT-PREF] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
+      const frontendUrl = process.env.FRONTEND_URL;
+      return res.json({
+        sessionId,
+        init_point: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno&cupom100=true`,
+        cupom100: true
+      });
+    }
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
@@ -1822,7 +1910,7 @@ app.post('/api/checkout/preference', async (req, res) => {
             id: 'mapa-integrativo',
             title: 'Mapa Integrativo',
             quantity: 1,
-            unit_price: 29.90,
+            unit_price: unitPrice,
             currency_id: 'BRL'
           }
         ],
@@ -1864,10 +1952,21 @@ app.get('/api/checkout/session-status/:sessionId', async (req, res) => {
 
 app.post('/api/checkout', async (req, res) => {
   try {
-    const { name, email, cpf, metodoPagamento } = req.body;
+    const { name, email, cpf, metodoPagamento, cupom } = req.body;
 
     if (!name || !email || !cpf || !metodoPagamento) {
       return res.status(400).json({ error: 'Nome, email, CPF e método de pagamento são obrigatórios.' });
+    }
+
+    // Validar e calcular desconto se cupom fornecido
+    let totalAmount = 29.90;
+    if (cupom) {
+      const cupomValidado = await validarCupom(cupom);
+      if (!cupomValidado) {
+        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
+      }
+      const desconto = calcularDesconto({ preco: 29.90, categoria: undefined }, cupomValidado);
+      totalAmount = desconto.precoFinal;
     }
 
     const sessionId = uuidv4();
@@ -1877,11 +1976,23 @@ app.post('/api/checkout', async (req, res) => {
       email,
       history: [],
       counter: 0,
-      paid: false,
+      paid: totalAmount === 0,
       createdAt: new Date().toISOString()
     };
 
     await upsertSession(session);
+
+    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
+    if (totalAmount === 0) {
+      console.log(`[CHECKOUT] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
+      return res.json({
+        sessionId,
+        pedidoId: `CUPOM-100-${sessionId}`,
+        qrCodeText: 'CUPOM 100% DESCONTO - PAGAMENTO AUTOMÁTICO',
+        qrCodeImage: '',
+        cupom100: true
+      });
+    }
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
@@ -1889,13 +2000,13 @@ app.post('/api/checkout', async (req, res) => {
     const paymentMethod = { id: 'pix', type: 'bank_transfer' };
 
     const payment = {
-      amount: '29.90',
+      amount: totalAmount.toFixed(2),
       payment_method: paymentMethod
     };
 
     const orderBody = {
       type: 'online',
-      total_amount: '29.90',
+      total_amount: totalAmount.toFixed(2),
       external_reference: sessionId,
       processing_mode: 'automatic',
       transactions: {
@@ -2003,6 +2114,20 @@ app.post('/api/pagamento/webhook', async (req, res) => {
 app.get('/api/checkout/status/:pedidoId', async (req, res) => {
   try {
     const { pedidoId } = req.params;
+
+    // Se for pedido fake de cupom 100%, verificar se sessão está marcada como paga
+    if (pedidoId.startsWith('CUPOM-100-')) {
+      const sessionId = pedidoId.replace('CUPOM-100-', '');
+      const session = await getSession(sessionId);
+
+      if (!session) {
+        console.error(`[CHECKOUT] Sessão não encontrada para pedido cupom 100%: ${sessionId}`);
+        return res.json({ pago: false });
+      }
+
+      return res.json({ pago: session.paid === true });
+    }
+
     const order = await consultarPedidoMercadoPago(pedidoId);
     const pago = await marcarPagoSeAprovado(order);
     return res.json({ pago });
@@ -2089,7 +2214,8 @@ app.post('/api/chat', async (req, res) => {
       return res.json({ texto: mensagemEncerramento, audio: '', contador: session.counter, sessaoEncerrada: true });
     }
     // ────────────────────────────────────────────────────────
-    const knowledge = await searchKnowledge(message);
+    // Busca RAG: usa tema da sessão se disponível (busca híbrida), senão genérica
+    const knowledge = await searchKnowledge(message, 5, session.temaQuestionario);
     const contextBlock = knowledge.length > 0
       ? `\n\nConhecimento relevante da base ZUNI Suprema:\n${knowledge.join('\n\n')}`
       : '';
@@ -2338,11 +2464,18 @@ const catalogoQuestionarios = require('./lib/catalogoQuestionarios');
 
 app.post('/api/questionario/salvar-respostas', async (req, res) => {
   try {
-    const { sessionId, tema, respostas } = req.body;
+    const { sessionId, tema, respostas, pacoteId } = req.body;
 
     if (!sessionId || !tema || !respostas) {
       return res.status(400).json({ error: 'sessionId, tema e respostas são obrigatórios.' });
     }
+
+    // Recupera a sessão para obter o email
+    const session = await getSession(sessionId);
+    if (!session) {
+      return res.status(404).json({ error: 'Sessão não encontrada.' });
+    }
+    const { email } = session;
 
     const supabaseClient = assertSupabase();
 
@@ -2362,11 +2495,13 @@ app.post('/api/questionario/salvar-respostas', async (req, res) => {
 
     // Persiste as respostas + Resposta A no Supabase
     const { error } = await supabaseClient.from('respostas_questionario').insert({
+      email,
       sessao_id: sessionId,
       tema,
-      respostas,
+      respostas_brutas: respostas,
       resposta_a_gerada: respostaA,
-      created_at: new Date().toISOString()
+      pacote_id: pacoteId || null,
+      criado_em: new Date().toISOString()
     });
 
     if (error) {
@@ -2376,6 +2511,29 @@ app.post('/api/questionario/salvar-respostas', async (req, res) => {
       console.error('  Detalhes:', error.details);
       console.error('  Objeto completo:', JSON.stringify(error, null, 2));
       return res.status(500).json({ error: 'Erro ao salvar respostas.' });
+    }
+
+    // ── ATUALIZAR SESSÃO COM TEMA ATIVO (Busca RAG Híbrida) ──
+    // Isto permite que buscas RAG subsequentes sejam contextualizadas ao tema do questionário
+    try {
+      session.temaQuestionario = tema;
+      await upsertSession(session);
+      console.log(`[QUESTIONÁRIO] Sessão ${sessionId} atualizada com tema ativo: "${tema}"`);
+    } catch (err) {
+      console.error('[QUESTIONÁRIO] Erro ao atualizar tema da sessão:', err.message);
+      // Não bloqueia — o questionário foi respondido, apenas o tema na sessão falhou
+    }
+
+    // Se respostas foram feitas como parte de um pacote, marcar o questionário como respondido
+    if (pacoteId) {
+      try {
+        const { marcarQuestionarioRespondido } = require('./lib/creditosSessao');
+        await marcarQuestionarioRespondido(pacoteId);
+        console.log(`[QUESTIONÁRIO] Pacote ${pacoteId} marcado como tendo respondido ao questionário`);
+      } catch (err) {
+        console.error('[QUESTIONÁRIO] Erro ao marcar questionário como respondido:', err.message);
+        // Não bloqueia a resposta — o questionário foi salvo, apenas o marcador falhou
+      }
     }
 
     return res.json({
@@ -2402,28 +2560,60 @@ app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
     // Busca as respostas do questionário para esta sessão
     const { data, error } = await supabaseClient
       .from('respostas_questionario')
-      .select('respostas')
+      .select('respostas_brutas, resposta_b_gerada, resposta_b_conteudo')
       .eq('sessao_id', sessionId)
       .maybeSingle();
 
     if (error || !data) {
+      console.error('[QUESTIONÁRIO] Erro ao buscar questionário:', error);
       return res.status(404).json({ error: 'Nenhum questionário encontrado para esta sessão.' });
+    }
+
+    // Idempotência: se Resposta B já foi gerada, retornar a versão salva
+    if (data.resposta_b_gerada) {
+      console.log(`[QUESTIONÁRIO] Resposta B já estava gerada para sessão ${sessionId} — retornando versão salva`);
+      return res.json({
+        success: true,
+        respostaB: data.resposta_b_conteudo,
+        message: 'Resumo técnico já havia sido gerado anteriormente.',
+        cached: true
+      });
     }
 
     // Gera a Resposta B (resumo técnico para a equipe)
     let respostaB = '';
     try {
-      respostaB = await gerarRespostaB(data.respostas);
+      respostaB = await gerarRespostaB(data.respostas_brutas);
       console.log(`[QUESTIONÁRIO] Resposta B gerada para sessão ${sessionId}:`, respostaB.substring(0, 100) + '...');
     } catch (err) {
       console.error('[QUESTIONÁRIO] Erro ao gerar Resposta B:', err.message);
       return res.status(500).json({ error: 'Erro ao gerar resumo técnico.' });
     }
 
+    // Persiste Resposta B na tabela
+    const { error: updateError } = await supabaseClient
+      .from('respostas_questionario')
+      .update({
+        resposta_b_gerada: true,
+        resposta_b_conteudo: respostaB
+      })
+      .eq('sessao_id', sessionId);
+
+    if (updateError) {
+      console.error('[QUESTIONÁRIO] Erro ao salvar Resposta B no Supabase:');
+      console.error('  Código:', updateError.code);
+      console.error('  Mensagem:', updateError.message);
+      console.error('  Detalhes:', updateError.details);
+      return res.status(500).json({ error: 'Erro ao salvar resumo técnico.' });
+    }
+
+    console.log(`[QUESTIONÁRIO] Resposta B persistida para sessão ${sessionId}`);
+
     return res.json({
       success: true,
       respostaB,
-      message: 'Resumo técnico gerado com sucesso (apenas para uso interno).'
+      message: 'Resumo técnico gerado e salvo com sucesso (apenas para uso interno).',
+      cached: false
     });
   } catch (error) {
     console.error('[QUESTIONÁRIO] Erro em /api/questionario/gerar-resposta-b:', error);
@@ -3113,7 +3303,8 @@ app.post('/api/experimente-chat', async (req, res) => {
     }
 
     // ── BUSCAR CONTEXTO DA BASE RAG (3 chunks para otimizar tokens) ──
-    const contextoBases = await searchKnowledge(message, 3);
+    // Chat de demo: sem tema, busca genérica
+    const contextoBases = await searchKnowledge(message, 3, null);
     const blocoContexto = contextoBases.length > 0
       ? `\n\nContexto da base ZUNI:\n${contextoBases.join('\n\n')}`
       : '';
