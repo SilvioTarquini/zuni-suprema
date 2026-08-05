@@ -248,6 +248,38 @@ module.exports = {
       ]
     },
     {
+      tema: 'namoro_conquista_romance',
+      categoria: 'relacionamentos',
+      titulo: 'Namoro, Conquista e Romance',
+      perguntas: [
+        {
+          id: 'q1',
+          texto: 'O que mais te incomoda hoje?',
+          opcoes: ['Não sei como me aproximar de quem me interessa', 'Dificuldade em manter o interesse depois do início', 'Insegurança sobre meu próprio valor no relacionamento', 'Medo de me abrir e sair machucado(a) de novo', 'Outro']
+        },
+        {
+          id: 'q2',
+          texto: 'Há quanto tempo isso te acompanha?',
+          opcoes: ['Sempre foi assim para mim', 'Começou depois de um término ou decepção', 'É algo recente (últimos meses)', 'Varia bastante, não é constante']
+        },
+        {
+          id: 'q3',
+          texto: 'O que você sente quando pensa nisso?',
+          opcoes: ['Ansiedade só de imaginar a situação', 'Frustração por já ter tentado e não ter dado certo', 'Dúvida se estou fazendo algo errado', 'Cansaço, como se já tivesse desistido um pouco']
+        },
+        {
+          id: 'q4',
+          texto: 'O que você já tentou para lidar com isso?',
+          opcoes: ['Nada ainda, só observo e evito', 'Já tentei mudar minha postura sozinho(a)', 'Já conversei sobre isso com alguém próximo', 'Já fiz terapia/acompanhamento sobre o tema']
+        },
+        {
+          id: 'q5',
+          texto: 'O que você espera encontrar aqui hoje?',
+          opcoes: ['Entender por que isso se repete comigo', 'Ferramentas práticas para agir diferente', 'Só desabafar e ser ouvido(a)', 'Ainda não sei, quero explorar']
+        }
+      ]
+    },
+    {
       tema: 'maternidade',
       categoria: 'familia',
       titulo: 'Maternidade',
