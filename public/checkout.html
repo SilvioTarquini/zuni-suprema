@@ -256,6 +256,34 @@
     let pixTentativas = 0;
     const MAX_TENTATIVAS_PIX = 36; // 36 x 5s = 180s (~3 minutos)
 
+    // Ler cupom da URL ao carregar a página
+    const urlParams = new URLSearchParams(window.location.search);
+    const cupomDaUrl = urlParams.get('cupom');
+    let cupomAplicado = null;
+
+    async function carregarCupomDaUrl() {
+      if (!cupomDaUrl) return;
+
+      try {
+        const res = await fetch(`/api/validar-cupom?codigo=${encodeURIComponent(cupomDaUrl)}`);
+        const data = await res.json();
+
+        if (data.valido) {
+          cupomAplicado = cupomDaUrl;
+          const desconto = 29.90 * (data.percentual / 100);
+          const precoFinal = 29.90 - desconto;
+
+          document.querySelector('.price').innerHTML =
+            `<span>R$</span> ${precoFinal.toFixed(2).replace('.', ',')}`;
+
+          document.querySelector('.price-desc').textContent =
+            `Desconto de ${data.percentual}% aplicado`;
+        }
+      } catch (e) {
+        console.error('Erro ao carregar cupom:', e);
+      }
+    }
+
     function formatarCPF(valor) {
       return valor
         .replace(/\D/g, '')
@@ -267,6 +295,9 @@
     document.getElementById('cpf').addEventListener('input', (e) => {
       e.target.value = formatarCPF(e.target.value);
     });
+
+    // Carregar cupom ao inicializar a página
+    document.addEventListener('DOMContentLoaded', carregarCupomDaUrl);
 
     async function selecionarMetodo(metodo) {
       metodoPagamento = metodo;
@@ -296,12 +327,19 @@
         const res = await fetch('/api/checkout/preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, cpf })
+          body: JSON.stringify({ name, email, cpf, cupom: cupomAplicado })
         });
         const data = await res.json();
 
-        if (!res.ok || !data.init_point) {
+        if (!res.ok || (!data.init_point && !data.cupom100)) {
           throw new Error(data.error || 'Erro ao gerar link de pagamento.');
+        }
+
+        // Se cupom 100%, pular direto para questionário
+        if (data.cupom100) {
+          fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+          window.location.href = `/questionario/timidez_comunicacao?sessionId=${data.sessionId}`;
+          return;
         }
 
         window.location.href = data.init_point;
@@ -341,7 +379,7 @@
           if (data.pago) {
             clearInterval(pollingInterval);
             fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
-            window.location.href = `/chat.html?sessionId=${sessionIdRetorno}`;
+            window.location.href = `/questionario/timidez_comunicacao?sessionId=${sessionIdRetorno}`;
             return;
           }
         } catch (e) {}
@@ -381,13 +419,21 @@
         const res = await fetch('/api/checkout', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, cpf, metodoPagamento })
+          body: JSON.stringify({ name, email, cpf, metodoPagamento, cupom: cupomAplicado })
         });
         const data = await res.json();
 
         if (data.qrCodeText) {
           pedidoId = data.pedidoId;
           sessionIdCheckout = data.sessionId;
+
+          // Se cupom 100%, pular direto para questionário sem polling
+          if (data.cupom100) {
+            fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
+            window.location.href = `/questionario/timidez_comunicacao?sessionId=${sessionIdCheckout}`;
+            return;
+          }
+
           if (data.qrCodeImage) {
             document.getElementById('qr-img').src = `data:image/png;base64,${data.qrCodeImage}`;
             document.getElementById('qr-img').style.display = 'block';
@@ -419,7 +465,7 @@
         if (data.pago) {
           clearInterval(pollingInterval);
           fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
-          window.location.href = `/chat.html?sessionId=${sessionIdCheckout}`;
+          window.location.href = `/questionario/timidez_comunicacao?sessionId=${sessionIdCheckout}`;
           return;
         }
       } catch (e) {}
