@@ -15,7 +15,7 @@ module.exports = {
     { cabecalho: 'Luto', apontaParaTema: 'luto', categoriaOrigem: 'saude_emocional' },
     { cabecalho: 'Estresse', apontaParaTema: 'estresse', categoriaOrigem: 'saude_emocional' },
     { cabecalho: 'Namoro', apontaParaTema: 'primeiro_amor', categoriaOrigem: 'juventude' },
-    { cabecalho: 'Educação de Filhos', apontaParaTema: 'adolescencia_dos_filhos', categoriaOrigem: 'familia' }
+    { cabecalho: 'Educação de Filhos', apontaParaTema: 'educar_filhos', categoriaOrigem: 'familia' }
   ],
 
   questionarios: [
@@ -114,6 +114,19 @@ module.exports = {
         { id: 'q3', texto: 'O que você sente fisicamente nesses dias?', opcoes: ['Cansaço constante, mesmo dormindo', 'Tensão no corpo, dores frequentes', 'Insônia ou sono ruim', 'Falta de energia para quase tudo'] },
         { id: 'q4', texto: 'O que você já tentou para lidar com isso?', opcoes: ['Nada ainda', 'Já tentei organizar melhor a rotina sozinho(a)', 'Já busquei ajuda profissional antes', 'Continuo empurrando, sem parar para lidar'] },
         { id: 'q5', texto: 'O que você espera encontrar aqui hoje?', opcoes: ['Entender por que cheguei nesse ponto', 'Ferramentas práticas para recuperar energia', 'Só desabafar e ser ouvido(a)', 'Ainda não sei, quero explorar'] }
+      ]
+    },
+    {
+      tema: 'administracao_empresarial_inteligente',
+      categoria: 'empresarios',
+      titulo: 'Administração Inteligente e Alta Performance',
+      ragIndexado: true,
+      perguntas: [
+        { id: 'q1', texto: 'O que mais pesa na sua rotina como líder/executivo hoje?', opcoes: ['Decisões sob pressão de tempo', 'Solidão nas grandes decisões', 'Sensação de estar sempre "ligado", sem desligar', 'Resultado bom mas com custo pessoal alto', 'Outro'] },
+        { id: 'q2', texto: 'Como você costuma reagir quando algo dá errado de repente no trabalho?', opcoes: ['Reajo na hora, depois me arrependo', 'Consigo pausar antes de responder', 'Fico paralisado(a)', 'Tento controlar tudo sozinho(a)'] },
+        { id: 'q3', texto: 'Há quanto tempo você sente esse tipo de pressão?', opcoes: ['É recente (últimos meses)', 'Já dura anos', 'Sempre foi assim na minha carreira', 'Piorou desde uma mudança específica (promoção, novo cargo, etc.)'] },
+        { id: 'q4', texto: 'O que mais te preocupa quando pensa no seu desempenho atual?', opcoes: ['Estou entregando resultado mas me sentindo esgotado(a)', 'Tenho medo de perder o controle numa decisão importante', 'Não sei se estou liderando bem ou só sobrevivendo ao cargo', 'Sinto que minha ambição não bate mais com meus valores'] },
+        { id: 'q5', texto: 'O que você mais gostaria de mudar na forma como lida com a pressão?', opcoes: ['Decidir com mais clareza, menos no impulso', 'Ter mais espaço para pensar antes de agir', 'Encontrar equilíbrio entre exigência e bem-estar', 'Reconectar com o propósito por trás do trabalho'] }
       ]
     },
     {
@@ -306,9 +319,10 @@ module.exports = {
       ]
     },
     {
-      tema: 'adolescencia_dos_filhos',
+      tema: 'educar_filhos',
       categoria: 'familia',
       titulo: 'Adolescência dos Filhos',
+      ragIndexado: true,
       perguntas: [
         { id: 'q1', texto: 'O que mais pesa agora?', opcoes: ['Não sei mais como me aproximar do meu filho(a)', 'Brigas frequentes em casa', 'Medo das escolhas que ele(a) está fazendo', 'Sinto que perdi a conexão que tínhamos', 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso acontece?', opcoes: ['É recente', 'Já dura meses', 'Já dura mais de um ano', 'Piorou depois de algo específico'] },
@@ -417,6 +431,7 @@ module.exports = {
       tema: 'depressao',
       categoria: 'saude_emocional',
       titulo: 'Depressão',
+      ragIndexado: true,
       perguntas: [
         { id: 'q1', texto: 'O que mais te incomoda hoje?', opcoes: ['Falta de energia para as coisas do dia a dia', 'Perda de interesse no que antes gostava', 'Tristeza que não parece ter motivo claro', 'Dificuldade em sair da cama ou começar o dia', 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso te acompanha?', opcoes: ['É recente (últimas semanas)', 'Já dura meses', 'Já dura mais de um ano', 'Vai e volta há tempos'] },
@@ -441,6 +456,7 @@ module.exports = {
       tema: 'obesidade',
       categoria: 'saude_fisica',
       titulo: 'Obesidade',
+      ragIndexado: true,
       perguntas: [
         { id: 'q1', texto: 'O que mais te incomoda hoje?', opcoes: ['Dificuldade em perder peso mesmo tentando', 'Compulsão alimentar', 'Impacto do peso na minha saúde e disposição', 'Julgamento ou vergonha relacionados ao meu corpo', 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso te acompanha?', opcoes: ['Sempre foi assim', 'Começou há alguns anos', 'É mais recente (últimos meses)', 'Piorou depois de algo específico'] },
@@ -498,9 +514,10 @@ module.exports = {
       ]
     },
     {
-      tema: 'sentimentos_confusos',
+      tema: 'sentimentos_adolescencia',
       categoria: 'mente_e_proposito',
       titulo: 'Sentimentos Confusos',
+      ragIndexado: true,
       perguntas: [
         { id: 'q1', texto: 'O que mais te incomoda hoje?', opcoes: ["Sinto várias coisas ao mesmo tempo e não sei nomear", 'Mudanças bruscas de humor', 'Reações que eu mesmo(a) não entendo', "Medo de estar 'exagerando' o que sinto", 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso te acompanha?', opcoes: ['É recente', 'Já dura meses', 'Já dura mais de um ano', 'Sempre foi assim comigo'] },
