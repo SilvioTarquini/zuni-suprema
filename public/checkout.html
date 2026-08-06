@@ -338,7 +338,7 @@
         // Se cupom 100%, pular direto para questionário
         if (data.cupom100) {
           fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
-          window.location.href = `/questionario/timidez_comunicacao?sessionId=${data.sessionId}`;
+          window.location.href = `/questionario-selecao.html?sessionId=${data.sessionId}`;
           return;
         }
 
@@ -379,7 +379,7 @@
           if (data.pago) {
             clearInterval(pollingInterval);
             fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
-            window.location.href = `/questionario/timidez_comunicacao?sessionId=${sessionIdRetorno}`;
+            window.location.href = `/questionario-selecao.html?sessionId=${sessionIdRetorno}`;
             return;
           }
         } catch (e) {}
@@ -430,7 +430,7 @@
           // Se cupom 100%, pular direto para questionário sem polling
           if (data.cupom100) {
             fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
-            window.location.href = `/questionario/timidez_comunicacao?sessionId=${sessionIdCheckout}`;
+            window.location.href = `/questionario-selecao.html?sessionId=${sessionIdCheckout}`;
             return;
           }
 
@@ -465,7 +465,7 @@
         if (data.pago) {
           clearInterval(pollingInterval);
           fbq('track', 'Purchase', { value: 29.90, currency: 'BRL' });
-          window.location.href = `/questionario/timidez_comunicacao?sessionId=${sessionIdCheckout}`;
+          window.location.href = `/questionario-selecao.html?sessionId=${sessionIdCheckout}`;
           return;
         }
       } catch (e) {}

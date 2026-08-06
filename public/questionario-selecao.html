@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Seleção de Tema — ZUNI Suprema</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0a0a0a;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 580px;
+      width: 100%;
+    }
+
+    .logo {
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 26px;
+      color: #ffffff;
+      margin-bottom: 12px;
+      font-weight: normal;
+      text-align: center;
+    }
+
+    .subtitle {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #ccc;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 40px 32px;
+    }
+
+    /* Botão de pular */
+    .skip-button-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .btn-skip {
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      border: 1px solid #c9a84c;
+      background: transparent;
+      color: #c9a84c;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Georgia', serif;
+      text-transform: uppercase;
+    }
+
+    .btn-skip:hover {
+      background: rgba(201, 168, 76, 0.1);
+    }
+
+    /* Acordeão */
+    .accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .accordion-item {
+      border: 1px solid #2a2a2a;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #0a0a0a;
+    }
+
+    .accordion-header {
+      padding: 16px 20px;
+      background: #141414;
+      border: none;
+      width: 100%;
+      text-align: left;
+      font-size: 15px;
+      font-weight: 600;
+      color: #ffffff;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: 'Georgia', serif;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .accordion-header:hover {
+      background: #1a1a1a;
+    }
+
+    .accordion-header.active {
+      background: #1a1a1a;
+      color: #c9a84c;
+    }
+
+    .accordion-toggle {
+      font-size: 12px;
+      color: #c9a84c;
+      transition: transform 0.3s ease;
+    }
+
+    .accordion-header.active .accordion-toggle {
+      transform: rotate(180deg);
+    }
+
+    .accordion-content {
+      display: none;
+      padding: 20px;
+      background: #0a0a0a;
+      border-top: 1px solid #2a2a2a;
+    }
+
+    .accordion-content.active {
+      display: block;
+    }
+
+    .accordion-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .accordion-item-link {
+      display: block;
+      padding: 12px 0;
+      color: #bbb;
+      text-decoration: none;
+      font-size: 14px;
+      border-bottom: 1px solid #1e1e1e;
+      transition: color 0.2s ease, padding-left 0.2s ease;
+    }
+
+    .accordion-item-link:last-of-type {
+      border-bottom: none;
+    }
+
+    .accordion-item-link:hover {
+      color: #c9a84c;
+      padding-left: 8px;
+    }
+
+    .accordion-item-other {
+      padding: 12px 0;
+      color: #888;
+      font-size: 13px;
+      font-style: italic;
+      border-bottom: 1px solid #1e1e1e;
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    .accordion-item-other:hover {
+      color: #c9a84c;
+    }
+
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      color: #c9a84c;
+      font-size: 14px;
+      padding: 40px 0;
+    }
+
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(201, 168, 76, 0.3);
+      border-top-color: #c9a84c;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .error-message {
+      background: #4a1a1a;
+      border: 1px solid #c41e1e;
+      color: #ff6b6b;
+      padding: 16px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+
+    .other-theme-message {
+      display: none;
+      text-align: center;
+    }
+
+    .other-theme-message.active {
+      display: block;
+    }
+
+    .other-theme-text {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #ccc;
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .btn-continue {
+      padding: 14px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      background: #c9a84c;
+      color: #0a0a0a;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      font-family: 'Georgia', serif;
+      text-transform: uppercase;
+    }
+
+    .btn-continue:hover {
+      background: #d9b85c;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">ZUNI SUPREMA</div>
+
+    <div class="card">
+      <h1>Sobre o que você gostaria de conversar hoje?</h1>
+      <p class="subtitle">Escolha o tema mais próximo da sua situação — isso ajuda o Mentor a começar já entendendo o que você precisa.</p>
+
+      <div class="skip-button-wrapper">
+        <button class="btn-skip" onclick="skipQuestionnaire()">Pular esta etapa</button>
+      </div>
+
+      <div id="errorMessage"></div>
+
+      <div id="accordionContainer" class="accordion">
+        <div class="loading">
+          <div class="spinner"></div>
+          <span>Carregando categorias...</span>
+        </div>
+      </div>
+
+      <div id="otherThemeMessage" class="other-theme-message">
+        <p class="other-theme-text">Sem problema. Você pode escrever livremente no chat, contando com o máximo de detalhes o que gostaria de entender ou resolver — quanto mais completo, mais completa será a resposta.</p>
+        <button class="btn-continue" onclick="continueToChat()">Continuar para o chat</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let catalogoData = null;
+
+    function getSessionId() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('sessionId') || '';
+    }
+
+    function skipQuestionnaire() {
+      const sessionId = getSessionId();
+      window.location.href = `/chat.html?sessionId=${sessionId}`;
+    }
+
+    async function carregarCatalogo() {
+      const container = document.getElementById('accordionContainer');
+
+      try {
+        const response = await fetch('/api/questionario/catalogo/rag-only');
+        if (!response.ok) {
+          throw new Error('Erro ao carregar catálogo');
+        }
+        catalogoData = await response.json();
+        renderizarAcordeon();
+      } catch (error) {
+        console.error('Erro ao carregar catálogo:', error);
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.className = 'error-message';
+        errorDiv.textContent = 'Erro ao carregar categorias. Você ainda pode pular esta etapa.';
+        container.innerHTML = '';
+      }
+    }
+
+    function renderizarAcordeon() {
+      const container = document.getElementById('accordionContainer');
+      container.innerHTML = '';
+
+      const sessionId = getSessionId();
+
+      catalogoData.categorias.forEach((categoria, index) => {
+        // Filtrar questionários dessa categoria
+        const questionariosDaCategoria = catalogoData.questionarios.filter(
+          q => q.categoria === categoria.slug
+        );
+
+        // Criar item do acordeão
+        const accordionItem = document.createElement('div');
+        accordionItem.className = 'accordion-item';
+
+        // Header do acordeão
+        const header = document.createElement('button');
+        header.className = 'accordion-header';
+        header.innerHTML = `
+          ${categoria.titulo}
+          <span class="accordion-toggle">▼</span>
+        `;
+        header.onclick = () => toggleAccordion(accordionItem, header);
+
+        // Conteúdo do acordeão
+        const content = document.createElement('div');
+        content.className = 'accordion-content';
+
+        const list = document.createElement('div');
+        list.className = 'accordion-list';
+
+        // Listar os questionários
+        questionariosDaCategoria.forEach(q => {
+          const link = document.createElement('a');
+          link.href = `/questionario/${q.tema}?sessionId=${sessionId}`;
+          link.className = 'accordion-item-link';
+          link.textContent = q.titulo;
+          list.appendChild(link);
+        });
+
+        // Adicionar item "Nenhum desses..."
+        const otherItem = document.createElement('div');
+        otherItem.className = 'accordion-item-other';
+        otherItem.textContent = 'Nenhum desses descreve bem minha situação';
+        otherItem.onclick = () => handleOtherClick(categoria.titulo);
+        list.appendChild(otherItem);
+
+        content.appendChild(list);
+
+        // Montar o item
+        accordionItem.appendChild(header);
+        accordionItem.appendChild(content);
+        container.appendChild(accordionItem);
+      });
+    }
+
+    function toggleAccordion(accordionItem, header) {
+      const content = accordionItem.querySelector('.accordion-content');
+      const isActive = content.classList.contains('active');
+
+      // Fechar todos os outros acordeões (ou deixar abrir todos, depende da UX)
+      // Por enquanto, deixarei abrir múltiplos
+      content.classList.toggle('active');
+      header.classList.toggle('active');
+    }
+
+    function handleOtherClick(categoriaTitulo) {
+      const accordionContainer = document.getElementById('accordionContainer');
+      const otherThemeMessage = document.getElementById('otherThemeMessage');
+
+      accordionContainer.style.display = 'none';
+      otherThemeMessage.classList.add('active');
+    }
+
+    function continueToChat() {
+      const sessionId = getSessionId();
+      window.location.href = `/chat.html?sessionId=${sessionId}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', carregarCatalogo);
+  </script>
+</body>
+</html>

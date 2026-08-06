@@ -598,6 +598,22 @@ app.get('/api/questionario/catalogo', (req, res) => {
   });
 });
 
+app.get('/api/questionario/catalogo/rag-only', (req, res) => {
+  const questionariosComRAG = catalogoQuestionarios.questionarios.filter(
+    q => q.ragIndexado === true
+  );
+
+  const categoriasComRAG = catalogoQuestionarios.categorias.filter(cat =>
+    questionariosComRAG.some(q => q.categoria === cat.slug)
+  );
+
+  res.json({
+    categorias: categoriasComRAG,
+    cabecalhosComSobreposicao: catalogoQuestionarios.cabecalhosComSobreposicao,
+    questionarios: questionariosComRAG
+  });
+});
+
 app.get('/api/questionario/catalogo/:tema', (req, res) => {
   const { tema } = req.params;
   const questionario = catalogoQuestionarios.questionarios.find(q => q.tema === tema);

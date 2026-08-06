@@ -23,6 +23,7 @@ module.exports = {
       tema: 'timidez_comunicacao',
       categoria: 'geral',
       titulo: 'Timidez e Comunicação',
+      ragIndexado: true,
       perguntas: [
         { id: 'q1', texto: 'O que mais te incomoda hoje?', opcoes: ['Falar em público/apresentações', 'Puxar conversa ou me aproximar de pessoas novas', 'Expressar minha opinião mesmo com quem já conheço', 'Situações sociais em grupo', 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso te acompanha?', opcoes: ['Sempre foi assim', 'Começou na adolescência', 'Começou na vida adulta', 'É recente (últimos meses)'] },
@@ -251,6 +252,7 @@ module.exports = {
       tema: 'namoro_conquista_romance',
       categoria: 'relacionamentos',
       titulo: 'Namoro, Conquista e Romance',
+      ragIndexado: true,
       perguntas: [
         {
           id: 'q1',
