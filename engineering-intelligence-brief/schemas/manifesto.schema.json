@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ZUNI Manifesto de Impacto",
+  "type": "object",
+  "required": ["data", "repositorio", "ref", "mudancas", "riscos", "recomendacoes"],
+  "properties": {
+    "data": {"type": "string", "format": "date"},
+    "repositorio": {"type": "string"},
+    "ref": {"type": "string"},
+    "mudancas": {"type": "array", "items": {"type": "string"}},
+    "riscos": {"type": "array", "items": {"type": "string"}},
+    "recomendacoes": {"type": "array", "items": {"type": "string"}},
+    "aprovacao_humana_necessaria": {"type": "boolean"}
+  }
+}
