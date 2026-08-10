@@ -296,7 +296,7 @@
       const container = document.getElementById('accordionContainer');
 
       try {
-        const response = await fetch('/api/questionario/catalogo/rag-only');
+        const response = await fetch('/api/questionario/catalogo');
         if (!response.ok) {
           throw new Error('Erro ao carregar catálogo');
         }
