@@ -91,8 +91,12 @@ limite de tokens do embedding (`text-embedding-3-small`, 8.191 tokens) — ver s
   que cada tema dispara `[RAG_HIBRIDO]` com tema correto e limite apropriado 
   (Limite tema: 3, Limite geral: 2).
 
-**Seletor de tema em produção** (GET /api/questionario/catalogo/rag-only) retorna 
-todos os 7 temas com `ragIndexado: true`. Integrado ao checkout de Mentor.
+**[10/08/2026] Fase 1 — Expandir seletor para 43 temas + skip visível (CONCLUÍDA):**
+- Seletor visual em questionario-selecao.html agora chama `/api/questionario/catalogo` (43 temas, não 7)
+- Botão "Pular formulário" adicionado em questionario-triagem.html (form-buttons, sempre visível)
+- Todos os 43 temas disponíveis para seleção (não apenas os com RAG indexado)
+- Resposta A será genérica para os 36 temas sem base RAG — validar qualidade em produção
+- Commit: `b7e4096` (feat: implementar Fase 1 do questionário — expandir seletor e skip visível)
 
 **[10/08/2026] Fase 2 — Gatilho Resposta B no chat (CONCLUÍDA):**
 - Modal de confirmação explícita implementado no chat.html ("📞 Falar com um profissional")
