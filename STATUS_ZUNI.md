@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 10/08/2026
+> Última atualização: 10/08/2026 (20:50) — Varredura completa de RAG concluída
 
 ---
 
@@ -29,8 +29,12 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 - **Funil de cupom** (Mentor→loja e loja→checkout), validado ponta a ponta.
 - **Sessões Extras** (pacote de 3 sessões, R$74,90), com memória de jornada isolada da
   sessão avulsa. Pendente apenas: 1 teste de pagamento real de terceiro.
-- **Leitura em voz alta gratuita** nos 6 volumes de "Os Bastidores da Mente" (Web
-  Speech API, substituindo ElevenLabs cancelado).
+- **4 volumes de "Os Bastidores da Mente"** — indexados em RAG (252 chunks), à venda na
+  loja, com chat/Mentor integrado. Leitura em voz alta gratuita (Web Speech API).
+  - Vol. I "A Origem de Todo Bem e de Todo Mal" — 20 chunks (3.8%)
+  - Vol. II "O Antídoto" — 80 chunks (15.1%)
+  - Vol. III "A Bússola Humana" — 86 chunks (16.2%)
+  - Vol. IV "A Travessia" — 66 chunks (12.5%)
 - **Vertical Astrológica** (35 blocos RAG, fonte Max Heindel/domínio público) —
   indexada, testada, 100% operacional. Registro simbólico, sem astrologia médica.
 - **Vertical Numerologia** (42 blocos RAG) — indexada, testada, 100% operacional.
@@ -41,6 +45,12 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   Ascendente corrigido, chave configurada em produção (Railway).
 - **Módulo "Experimente a ZUNI"** (numerologia, astrologia, chat demo) — funcionando
   após correção de RLS.
+- **Varredura RAG completa (10/08/2026 20:44-20:45)** — Teste end-to-end em todos os 7
+  temas com RAG indexado. Resultado: ✅ 100% operacional (7/7 temas responderam com
+  conteúdo específico e > 250 caracteres). Logs [RAG_HIBRIDO] acionados corretamente,
+  limite de busca híbrida: 3 chunks tema-específico + 2 chunks geral por consulta
+  (contagem real de chunks retornados/utilizados por resposta não foi verificada nesta
+  varredura). Total de 1.143 chunks em banco (613 temáticos + 530 genéricos/livros).
 
 ## 3. Pendências antigas, ainda em aberto
 
@@ -66,19 +76,21 @@ e validado contra o parser real. Sub-chunking automático para blocos que excede
 limite de tokens do embedding (`text-embedding-3-small`, 8.191 tokens) — ver skill
 `zuni-rag-tema` para o pipeline completo de curadoria.
 
-**7 temas em produção com RAG híbrido, todos validados via log [RAG_HIBRIDO]** (status em 06/08/2026):
+**7 temas em produção com RAG híbrido, validados via varredura completa** (10/08/2026 20:44-20:45):
 
-| Tema (slug) | Chunks | Questionário | ragIndexado | Validação [RAG_HIBRIDO] |
+| Tema (slug) | Chunks | Questionário | Validação (10/08/2026) | Resposta (chars) |
 |---|---|---|---|---|
-| `timidez_comunicacao` | 2 | ✅ 5 perguntas | true | ✅ Produção validado |
-| `namoro_conquista_romance` | 52 | ✅ 5 perguntas | true | ✅ Produção validado |
-| `administracao_empresarial_inteligente` | 40 | ✅ 5 perguntas | true | ✅ 06/08 via teste HTTP |
-| `obesidade` | 410 | ✅ 5 perguntas | true | ✅ 06/08 via teste HTTP |
-| `depressao` | 79 | ✅ 5 perguntas | true | ✅ 06/08 via teste HTTP |
-| `sentimentos_adolescencia` | 16 | ✅ 5 perguntas | true | ✅ 06/08 via teste HTTP |
-| `educar_filhos` | 14 | ✅ 5 perguntas | true | ✅ 06/08 via teste HTTP |
+| `timidez_comunicacao` | 2 | ✅ 5 perguntas | ✅ Teste real OK | 268 |
+| `namoro_conquista_romance` | 52 | ✅ 5 perguntas | ✅ Teste real OK | 1526 |
+| `administracao_empresarial_inteligente` | 40 | ✅ 5 perguntas | ✅ Teste real OK | 431 |
+| `obesidade` | 410 | ✅ 5 perguntas | ✅ Teste real OK | 1513 |
+| `depressao` | 79 | ✅ 5 perguntas | ✅ Teste real OK | 1251 |
+| `sentimentos_adolescencia` | 16 | ✅ 5 perguntas | ✅ Teste real OK | 399 |
+| `educar_filhos` | 14 | ✅ 5 perguntas | ✅ Teste real OK | 425 |
 
-**Nota**: os 827 chunks originalmente documentados para timidez_comunicacao nunca foram de fato indexados — apenas 2 chunks reais existem no banco, confirmado por auditoria em 04-05/08/2026. A origem dos 827 permanece desconhecida.
+**Evidência de logs RAG capturada**: Todos os 7 temas confirmados com log [RAG_HIBRIDO] do servidor (linha 785 de server.js), incluindo tema identificado e limites de busca. Logs brutos revisados em sessão 10/08/2026 20:44-20:45.
+
+**Nota sobre `timidez_comunicacao`**: Apenas 2 chunks reais indexados no banco (confirmado em 04-05/08 e revalidado em 10/08). A discrepância com os 827 chunks originalmente documentados permanece sem explicação. Base funcional mas minimal — reindexação recomendada se expandir cobertura do tema.
 
 **Mudanças realizadas em 06/08/2026:**
 - Renomeados slugs no catálogo: `sentimentos_confusos` → `sentimentos_adolescencia`, 
@@ -90,6 +102,15 @@ limite de tokens do embedding (`text-embedding-3-small`, 8.191 tokens) — ver s
 - Validação ponta a ponta: 5 sessões de teste via HTTP, confirmação em logs Railway 
   que cada tema dispara `[RAG_HIBRIDO]` com tema correto e limite apropriado 
   (Limite tema: 3, Limite geral: 2).
+
+**Mudanças em 10/08/2026 (20:50) — Varredura completa de RAG:**
+- Varredura completa executada: consultado Supabase, criadas 7 sessões de teste,
+  executado end-to-end no `/api/chat` com sessionId real e tema_questionario específico.
+- Todas as respostas analisadas para conteúdo temático (> 250 caracteres confirmados).
+- Composição dos 530 chunks "genéricos" (sem tema específico) confirmada:
+  - Vol. I (20 chunks), Vol. II (80), Vol. III (86), Vol. IV (66), Geral (278)
+  - Todos os 4 volumes estão **publicados e à venda** na loja.
+- Timestamp de execução: 10/08/2026 entre 20:44:30 e 20:45:31 (horário de Brasília).
 
 **[10/08/2026] Fase 1 — Expandir seletor para 43 temas + skip visível (CONCLUÍDA):**
 - Seletor visual em questionario-selecao.html agora chama `/api/questionario/catalogo` (43 temas, não 7)
