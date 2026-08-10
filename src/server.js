@@ -2635,6 +2635,18 @@ app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
 
     console.log(`[QUESTIONÁRIO] Resposta B persistida para sessão ${sessionId}`);
 
+    // Dispara webhook Make para enviar Resposta B ao WhatsApp (apenas na primeira geração)
+    try {
+      const session = await getSession(sessionId);
+      if (session?.email) {
+        await triggerMake(session.name, session.email, respostaB.slice(0, 1200));
+        console.log(`[QUESTIONÁRIO] Resposta B disparada ao WhatsApp para ${session.email}`);
+      }
+    } catch (err) {
+      console.error('[QUESTIONÁRIO] Erro ao disparar Make webhook:', err.message);
+      // Não bloqueia — Resposta B já foi salva em BD
+    }
+
     return res.json({
       success: true,
       respostaB,

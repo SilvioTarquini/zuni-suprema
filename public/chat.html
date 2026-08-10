@@ -447,13 +447,28 @@
 
   <audio id="audio"></audio>
 
-  <span id="btn-whatsapp-label">💬 Falar com a Equipe Clínica</span>
+  <span id="btn-whatsapp-label">📞 Falar com um profissional</span>
 
-  <a id="btn-whatsapp" onclick="abrirWhatsapp()" target="_blank" rel="noopener noreferrer" title="Falar no WhatsApp" style="cursor:pointer;">
+  <a id="btn-whatsapp" onclick="mostrarConfirmacaoEncaminhamento()" target="" rel="noopener noreferrer" title="Falar com um profissional" style="cursor:pointer;">
     <svg viewBox="0 0 32 32" fill="white" xmlns="http://www.w3.org/2000/svg">
       <path d="M16 0C7.163 0 0 7.163 0 16c0 2.837.738 5.5 2.03 7.81L0 32l8.4-2.205A15.93 15.93 0 0 0 16 32c8.837 0 16-7.163 16-16S24.837 0 16 0zm0 29.09c-2.553 0-4.95-.71-6.99-1.94l-.5-.297-4.99 1.31 1.33-4.86-.325-.5A13.07 13.07 0 0 1 2.91 16C2.91 8.78 8.78 2.91 16 2.91S29.09 8.78 29.09 16 23.22 29.09 16 29.09zm7.17-9.78c-.39-.196-2.31-1.14-2.67-1.27-.36-.13-.62-.196-.88.196-.26.39-1.01 1.27-1.24 1.53-.23.26-.46.29-.85.1-.39-.196-1.65-.608-3.14-1.94-1.16-1.035-1.95-2.31-2.18-2.7-.23-.39-.025-.6.17-.81.196-.196.46-.51.69-.77.23-.26.3-.45.46-.75.16-.3.05-.55-.1-.75-.15-.196-1.36-3.27-1.86-4.48-.49-1.21-1-1.04-1.37-1.06-.36-.02-.78-.024-1.2-.024-.42 0-1.1.157-1.62.747-.52.59-1.99 1.94-1.99 4.73 0 2.79 2.04 5.49 2.32 5.87.28.39 3.91 5.98 9.5 8.15 5.59 2.17 5.59 1.45 6.6 1.36 1.01-.1 3.27-1.34 3.73-2.63.46-1.29.46-2.4.32-2.63-.14-.23-.39-.36-.78-.55z"/>
     </svg>
   </a>
+
+  <!-- Modal de confirmação para encaminhamento -->
+  <div id="modal-encaminhamento" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:1000;align-items:center;justify-content:center;">
+    <div style="background:#f8f5f0;border-radius:12px;padding:32px;max-width:420px;width:90%;box-shadow:0 8px 32px rgba(0,0,0,0.2);">
+      <h2 style="font-family:'Georgia',serif;font-size:20px;color:#2c2c2c;margin-bottom:16px;font-weight:normal;">Encaminhamento à Equipe</h2>
+      <p style="font-family:'Inter',sans-serif;font-size:15px;line-height:1.6;color:#555;margin-bottom:24px;">
+        Você confirma que quer que um membro da nossa equipe entre em contato?<br><br>
+        Seus dados serão compartilhados com segurança via WhatsApp.
+      </p>
+      <div style="display:flex;gap:12px;">
+        <button id="btn-confirmar-encaminhamento" onclick="confirmarEncaminhamento()" style="flex:1;background:#D4AF37;color:#0a0a0a;border:none;border-radius:6px;padding:12px;font-weight:600;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.5px;">Sim, encaminhar</button>
+        <button onclick="fecharConfirmacao()" style="flex:1;background:transparent;color:#D4AF37;border:1px solid #D4AF37;border-radius:6px;padding:12px;font-weight:600;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.5px;">Cancelar</button>
+      </div>
+    </div>
+  </div>
 
   <script>
     const params = new URLSearchParams(window.location.search);
@@ -595,36 +610,53 @@ addMsg('user', msg);
       if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); enviar(); }
     });
 
-    function abrirWhatsapp() {
-      const numero = '5515996088895';
-      const texto = encodeURIComponent('Olá! Estou em uma sessão com o Mentor ZUNI e gostaria de falar com a equipe.');
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    function mostrarConfirmacaoEncaminhamento() {
+      const modal = document.getElementById('modal-encaminhamento');
+      modal.style.display = 'flex';
+    }
 
-      // Fire-and-forget: gerar Resposta B nos bastidores se veio do questionário
-      if (fromQuestionnaire) {
-        fetch(`/api/questionario/gerar-resposta-b/${sessionId}`, {
+    function fecharConfirmacao() {
+      const modal = document.getElementById('modal-encaminhamento');
+      modal.style.display = 'none';
+    }
+
+    async function confirmarEncaminhamento() {
+      const btnConfirmar = document.getElementById('btn-confirmar-encaminhamento');
+
+      // Desabilitar botão e mostrar spinner
+      btnConfirmar.disabled = true;
+      btnConfirmar.innerHTML = '<span aria-hidden="true">⏳</span> Enviando...';
+
+      try {
+        // Gerar Resposta B (só faz algo se não foi gerada antes)
+        const res = await fetch(`/api/questionario/gerar-resposta-b/${sessionId}`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' }
-        }).catch((err) => {
-          console.warn('[QUESTIONÁRIO] Falha silenciosa ao gerar Resposta B:', err.message);
         });
-      }
 
-      // Abre WhatsApp
-      if (isMobile) {
-        window.open(`https://wa.me/${numero}?text=${texto}`, '_blank', 'noopener,noreferrer');
-      } else {
-        alert('Aponte a câmera do seu celular para o código que vai aparecer agora, e sua solicitação chegará até nossa equipe clínica.');
-        window.open(`https://web.whatsapp.com/send?phone=${numero}&text=${texto}`, '_blank', 'noopener,noreferrer');
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Erro ao enviar solicitação.');
+        }
+
+        // Fechar modal
+        fecharConfirmacao();
+
+        // Exibir confirmação no chat
+        addMsg('assistant', `✓ Sua solicitação foi encaminhada com sucesso! Um membro da nossa equipe entrará em contato via WhatsApp em breve. 💬<br><br>Enquanto isso, continue conversando comigo — estou aqui para ajudar!`);
+      } catch (err) {
+        console.error('[ENCAMINHAMENTO] Erro:', err.message);
+        addMsg('assistant', `Desculpe, houve um problema ao processar sua solicitação: ${err.message}<br>Por favor, tente novamente ou entre em contato conosco via WhatsApp.`);
+      } finally {
+        // Restaurar botão
+        btnConfirmar.disabled = false;
+        btnConfirmar.innerHTML = 'Sim, encaminhar';
       }
     }
 
-    // Atualizar title e mostrar rótulo do botão WhatsApp conforme fromQuestionnaire
+    // Mostrar rótulo do botão de encaminhamento se veio do questionário
     if (fromQuestionnaire) {
-      document.getElementById('btn-whatsapp').setAttribute(
-        'title',
-        'Fale com nossa equipe — responda como profissional'
-      );
       document.getElementById('btn-whatsapp-label').style.display = 'block';
     }
 
