@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 06/08/2026
+> Última atualização: 10/08/2026
 
 ---
 
@@ -94,6 +94,16 @@ limite de tokens do embedding (`text-embedding-3-small`, 8.191 tokens) — ver s
 **Seletor de tema em produção** (GET /api/questionario/catalogo/rag-only) retorna 
 todos os 7 temas com `ragIndexado: true`. Integrado ao checkout de Mentor.
 
+**[10/08/2026] Fase 2 — Gatilho Resposta B no chat (CONCLUÍDA):**
+- Modal de confirmação explícita implementado no chat.html ("📞 Falar com um profissional")
+- Backend: `triggerMake()` disparado ao gerar Resposta B pela primeira vez (apenas)
+- Idempotência garantida: 2ª chamada retorna cache sem re-disparar webhook
+- Validação via teste de ponta a ponta: sessionId `16606ea1-cf1a-4c33-92d7-fc63c80255d8`
+  - 1ª chamada: `cached: false`, triggerMake disparado (log: "Resposta B disparada ao WhatsApp")
+  - 2ª chamada: `cached: true`, triggerMake não re-disparado
+  - Supabase: 1 registro, sem duplicata
+- Commit: `937cf32` (feat: implementar Fase 2 do questionário — gatilho Resposta B no chat)
+
 **Próximos passos (se necessário):**
 1. Monitorar uso em produção: quais temas os clientes escolhem, taxa de abandono.
 2. A/B testing: avaliar se os 5 novos temas mantêm engajamento equivalente aos 2 pilotos.
@@ -109,8 +119,6 @@ Em ordem aproximada de intenção manifestada, sem data definida:
 3. Portal Editorial (artigos SEO, 2-3/semana via Railway Cron, aprovação humana
    obrigatória nas primeiras fases).
 4. Gatilho de reajuste de preço quando o volume de consultas/mês atingir ~150.
-5. Entrega da Resposta B (resumo técnico) via WhatsApp da equipe — função já criada,
-   falta conectar ao gatilho no chat.
 
 ## 6. Decisões editoriais fixas (nunca revisitar sem motivo forte)
 
