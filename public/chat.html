@@ -227,10 +227,12 @@
     .input-aviso {
       text-align: center;
       font-family: 'Inter', sans-serif;
-      font-size: 11px;
+      font-size: 13px;
+      font-weight: 500;
       color: #f5d787;
       font-style: italic;
       letter-spacing: 0.2px;
+      text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
 
     #input-mensagem {
@@ -443,7 +445,7 @@
       <h1>Mentor ZUNI Suprema</h1>
       <div style="display:flex;align-items:center;gap:12px;">
         <div class="counter">Mensagens: <span id="cnt">0</span>/15</div>
-        <span style="font-family:'Inter',sans-serif;font-size:11px;color:#9a9a9a;">Você pode baixar seu relatório aqui</span>
+        <span style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#e8e8e8;text-shadow:0 1px 3px rgba(0,0,0,0.5);">Você pode baixar seu relatório aqui</span>
         <button id="btn-pdf" onclick="window.open('/api/relatorio/download/' + sessionId, '_blank')" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:8px 16px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;box-shadow:0 2px 8px rgba(212,175,55,0.35);">📄 Baixar relatório</button>
         <a class="link-loja" href="/loja">Loja de Livros</a>
       </div>
