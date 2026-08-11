@@ -49,8 +49,8 @@
       width: 100vw;
       height: 100vh;
       z-index: -1;
-      background: url('./Desktop%202.png?v=4') no-repeat center center;
-      background-size: contain;
+      background: url('./Fundo_do_Chat.png?v=1') no-repeat center center;
+      background-size: cover;
       background-color: #F8F5F0;
     }
 
@@ -89,6 +89,18 @@
       align-items: center;
     }
 
+    header::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0,0,0,0.42), rgba(0,0,0,0.35), rgba(0,0,0,0.42));
+      z-index: -1;
+      pointer-events: none;
+    }
+
     .link-loja {
       font-family: 'Inter', sans-serif;
       font-size: 14px;
@@ -123,9 +135,9 @@
       font-family: 'Inter', sans-serif;
       font-size: 11px;
       font-weight: 400;
-      color: #9a9a9a;
+      color: #e8e8e8;
     }
-    .counter span { color: var(--dourado); font-weight: 500; }
+    .counter span { color: #f5d787; font-weight: 500; }
 
     /* ÁREA DE MENSAGENS */
     #messages {
@@ -195,6 +207,18 @@
       box-shadow: 0 -2px 16px rgba(0,0,0,0.06);
       z-index: 10;
     }
+
+    .input-area::before {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100%;
+      background: linear-gradient(to right, rgba(0,0,0,0.42), rgba(0,0,0,0.35), rgba(0,0,0,0.42));
+      z-index: -1;
+      pointer-events: none;
+    }
     .input-row {
       display: flex;
       gap: 10px;
@@ -204,7 +228,7 @@
       text-align: center;
       font-family: 'Inter', sans-serif;
       font-size: 11px;
-      color: rgba(212,175,55,0.75);
+      color: #f5d787;
       font-style: italic;
       letter-spacing: 0.2px;
     }
@@ -411,7 +435,7 @@
   </style>
 </head>
 <body>
-  <img id="bg-img" src="/Desktop 2.png" alt="" style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:contain;background-color:#fdf8f0;z-index:-1;pointer-events:none;"><style>@media(max-width:768px){#bg-img{content:url('/Smartphone 2.png');}}</style>
+  <img id="bg-img" src="/Fundo_do_Chat.png" alt="" style="position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;background-color:#fdf8f0;z-index:-1;pointer-events:none;"><style>@media(max-width:768px){#bg-img{content:url('/Smartphone 2.png');}}</style>
 
 
   <div class="chat-container">
