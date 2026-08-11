@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 10/08/2026 (20:50) — Varredura completa de RAG concluída
+> Última atualização: 11/08/2026 (00:20) — Validação de chave AstroWay + teste de mapa astral
 
 ---
 
@@ -42,7 +42,10 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 - **RLS habilitado** em todas as tabelas do Supabase (checklist permanente desde
   28/07/2026 — sempre verificar em tabela nova).
 - **lib/astro.js** (integração AstroWay) — validado com dados reais, bug do
-  Ascendente corrigido, chave configurada em produção (Railway).
+  Ascendente corrigido, chave configurada em produção (Railway). Revalidado em
+  11/08/2026: chave ASTROWAY_API_KEY restaurada (876f), teste de geração de mapa
+  natal completo executado e confirmado (10 planetas, 12 casas, 25 aspectos). Status:
+  ✅ 100% operacional, 9975 créditos disponíveis.
 - **Módulo "Experimente a ZUNI"** (numerologia, astrologia, chat demo) — funcionando
   após correção de RLS.
 - **Varredura RAG completa (10/08/2026 20:44-20:45)** — Teste end-to-end em todos os 7
