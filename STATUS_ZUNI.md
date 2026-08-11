@@ -46,6 +46,21 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   11/08/2026: chave ASTROWAY_API_KEY restaurada (876f), teste de geração de mapa
   natal completo executado e confirmado (10 planetas, 12 casas, 25 aspectos). Status:
   ✅ 100% operacional, 9975 créditos disponíveis.
+
+**[11/08/2026] Ajuste de contraste em chat.html — PENDENTE VALIDAÇÃO EM PRODUÇÃO:**
+- Investigação de contraste WCAG iniciada em chat.html (elementos pálidos).
+- Mudanças de cor aprovadas e especificadas: #9a9a9a → #6c5c3c (contador/aviso header),
+  rgba(212,175,55,0.75) → #8B6914 (aviso rodapé), background-size: contain → cover (fundo).
+- **Status**: Mudanças foram aprovadas e especificadas, mas NÃO foram aplicadas no arquivo.
+  Arquivo local ainda contém cores antigas (#9a9a9a, rgba(212,175,55,0.75)).
+- Usuário reportou que após hard refresh em zunisuprema.com.br/chat.html, cores continuam
+  iguais (como esperado — nunca foram commitadas).
+- **Git state**: branch ahead of origin/main by 2 commits (do AstroWay, não do chat.html).
+- **PRÓXIMA SESSÃO**: (1) Aplicar mudanças CSS no arquivo local, (2) verificar commit/push
+  a origin/main, (3) confirmar deploy no Railway, (4) verificar via curl se HTML em
+  produção tem cores novas, (5) investigar possível CSS conflitante sobrescrevendo estilos.
+  **NÃO ASSUMIR que correção está ativa até essa investigação.**
+
 - **Módulo "Experimente a ZUNI"** (numerologia, astrologia, chat demo) — funcionando
   após correção de RLS.
 - **Varredura RAG completa (10/08/2026 20:44-20:45)** — Teste end-to-end em todos os 7
