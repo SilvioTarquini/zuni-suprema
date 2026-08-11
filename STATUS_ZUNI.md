@@ -61,6 +61,41 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   produção tem cores novas, (5) investigar possível CSS conflitante sobrescrevendo estilos.
   **NÃO ASSUMIR que correção está ativa até essa investigação.**
 
+**[11/08/2026] Redesign visual do chat.html — nova imagem de fundo + reorganização completa:**
+- Nova imagem de fundo desktop (`Fundo_do_Chat.png`, tons dourado/azul-marinho/roxo, 
+  substituindo a antiga pastel). Imagem mobile mantida como estava (`Smartphone 2.png`).
+- Header reestruturado em 3 colunas: logo (esquerda) | botão "Explorar Loja" com 
+  destaque dourado central | contador de mensagens + botão "Baixar relatório" (direita). 
+  Renomeado de "Loja de Livros" para "Explorar Loja" por decisão do usuário.
+- Overlay escuro semi-transparente adicionado atrás do header e rodapé para garantir 
+  contraste de texto sobre a imagem de fundo variável (rgba(0,0,0,0.42)).
+- Cores de texto corrigidas para contraste WCAG AA (4.5:1+) em múltiplos elementos: 
+  contador (#e8e8e8→#5a4a30), aviso de rodapé (#f5d787→#5a4a30), nota de instrução 
+  (#aaa→#6c6c6c→#7a7a7a com classe .painel-hint).
+- Font-size aumentado: rodapé (11px→14px), texto instrução (12px→13px).
+- Caixa "Como usar esta sessão" redesenhada: layout horizontal em 3 colunas (era 
+  vertical/estreito com max-width 520px), tipografia Playfair Display para título + 
+  Georgia para corpo, reposicionada com margin-top: 290px para não sobrepor o nome 
+  "Zuni Suprema" da imagem de fundo, espaçamento interno compactado (padding 28px→20px, 
+  títulos e gaps reduzidos).
+- **Commits desta sessão** (git log -10):
+  ef93629 fix: aumentar margin-top de #painel-instrucoes de 260px para 290px
+  161f504 fix: aumentar margin-top de #painel-instrucoes de 190px para 260px para liberar nome ZUNI SUPREMA
+  b85a83a fix: ajuste fino na caixa 'Como usar' — margin-top 190px, padding compacto, espaçamentos reduzidos
+  a5134ce feat: caixa 'Como usar' — layout horizontal 3 colunas + reposicionada (margin-top 120px, width 90%)
+  69ac405 fix: adicionar classe .painel-hint para garantir aplicação de estilos ao texto 'Esta mensagem desaparecerá'
+  9837acd fix: aumentar font-size rodapé (14px), corrigir cor/tamanho texto instrução, redesenhar caixa 'Como usar' com tipografia elegante e blur
+  2f72703 feat: reorganizar header em 3 colunas + botão Loja centralizado + corrigir contraste de cores
+  9ee7575 fix: aumentar font-size e melhorar contraste dos textos de header e rodapé no chat
+  af2bea9 feat: nova imagem de fundo do chat + overlay de contraste
+  b52d86c docs: registra estado do ajuste de contraste chat.html — pendente validação em produção (11/08/2026)
+- **PENDENTE PARA PRÓXIMA SESSÃO**: (1) Testar o posicionamento (margin-top: 290px) em 
+  diferentes alturas de tela/janela do navegador — é um valor fixo em px e a imagem 
+  escala proporcionalmente (background-size: cover), pode precisar ajuste em resoluções 
+  muito diferentes. (2) Gerar versão mobile (9:16) da nova imagem, se decidido 
+  futuramente — por ora mobile mantém imagem antiga por escolha do usuário. (3) Confirmar 
+  funcionamento em produção via teste manual em pelo menos 2 resoluções (desktop + tablet).
+
 - **Módulo "Experimente a ZUNI"** (numerologia, astrologia, chat demo) — funcionando
   após correção de RLS.
 - **Varredura RAG completa (10/08/2026 20:44-20:45)** — Teste end-to-end em todos os 7
