@@ -280,13 +280,14 @@
 </header>
 
 <main>
-  <div class="grade" id="grade-servicos">
-    <!-- Cards de serviços (Mapa Astral) serão renderizados aqui -->
-  </div>
-
   <h2 style="margin-top: 56px; margin-bottom: 28px; font-size: 1.4rem; font-weight: normal; letter-spacing: 0.5px; color: var(--dourado-suave);">Livros</h2>
   <div class="grade" id="grade-livros">
     <!-- Cards dos livros serão renderizados aqui dinamicamente -->
+  </div>
+
+  <h2 style="margin-top: 56px; margin-bottom: 28px; font-size: 1.4rem; font-weight: normal; letter-spacing: 0.5px; color: var(--dourado-suave);">Serviços Complementares</h2>
+  <div class="grade" id="grade-servicos">
+    <!-- Cards de serviços (Mapa Integrado) serão renderizados aqui -->
   </div>
 </main>
 
@@ -435,8 +436,8 @@
 
   // Renderizar ao carregar
   document.addEventListener('DOMContentLoaded', () => {
-    renderizarServicos();
     renderizarLivros();
+    renderizarServicos();
   });
 </script>
 
