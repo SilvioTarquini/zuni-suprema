@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 11/08/2026 (00:20) — Validação de chave AstroWay + teste de mapa astral
+> Última atualização: 14/08/2026 (14:45) — Indexação de 2 novos temas RAG (elegancia_charme_feminino + elegancia_presenca_masculina)
 
 ---
 
@@ -105,6 +105,18 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   (contagem real de chunks retornados/utilizados por resposta não foi verificada nesta
   varredura). Total de 1.143 chunks em banco (613 temáticos + 530 genéricos/livros).
 
+**[14/08/2026] Indexação de 2 novos temas RAG — Elegância & Presença:**
+- **elegancia_charme_feminino**: 174 chunks (consolidação de charme feminino + elegância + inteligência emocional + relacionamentos)
+  - Etapa 4 (validação): ✅ Maior chunk 853 palavras (~1.152 tokens), 100% dentro do limite
+  - Etapa 5 (indexação): ✅ 174 chunks com embeddings OpenAI, 100% inseridos no Supabase
+  - Verificação: ✅ SELECT confirmou 174 registros em produção (14/08/2026 14:45)
+- **elegancia_presenca_masculina**: 58 chunks (consolidação de presença + elegância + refinamento + comunicação masculina)
+  - Etapa 4 (validação): ✅ Maior chunk 1.441 palavras (~1.946 tokens), 100% dentro do limite
+  - Etapa 5 (indexação): ✅ 58 chunks com embeddings OpenAI, 100% inseridos no Supabase
+  - Verificação: ✅ SELECT confirmou 58 registros em produção (14/08/2026 14:45)
+- **Total novo RAG**: 232 chunks adicionados (elegância + presença como temas separados)
+- **Observação**: Ambos temas prontos para funcionamento na busca híbrida do Mentor. Pendente validação em logs [RAG_HIBRIDO] do Railway e teste na interface de chat.
+
 ## 3. Pendências antigas, ainda em aberto
 
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
@@ -140,6 +152,13 @@ limite de tokens do embedding (`text-embedding-3-small`, 8.191 tokens) — ver s
 | `depressao` | 79 | ✅ 5 perguntas | ✅ Teste real OK | 1251 |
 | `sentimentos_adolescencia` | 16 | ✅ 5 perguntas | ✅ Teste real OK | 399 |
 | `educar_filhos` | 14 | ✅ 5 perguntas | ✅ Teste real OK | 425 |
+
+**2 novos temas em produção — indexados em 14/08/2026** (ambos com RAG, sem questionário associado por enquanto):
+
+| Tema (slug) | Chunks | Indexação | Validação (14/08/2026) | Status |
+|---|---|---|---|---|
+| `elegancia_charme_feminino` | 174 | ✅ Embeddings + Supabase | ✅ SELECT confirmado | 🟢 Ativo |
+| `elegancia_presenca_masculina` | 58 | ✅ Embeddings + Supabase | ✅ SELECT confirmado | 🟢 Ativo |
 
 **Evidência de logs RAG capturada**: Todos os 7 temas confirmados com log [RAG_HIBRIDO] do servidor (linha 785 de server.js), incluindo tema identificado e limites de busca. Logs brutos revisados em sessão 10/08/2026 20:44-20:45.
 
