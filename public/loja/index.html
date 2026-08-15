@@ -452,7 +452,11 @@
 
     Object.entries(CATALOGO).forEach(([livroId, livro]) => {
       const urlCompra = `/checkout-livro.html?livro=${encodeURIComponent(livroId)}${cupom ? `&cupom=${encodeURIComponent(cupom)}` : ''}`;
-      const urlCapa = `/loja/capas/${livroId}.png`;
+      // Usar .jpg para Universo Feminino + Masculino (comprimidos), .png para o resto
+      const universosFeminino = ['codigo-feminino', 'ela-tem-classe', 'inesquecivel-charme-feminino', 'a-inteligencia-do-corpo-feminino', 'a-mulher-que-permanece-inteira'];
+      const universoMasculino = ['a-arte-da-presenca-masculina', 'a-presenca-em-acao-apendice', 'a-arte-invisivel-elegancia-masculina', 'guia-integral-saude-beleza-masculina'];
+      const ext = universosFeminino.includes(livroId) || universoMasculino.includes(livroId) ? 'jpg' : 'png';
+      const urlCapa = `/loja/capas/${livroId}.${ext}`;
 
       let precoHTML = '';
       if (livro.precoOriginal && livro.precoPromocional) {
