@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 14/08/2026 (21:00) — Lançamento de 5 novas obras "Universo Feminino" + campo "departamento" retrocompatível + validação de API em produção ✅
+> Última atualização: 14/08/2026 (22:30) — Lançamento de 4 novas obras "Universo Masculino" + suporte a preços promocionais de/por + débito técnico registrado
 
 ---
 
@@ -21,6 +21,36 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (14/08/2026 22:30)
+
+**[14/08/2026 22:30] Universo Masculino — 4 novas obras publicadas com suporte a preços promocionais:**
+- **Estrutura**: Novo padrão `precoOriginal` + `precoPromocional` em catalogoLivros.js (com fallback `preco` para retrocompatibilidade)
+- **4 Obras publicadas na loja** (preço original → preço promo, slug, desconto, status):
+  1. A Arte da Presença Masculina — R$97,00 → R$67,00 | `a-arte-da-presenca-masculina` | -31% | ✅ Ativa
+  2. A Presença em Ação — Apêndice Prático — R$57,00 → R$37,90 | `a-presenca-em-acao-apendice` | -33% | ✅ Ativa
+  3. A Arte Invisível da Elegância Masculina — R$87,00 → R$57,00 | `a-arte-invisivel-elegancia-masculina` | -34% | ✅ Ativa
+  4. Guia Integral de Saúde e Beleza Masculina — R$147,00 → R$97,00 | `guia-integral-saude-beleza-masculina` | -34% | ✅ Ativa
+
+- **Implementação técnica**:
+  - Campos `preco`, `precoOriginal`, `precoPromocional` adicionados a catalogoLivros.js (preco = fallback de segurança)
+  - Renderização na loja: "de/por" (original riscado em cinza + promocional em dourado destaque) — CSS + JS
+  - Checkout: `precoFinal = livro.precoPromocional || livro.preco` em 3 pontos (linha 1521, 1588, 1650 de server.js)
+  - Arquivos HTML copiados para `private/livros/{slug}/index.html` (protegido por token pós-pagamento)
+  - Capas placeholder criadas em `public/loja/capas/` (fundo degradado + texto dourado, funcional, ~3-4KB PNG)
+  - Commits: `8601d79` (catálogo + loja + arquivos HTML + capas), `3c63796` (checkout com precoPromocional)
+
+- **Status**: ✅ Completamente operacional na loja, checkout testado
+
+- **⚠️ DÉBITO TÉCNICO REGISTRADO**:
+  - **Problema identificado**: `public/loja/index.html` mantém um CATALOGO hardcoded que é cópia manual de `src/lib/catalogoLivros.js`
+  - **Impacto**: Novas obras adicionadas só a `catalogoLivros.js` não aparecem na loja até serem duplicadas manualmente no HTML
+  - **O que aconteceu agora**: As 4 obras foram adicionadas a ambos os arquivos manualmente — processo propenso a erro e sincronização perdida
+  - **Solução sugerida**: Unificar fonte de dados (considerar servidor injetar CATALOGO dinamicamente ou gerar HTML estático via build)
+  - **Prioridade**: Baixa (manual funciona, mas insustentável com crescimento de acervo)
+  - **Próxima sessão**: Considerar refatoração para renderizar catálogo dinamicamente ou via build-time injection
 
 ---
 
