@@ -1518,7 +1518,7 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
   if (!livro) {
     return res.status(404).json({ error: 'Livro não encontrado.' });
   }
-  return res.json({ livroId: req.params.livroId, titulo: livro.titulo, preco: livro.preco, categoria: livro.categoria });
+  return res.json({ livroId: req.params.livroId, titulo: livro.titulo, preco: livro.precoPromocional || livro.preco, categoria: livro.categoria });
 });
 
 app.get('/api/validar-cupom', async (req, res) => {
@@ -1585,7 +1585,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
       return res.status(500).json({ error: 'Mercado Pago não configurado.' });
     }
 
-    let precoFinal = livro.preco;
+    let precoFinal = livro.precoPromocional || livro.preco;
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);
       if (cupomValidado) {
@@ -1647,7 +1647,7 @@ app.post('/api/checkout/livro', async (req, res) => {
       return res.status(404).json({ error: 'Livro não encontrado.' });
     }
 
-    let precoFinal = livro.preco;
+    let precoFinal = livro.precoPromocional || livro.preco;
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);
       if (cupomValidado) {
