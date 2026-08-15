@@ -250,18 +250,43 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   - **Status**: ✅ Implementado e testado — capas JPG servidas corretamente em ~77 KB vs 2+ MB antes
   - **PNG originais mantidos** em `public/loja/capas/` para flipbooks/páginas de detalhe (se necessário futuro)
 
-- **[15/08/2026] Teste de checkout das 15 novas obras — ✅ CONCLUÍDO**:
-  - **Obra testada**: "O Elo Invisível" (Saúde Integrativa, R$77,90 → R$47,90)
-  - **Fluxo validado** (15/08/2026 15:15):
-    - ✅ Obra encontrada no catálogo (catalogoLivros.js)
-    - ✅ Preço promocional aplicado corretamente (R$47,90)
-    - ✅ HTML flipbook presente e acessível (4.20 MB)
-    - ✅ Capa JPEG comprimida presente (332 KB)
-    - ✅ Requisição POST a `/api/checkout/livro` processada com sucesso
-    - ✅ Cupom 100% pode ser aplicado (preço final: R$0,00)
-    - ✅ Sistema pronto para integração com MercadoPago (erro local é do token de teste, não do código)
-  - **Nota**: Erro do MercadoPago é esperado em ambiente local (permissões de token de teste). Em produção (Railway), fluxo completo checkout → pagamento → liberação de acesso funciona normalmente (validado em lançamentos anteriores).
-  - **Status**: ✅ Pronto para produção — todas as 15 obras operacionais
+- **[15/08/2026] Testes de checkout das 15 novas obras — ⏳ PARCIALMENTE VALIDADO**:
+  
+  **Teste 1 — Local com simulação (15/08/2026 15:15):**
+  - ✅ Obra encontrada no catálogo (catalogoLivros.js)
+  - ✅ Preço promocional aplicado corretamente (R$47,90)
+  - ✅ HTML flipbook presente e acessível (4.20 MB)
+  - ✅ Capa JPEG comprimida presente (332 KB)
+  - ✅ Requisição POST a `/api/checkout/livro` processada
+  - ✅ Preços validados (de/por funcionando)
+  
+  **Teste 2 — Em produção com cupom TEST100 (15/08/2026 15:20):**
+  - Obra testada: "O Elo Invisível" (R$47,90)
+  - Cupom utilizado: TEST100 (100% desconto, existente no banco)
+  - ✅ Cupom validado e aplicado (desconto 100% = R$0,00)
+  - ❌ MercadoPago rejeita pedidos de R$0,00 (limitação esperada)
+  - **Limitação identificada**: Cupom 100% não pode ser processado via MercadoPago (valor zero não é aceito)
+  - **Solução**: Teste real de pagamento requer cupom com desconto parcial OU pagamento com valor > R$0,00
+  
+  **Status final:**
+  - ✅ Fluxo de checkout funciona (até o ponto do MercadoPago)
+  - ✅ Cálculo de preço com cupom funciona
+  - ❌ **PENDENTE: Validação real de pagamento com valor > R$0,00** (com cartão/Pix real ou cupom parcial)
+  - ❌ **PENDENTE: Validação de liberação de acesso ao flipbook pós-pagamento**
+  - ❌ **PENDENTE: Validação de e-mail/WhatsApp de entrega**
+  
+  **Nota importante**: Este teste valida a lógica de checkout e cálculo de preço, mas **NÃO valida a integração real com gateway de pagamento** (processamento de pagamento, webhook de confirmação, liberação de acesso), pois cupom 100% pula a etapa de pagamento no MercadoPago.
+
+- **[15/08/2026] Validação real de pagamento das 15 novas obras — ⏳ BLOQUEADOR**:
+  - **Necessário**: Fazer 1 compra real (com cartão/Pix) de uma das 15 obras com valor > R$0,00 em produção
+  - **Obra sugerida**: "O Elo Invisível" (R$47,90) ou "Executive Black Standalone" (R$47,90)
+  - **O que validar**:
+    1. Pagamento processado com sucesso no MercadoPago
+    2. Webhook de confirmação dispara corretamente
+    3. Acesso ao HTML do flipbook liberado após confirmação
+    4. E-mail com link de acesso chega corretamente
+    5. WhatsApp de entrega é disparado (se configurado)
+  - **Status**: Bloqueador para anúncio público das 15 obras — sem validação real de pagamento, não é possível confirmar que o fluxo end-to-end funciona
 
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
   celular real.
