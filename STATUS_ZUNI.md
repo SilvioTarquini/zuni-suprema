@@ -184,6 +184,14 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 
 ## 3. Pendências antigas, ainda em aberto
 
+- **[14/08/2026] Otimização de capas da loja — NOVO**:
+  - Capas do Universo Masculino (e futuramente Feminino) estão em alta resolução: 1.8-2.4 MB PNG cada
+  - Tamanho apropriado para flipbooks, mas não otimizado para thumbnails de cards de loja
+  - **Impacto**: Carregamento lento de `/loja` em conexões lentas/mobile (9 obras × 2+ MB = 18+ MB na página)
+  - **Solução sugerida**: Gerar versão comprimida para os cards (~300-400px, WebP/JPEG, <150KB), manter original apenas em páginas de detalhe
+  - **Prioridade**: Média (afeta responsividade/performance mobile)
+  - **Vinculado a**: Teste de responsividade mobile (item abaixo) — considerar incluir benchmarks de carregamento de /loja
+
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
   celular real.
 - Domínio raiz `zunisuprema.com.br` (sem www) ainda não resolve — solução definitiva
