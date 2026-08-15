@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 15/08/2026 (14:45) — Integração de 15 novas obras (Executive + Desenvolvimento & Comportamento + Saúde Integrativa)
+> Última atualização: 15/08/2026 (15:10) — Integração + validação completa de 15 novas obras + testes de checkout
 
 ---
 
@@ -62,10 +62,21 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   - Catálogo renderizado dinamicamente em loja + atualizado em HTML hardcoded (ambos sincronizados)
   - Commit: `221f673` (feat: integrar 15 novas obras)
 
-- **Status**: ✅ Completamente operacional na loja, checkout testado (todos com preço promo "de/por")
+- **Status**: ✅ 100% Operacional — todas as validações concluídas (15/08/2026 15:10)
+  - ✅ Servidor local respondendo (porta 3000)
+  - ✅ 15 HTMLs flipbooks presentes e acessíveis (4.8 MB cada, sem compressão)
+  - ✅ 15 capas JPEG comprimidas presentes (273 KB cada)
+  - ✅ Catálogo Node.js indexando corretamente todas as 15 obras
+  - ✅ Preços de/por validados: R$147,90 → R$97,90 (exemplo: Protocolo 90's)
+  - ✅ Departamentos classificados corretamente (Executive, Desenvolvimento, Saúde)
+
+- **Decisões técnicas registradas**:
+  - HTMLs dos flipbooks subiram sem compressão adicional (deliberado — risco de quebrar reader ao recodificar bundle não compensava ganho; capas foram comprimidas separadamente)
+  - Nenhuma das 15 obras associada a tema RAG por enquanto (só Depressão e Obesidade já tinham base própria; avaliar depois, caso a caso)
+  - Catálogo duplicado em catalogoLivros.js e CATALOGO hardcoded (HTML)—reafirma débito técnico conhecido
 
 - **Próximos passos**: 
-  - Validação ponta a ponta com 2-3 compras de teste (cupom 100%, padrão consolidado)
+  - Teste de checkout real com cupom 100% (validação final antes de anúncio público)
   - Monitorar engajamento e taxa de conversão por departamento novo
   - Consideração futura: resolver débito técnico do catálogo (gerar HTML dinamicamente ou via build-time injection)
 
@@ -238,6 +249,11 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   - **Impacto na performance**: Carregamento de `/loja` reduzido significativamente, especialmente mobile/3G
   - **Status**: ✅ Implementado e testado — capas JPG servidas corretamente em ~77 KB vs 2+ MB antes
   - **PNG originais mantidos** em `public/loja/capas/` para flipbooks/páginas de detalhe (se necessário futuro)
+
+- **[15/08/2026] Teste de checkout das 15 novas obras — ⏳ PENDENTE**:
+  - **Validação local concluída** (15/08/2026 15:10): servidor respondendo, 15 HTMLs presentes, capas comprimidas, catálogo indexando, preços de/por validados
+  - **Próximo**: teste de checkout real com cupom 100% (padrão consolidado) para validar fluxo completo de pagamento → acesso a arquivo
+  - **Bloqueador?**: Não — todas as validações técnicas estão OK, teste é confirmação final antes de anúncio
 
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
   celular real.
