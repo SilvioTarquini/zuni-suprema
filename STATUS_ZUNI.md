@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 14/08/2026 (20:53) — Validação completa de 2 novos temas RAG (elegancia_charme_feminino + elegancia_presenca_masculina) — logs [RAG_HIBRIDO] confirmados, testes de chat em produção ✅
+> Última atualização: 14/08/2026 (21:00) — Lançamento de 5 novas obras "Universo Feminino" + campo "departamento" retrocompatível + validação de API em produção ✅
 
 ---
 
@@ -21,6 +21,35 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (14/08/2026 21:00)
+
+**[14/08/2026 21:00] Universo Feminino — 5 novas obras publicadas:**
+- **Estrutura**: Novo campo `departamento` adicionado a catalogoLivros.js (retrocompatível, não quebra livros existentes)
+- **Departamentos atribuídos**:
+  - "Desenvolvimento Humano" → 6 volumes "Os Bastidores da Mente" + Degustação
+  - "Saúde & Longevidade" → "A Arquitetura da Excelência Humana"
+  - "Universo Feminino" → 5 novas obras
+
+- **5 Obras publicadas na loja** (preço, slug, status):
+  1. Ela Tem Classe — R$37,90 | `ela-tem-classe` | ✅ Ativa
+  2. Código Feminino — R$57,00 | `codigo-feminino` | ✅ Ativa
+  3. A Inteligência do Corpo Feminino — R$57,00 | `a-inteligencia-do-corpo-feminino` | ✅ Ativa
+  4. Inesquecível — R$67,00 | `inesquecivel-charme-feminino` | ✅ Ativa
+  5. A Mulher que Permanece Inteira — R$67,00 | `a-mulher-que-permanece-inteira` | ✅ Ativa
+
+- **Implementação técnica**:
+  - Arquivos HTML copiados para `private/livros/{slug}/index.html` (28 MB total)
+  - Campo `categoria: 'principal'` adicionado a todas as 5 obras (compatível com cálculo de desconto em cupons.js)
+  - API de catálogo `/api/livros/catalogo/:livroId` testada em produção ✅
+  - Rota de entrega `/livros/:livroId?token={token}` protegida por token de acesso pós-pagamento (padrão existente, correto)
+  - Commits: `f95ed97` (departamento + catálogo), `5e5ed0c` (categoria + cópia), `064ce94` (arquivos HTML)
+
+- **Pendências**:
+  - Teste ponta a ponta com token real (compra de teste com cupom 100%, padrão já validado para outros produtos) — não bloqueia lançamento
+  - Universo Masculino (4-5 obras) ainda a subir
 
 ---
 
