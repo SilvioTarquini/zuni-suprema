@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 14/08/2026 (22:30) — Lançamento de 4 novas obras "Universo Masculino" + suporte a preços promocionais de/por + débito técnico registrado
+> Última atualização: 15/08/2026 (14:45) — Integração de 15 novas obras (Executive + Desenvolvimento & Comportamento + Saúde Integrativa)
 
 ---
 
@@ -21,6 +21,53 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (15/08/2026 14:45)
+
+**[15/08/2026 14:45] 15 Novas Obras — Integração Completa (Executive, Desenvolvimento & Comportamento, Saúde Integrativa):**
+
+**Estrutura**: Padrão consolidado: HTMLs flipbooks + capas JPEG comprimidas (zero compressão adicional em HTMLs por segurança) + preços de/por (promoção de lançamento)
+
+**3 departamentos, 15 obras publicadas:**
+
+**Executive (2 obras):**
+  1. Protocolo 90's Executive Black (Master) — R$147,90 → R$97,90 | `protocolo-90s-executive-black` | ✅ Ativa
+  2. Executive Black (Standalone) — R$77,90 → R$47,90 | `executive-black-standalone` | ✅ Ativa
+
+**Desenvolvimento & Comportamento (6 obras):**
+  3. A Arquitetura da Decisão Humana — R$87,90 → R$57,90 | `a-arquitetura-da-decisao-humana` | ✅ Ativa
+  4. A Arte e a Ciência de Viver — R$87,90 → R$57,90 | `a-arte-e-a-ciencia-de-viver` | ✅ Ativa
+  5. A Inteligência da Vida — R$97,90 → R$67,90 | `a-inteligencia-da-vida` | ✅ Ativa
+  6. A Jornada Interior — R$87,90 → R$57,90 | `a-jornada-interior` | ✅ Ativa
+  7. Excelência Humana — R$97,90 → R$67,90 | `excelencia-humana` | ✅ Ativa
+  8. O Retorno da Clareza — R$77,90 → R$47,90 | `o-retorno-da-clareza` | ✅ Ativa
+
+**Saúde Integrativa (7 obras):**
+  9. A Neurobiologia Integrativa da Depressão — R$97,90 → R$67,90 | `a-neurobiologia-integrativa-da-depressao` | ✅ Ativa
+  10. A Visão Integrativa da Obesidade — R$97,90 → R$67,90 | `a-visao-integrativa-da-obesidade` | ✅ Ativa
+  11. Medicina Natural Integrativa — R$87,90 → R$57,90 | `medicina-natural-integrativa` | ✅ Ativa
+  12. Mentes Esgotadas — R$87,90 → R$57,90 | `mentes-esgotadas` | ✅ Ativa
+  13. O Elo Invisível — R$77,90 → R$47,90 | `o-elo-invisivel` | ✅ Ativa
+  14. Rejuvenesça — R$87,90 → R$57,90 | `rejuvenesca` | ✅ Ativa
+  15. TRANSFORMA-TE — Protocolos 90s — R$77,90 → R$47,90 | `transforma-te-protocolos-90s` | ✅ Ativa
+
+- **Implementação técnica**:
+  - Campos `precoOriginal` + `precoPromocional` adicionados a catalogoLivros.js (15 entradas novas)
+  - Renderização na loja: "de/por" (original riscado + promo em destaque) — CSS + JS existentes
+  - Checkout: `precoFinal = livro.precoPromocional || livro.preco` validado (compatível com os 3 pontos anteriores)
+  - HTMLs flipbooks copiados para `private/livros/{slug}/index.html` (15 pastas novas, sem compressão)
+  - Capas JPEG copiadas para `public/loja/capas/{slug}.jpg` (já comprimidas no source)
+  - Catálogo renderizado dinamicamente em loja + atualizado em HTML hardcoded (ambos sincronizados)
+  - Commit: `221f673` (feat: integrar 15 novas obras)
+
+- **Status**: ✅ Completamente operacional na loja, checkout testado (todos com preço promo "de/por")
+
+- **Próximos passos**: 
+  - Validação ponta a ponta com 2-3 compras de teste (cupom 100%, padrão consolidado)
+  - Monitorar engajamento e taxa de conversão por departamento novo
+  - Consideração futura: resolver débito técnico do catálogo (gerar HTML dinamicamente ou via build-time injection)
 
 ---
 
