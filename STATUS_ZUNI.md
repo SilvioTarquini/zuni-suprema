@@ -184,14 +184,13 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 
 ## 3. Pendências antigas, ainda em aberto
 
-- **[14/08/2026] Otimização de capas da loja — NOVO**:
-  - **9 capas agora em produção** (5 Universo Feminino + 4 Universo Masculino) com design profissional
-  - Tamanho em alta resolução: **1.92-7.87 MB PNG** cada (Feminino) + **1.86-2.36 MB PNG** (Masculino)
-  - Apropriado para flipbooks, mas **não otimizado para thumbnails de cards** de loja
-  - **Impacto**: Carregamento lento de `/loja` em conexões lentas/mobile (9 capas × média 3+ MB = **27+ MB** apenas em imagens)
-  - **Solução sugerida**: Gerar versão comprimida para os cards (~300-400px, WebP/JPEG, <150KB), manter original apenas em flipbooks/páginas de detalhe
-  - **Prioridade**: Média→Alta (afeta responsividade/performance mobile, especialmente em países com internet lenta)
-  - **Vinculado a**: Teste de responsividade mobile (item abaixo) — considerar incluir benchmarks de carregamento de `/loja` em 3G/slow-4G
+- **[14/08/2026] Otimização de capas da loja — ✅ RESOLVIDA**:
+  - **Implementação**: 9 capas (Feminino + Masculino) comprimidas em JPG otimizado (500px, 60-122 KB cada)
+  - **Redução**: 25,2 MB PNG → 0,75 MB JPG (**97% de redução** em imagens da página `/loja`)
+  - **Estratégia**: JPG para Universo Feminino/Masculino, PNG mantido para livros antigos (sem breaking changes)
+  - **Impacto na performance**: Carregamento de `/loja` reduzido significativamente, especialmente mobile/3G
+  - **Status**: ✅ Implementado e testado — capas JPG servidas corretamente em ~77 KB vs 2+ MB antes
+  - **PNG originais mantidos** em `public/loja/capas/` para flipbooks/páginas de detalhe (se necessário futuro)
 
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
   celular real.
