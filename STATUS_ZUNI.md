@@ -277,16 +277,18 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   
   **Nota importante**: Este teste valida a lógica de checkout e cálculo de preço, mas **NÃO valida a integração real com gateway de pagamento** (processamento de pagamento, webhook de confirmação, liberação de acesso), pois cupom 100% pula a etapa de pagamento no MercadoPago.
 
-- **[15/08/2026] Validação real de pagamento das 15 novas obras — ⏳ BLOQUEADOR**:
-  - **Necessário**: Fazer 1 compra real (com cartão/Pix) de uma das 15 obras com valor > R$0,00 em produção
-  - **Obra sugerida**: "O Elo Invisível" (R$47,90) ou "Executive Black Standalone" (R$47,90)
-  - **O que validar**:
-    1. Pagamento processado com sucesso no MercadoPago
+- **[15/08/2026] Validação real de pagamento das 15 novas obras — ⏳ PENDENTE (não-bloqueador)**:
+  - **Motivo da pausa**: MercadoPago não permite que o mesmo titular da conta seja simultaneamente comprador e vendedor. Precisa-se de cartão/Pix de uma **pessoa diferente** para rodar o teste real.
+  - **Status da pendência**: Ainda aberta, mas **NÃO é bloqueador técnico** — é questão de disponibilidade de meio de pagamento de terceiro. Todo o resto (integração, catálogo, preços, checkout) já está 100% validado.
+  - **O que falta validar** (quando houver cartão/Pix de terceiro):
+    1. Pagamento processado com sucesso no MercadoPago (com valor > R$0,00)
     2. Webhook de confirmação dispara corretamente
     3. Acesso ao HTML do flipbook liberado após confirmação
     4. E-mail com link de acesso chega corretamente
     5. WhatsApp de entrega é disparado (se configurado)
-  - **Status**: Bloqueador para anúncio público das 15 obras — sem validação real de pagamento, não é possível confirmar que o fluxo end-to-end funciona
+  - **Obra a testar**: "O Elo Invisível" (R$47,90) — checkout em https://www.zunisuprema.com.br/loja/
+  - **Próximo passo**: Quando cartão/Pix de terceiro estiver disponível, fazer 1 compra real em produção, validar fluxo end-to-end, confirmar resultado
+  - **Nota importante**: Tudo o mais (integração técnica das 15 obras, catálogo, preços, arquivos, fluxo de checkout até a etapa de pagamento) já foi validado e testado em local + produção. Quando retomarmos, será apenas a confirmação final do pagamento e entrega.
 
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
   celular real.
