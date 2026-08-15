@@ -116,6 +116,46 @@ const CATALOGO = {
     resumo: 'Mais do que um livro sobre relacionamentos: uma jornada de reconstrução emocional feminina — incluindo um raro capítulo sobre como reconhecer perfis emocionais masculinos.',
     descricao: '"O amor saudável não destrói o amor-próprio; pelo contrário, o fortalece." É a partir dessa premissa que a obra percorre seis partes: autoestima feminina profunda, perfis emocionais masculinos (um bloco raro e especialmente valioso, que ajuda a leitora a reconhecer padrões antes de se envolver), relacionamentos tóxicos e proteção emocional, sedução emocional refinada, comunicação moderna e elegância digital, e exercícios práticos de desenvolvimento. É a obra mais extensa e psicologicamente densa do lote — pensada não apenas para inspirar, mas para equipar a leitora com discernimento real diante de vínculos afetivos.'
   },
+  'a-arte-da-presenca-masculina': {
+    titulo: 'A Arte da Presença Masculina',
+    preco: 67.00,
+    precoOriginal: 97.00,
+    precoPromocional: 67.00,
+    categoria: 'principal',
+    departamento: 'Universo Masculino',
+    resumo: 'Presença vale mais que performance. Um guia sobre como desenvolver magnetismo, segurança emocional e elegância masculina genuína — sem personagens, sem manipulação, sem teatralidade.',
+    descricao: 'Esta obra nasce de uma percepção simples e profundamente humana: muitos homens perderam a naturalidade da presença, não por falta de valor, mas por excesso de ruído — social, emocional, cultural. Ao longo de 21 capítulos, o livro percorre o que realmente sustenta o magnetismo masculino: a calma, a segurança sem arrogância, a comunicação elegante, a capacidade de gerar conforto emocional em quem está por perto. Trata também de temas práticos — imagem, voz, postura, o primeiro encontro, o poder da discrição — sempre a partir de um princípio central: presença não se atua, se constrói. Não é um manual de conquista nem de estratégia; é um convite à maturidade emocional como forma real de magnetismo.'
+  },
+  'a-presenca-em-acao-apendice': {
+    titulo: 'A Presença em Ação — Apêndice Prático',
+    preco: 37.90,
+    precoOriginal: 57.00,
+    precoPromocional: 37.90,
+    categoria: 'principal',
+    departamento: 'Universo Masculino',
+    resumo: 'O complemento prático de "A Arte da Presença Masculina" — 12 exercícios objetivos, um por capítulo, para transformar princípio em hábito no dia a dia.',
+    descricao: '"A Arte da Presença Masculina" apresentou princípios. Este apêndice apresenta prática. Cada capítulo corresponde a uma dimensão da presença masculina refinada — confiança, controle emocional, comunicação, linguagem corporal, charme, aproximação, flerte saudável e relacionamentos — e traz um exercício objetivo para aplicar no cotidiano, seguido de uma reflexão para fechar com clareza. Inclui ainda um desafio estruturado de 21 dias, dividido em três semanas de progressão gradual. Não são fórmulas nem scripts — são convites à prática consciente e repetida, porque presença não se decora, se constrói.'
+  },
+  'a-arte-invisivel-elegancia-masculina': {
+    titulo: 'A Arte Invisível da Elegância Masculina',
+    preco: 57.00,
+    precoOriginal: 87.00,
+    precoPromocional: 57.00,
+    categoria: 'principal',
+    departamento: 'Universo Masculino',
+    resumo: 'Roupas impressionam por alguns minutos — presença permanece na memória. Um guia sobre o refinamento invisível masculino: o que não se compra, não se veste, mas se percebe.',
+    descricao: 'Existe um nível de sofisticação masculina que vai muito além da roupa, da aparência física ou do status — é o refinamento invisível, aquele que se manifesta na postura, na serenidade, na voz, no olhar, na forma de tratar as pessoas. Em 12 capítulos, esta obra aprofunda os aspectos mais sofisticados da presença masculina contemporânea: da psicologia da presença ao magnetismo moderno, da elegância emocional à linguagem corporal, passando por voz refinada, estética contemporânea, perfumes e estilo por ocasião. Um guia para o homem que entende que valor real não precisa ser anunciado constantemente — ele já se comunica antes de qualquer palavra.'
+  },
+  'guia-integral-saude-beleza-masculina': {
+    titulo: 'Guia Integral de Saúde e Beleza Masculina',
+    preco: 97.00,
+    precoOriginal: 147.00,
+    precoPromocional: 97.00,
+    categoria: 'principal',
+    departamento: 'Universo Masculino',
+    resumo: 'O guia definitivo de saúde masculina integrativa — corpo, hormônios, nootrópicos, longevidade e presença, com protocolos práticos e fórmulas de referência para acompanhamento com profissional de saúde.',
+    descricao: 'Reunindo 23 capítulos em 4 partes, este é o guia mais completo do Universo Masculino: cuidados essenciais (pele, cabelo, barba, higiene), saúde interna e desempenho (testosterona, libido, próstata, cardiovascular, cerebral), presença e estilo, e uma seção de ferramentas — checklists, exames preventivos, receitas funcionais, nootrópicos e um guia de referência hormonal completo, incluindo fórmulas magistrais. As formulações e sugestões de suplementação que aparecem ao longo da obra foram avaliadas por uma equipe multidisciplinar de saúde integrativa — mas nada aqui substitui o acompanhamento de um profissional que conhece a história e os exames de cada leitor. Um mapa completo do corpo masculino, não um substituto do cuidado clínico individual.'
+  },
 };
 
 function buscarLivro(livroId) {
