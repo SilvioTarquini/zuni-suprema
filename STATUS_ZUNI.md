@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 14/08/2026 (14:45) — Indexação de 2 novos temas RAG (elegancia_charme_feminino + elegancia_presenca_masculina)
+> Última atualização: 14/08/2026 (20:53) — Validação completa de 2 novos temas RAG (elegancia_charme_feminino + elegancia_presenca_masculina) — logs [RAG_HIBRIDO] confirmados, testes de chat em produção ✅
 
 ---
 
@@ -110,12 +110,18 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   - Etapa 4 (validação): ✅ Maior chunk 853 palavras (~1.152 tokens), 100% dentro do limite
   - Etapa 5 (indexação): ✅ 174 chunks com embeddings OpenAI, 100% inseridos no Supabase
   - Verificação: ✅ SELECT confirmou 174 registros em produção (14/08/2026 14:45)
+  - **Etapa 6 (validação em produção)**: ✅ CONCLUÍDA (14/08/2026 20:53)
+    - Log [RAG_HIBRIDO] confirmado: `Query: "Como desenvolver mais elegância e charme como mulher..." | Tema: "elegancia_charme_feminino" | Limite tema: 3, Limite geral: 2`
+    - Teste de chat em produção: SessionId `4c6fa41d-7b0f-4d80-a9c1-87efd8d6e965` ✅ Resposta específica e relevante gerada
 - **elegancia_presenca_masculina**: 58 chunks (consolidação de presença + elegância + refinamento + comunicação masculina)
   - Etapa 4 (validação): ✅ Maior chunk 1.441 palavras (~1.946 tokens), 100% dentro do limite
   - Etapa 5 (indexação): ✅ 58 chunks com embeddings OpenAI, 100% inseridos no Supabase
   - Verificação: ✅ SELECT confirmou 58 registros em produção (14/08/2026 14:45)
+  - **Etapa 6 (validação em produção)**: ✅ CONCLUÍDA (14/08/2026 20:53)
+    - Log [RAG_HIBRIDO] confirmado: `Query: "Como desenvolver mais presença e elegância como homem..." | Tema: "elegancia_presenca_masculina" | Limite tema: 3, Limite geral: 2`
+    - Teste de chat em produção: SessionId `6e7dddb1-f138-4f04-8c62-38c720637733` ✅ Resposta específica e relevante gerada
 - **Total novo RAG**: 232 chunks adicionados (elegância + presença como temas separados)
-- **Observação**: Ambos temas prontos para funcionamento na busca híbrida do Mentor. Pendente validação em logs [RAG_HIBRIDO] do Railway e teste na interface de chat.
+- **Status Final**: ✅ 100% OPERACIONAL — ambos temas funcionando com busca híbrida, respostas do Mentor específicas e relevantes confirmadas.
 
 ## 3. Pendências antigas, ainda em aberto
 
