@@ -185,12 +185,13 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 ## 3. Pendências antigas, ainda em aberto
 
 - **[14/08/2026] Otimização de capas da loja — NOVO**:
-  - Capas do Universo Masculino (e futuramente Feminino) estão em alta resolução: 1.8-2.4 MB PNG cada
-  - Tamanho apropriado para flipbooks, mas não otimizado para thumbnails de cards de loja
-  - **Impacto**: Carregamento lento de `/loja` em conexões lentas/mobile (9 obras × 2+ MB = 18+ MB na página)
-  - **Solução sugerida**: Gerar versão comprimida para os cards (~300-400px, WebP/JPEG, <150KB), manter original apenas em páginas de detalhe
-  - **Prioridade**: Média (afeta responsividade/performance mobile)
-  - **Vinculado a**: Teste de responsividade mobile (item abaixo) — considerar incluir benchmarks de carregamento de /loja
+  - **9 capas agora em produção** (5 Universo Feminino + 4 Universo Masculino) com design profissional
+  - Tamanho em alta resolução: **1.92-7.87 MB PNG** cada (Feminino) + **1.86-2.36 MB PNG** (Masculino)
+  - Apropriado para flipbooks, mas **não otimizado para thumbnails de cards** de loja
+  - **Impacto**: Carregamento lento de `/loja` em conexões lentas/mobile (9 capas × média 3+ MB = **27+ MB** apenas em imagens)
+  - **Solução sugerida**: Gerar versão comprimida para os cards (~300-400px, WebP/JPEG, <150KB), manter original apenas em flipbooks/páginas de detalhe
+  - **Prioridade**: Média→Alta (afeta responsividade/performance mobile, especialmente em países com internet lenta)
+  - **Vinculado a**: Teste de responsividade mobile (item abaixo) — considerar incluir benchmarks de carregamento de `/loja` em 3G/slow-4G
 
 - Teste de responsividade mobile (checkout → chat → relatório → WhatsApp) no
   celular real.
