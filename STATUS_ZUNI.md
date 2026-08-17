@@ -380,6 +380,21 @@ limite de tokens do embedding (`text-embedding-3-small`, 8.191 tokens) — ver s
 | `elegancia_charme_feminino` | 174 | ✅ Embeddings + Supabase | ✅ SELECT confirmado | 🟢 Ativo |
 | `elegancia_presenca_masculina` | 58 | ✅ Embeddings + Supabase | ✅ SELECT confirmado | 🟢 Ativo |
 
+**1 novo tema em produção — indexado em 17/08/2026** (com RAG, sem questionário associado por enquanto):
+
+| Tema (slug) | Chunks | Indexação | Validação (17/08/2026) | Status |
+|---|---|---|---|---|
+| `compreensao_da_vida_base_mentor` | 60 | ✅ Embeddings + Supabase | ✅ SELECT confirmado + 60 chunks inseridos | 🟢 Ativo |
+
+- **Detalhes da indexação de `compreensao_da_vida_base_mentor`** (17/08/2026):
+  - Fonte: arquivo "compreensao_da_vida_base_mentor.txt" validado (1351 linhas, 60 blocos temáticos)
+  - Validação pré-indexação: ✅ Formato correto, chunks <= 2500 palavras, sem artefatos de conversa com IA
+  - Tipo: Tema NOVO (não existia anteriormente no Supabase)
+  - Embeddings: ✅ 60 chunks processados via OpenAI `text-embedding-3-small`
+  - Ingestão: ✅ Todos os 60 chunks inseridos em `public.documentos` com coluna `tema` preenchida
+  - Verificação: ✅ SELECT confirmou 60 registros em produção (17/08/2026 14:15)
+  - Status: 🟢 100% Operacional
+
 **Evidência de logs RAG capturada**: Todos os 7 temas confirmados com log [RAG_HIBRIDO] do servidor (linha 785 de server.js), incluindo tema identificado e limites de busca. Logs brutos revisados em sessão 10/08/2026 20:44-20:45.
 
 **Nota sobre `timidez_comunicacao`**: Apenas 2 chunks reais indexados no banco (confirmado em 04-05/08 e revalidado em 10/08). A discrepância com os 827 chunks originalmente documentados permanece sem explicação. Base funcional mas minimal — reindexação recomendada se expandir cobertura do tema.
