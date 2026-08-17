@@ -306,6 +306,56 @@ const CATALOGO = {
     resumo: 'O método dos 90 segundos — como criar espaço interno antes de reagir, com protocolos para 12 situações do dia a dia.',
     descricao: 'A vida moderna exige respostas rápidas, mas raramente ensina a criar espaço interno antes de reagir. Este método é construído em torno do intervalo de 90 segundos — tempo suficiente para impedir que um momento de desorganização escreva sozinho o próximo capítulo. Inclui protocolos para pânico, raiva, conflitos e situações reais.'
   },
+  'alem-do-que-voce-ve': {
+    titulo: 'Além do Que Você Vê',
+    precoOriginal: 77.90,
+    precoPromocional: 47.90,
+    categoria: 'principal',
+    departamento: 'Desenvolvimento & Comportamento',
+    capa: '/loja/capas/alem-do-que-voce-ve.jpg',
+    resumo: 'Guia para pais e responsáveis de adolescentes — sobre portas batidas, silêncios, namoro e as conversas que ninguém ensinou a ter.',
+    descricao: 'Para quem tem em casa alguém entre catorze e vinte e poucos anos e sente que está lidando com uma pessoa que não conhece mais. Este não é um manual de disciplina — é algo mais básico: o que está acontecendo do outro lado. Cada capítulo mostra o que se passou nas horas anteriores, às quais o adulto não teve acesso, para que cada lado entenda o que o outro está atravessando.'
+  },
+  'alem-do-que-voce-sente': {
+    titulo: 'Além do Que Você Sente',
+    precoOriginal: 77.90,
+    precoPromocional: 47.90,
+    categoria: 'principal',
+    departamento: 'Desenvolvimento & Comportamento',
+    capa: '/loja/capas/alem-do-que-voce-sente.jpg',
+    resumo: 'Um mapa para adolescentes atravessarem os anos em que tudo ferve — sobre emoções, amizades, namoro, limites e situações que ninguém explicou.',
+    descricao: 'Para quem tem entre catorze e vinte e poucos anos e está atravessando a fase em que tudo é mais intenso. Um manual de instruções da própria mente, o tipo de coisa que deveria vir junto com essa idade e nunca vem. Trata com seriedade temas como cuidado vs. controle num namoro, ciúme, pressão por fotos íntimas e o direito de dizer não.'
+  },
+  'o-caminho-da-consciencia': {
+    titulo: 'O Caminho da Consciência',
+    precoOriginal: 87.90,
+    precoPromocional: 57.90,
+    categoria: 'principal',
+    departamento: 'Desenvolvimento & Comportamento',
+    capa: '/loja/capas/o-caminho-da-consciencia.jpg',
+    resumo: 'Um convite a uma pausa no automatismo — para compreender a si mesmo, os outros e a vida através da perspectiva esotérica.',
+    descricao: 'Esta obra percorre o indivíduo como ser cósmico em evolução, o despertar da consciência, os obstáculos comuns do caráter (egoísmo, timidez, inveja), as escolhas e o planejamento pessoal, sempre com o objetivo de transformar dor em reflexão, não apenas em reação automática.'
+  },
+  'inteligencia-artificial-volume-1': {
+    titulo: 'Inteligência Artificial — Volume 1',
+    precoOriginal: 87.90,
+    precoPromocional: 57.90,
+    categoria: 'principal',
+    departamento: 'Negócios & Tecnologia',
+    capa: '/loja/capas/inteligencia-artificial-volume-1.jpg',
+    resumo: 'Fundamentos da revolução da IA — como inteligência artificial e novas tecnologias estão transformando negócios, profissões e produtividade.',
+    descricao: 'Traduz o futuro para o presente de forma prática e acessível: dos fundamentos da revolução da IA ao futuro do trabalho, passando por aplicações para atendimento, marketing, gestão e profissões específicas, até um plano de transformação real e uma reflexão sobre a humanidade nessa nova era.'
+  },
+  'empresas-inteligentes-volume-2': {
+    titulo: 'Empresas Inteligentes — Volume 2',
+    precoOriginal: 87.90,
+    precoPromocional: 57.90,
+    categoria: 'principal',
+    departamento: 'Negócios & Tecnologia',
+    capa: '/loja/capas/empresas-inteligentes-volume-2.jpg',
+    resumo: 'Guia prático de implementação com diagnósticos, exercícios, checklists e planos de automação e IA para empresas e profissionais.',
+    descricao: 'Oferece um caminho estruturado e progressivo para incorporar IA de forma consciente e verdadeiramente útil — identificando gargalos, organizando processos, automatizando tarefas e ampliando capacidades humanas. Reúne diagnósticos, exercícios, checklists e centenas de aplicações práticas.'
+  },
 };
 
 function buscarLivro(livroId) {
