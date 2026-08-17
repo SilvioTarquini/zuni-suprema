@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 15/08/2026 (15:10) — Integração + validação completa de 15 novas obras + testes de checkout
+> Última atualização: 17/08/2026 (14:30) — Integração de 5 novas obras (Desenvolvimento & Comportamento + novo departamento Negócios & Tecnologia) + indexação de tema RAG "compreensao_da_vida"
 
 ---
 
@@ -21,6 +21,55 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (17/08/2026 14:30)
+
+**[17/08/2026 14:30] 5 Novas Obras — Lote "Subir para a loja" (Desenvolvimento & Comportamento + novo Negócios & Tecnologia):**
+
+**Estrutura**: Padrão consolidado: HTMLs flipbooks + capas JPEG comprimidas + preços de/por (promoção de lançamento)
+
+**2 departamentos, 5 obras publicadas:**
+
+**Desenvolvimento & Comportamento (3 obras — extensão do departamento existente):**
+  1. Além do Que Você Vê (guia para pais/responsáveis de adolescentes, série "Bastidores da Mente" Obra II) — R$77,90 → R$47,90 | `alem-do-que-voce-ve` | ✅ Ativa
+  2. Além do Que Você Sente (guia para adolescentes, série "Bastidores da Mente" Obra I, par da obra acima) — R$77,90 → R$47,90 | `alem-do-que-voce-sente` | ✅ Ativa
+  3. O Caminho da Consciência (desenvolvimento humano/cosmologia esotérica) — R$87,90 → R$57,90 | `o-caminho-da-consciencia` | ✅ Ativa
+
+**Negócios & Tecnologia (2 obras — novo departamento):**
+  4. Inteligência Artificial — Volume 1 (fundamentos, para negócios) — R$87,90 → R$57,90 | `inteligencia-artificial-volume-1` | ✅ Ativa
+  5. Empresas Inteligentes — Volume 2 (aplicação prática, sequência do Vol. 1) — R$87,90 → R$57,90 | `empresas-inteligentes-volume-2` | ✅ Ativa
+
+- **Implementação técnica**:
+  - 5 entradas novas adicionadas a `catalogoLivros.js` com campos `precoOriginal` + `precoPromocional` + `departamento`
+  - CATALOGO em `public/loja/index.html` atualizado com 5 novas obras
+  - Array `novasObras` em `public/loja/index.html` atualizado (resolução automática de extensão .jpg para capas)
+  - HTMLs flipbooks copiados para `private/livros/{slug}/index.html` (5 pastas novas)
+  - Capas JPEG copiadas para `public/loja/capas/{slug}.jpg` (formato .jpg, padrão das novas obras)
+  - Commit: `5aa87b8` (feat: integrar 5 novas obras na loja ZUNI Suprema)
+
+- **Status**: ✅ 100% Operacional — todas as validações concluídas (17/08/2026 14:30)
+  - ✅ Servidor local respondendo (porta 3000)
+  - ✅ 5 HTMLs flipbooks presentes e acessíveis
+  - ✅ 5 capas JPEG comprimidas presentes
+  - ✅ Catálogo Node.js indexando corretamente todas as 5 obras
+  - ✅ Preços de/por validados: R$77,90 → R$47,90 e R$87,90 → R$57,90
+  - ✅ Novos departamentos classificados corretamente (Desenvolvimento & Comportamento, Negócios & Tecnologia)
+
+- **Nota de conteúdo**:
+  - As duas obras da série "Bastidores da Mente" (pais e adolescentes — "Além do Que Você Vê" e "Além do Que Você Sente") tratam de temas sensíveis de forma responsável e protetiva: controle em relacionamentos, ciúme, pressão por imagens íntimas, com orientação explícita para buscar adulto de confiança nos pontos que exigem.
+  - Conteúdo revisado antes da publicação.
+  - **Pendência editorial (não bloqueia produção)**: Avaliar se a página de produto dessas duas obras precisa de aviso de faixa etária/parental — decisão editorial, não técnica.
+
+- **Nota técnica**:
+  - Um arquivo HTML anterior de "Além do Que Você Sente" estava corrompido (dependia de módulo JS externo `pages-adolescentes.js` não exportado). Foi refeito e resubido com sucesso nesta sessão.
+
+- **Resumo de expansão do catálogo**:
+  - Catálogo geral agora tem **4 departamentos além dos originais**: Executive, Desenvolvimento & Comportamento, Saúde Integrativa, Negócios & Tecnologia
+  - **Total de 20 obras novas publicadas nas últimas 2 sessões**: 15 do primeiro grande lote (15/08) + 5 deste (17/08)
+  - Departamento "Desenvolvimento & Comportamento" expandido de 6 para 9 obras
+  - Departamento "Negócios & Tecnologia" criado (novo, 2 obras)
 
 ---
 
