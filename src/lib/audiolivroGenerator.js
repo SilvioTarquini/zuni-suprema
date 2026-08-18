@@ -9,6 +9,19 @@ const { createClient } = require('@supabase/supabase-js');
 ffmpeg.setFfmpegPath(ffmpegStatic);
 ffmpeg.setFfprobePath(ffprobeStatic.path);
 
+function obterDuracaoMp3(caminhoArquivo) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(caminhoArquivo, (err, metadata) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      const duracao = Math.round(metadata.format.duration);
+      resolve(duracao);
+    });
+  });
+}
+
 const textToSpeechClient = new textToSpeech.TextToSpeechClient();
 
 const supabaseUrl = process.env.SUPABASE_URL;
@@ -18,7 +31,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function dividirEmChunks(texto, bytesMax = 5000) {
   const chunks = [];
   let chunkAtual = '';
-  const OVERHEAD_SSML = 20;
+  const OVERHEAD_SSML = 300;
   const limiteTexto = bytesMax - OVERHEAD_SSML;
 
   const paragrafos = texto.split('\n\n').filter(p => p.trim());
@@ -74,8 +87,15 @@ async function dividirEmChunks(texto, bytesMax = 5000) {
   return chunks;
 }
 
+function sanitizarTexto(texto) {
+  return texto
+    .replace(/([^\w\s])\1{2,}/g, '<break time="500ms"/>')
+    .replace(/\n{2,}/g, '\n');
+}
+
 function gerarSSML(texto) {
-  let ssml = '<speak>' + texto + '</speak>';
+  const textoSanitizado = sanitizarTexto(texto);
+  let ssml = '<speak>' + textoSanitizado + '</speak>';
   return ssml;
 }
 
@@ -212,8 +232,12 @@ async function gerarAudiolivro(
     await concatenarComFFmpeg(caminhosMp3, caminhoFinal);
 
     const stats = await fs.stat(caminhoFinal);
+    const duracao = await obterDuracaoMp3(caminhoFinal);
+    const minutos = Math.floor(duracao / 60);
+    const segundos = duracao % 60;
+
     console.log(
-      `[Audiolivro] ✅ Arquivo concatenado: ${(stats.size / 1024 / 1024).toFixed(2)} MB`
+      `[Audiolivro] ✅ Arquivo concatenado: ${(stats.size / 1024 / 1024).toFixed(2)} MB, ${minutos}m${segundos}s`
     );
 
     console.log('[Audiolivro] Fazendo upload para Supabase Storage...');
