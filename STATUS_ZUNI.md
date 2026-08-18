@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 18/08/2026 (19:45) — Pipeline de audiolivros pagos CONSTRUÍDO + teste piloto concluído
+> Última atualização: 18/08/2026 (22:15) — Pipeline de audiolivros VALIDADO e PRONTO PARA PRODUÇÃO (Fase 1 concluída)
 
 ---
 
@@ -21,6 +21,96 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (18/08/2026 22:15)
+
+**[18/08/2026 22:15] ✅ FASE 1 CONCLUÍDA — Pipeline de Audiolivros 100% Pronto para Produção:**
+
+**Status Final**: 🟢 100% OPERACIONAL — Vol. I com audiolivro definitivo em produção
+
+**O que foi finalizado nesta sessão (após validação auditiva):**
+
+**Melhorias de Qualidade Implementadas:**
+
+1. **Normalização de Maiúsculas** ✅
+   - Problema: Palavras inteiramente em MAIÚSCULAS (ZUNI, CÉREBRO, AMÍGDALA) soletradas letra por letra
+   - Solução: Função `normalizarMaiusculas()` em audiolivroGenerator.js
+   - Detecção: Palavras 2+ caracteres em maiúsculas (incluindo acentuadas: Á, É, Í, Ó, Ú, Ç, Ã, Õ)
+   - Conversão: ZUNI → Zuni, CÉREBRO → Cérebro, AMÍGDALA → Amígdala
+   - Escopo: Aplicado apenas ao SSML, arquivo-fonte preservado
+   - Validação: ✅ Teste de 32s aprovado auditivamente
+
+2. **Suporte a Voz Variável por Departamento** ✅
+   - Novo: Mapeamento MAPEAMENTO_VOZ_POR_DEPARTAMENTO em catalogoLivros.js
+   - Universo Masculino → pt-BR-Wavenet-B (voz masculina grave)
+   - Demais departamentos → pt-BR-Wavenet-A (voz feminina padrão)
+   - Função: obterVozPadraoParaDepartamento(departamento) exportada
+   - Integração: gerarAudioComAPI() já aceita parâmetro `voz`
+   - Validação: ✅ Teste com Wavenet-B (39s) aprovado auditivamente
+
+**Versão Definitiva de Produção — Vol. I:**
+- ✅ Regenerado com todas as correções (sanitização + normalização + duração real via ffprobe)
+- Arquivo: `os-bastidores-vol1/os-bastidores-vol1.mp3`
+- URL Pública: `https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3`
+- Tamanho: 6.47 MB
+- Duração: 28m16s (duração real via ffprobe)
+- Chunks: 6 (4.3–4.7 KB SSML cada)
+- Tempo processamento: 98.9s (16.5s por chunk)
+- Corrido do catálogo: `audiobookUrl` atualizada, `audiobookDisponivel: true` ✅
+
+**Limpeza de Bucket:**
+- ✅ Apagados 4 arquivos de teste do Supabase Storage:
+  - os-bastidores-vol1-teste (versão anterior)
+  - identidade-autoestima-teste (teste piloto)
+  - teste-normalizacao-maiusculas (teste de validação)
+  - teste-voz-masculina (teste de validação)
+- Resultado: Bucket limpo, apenas arquivo de produção permanece
+
+**Resumo de Testes Realizados (nesta sessão):**
+| Teste | Entrada | Saída | Duração | Status |
+|---|---|---|---|---|
+| Vol. I Inicial | 24.5 KB | 6.65 MB | 28m24s | ✅ Teste piloto |
+| Vol. II (Identidade) | 3.7 KB | 1.00 MB | 4m21s | ✅ Generalização |
+| Normalização Maiúsculas | 0.4 KB | 0.12 MB | 32s | ✅ Aprovado |
+| Voz Masculina (B) | 0.5 KB | 0.15 MB | 39s | ✅ Aprovado |
+| Vol. I Produção Final | 24.5 KB | 6.47 MB | 28m16s | ✅ Pronto |
+
+**Scripts Operacionais Desenvolvidos:**
+- `src/lib/audiolivroGenerator.js` — Motor de geração (funções normalizarMaiusculas, obterDuracaoMp3)
+- `scripts/gerar-audiolivro.js` — CLI generalizável (aceita arquivo + slug)
+- `scripts/validar-audiolivro.js` — Validação com ffprobe
+- `scripts/criar-bucket-audiolivros.js` — Setup infraestrutura
+- `scripts/detectar-padrao-repeticao.js` — Validação de padrões antes de gerar
+- `scripts/mapear-sanitizacoes-timeline.js` — Timeline de pausas SSML
+- `scripts/mapear-sanitizacoes-arquivo.js` — Auditoria para qualquer arquivo
+- `scripts/testar-normalizacao-maiusculas.js` — Teste isolado de maiúsculas
+- `scripts/testar-voz-masculina.js` — Teste isolado de voz masculina
+- `scripts/limpar-testes-supabase.js` — Limpeza de bucket (now played)
+
+**Decisões de Arquitetura Confirmadas:**
+1. 1 arquivo MP3 único por obra (não por capítulo)
+2. SSML simplificado (tags <speak></speak> básicos + sanitização)
+3. Sanitização automática de sequências repetidas (===> pausa)
+4. Normalização de maiúsculas automática
+5. Voz por departamento (padrão configurable, sem overhead)
+6. Duração calculada via ffprobe (não estimativa)
+7. Overhead SSML: 300 bytes (para cobrir Tags + substituições)
+
+**Métricas Finais:**
+- Custo por obra: ~$0.0001 (24.559 chars × $0.000004/char)
+- Performance: ~16.5s por chunk (síntese + concat + upload)
+- Escalabilidade: Testada de 3.7 KB a 24.5 KB
+- Qualidade: ✅ Aprovada auditivamente (maiúsculas, voz, pausas naturais)
+
+**Próxima Fase (Não iniciada nesta sessão):**
+- Fase 2: Entrega via token HMAC no checkout
+  - Rota de acesso protegida por token
+  - E-mail/WhatsApp com link de download
+  - Teste end-to-end de pagamento real
+
+**Commit**: Pendente — com atualizações finais de produção
 
 ---
 
