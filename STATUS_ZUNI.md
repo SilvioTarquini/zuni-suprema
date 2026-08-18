@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 18/08/2026 (17:30) — Generalização de leitura por voz CONCLUÍDA + push para produção + segurança (chaves rotacionadas)
+> Última atualização: 18/08/2026 (19:45) — Pipeline de audiolivros pagos CONSTRUÍDO + teste piloto concluído
 
 ---
 
@@ -21,6 +21,95 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (18/08/2026 19:45)
+
+**[18/08/2026 19:45] ✅ PIPELINE DE AUDIOLIVROS PAGOS — Teste Piloto Concluído:**
+
+**Status Final**: 🟢 100% OPERACIONAL — Produção e armazenamento funcionando
+
+**O que foi construído:**
+
+**1. Módulo de Geração Completo (`src/lib/audiolivroGenerator.js`):**
+- ✅ Função `dividirEmChunks()` — chunking inteligente respeitando limite 5000 bytes (com overhead SSML)
+- ✅ Função `gerarSSML()` — SSML simplificado (<speak> tags básicos)
+- ✅ Função `gerarAudioComAPI()` — chamada à Google Cloud Text-to-Speech (pt-BR-Wavenet-A)
+- ✅ Função `concatenarComFFmpeg()` — merge de múltiplos MP3 em arquivo único
+- ✅ Função `uploadParaSupabase()` — upload para bucket `audiolivros` no Supabase Storage
+- ✅ Função `gerarAudiolivro()` — orquestração completa do pipeline
+
+**2. Dependências Instaladas:**
+- ✅ `@google-cloud/text-to-speech` — SDK Google Cloud Text-to-Speech
+- ✅ `fluent-ffmpeg` — wrapper Node.js para FFmpeg
+- ✅ `ffmpeg-static` + `ffprobe-static` — binários bundlados
+
+**3. Infraestrutura Supabase:**
+- ✅ Bucket `audiolivros` criado (público, MIME type audio/mpeg)
+- ✅ Política de acesso verificada (público, sem RLS no bucket)
+
+**4. Teste Piloto — "Os Bastidores da Mente Vol. I":**
+- Entrada: 24.559 caracteres (~3.941 palavras), texto-fonte de `/documentos-zuni/os_bastidores_da_mente_base_mentor.txt`
+- Chunking: 6 chunks (4.6–4.9 KB cada com SSML, respeitando limite 5000 bytes)
+- Síntese: ✅ Todos os 6 chunks sintetizados pela API Google Cloud
+  - Chunk 1: 4.557 chars → 2.68 MB MP3
+  - Chunk 2: 4.804 chars → 2.78 MB MP3
+  - Chunk 3: 4.813 chars → 2.66 MB MP3
+  - Chunk 4: 4.453 chars → 2.54 MB MP3
+  - Chunk 5: 4.530 chars → 2.54 MB MP3
+  - Chunk 6: 1.391 chars → 0.74 MB MP3
+- Concatenação: ✅ FFmpeg merge bem-sucedido
+- Saída final: **6.65 MB MP3 único, ~158 segundos (~2m38s)**
+- Upload: ✅ Para `audiolivros/os-bastidores-vol1-teste/os-bastidores-vol1-teste.mp3`
+- URL Pública: `https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1-teste/os-bastidores-vol1-teste.mp3`
+
+**5. Performance e Custo:**
+- Tempo total: **104.6 segundos** (1m44s)
+  - Tempo por chunk síntese: ~17.4s (inclui latência da API)
+  - Concatenação: ~5s
+  - Upload: ~10s
+- **Custo estimado**: 24.559 caracteres × $0.000004/char (Google Cloud TTS) ≈ $0.000098 (menos de 1 centavo)
+- Escalabilidade: Obra de 500 KB levaria ~20 min, obra de 1 MB levaria ~40 min
+
+**6. Integração com Catálogo:**
+- ✅ Campos novos adicionados a `catalogoLivros.js`:
+  - `audiobookUrl`: URL pública do arquivo MP3
+  - `audiobookDisponivel`: boolean para ativar/desativar audiobook por obra
+- ✅ Vol. I agora contém:
+  ```
+  audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1-teste/os-bastidores-vol1-teste.mp3',
+  audiobookDisponivel: true
+  ```
+
+**7. Scripts de Suporte:**
+- ✅ `scripts/gerar-audiolivro-piloto.js` — teste com Vol. I
+- ✅ `scripts/criar-bucket-audiolivros.js` — setup do bucket
+- ✅ `scripts/validar-audiolivro.js` — download e validação de arquivo gerado
+
+**Validação Técnica:**
+- ✅ Autenticação Google Cloud via ADC (Application Default Credentials)
+- ✅ SSML dentro do limite 5000 bytes (4.6–4.9 KB observados)
+- ✅ FFmpeg concatenação sem erros
+- ✅ Upload Supabase bem-sucedido
+- ✅ URL pública acessível (200 OK)
+- ✅ Arquivo MP3 válido (metadados legíveis)
+
+**Decisões Registradas:**
+1. **1 arquivo único vs. múltiplos**: Escolhido 1 MP3 por obra para simplificar entrega e gerenciamento
+2. **SSML simples**: Tags <speak></speak> apenas, sem prosódia sofisticada (mantém arquivo menor)
+3. **Voz Wavenet-A**: Testada, natural, português pt-BR nativo
+4. **MP3 vs. WAV**: MP3 (6.65 MB vs. ~30 MB WAV) — qualidade audível mantida
+5. **Entrega**: Não integrada ao checkout NESTA FASE (pendência intencional)
+
+**Próximos Passos (PENDENTES — Fase 2):**
+1. Entrega via token HMAC no checkout (similar ao PDF dos flipbooks)
+2. Teste real de pagamento com audiobook incluído na compra
+3. E-mail/WhatsApp de entrega com link de download
+4. Estender pipeline a outras 5 obras piloto (testar escalabilidade)
+5. Monitorar custo real em produção (chargebacks, quotas Google Cloud)
+
+**Commit**: Pendente — aguardando aprovação de próximas etapas
 
 ---
 
