@@ -1,3 +1,9 @@
 node_modules/
 .env
 credentials/
+
+# Audiolivro test files (large, local only)
+scripts/*.mp3
+.temp-audio/
+audiolivro-piloto.log
+.git-rewrite/
