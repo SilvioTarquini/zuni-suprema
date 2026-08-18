@@ -1513,6 +1513,11 @@ async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
   return reportText;
 }
 
+app.get('/api/livros', (req, res) => {
+  const { CATALOGO } = require('./lib/catalogoLivros');
+  return res.json(CATALOGO);
+});
+
 app.get('/api/livros/catalogo/:livroId', (req, res) => {
   const livro = buscarLivro(req.params.livroId);
   if (!livro) {

@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(railway status *)",
+      "Bash(railway logs *)",
+      "Bash(railway variable list *)",
+      "mcp__claude_ai_Supabase__list_projects",
+      "mcp__claude_ai_Supabase__list_tables"
+    ]
+  }
+}

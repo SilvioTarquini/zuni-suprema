@@ -1,0 +1,53 @@
+[
+  {
+    "tema": "timidez_comunicacao",
+    "session_id": "test-timidez-2026-08-10",
+    "erro": "JSON Parse error: Unexpected end of JSON input",
+    "timestamp": "2026-08-10T23:37:31.740Z",
+    "classificacao": "❌ ERRO"
+  },
+  {
+    "tema": "namoro_conquista_romance",
+    "session_id": "test-namoro-2026-08-10",
+    "pergunta": "Como conquistar a pessoa que gosto?",
+    "resposta_chars": 1694,
+    "classificacao": "✅ CONFIRMADO",
+    "preview": "Essa pergunta aparece simples. Mas debaixo dela costuma haver algo bem mais específico — uma situaçã",
+    "timestamp": "2026-08-10T23:37:31.740Z"
+  },
+  {
+    "tema": "administracao_empresarial_inteligente",
+    "session_id": "test-admin-2026-08-10",
+    "erro": "JSON Parse error: Unexpected end of JSON input",
+    "timestamp": "2026-08-10T23:37:31.740Z",
+    "classificacao": "❌ ERRO"
+  },
+  {
+    "tema": "obesidade",
+    "session_id": "test-obesity-2026-08-10",
+    "erro": "JSON Parse error: Unexpected end of JSON input",
+    "timestamp": "2026-08-10T23:37:31.740Z",
+    "classificacao": "❌ ERRO"
+  },
+  {
+    "tema": "depressao",
+    "session_id": "test-depression-2026-08-10",
+    "erro": "JSON Parse error: Unexpected end of JSON input",
+    "timestamp": "2026-08-10T23:37:31.740Z",
+    "classificacao": "❌ ERRO"
+  },
+  {
+    "tema": "sentimentos_adolescencia",
+    "session_id": "test-adolesc-2026-08-10",
+    "erro": "JSON Parse error: Unexpected end of JSON input",
+    "timestamp": "2026-08-10T23:37:31.740Z",
+    "classificacao": "❌ ERRO"
+  },
+  {
+    "tema": "educar_filhos",
+    "session_id": "test-educate-2026-08-10",
+    "erro": "JSON Parse error: Unexpected end of JSON input",
+    "timestamp": "2026-08-10T23:37:31.740Z",
+    "classificacao": "❌ ERRO"
+  }
+]

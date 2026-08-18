@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmação — Sessões Extras ZUNI Suprema</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0a0a0a;
+      color: #f0f0f0;
+      font-family: 'Georgia', serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 480px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo {
+      font-size: 13px;
+      letter-spacing: 4px;
+      color: #c9a84c;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    h1 {
+      font-size: 28px;
+      color: #ffffff;
+      margin-bottom: 8px;
+      font-weight: normal;
+    }
+    .subtitle {
+      font-size: 14px;
+      color: #888;
+      margin-bottom: 40px;
+      font-style: italic;
+    }
+    .card {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 40px 32px;
+      margin-bottom: 20px;
+    }
+    .success-icon {
+      font-size: 48px;
+      margin-bottom: 24px;
+      display: none;
+    }
+    .success-icon.show { display: block; }
+    .message {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #ccc;
+      margin-bottom: 24px;
+    }
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(201, 168, 76, 0.3);
+      border-radius: 50%;
+      border-top-color: #c9a84c;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .error {
+      color: #e74c3c;
+      font-size: 14px;
+      display: none;
+      margin-top: 20px;
+    }
+    .error.show { display: block; }
+    button {
+      width: 100%;
+      background: linear-gradient(135deg, #c9a84c, #e8c96a);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 8px;
+      padding: 14px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">ZUNI SUPREMA</div>
+
+    <!-- SUCESSO -->
+    <div id="success-container" style="display: none;">
+      <div class="card">
+        <div class="success-icon show">✨</div>
+        <h1>Pagamento Confirmado!</h1>
+        <p class="subtitle">Suas 3 sessões extras estão prontas</p>
+        <p class="message">
+          Você agora tem acesso a 3 sessões completas com o Mentor ZUNI Suprema, válidas por 30 dias.
+        </p>
+        <button onclick="irParaChat()">Iniciar Minha Primeira Sessão →</button>
+      </div>
+    </div>
+
+    <!-- PENDENTE / POLLING -->
+    <div id="pending-container" style="display: none;">
+      <div class="card">
+        <h1>Verificando Pagamento...</h1>
+        <p class="subtitle">Aguarde alguns momentos</p>
+        <p class="message">
+          <div class="loading-spinner"></div>
+          <br><br>
+          Estamos confirmando seu pagamento. Esta página atualizará automaticamente em breve.
+        </p>
+      </div>
+    </div>
+
+    <!-- ERRO -->
+    <div id="error-container" style="display: none;">
+      <div class="card">
+        <h1>⚠ Pagamento Não Confirmado</h1>
+        <p class="subtitle">Algo não deu certo</p>
+        <p class="message">
+          Não conseguimos confirmar seu pagamento. Verifique se os dados estão corretos e tente novamente.
+        </p>
+        <button onclick="window.location.href='/checkout'">← Voltar ao Checkout</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get('email');
+    const status = params.get('status');
+    const erro = params.get('erro');
+
+    // ────────────────────────────────────────────────────────────────
+    // FLUXO: erro
+    if (erro) {
+      document.getElementById('error-container').style.display = 'block';
+      document.title = 'Erro no Pagamento — ZUNI Suprema';
+    }
+    // FLUXO: status=aprovado → ir direto para chat
+    else if (status === 'aprovado' && email) {
+      irParaChat();
+    }
+    // FLUXO: status=pendente → polling até confirmação
+    else if (status === 'pendente' && email) {
+      document.getElementById('pending-container').style.display = 'block';
+      document.title = 'Aguardando Confirmação — ZUNI Suprema';
+
+      const MAX_TENTATIVAS = 40; // ~2 minutos com intervalo de 3s
+      let tentativas = 0;
+      const pollingInterval = setInterval(async () => {
+        tentativas++;
+        try {
+          const res = await fetch(`/api/sessoes-extras/status?email=${encodeURIComponent(email)}`);
+          const data = await res.json();
+
+          if (data.temCreditos) {
+            clearInterval(pollingInterval);
+            // Pagamento confirmado — ir para chat
+            document.getElementById('pending-container').style.display = 'none';
+            document.getElementById('success-container').style.display = 'block';
+            document.title = 'Pronto! — ZUNI Suprema';
+            return;
+          }
+        } catch (e) {
+          console.error('Erro ao verificar status:', e);
+        }
+
+        if (tentativas >= MAX_TENTATIVAS) {
+          clearInterval(pollingInterval);
+          document.getElementById('pending-container').style.display = 'none';
+          document.getElementById('error-container').style.display = 'block';
+          document.title = 'Pagamento Expirou — ZUNI Suprema';
+        }
+      }, 3000);
+    }
+    // FLUXO: parâmetros inválidos
+    else {
+      document.getElementById('error-container').style.display = 'block';
+      document.title = 'Erro — ZUNI Suprema';
+    }
+
+    async function irParaChat() {
+      if (!email) {
+        document.getElementById('error-container').style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/sessoes-extras/iniciar-sessao', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+
+        if (data.sessionId) {
+          // Ir para o questionário (apenas na 1ª sessão do pacote)
+          // O endpoint retorna pacoteId se o pacote ainda não teve questionário respondido
+          if (data.pacoteId) {
+            window.location.href = `/questionario/timidez_comunicacao?sessionId=${data.sessionId}&pacoteId=${data.pacoteId}`;
+          } else {
+            // Pacote já respondeu o questionário nas próximas sessões, vai direto ao chat
+            window.location.href = `/chat.html?sessionId=${data.sessionId}`;
+          }
+        } else {
+          document.getElementById('error-container').style.display = 'block';
+        }
+      } catch (e) {
+        console.error('Erro ao iniciar sessão:', e);
+        document.getElementById('error-container').style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

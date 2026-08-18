@@ -1,0 +1,122 @@
+=== TEMA: sentimentos_confusos ===
+
+{
+  "tema": "sentimentos_confusos",
+  "categoria": "mente_e_proposito",
+  "titulo": "Sentimentos Confusos",
+  "perguntas": [
+    {
+      "id": "q1",
+      "texto": "O que mais te incomoda hoje?",
+      "opcoes": [
+        "Sinto várias coisas ao mesmo tempo e não sei nomear",
+        "Mudanças bruscas de humor",
+        "Reações que eu mesmo(a) não entendo",
+        "Medo de estar 'exagerando' o que sinto",
+        "Outro"
+      ]
+    },
+    {
+      "id": "q2",
+      "texto": "Há quanto tempo isso te acompanha?",
+      "opcoes": [
+        "É recente",
+        "Já dura meses",
+        "Já dura mais de um ano",
+        "Sempre foi assim comigo"
+      ]
+    },
+    {
+      "id": "q3",
+      "texto": "Qual sentimento aparece com mais força ultimamente?",
+      "opcoes": [
+        "Ciúme",
+        "Medo",
+        "Tristeza",
+        "Uma mistura difícil de separar"
+      ]
+    },
+    {
+      "id": "q4",
+      "texto": "O que você já tentou para lidar com isso?",
+      "opcoes": [
+        "Nada ainda",
+        "Já tentei entender sozinho(a)",
+        "Já fiz terapia/acompanhamento antes",
+        "Evito pensar nisso"
+      ]
+    },
+    {
+      "id": "q5",
+      "texto": "O que você espera encontrar aqui hoje?",
+      "opcoes": [
+        "Colocar ordem no que sinto",
+        "Ferramentas práticas",
+        "Só desabafar e ser ouvido(a)",
+        "Ainda não sei, quero explorar"
+      ]
+    }
+  ]
+}
+
+
+=== TEMA: adolescencia_dos_filhos ===
+
+{
+  "tema": "adolescencia_dos_filhos",
+  "categoria": "familia",
+  "titulo": "Adolescência dos Filhos",
+  "perguntas": [
+    {
+      "id": "q1",
+      "texto": "O que mais pesa agora?",
+      "opcoes": [
+        "Não sei mais como me aproximar do meu filho(a)",
+        "Brigas frequentes em casa",
+        "Medo das escolhas que ele(a) está fazendo",
+        "Sinto que perdi a conexão que tínhamos",
+        "Outro"
+      ]
+    },
+    {
+      "id": "q2",
+      "texto": "Há quanto tempo isso acontece?",
+      "opcoes": [
+        "É recente",
+        "Já dura meses",
+        "Já dura mais de um ano",
+        "Piorou depois de algo específico"
+      ]
+    },
+    {
+      "id": "q3",
+      "texto": "O que você sente quando pensa nisso?",
+      "opcoes": [
+        "Preocupação",
+        "Tristeza",
+        "Impotência",
+        "Frustração"
+      ]
+    },
+    {
+      "id": "q4",
+      "texto": "O que você já tentou para lidar com isso?",
+      "opcoes": [
+        "Nada ainda",
+        "Já tentei conversar sozinho(a)",
+        "Já buscamos ajuda profissional",
+        "Evito o assunto em casa"
+      ]
+    },
+    {
+      "id": "q5",
+      "texto": "O que você espera encontrar aqui hoje?",
+      "opcoes": [
+        "Entender melhor essa fase",
+        "Ferramentas práticas",
+        "Só desabafar e ser ouvido(a)",
+        "Ainda não sei, quero explorar"
+      ]
+    }
+  ]
+}

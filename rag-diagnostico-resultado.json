@@ -1,0 +1,100 @@
+[
+  {
+    "tema": "timidez_comunicacao",
+    "chunks_esperados": 2,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  },
+  {
+    "tema": "namoro_conquista_romance",
+    "chunks_esperados": 52,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  },
+  {
+    "tema": "administracao_empresarial_inteligente",
+    "chunks_esperados": 40,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  },
+  {
+    "tema": "obesidade",
+    "chunks_esperados": 410,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  },
+  {
+    "tema": "depressao",
+    "chunks_esperados": 79,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  },
+  {
+    "tema": "sentimentos_adolescencia",
+    "chunks_esperados": 16,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  },
+  {
+    "tema": "educar_filhos",
+    "chunks_esperados": 14,
+    "chunks_confirmados": 0,
+    "log_rag_encontrado": false,
+    "resposta_recebida": false,
+    "resposta_preview": "",
+    "classificacao": "❌ NÃO TESTADO",
+    "observacoes": [
+      "API retornou status 404",
+      "Sessão não encontrada — pode estar com RLS ativo"
+    ],
+    "erro": "Status 404"
+  }
+]

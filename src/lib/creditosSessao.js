@@ -243,12 +243,36 @@ async function statusPacote(pacoteId) {
   };
 }
 
+/**
+ * Marca que um pacote já teve o questionário respondido (1x por pacote, não repetir nas sessões seguintes)
+ *
+ * @param {string} pacoteId
+ * @returns {Promise<boolean>} - true se marcado com sucesso
+ */
+async function marcarQuestionarioRespondido(pacoteId) {
+  const supabaseClient = assertSupabase();
+
+  const { error } = await supabaseClient
+    .from('creditos_sessao')
+    .update({ questionario_respondido: true })
+    .eq('pacote_id', pacoteId);
+
+  if (error) {
+    console.error('[CREDITOS] Erro ao marcar questionário respondido:', error.message);
+    return false;
+  }
+
+  console.log(`[CREDITOS] Questionário marcado como respondido: ${pacoteId}`);
+  return true;
+}
+
 module.exports = {
   criarPacoteSessoes,
   buscarPacoteAtivo,
   consumirCredito: consumirCreditoSimples,
   buscarResumosDoPacko,
   statusPacote,
+  marcarQuestionarioRespondido,
   PREÇO_PACOTE,
   SESSOES_POR_PACOTE,
   DIAS_VALIDADE

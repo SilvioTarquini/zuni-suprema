@@ -1,12 +1,11 @@
 /**
  * Leitor de Voz com Web Speech API
- * Lê capítulos/seções de livros em voz alta usando síntese nativa do navegador
- * Sem custos, sem API keys, funciona offline
+ * Lê textos em voz alta usando síntese nativa do navegador
+ * Suporta: seções de livro (modo legacy), texto livre, ou arquivo remoto
  */
 
 class LeitorDeVoz {
-  constructor() {
-    // Verificar suporte
+  constructor(opcoes = {}) {
     const synth = window.speechSynthesis;
     const SpeechSynthesisUtterance = window.SpeechSynthesisUtterance || window.webkitSpeechSynthesisUtterance;
 
@@ -18,29 +17,43 @@ class LeitorDeVoz {
     this.emFala = false;
     this.pausado = false;
     this.botaoAtivo = null;
+
+    // Parâmetros opcionais
+    this.textoFonte = opcoes.textoFonte || null;
+    this.container = opcoes.container || null;
+    this.onIniciar = opcoes.onIniciar || null;
+    this.onFinalizar = opcoes.onFinalizar || null;
   }
 
-  inicializar() {
+  async inicializar() {
     if (!this.suportado) {
       console.log('Web Speech API não suportada neste navegador');
       return;
     }
 
-    // Encontrar todos os h2 e h3 no conteúdo do livro
+    // Modo 1: Inicializar com seções de heading (compatibilidade com modo antigo)
     const conteudo = document.querySelector('.conteudo-livro');
-    if (!conteudo) return;
+    if (conteudo) {
+      this._inicializarComSecoes(conteudo);
+      return;
+    }
 
+    // Modo 2: Se textoFonte foi fornecido, buscar e inicializar
+    if (this.textoFonte) {
+      await this._buscarEInicializar();
+    }
+  }
+
+  _inicializarComSecoes(conteudo) {
     const secoes = conteudo.querySelectorAll('h2, h3');
 
     secoes.forEach((secao, index) => {
-      // Criar wrapper com o botão
       const wrapper = document.createElement('div');
       wrapper.style.display = 'flex';
       wrapper.style.alignItems = 'center';
       wrapper.style.gap = '12px';
       wrapper.style.marginBottom = '12px';
 
-      // Botão de ouvir
       const botao = document.createElement('button');
       botao.className = 'btn-ouvir-capitulo';
       botao.innerHTML = '🔊 Ouvir';
@@ -77,74 +90,84 @@ class LeitorDeVoz {
         this.toggleLeitura(secao, botao, index);
       });
 
-      // Inserir antes do h2/h3
       secao.parentNode.insertBefore(wrapper, secao);
       wrapper.appendChild(botao);
       wrapper.appendChild(secao);
     });
 
-    console.log('✅ Leitor de voz inicializado');
+    console.log('✅ Leitor de voz inicializado (modo seções)');
+  }
+
+  async _buscarEInicializar() {
+    try {
+      const res = await fetch(this.textoFonte);
+      if (!res.ok) throw new Error(`Erro ao buscar texto: ${res.status}`);
+      const texto = await res.text();
+      this.texto = texto;
+      console.log('✅ Texto carregado para leitura em voz alta');
+    } catch (err) {
+      console.error('Erro ao buscar texto para leitura:', err);
+    }
   }
 
   extrairTextoSecao(elemento) {
-    // Encontrar o próximo h2/h3 ou fim do conteúdo
     let conteudo = '';
     let node = elemento.nextSibling;
     const nivelAtual = parseInt(elemento.tagName[1]);
 
     while (node) {
-      // Se encontrar outro heading do mesmo nível ou maior, parar
-      if (node.nodeType === 1) { // Element node
+      if (node.nodeType === 1) {
         const tagName = node.tagName;
         if ((tagName === 'H2' || tagName === 'H3') && node !== elemento) {
           const nivelProximo = parseInt(tagName[1]);
           if (nivelProximo <= nivelAtual) break;
         }
 
-        // Incluir texto do elemento
         if (tagName.match(/^H[2-3]$/)) {
-          // Pular se for heading (já extraído)
           node = node.nextSibling;
           continue;
         }
 
-        if (node.textContent && node.offsetParent !== null) { // Visible element
+        if (node.textContent && node.offsetParent !== null) {
           conteudo += node.textContent.trim() + ' ';
         }
       }
       node = node.nextSibling;
     }
 
-    // Incluir o título do elemento
     const titulo = elemento.textContent.trim();
     return `${titulo}. ${conteudo.trim()}`;
   }
 
   toggleLeitura(elemento, botao, index) {
-    // Se já está falando
     if (this.emFala) {
       if (this.botaoAtivo === botao) {
-        // Mesmo botão: alternar pause/resume
         if (this.pausado) {
           this.resumir(botao);
         } else {
           this.pausar(botao);
         }
       } else {
-        // Botão diferente: parar e começar novo
         this.parar();
         this.iniciarLeitura(elemento, botao);
       }
     } else {
-      // Não está falando: começar
       this.iniciarLeitura(elemento, botao);
     }
   }
 
-  iniciarLeitura(elemento, botao) {
-    const texto = this.extrairTextoSecao(elemento);
+  iniciarLeitura(elementoOuTexto, botao = null) {
+    let texto;
 
-    if (!texto.trim()) {
+    // Se recebeu um elemento, extrair o texto da seção
+    if (elementoOuTexto instanceof HTMLElement) {
+      texto = this.extrairTextoSecao(elementoOuTexto);
+    } else {
+      // Caso contrário, tratá-lo como texto puro
+      texto = elementoOuTexto;
+    }
+
+    if (!texto || !texto.trim()) {
       console.log('Nenhum texto para ler');
       return;
     }
@@ -153,33 +176,34 @@ class LeitorDeVoz {
     this.emFala = true;
     this.pausado = false;
 
-    // Atualizar botão
-    botao.innerHTML = '⏸ Pausar';
-    botao.style.background = 'var(--dourado)';
-    botao.style.color = '#0f0f0f';
+    if (botao) {
+      botao.innerHTML = '⏸ Pausar';
+      botao.style.background = 'var(--dourado)';
+      botao.style.color = '#0f0f0f';
+    }
 
-    // Criar utterance
     this.utterance = new this.SpeechSynthesisUtterance(texto);
     this.utterance.lang = 'pt-BR';
     this.utterance.rate = 1.0;
     this.utterance.pitch = 1.0;
     this.utterance.volume = 1.0;
 
-    // Encontrar voz em português
     const vozes = this.speechSynthesis.getVoices();
-    const vozPt = voizes.find(v => v.lang.startsWith('pt'));
+    const vozPt = vozes.find(v => v.lang.startsWith('pt'));
     if (vozPt) {
       this.utterance.voice = vozPt;
     }
 
-    // Callbacks
     this.utterance.onend = () => {
       this.emFala = false;
       this.pausado = false;
-      botao.innerHTML = '🔊 Ouvir';
-      botao.style.background = 'rgba(184, 150, 62, 0.2)';
-      botao.style.color = 'var(--dourado-suave)';
+      if (botao) {
+        botao.innerHTML = '🔊 Ouvir';
+        botao.style.background = 'rgba(184, 150, 62, 0.2)';
+        botao.style.color = 'var(--dourado-suave)';
+      }
       this.botaoAtivo = null;
+      if (this.onFinalizar) this.onFinalizar();
     };
 
     this.utterance.onerror = (e) => {
@@ -187,25 +211,23 @@ class LeitorDeVoz {
       this.parar();
     };
 
-    // Iniciar síntese
-    this.speechSynthesis.cancel(); // Cancelar qualquer fala anterior
+    this.speechSynthesis.cancel();
     this.speechSynthesis.speak(this.utterance);
+    if (this.onIniciar) this.onIniciar();
   }
 
-  pausar(botao) {
+  pausar(botao = null) {
     if (!this.emFala) return;
-
     this.speechSynthesis.pause();
     this.pausado = true;
-    botao.innerHTML = '▶ Retomar';
+    if (botao) botao.innerHTML = '▶ Retomar';
   }
 
-  resumir(botao) {
+  resumir(botao = null) {
     if (!this.emFala) return;
-
     this.speechSynthesis.resume();
     this.pausado = false;
-    botao.innerHTML = '⏸ Pausar';
+    if (botao) botao.innerHTML = '⏸ Pausar';
   }
 
   parar() {
@@ -214,11 +236,18 @@ class LeitorDeVoz {
       this.botaoAtivo.style.background = 'rgba(184, 150, 62, 0.2)';
       this.botaoAtivo.style.color = 'var(--dourado-suave)';
     }
-
     this.speechSynthesis.cancel();
     this.emFala = false;
     this.pausado = false;
     this.botaoAtivo = null;
+  }
+
+  estaFalando() {
+    return this.emFala;
+  }
+
+  estaPausado() {
+    return this.pausado;
   }
 }
 
@@ -227,7 +256,7 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     const leitor = new LeitorDeVoz();
     leitor.inicializar();
-    window.leitorDeVoz = leitor; // Expor globalmente para debug
+    window.leitorDeVoz = leitor;
   });
 } else {
   const leitor = new LeitorDeVoz();

@@ -1,0 +1,37 @@
+[
+  {
+    "tema": "timidez_comunicacao",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  },
+  {
+    "tema": "namoro_conquista_romance",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  },
+  {
+    "tema": "administracao_empresarial_inteligente",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  },
+  {
+    "tema": "obesidade",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  },
+  {
+    "tema": "depressao",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  },
+  {
+    "tema": "sentimentos_adolescencia",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  },
+  {
+    "tema": "educar_filhos",
+    "status": "❌ ERRO_SESSAO",
+    "erro": "Invalid API key"
+  }
+]
