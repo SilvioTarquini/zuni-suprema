@@ -306,6 +306,16 @@ const CATALOGO = {
     resumo: 'O método dos 90 segundos — como criar espaço interno antes de reagir, com protocolos para 12 situações do dia a dia.',
     descricao: 'A vida moderna exige respostas rápidas, mas raramente ensina a criar espaço interno antes de reagir. Este método é construído em torno do intervalo de 90 segundos — tempo suficiente para impedir que um momento de desorganização escreva sozinho o próximo capítulo. Inclui protocolos para pânico, raiva, conflitos e situações reais.'
   },
+  'consequencias-edicao-essencial': {
+    titulo: 'CONSEQUÊNCIAS — Edição Essencial',
+    subtitulo: 'Causa, Efeito e Escolhas de Vida',
+    preco: 37.90,
+    categoria: 'principal',
+    departamento: 'Saúde Integrativa',
+    capa: '/loja/capas/consequencias-edicao-essencial.jpg',
+    resumo: 'Uma exploração profunda sobre como nossas escolhas geram consequências — e como compreender esse ciclo transforma a liberdade pessoal.',
+    descricao: 'Este livro mergulha na relação fundamental entre causa, efeito e escolha. Cada decisão que tomamos dispara uma cadeia de consequências, muitas delas invisíveis no momento. Compreender essa teia de causalidade é essencial para navegar a vida com responsabilidade genuína e liberdade de escolha verdadeira. Uma jornada pela inteligência das consequências e o poder transformador da compreensão.'
+  },
   'alem-do-que-voce-ve': {
     titulo: 'Além do Que Você Vê',
     precoOriginal: 77.90,
