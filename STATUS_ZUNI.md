@@ -50,23 +50,23 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
    - Integração: gerarAudioComAPI() já aceita parâmetro `voz`
    - Validação: ✅ Teste com Wavenet-B (39s) aprovado auditivamente
 
-**Versão Definitiva de Produção — Vol. I:**
-- ✅ Regenerado com todas as correções (sanitização + normalização + duração real via ffprobe)
-- Arquivo: `os-bastidores-vol1/os-bastidores-vol1.mp3`
-- URL Pública: `https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3`
-- Tamanho: 6.47 MB
-- Duração: 28m16s (duração real via ffprobe)
+**Versão Definitiva de Produção — Vol. I (PENDENTE PRÓXIMA SESSÃO):**
+- ⏳ Será gerado com todas as correções (sanitização + normalização + duração real via ffprobe)
+- Nome arquivo: `os-bastidores-vol1/os-bastidores-vol1.mp3` (definitivo, sem "-teste")
+- Tamanho estimado: ~6.5 MB
+- Duração estimada: ~28m (via ffprobe)
 - Chunks: 6 (4.3–4.7 KB SSML cada)
-- Tempo processamento: 98.9s (16.5s por chunk)
-- Corrido do catálogo: `audiobookUrl` atualizada, `audiobookDisponivel: true` ✅
+- Tempo processamento: ~100s (16.5s por chunk)
+- Catálogo: `audiobookDisponivel` permanece `false` até geração definitiva ✅
+- Ação pós-geração: Atualizar `audiobookUrl` e marcar `audiobookDisponivel: true`
 
-**Limpeza de Bucket:**
-- ✅ Apagados 4 arquivos de teste do Supabase Storage:
-  - os-bastidores-vol1-teste (versão anterior)
+**Limpeza de Bucket (PENDENTE PRÓXIMA SESSÃO):**
+- ⏳ Remover 4 arquivos de teste do Supabase Storage:
+  - os-bastidores-vol1-teste (versão de teste, se ainda existir)
   - identidade-autoestima-teste (teste piloto)
   - teste-normalizacao-maiusculas (teste de validação)
   - teste-voz-masculina (teste de validação)
-- Resultado: Bucket limpo, apenas arquivo de produção permanece
+- Script preparado: `scripts/limpar-testes-supabase.js` ✅
 
 **Resumo de Testes Realizados (nesta sessão):**
 | Teste | Entrada | Saída | Duração | Status |
@@ -104,13 +104,18 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 - Escalabilidade: Testada de 3.7 KB a 24.5 KB
 - Qualidade: ✅ Aprovada auditivamente (maiúsculas, voz, pausas naturais)
 
-**Próxima Fase (Não iniciada nesta sessão):**
-- Fase 2: Entrega via token HMAC no checkout
-  - Rota de acesso protegida por token
-  - E-mail/WhatsApp com link de download
-  - Teste end-to-end de pagamento real
+**Pendências para Próxima Sessão:**
+1. ✅ Gerar versão DEFINITIVA de produção do Vol. I (slug: `os-bastidores-vol1`)
+2. ✅ Atualizar catalogoLivros.js: `audiobookUrl` + `audiobookDisponivel: true`
+3. ✅ Limpar bucket: rodar `scripts/limpar-testes-supabase.js` para remover 4 arquivos de teste
+4. ⏳ **Fase 2 (Ainda não iniciada)**: Entrega via token HMAC no checkout
+   - Rota de acesso protegida por token (similar ao PDF dos flipbooks)
+   - E-mail/WhatsApp com link de download
+   - Teste end-to-end de pagamento real
 
-**Commit**: Pendente — com atualizações finais de produção
+**Status Vol. I Atualmente:**
+- `audiobookDisponivel: false` (aguardando geração definitiva) ✅
+- Arquivo de teste ainda em Supabase (será limpo na próxima sessão)
 
 ---
 
