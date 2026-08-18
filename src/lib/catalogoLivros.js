@@ -8,6 +8,21 @@
 // O preço fica só aqui — o checkout nunca aceita preço vindo do cliente,
 // exatamente para impedir que alguém manipule o valor pago.
 
+const MAPEAMENTO_VOZ_POR_DEPARTAMENTO = {
+  'Universo Masculino': 'pt-BR-Wavenet-B',
+  'Universo Feminino': 'pt-BR-Wavenet-A',
+  'Desenvolvimento Humano': 'pt-BR-Wavenet-A',
+  'Desenvolvimento & Comportamento': 'pt-BR-Wavenet-A',
+  'Saúde & Longevidade': 'pt-BR-Wavenet-A',
+  'Saúde Integrativa': 'pt-BR-Wavenet-A',
+  'Executive': 'pt-BR-Wavenet-A',
+  'Negócios & Tecnologia': 'pt-BR-Wavenet-A',
+};
+
+function obterVozPadraoParaDepartamento(departamento) {
+  return MAPEAMENTO_VOZ_POR_DEPARTAMENTO[departamento] || 'pt-BR-Wavenet-A';
+}
+
 const CATALOGO = {
   'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal': {
     titulo: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal',
@@ -18,7 +33,7 @@ const CATALOGO = {
     descricao: 'Neste volume inaugural, explore a arquitetura profunda dos sentimentos e emoções que governam nosso comportamento. Entenda como as reações instintivas moldam nossas vidas, quais são as forças que operam por trás dos bastidores da mente, e como reconhecê-las é o primeiro passo para a verdadeira liberdade de escolha.',
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1-teste/os-bastidores-vol1-teste.mp3',
-    audiobookDisponivel: true
+    audiobookDisponivel: false
   },
   'os-bastidores-da-mente-2-o-antidoto': {
     titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
@@ -380,4 +395,4 @@ function buscarLivro(livroId) {
   return CATALOGO[livroId] || null;
 }
 
-module.exports = { CATALOGO, buscarLivro };
+module.exports = { CATALOGO, buscarLivro, obterVozPadraoParaDepartamento };

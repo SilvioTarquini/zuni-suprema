@@ -87,6 +87,12 @@ async function dividirEmChunks(texto, bytesMax = 5000) {
   return chunks;
 }
 
+function normalizarMaiusculas(texto) {
+  return texto.replace(/\b([A-ZÁÉÍÓÚÇÃÕ]{2,})\b/g, (match) => {
+    return match.charAt(0) + match.slice(1).toLowerCase();
+  });
+}
+
 function sanitizarTexto(texto) {
   return texto
     .replace(/([^\w\s])\1{2,}/g, '<break time="500ms"/>')
@@ -94,7 +100,8 @@ function sanitizarTexto(texto) {
 }
 
 function gerarSSML(texto) {
-  const textoSanitizado = sanitizarTexto(texto);
+  const textoNormalizado = normalizarMaiusculas(texto);
+  const textoSanitizado = sanitizarTexto(textoNormalizado);
   let ssml = '<speak>' + textoSanitizado + '</speak>';
   return ssml;
 }
