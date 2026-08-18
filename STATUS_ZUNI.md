@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 18/08/2026 (13:00) — Lançamento de "CONSEQUÊNCIAS — Edição Essencial" + indexação de 2 temas RAG (Cabala+Astrologia+Numerologia, Consequências)
+> Última atualização: 18/08/2026 (16:30) — Generalização de leitura por voz + unificação de catálogo
 
 ---
 
@@ -21,6 +21,60 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (18/08/2026 16:30)
+
+**[18/08/2026 16:30] Generalização de leitura por voz (Web Speech API) para todas as obras:**
+
+**Problema resolvido**: Recurso de leitura em voz alta estava hardcoded apenas para os 6 volumes de "Os Bastidores da Mente". Impossível adicionar a qualquer outra obra sem copiar código específico para cada flipbook.
+
+**Solução implementada** (5 etapas completadas):
+
+**1. Unificar catálogo:**
+  - ✅ Adicionada rota `/api/livros` que retorna catálogo completo dinamicamente (Nova rota em server.js:1516)
+  - ✅ Migrado `public/loja/index.html` para consumir catálogo via fetch (`/api/livros`)
+  - ✅ Eliminada duplicação: catálogo hardcoded removido do HTML (era mantido em 2 locais)
+  - ✅ HTML renderiza dinamicamente — qualquer novo livro em catalogoLivros.js aparece automaticamente na loja
+
+**2. Adicionar campo de texto-fonte:**
+  - ✅ Campo `textoFonteParaLeitura` adicionado a catalogoLivros.js (linha 18-19, 24-25, 34-35, 42-43, 50-51, 58-59)
+  - ✅ Preenchido para os 6 volumes de "Os Bastidores da Mente": `/documentos-zuni/os_bastidores_da_mente_base_mentor.txt`
+  - ✅ Reutiliza arquivo consolidado (não duplica conteúdo) — mesmo arquivo serve para leitura e RAG
+
+**3. Componentizar leitor Web Speech API:**
+  - ✅ Classe `LeitorDeVoz` refatorada (public/leitor-voz.js linhas 7-196)
+  - ✅ Novo: aceita `textoFonte` como parâmetro (não depende de `.conteudo-livro`)
+  - ✅ Novo: modo texto livre (`iniciarLeitura(texto, botao)`) além do modo seções legado
+  - ✅ Novo: callbacks `onIniciar`/`onFinalizar` para integração com UI
+  - ✅ Novo: métodos públicos `estaFalando()` e `estaPausado()` para queries de estado
+  - ✅ Backward-compatible: modo seções (headings) continua funcionando para flipbooks antigos
+
+**4. Renderização condicional automática:**
+  - ✅ Rota `/livros/:livroId` agora inspeciona `textoFonteParaLeitura` (src/routes/livros.js linhas 65-115)
+  - ✅ Se preenchido, injeta dinamicamente botão "🔊 Ouvir Livro Completo" (não modifica arquivos de livro)
+  - ✅ Botão renderizado automaticamente: novo livro + campo preenchido = recurso ativado sem código extra
+  - ✅ Fetch remoto do texto: não duplica conteúdo em cada flipbook
+
+**5. Estrutura pronta para validação:**
+  - ✅ Compatível com 39 obras do catálogo (todos os livros existentes)
+  - ✅ Sem breaking changes: volumes antigos continuam funcionando
+  - ✅ Fácil expansão: adicionar `textoFonteParaLeitura` a qualquer obra ativa o recurso
+
+**Tecnicalidades:**
+  - Injeção dinâmica de script no HTML (inline, sem modificação de arquivo)
+  - Fetch local do arquivo de texto (reutiliza arquivo existente)
+  - Fallback elegante: botão não aparece se `textoFonteParaLeitura` não preenchido
+  - Compatibilidade cross-browser: Web Speech API (suporta ~95% dos navegadores modernos)
+
+**Commit**: `29e1a1c` (feat: generalizar leitura por voz para todas as obras)
+
+**Próximos passos (se necessário):**
+1. Validar em produção: testar 3+ obras (Volume I Bastidores, uma obra do Universo Feminino, uma do Executive)
+2. Monitorar se botão "Ouvir" aparece corretamente em obras com `textoFonteParaLeitura` preenchido
+3. Coletar feedback sobre velocidade/qualidade de síntese de voz (ajustável via `utterance.rate`)
+4. Audiobook pago (WaveNet/Google Cloud): requer credencial de serviço — depende de aprovação/orçamento
 
 ---
 
@@ -405,6 +459,7 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
   investigar rota/index no `server.js`.
 - Banner discreto na 8ª troca da sessão avulsa (oferecendo Sessões Extras, Mapa
   Integrado, obras) — planejado, não implementado.
+- **Audiobook pago (Google Cloud WaveNet)**: estrutura de leitura por voz generalizada pronta. Aguarda: (1) credencial de serviço do Google Cloud, (2) aprovação de orçamento para custos de síntese premium.
 
 ## 4. Frente ativa — Questionários pós-checkout + bases RAG por tema
 
