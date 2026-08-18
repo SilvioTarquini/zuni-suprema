@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 17/08/2026 (14:30) — Integração de 5 novas obras (Desenvolvimento & Comportamento + novo departamento Negócios & Tecnologia) + indexação de tema RAG "compreensao_da_vida"
+> Última atualização: 18/08/2026 (13:00) — Lançamento de "CONSEQUÊNCIAS — Edição Essencial" + indexação de 2 temas RAG (Cabala+Astrologia+Numerologia, Consequências)
 
 ---
 
@@ -21,6 +21,64 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. Lançamentos Recentes (18/08/2026 13:00)
+
+**[18/08/2026 13:00] Livro "CONSEQUÊNCIAS — Edição Essencial" publicado + 2 temas RAG indexados:**
+
+**1 Nova Obra publicada na loja:**
+- **Consequências — Edição Essencial** — R$37,90 | `consequencias-edicao-essencial` | Saúde Integrativa | ✅ Ativa
+  - Capa: JPEG comprimida (120 KB, padrão consolidado)
+  - Flipbook: HTML self-contained (1.5 MB, pronto para acesso pós-pagamento)
+  - Sinopse: Reescrita com base em arquivo .md real da obra (não genérica)
+    - Resumo: "O intervalo entre a decisão de hoje e a consequência de amanhã — como reconhecer, a tempo, os pontos onde ainda é possível interromper a cascata que silenciosamente constrói a trajetória."
+    - Descrição: Cobre 40 capítulos em 5 partes sobre hábitos, preço adiado, compensação do corpo e oportunidades de mudança.
+  - Departamento: Saúde Integrativa (consolidado com outras 7 obras do departamento)
+  - Status: ✅ 100% operacional — API, loja, catálogo e flipbook testados
+
+- **Implementação técnica**:
+  - Triagem do arquivo .md completada (sem resíduos de conversa com IA detectados)
+  - Sinopse & descrição extraídas do conteúdo real (2-3 frases de gancho + parágrafo completo)
+  - Entrada adicionada a `catalogoLivros.js` (slug, preço, departamento, capa, sinopse, descrição)
+  - Catálogo duplicado em `public/loja/index.html` atualizado (sincronização manual)
+  - Array `novasObras` atualizado para destaque (resolução automática de .jpg)
+  - Deploy validado: API retorna metadados corretos, loja renderiza obra corretamente
+  - Commit: `d455e95` (docs: reescrever sinopse e descrição com base em conteúdo real)
+
+**2 Novos temas RAG indexados:**
+
+| Tema | Chunks | Blocos | Validação | Status |
+|---|---|---|---|---|
+| `cabala_astrologia_numerologia_integrativa` | 25 | 25 temas estruturados | ✅ Contagem real: 25 chunks, IDs verificados | 🟢 Ativo |
+| `consequencias_causa_efeito` | 12 | 5 blocos + 7 sub-chunks | ✅ Contagem real: 12 chunks, sem duplicação | 🟢 Ativo |
+
+- **Detalhes da indexação**:
+  - **cabala_astrologia_numerologia_integrativa** (71 KB, ~8000 palavras):
+    - Cobertura: 18 temas principais incluindo Sephiroth, Pilares, Mundos, Caminhos, Números 1-9, Números Mestres, Signos, Planetas, Casas, Aspectos, Temperamentos, Psicologia Profunda, Ética Interpretativa
+    - Sub-chunking: Não necessário (blocos bem dimensionados)
+    - Triagem: ✅ Sem resíduos de IA, totalmente coerente
+    - Verificação pós-indexação: ✅ SELECT confirmou 25 registros em Supabase, IDs únicos, títulos corretos
+
+  - **consequencias_causa_efeito** (174 KB, ~20000 palavras):
+    - Cobertura: Parte I (6 capítulos sobre acúmulo, preço adiado, normalização) + Parte II (11+ capítulos sobre hábitos: sedentarismo, alimentação, água, sono, estresse, tabaco, álcool, drogas, automedicação, prazer/compulsão)
+    - Sub-chunking: ✅ 7 sub-chunks automáticos gerados (blocos >2500 palavras divididos por frase)
+    - Triagem: ✅ Sem resíduos de IA, texto didático e coerente
+    - Verificação pós-indexação: ✅ SELECT confirmou 12 registros em Supabase, distribuição de partes verificada (Parte I: 2 chunks, Parte II: 10 chunks)
+
+- **Proteção contra duplicação verificada**:
+  - ✅ Código de indexarTema.js contém `delete().eq('tema', tema)` ANTES de INSERT (linha 243)
+  - ✅ Teste: Ambos temas indexados 1x, contagem final exata (não duplicada)
+  - ⚠️ **Débito técnico identificado**: Sem aviso/confirmação antes de sobrescrever um tema já existente
+    - Risco: Baixo (delete é silencioso, mas seguro)
+    - Opção A (recomendada): Adicionar warning antes de sobrescrever (5 linhas de código)
+    - Opção B: Flag `--force` explícita (mais seguro, mais verboso)
+    - **Decisão**: Registrado como débito técnico baixo — considerar proteção em refactor futuro
+
+- **Total novo RAG**: 37 chunks adicionados (25 + 12)
+- **Status final**: ✅ 100% OPERACIONAL — ambos temas disponíveis para busca híbrida do Mentor
+- **Commit**: `2c49010` (docs: indexar dois novos temas na base RAG do Mentor ZUNI)
 
 ---
 
