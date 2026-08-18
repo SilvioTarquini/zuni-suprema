@@ -10,8 +10,8 @@ const http = require('http');
 const { v4: uuidv4 } = require('uuid');
 
 // Configuração
-const SUPABASE_URL = process.env.SUPABASE_URL || 'https://yirxjunmjfnajotcnywc.supabase.co';
-const SUPABASE_KEY = process.env.SUPABASE_KEY || 'sb_secret_ccnCiDVYGzdcOc0hPH0ycw_Xkz7tknX';
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_KEY;
 const API_URL = 'http://localhost:3000';
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
