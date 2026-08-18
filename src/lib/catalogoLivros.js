@@ -313,8 +313,8 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Saúde Integrativa',
     capa: '/loja/capas/consequencias-edicao-essencial.jpg',
-    resumo: 'Uma exploração profunda sobre como nossas escolhas geram consequências — e como compreender esse ciclo transforma a liberdade pessoal.',
-    descricao: 'Este livro mergulha na relação fundamental entre causa, efeito e escolha. Cada decisão que tomamos dispara uma cadeia de consequências, muitas delas invisíveis no momento. Compreender essa teia de causalidade é essencial para navegar a vida com responsabilidade genuína e liberdade de escolha verdadeira. Uma jornada pela inteligência das consequências e o poder transformador da compreensão.'
+    resumo: 'O intervalo entre a decisão de hoje e a consequência de amanhã — como reconhecer, a tempo, os pontos onde ainda é possível interromper a cascata que silenciosamente constrói a trajetória.',
+    descricao: 'Poucas pessoas decidem conscientemente prejudicar a própria saúde — as trajetórias desfavoráveis começam de forma muito menos dramática: permanecer sentado porque é confortável, repetir alimentação pobre porque é prática, dormir menos porque sempre existe algo para terminar. Este livro percorre os 40 capítulos que conectam esses pequenos hábitos (sedentarismo, alimentação, sono, estresse, tabaco, álcool) ao momento em que o corpo começa a cobrar. Não é uma obra de proibições, mas sobre reconhecer os pontos de interrupção da cascata — antes que a próxima consequência se instale e transforme hábitos em limitações reais.'
   },
   'alem-do-que-voce-ve': {
     titulo: 'Além do Que Você Vê',
