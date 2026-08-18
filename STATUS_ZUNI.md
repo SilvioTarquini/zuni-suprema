@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 18/08/2026 (16:30) — Generalização de leitura por voz + unificação de catálogo
+> Última atualização: 18/08/2026 (17:30) — Generalização de leitura por voz CONCLUÍDA + push para produção + segurança (chaves rotacionadas)
 
 ---
 
@@ -24,7 +24,40 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 
 ---
 
-## 2. Lançamentos Recentes (18/08/2026 16:30)
+## 2. Lançamentos Recentes (18/08/2026 17:30)
+
+**[18/08/2026 17:30] ✅ CONCLUSÃO — Generalização de leitura por voz + Push para Produção + Segurança:**
+
+**Status Final**: 🟢 100% OPERACIONAL EM PRODUÇÃO
+
+**O que foi concluído nesta sessão:**
+
+**Tarefa Principal — Generalizar Leitura por Voz:**
+- ✅ 5 passos implementados e validados (unificar catálogo, campo de texto-fonte, componentizar leitor, renderização condicional, validações)
+- ✅ 4 validações técnicas realizadas (catálogo, arquivo, injeção, componente)
+- ✅ Estrutura pronta para expandir a qualquer obra via `textoFonteParaLeitura`
+- ✅ Compatível com 39 obras do catálogo, sem breaking changes
+
+**Push para Produção:**
+- ✅ 4 commits enviados com sucesso para GitHub (e532d98, 414fad0, 64b1257, 06f7582)
+- ✅ GitHub secret-scanning desbloqueado
+- ✅ Secrets hardcoded removidos do histórico
+
+**Segurança e Credenciais:**
+- ✅ SUPABASE_KEY rotacionada (chave ANTIGA: `sb_secret_ccnCiDVYGz...`, chave NOVA: `sb_secret_3XyWR4g5L...`)
+- ✅ .env local atualizado com chave NOVA
+- ✅ Railway sincronizado com chave NOVA
+- ✅ Conexão Supabase testada e validada com chave NOVA
+- ✅ Chave ANTIGA removida de todos os arquivos de código
+- ✅ .env protegido no .gitignore
+
+**Resultado**:
+- 🟢 Código em produção
+- 🟢 Credenciais seguras (chave NOVA + antiga rotacionada)
+- 🟢 Railway sincronizado
+- 🟢 Próximo deploy levará recurso automaticamente para produção
+
+---
 
 **[18/08/2026 16:30] Generalização de leitura por voz (Web Speech API) para todas as obras:**
 
