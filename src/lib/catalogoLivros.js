@@ -128,7 +128,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um mergulho no que o corpo tenta comunicar através de inchaço, celulite e cansaço — e os caminhos reais (alimentação, intestino, movimento, descanso) para restaurar o equilíbrio metabólico.',
-    descricao: 'Por trás do inchaço abdominal, da celulite que resiste mesmo em corpos magros e do cansaço que o sono não resolve, existe quase sempre a mesma origem silenciosa: a inflamação de baixo grau. "A Inteligência do Corpo Feminino" decifra esse processo capítulo a capítulo — intestino, fígado, sistema linfático, pele — sempre trocando a lógica da culpa ("falta de disciplina") pela lógica da escuta do corpo. Traz ainda anexos práticos de consulta rápida: checklist diário de rotina e a Escala de Bristol para observar a própria saúde intestinal sem constrangimento. Um livro que ensina a interpretar sinais, não a se punir por eles.'
+    descricao: 'Por trás do inchaço abdominal, da celulite que resiste mesmo em corpos magros e do cansaço que o sono não resolve, existe quase sempre a mesma origem silenciosa: a inflamação de baixo grau. "A Inteligência do Corpo Feminino" decifra esse processo capítulo a capítulo — intestino, fígado, sistema linfático, pele — sempre trocando a lógica da culpa ("falta de disciplina") pela lógica da escuta do corpo. Traz ainda anexos práticos de consulta rápida: checklist diário de rotina e a Escala de Bristol para observar a própria saúde intestinal sem constrangimento. Um livro que ensina a interpretar sinais, não a se punir por eles.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/inteligencia-corpo-feminino/inteligencia-corpo-feminino.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 14.90
   },
   'inesquecivel-charme-feminino': {
     titulo: 'Inesquecível',
@@ -136,7 +139,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Como criar conexões memoráveis e saudáveis sem perder autenticidade — charme feminino construído sobre autoestima, presença e inteligência emocional, não sobre estratégia ou performance.',
-    descricao: '"Inesquecível" parte de uma constatação simples: o magnetismo verdadeiro nunca nasce de competição — nasce de verdade. Ao longo de cinco partes (o verdadeiro charme feminino, presença e comunicação, maturidade afetiva, feminilidade e relacionamentos saudáveis, e um bloco final de perguntas para o autoconhecimento), a obra guia a leitora por uma jornada que começa na autoestima e termina na capacidade de se conectar com leveza e valor próprio. É o volume mais extenso e estruturado do lote — uma edição cuidadosamente diagramada, pensada para ser lida como uma experiência completa, não apenas consultada por partes.'
+    descricao: '"Inesquecível" parte de uma constatação simples: o magnetismo verdadeiro nunca nasce de competição — nasce de verdade. Ao longo de cinco partes (o verdadeiro charme feminino, presença e comunicação, maturidade afetiva, feminilidade e relacionamentos saudáveis, e um bloco final de perguntas para o autoconhecimento), a obra guia a leitora por uma jornada que começa na autoestima e termina na capacidade de se conectar com leveza e valor próprio. É o volume mais extenso e estruturado do lote — uma edição cuidadosamente diagramada, pensada para ser lida como uma experiência completa, não apenas consultada por partes.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/inesquecivel/inesquecivel.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 14.90
   },
   'a-mulher-que-permanece-inteira': {
     titulo: 'A Mulher que Permanece Inteira',
