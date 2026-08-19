@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 18/08/2026 (22:15) — Pipeline de audiolivros VALIDADO e PRONTO PARA PRODUÇÃO (Fase 1 concluída)
+> Última atualização: 19/08/2026 (00:50) — Vol. I corrigido (manuscrito completo) e reativado para venda; pipeline de pausas SSML consolidado. Falta apenas teste de pagamento real via webhook.
 
 ---
 
@@ -138,11 +138,116 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 - Entrega: 302 redirect para Supabase (sem tracking)
 - Armazenamento: tabela `acessos_livros` com `tipo_produto` para diferenciação
 
-**Pendências para Próxima Sessão:**
-- ⏳ Teste com webhook MercadoPago real
-- ⏳ Definir preço final do audiolivro
-- ⏳ Decidir lançamento público do audiolivro Vol. I
-- ⏳ Estender a outros volumes (opcional)
+**Pendências para Próxima Sessão (19/08/2026):**
+
+**Preço do Audiobook:**
+- ✅ Mudança R$17,90 → R$14,90 **APLICADA E EM PRODUÇÃO** (19/08/2026)
+  - Commit `728fe8a` (fix: reduzir preço do audiolivro de R$17,90 para R$14,90)
+  - Alterado em 4 pontos: `public/checkout-livro.html` (display do checkbox + variável JS) e `src/server.js` (2 endpoints: `/api/checkout/livro/preference` e `/api/checkout/livro`)
+  - Push feito para `origin/main` (`40c2a01..728fe8a`) — deploy automático via Railway
+
+**Teste de Pagamento Real:**
+- ⏳ Webhook MercadoPago: ainda não foi testado com pagamento real
+- ⏳ Necessário: cartão/Pix de terceiro para validar integração completa
+- ⏳ O que falta testar: pagamento processado → webhook → token gerado → email enviado → acesso ao audiolivro
+
+**Próximos Audiolivros — 11 Obras Candidatas Levantadas:**
+
+PRIORIDADE 1 - Universo Feminino: Ela Tem Classe (pronto, charme_feminino_relacionamentos.txt, 9.2 KB), Inesquecível (pronto, mesmo arquivo), Código Feminino (arquivo-fonte não confirmado), A Inteligência do Corpo Feminino (arquivo-fonte não confirmado), A Mulher que Permanece Inteira (arquivo-fonte não confirmado).
+
+PRIORIDADE 2 - Universo Masculino: A Arte da Presença Masculina (pronto, presenca_masculina_autoestima_relacionamentos.txt, 9.4 KB), Guia Integral de Saúde e Beleza Masculina (pronto, saude_masculina_integrativa.txt, 10.2 KB), A Presença em Ação — Apêndice (arquivo-fonte não confirmado), A Arte Invisível da Elegância Masculina (arquivo-fonte não confirmado).
+
+PRIORIDADE 3 - Adolescência & Pais: Além do Que Você Vê (pronto, desenvolvimento_humano_adolescencia.txt, 8.7 KB), Além do Que Você Sente (pronto, adolescencia_desenvolvimento_integral.txt, 8.5 KB).
+
+**PENDÊNCIA CRÍTICA — CONFIRMADA em 19/08/2026: os arquivos-fonte marcados "pronto" NÃO são texto integral.**
+
+Verificação feita (leitura completa dos 5 arquivos .txt + comparação com os flipbooks HTML reais):
+
+1. **Os 5 arquivos-fonte "prontos"** (`charme_feminino_relacionamentos.txt`, `presenca_masculina_autoestima_relacionamentos.txt`, `saude_masculina_integrativa.txt`, `desenvolvimento_humano_adolescencia.txt`, `adolescencia_desenvolvimento_integral.txt`) são **documentos RAG para o Mentor IA**, não texto de livro. Todos têm cabeçalho "Documento preparado para banco vetorial" e terminam com seção "PARA A ORIENTAÇÃO ZUNI SUPREMA" (instruções de como o Mentor deve aconselhar clientes) — conteúdo de chatbot, não de audiolivro vendável.
+
+2. **Achado mais grave — o próprio Vol. I já vendido usa a mesma fonte RAG.** O flipbook real de "Os Bastidores da Mente Vol. I" (`private/livros/os-bastidores-da-mente-1-.../index.html`) contém **~17.887 palavras** de prosa integral. O audiolivro pago já em produção (R$14,90, 28m16s, commit `993edef`) foi gerado a partir de `os_bastidores_da_mente_base_mentor.txt` — **apenas ~3.941 palavras (~22% do livro real)**. Ou seja, o "arquivo íntegro de referência" usado como padrão de comparação não é íntegro — é o mesmo tipo de resumo RAG dos outros 5, só que já vendido a clientes reais. **Isso é uma pendência de correção, não só de planejamento futuro.**
+
+3. **Os flipbooks reais das 6 obras "prontas"** existem (`private/livros/{slug}/index.html`, 3.5–14 MB cada) mas são bundles visuais (tipo Canva/SVG), sem texto extraível diretamente — não há forma trivial de puxar a prosa integral deles para gerar áudio. É necessário localizar o manuscrito/fonte original de cada obra (fora de `documentos-zuni/`, que é só base RAG) antes de gerar qualquer audiolivro pago.
+
+4. **As 5 obras "não confirmadas"** (Código Feminino, A Inteligência do Corpo Feminino, A Mulher que Permanece Inteira, A Presença em Ação — Apêndice, A Arte Invisível da Elegância Masculina): busca em `documentos-zuni/` por conteúdo correspondente ao resumo de cada obra no catálogo **não encontrou nenhum arquivo com correspondência clara**. Não há candidato a confundir por nome — a busca por temas (hormonal/sexualidade feminina, inchaço/metabolismo, exercícios/desafio 21 dias, elegância/refinamento masculino) não convergiu em nenhum arquivo dedicado.
+
+**ATUALIZAÇÃO 19/08/2026 — Manuscritos íntegros LOCALIZADOS para todas as 11 obras (Vol. I + 10 candidatas).**
+
+Ação imediata tomada: `audiobookDisponivel: false` para Vol. I aplicado em produção (commit `66e897d`, deploy feito). Verificado no Supabase (`acessos_livros`, `tipo_produto='audiolivro'`): **0 clientes reais compraram** — único registro é o teste E2E interno (`teste@e2e.com`). Sem incidente de cliente afetado.
+
+Busca expandida fora do repositório Git (`C:\Users\Silvio\Documents\1 - Obras Novas\1 - Obras Na Loja\`) encontrou os manuscritos `.docx` originais de todas as 11 obras — pasta espelha exatamente a estrutura dos slugs do catálogo, com `.docx` (manuscrito), `.html` (flipbook visual) e capa lado a lado por obra:
+
+| Obra | Manuscrito `.docx` localizado | Palavras (texto integral) | RAG usado até agora (referência) |
+|---|---|---|---|
+| **Vol. I — Os Bastidores da Mente** | `Os Bastidores da Mente - 6 Vol/Volume I.../Os Bastidores da Mente.docx` | **23.442** | ~3.941 (22% — audiolivro atual incompleto) |
+| Ela Tem Classe | `Flerte Mulheres/Ela Tem Classe.../2 - Elegância Feminina - Revisada e Completa.docx` | 4.373 | RAG genérico não específico p/ esta obra |
+| Inesquecível | `Flerte Mulheres/Inesquecível & Arte.../Charme Feminino - Revisada e Completa.docx` | 15.444 | `charme_feminino_relacionamentos.txt` (~1.500) |
+| Código Feminino | `Flerte Mulheres/Código Feminino.../Codigo Feminino.docx` | 8.822 | não havia RAG localizado |
+| A Inteligência do Corpo Feminino | `Flerte Mulheres/Inteligencia do Corpo.../A Inteligência do Corpo Feminino.docx` | 14.017 | não havia RAG localizado |
+| A Mulher que Permanece Inteira | `Flerte Mulheres/Mulher Permanece Inteira.../Mulher Inteira.docx` | 17.663 | não havia RAG localizado |
+| A Arte da Presença Masculina | `Flerte Homens/A Arte da Presença Masculina/A Arte da Presença Masculina.docx` | 13.483 | `presenca_masculina_autoestima_relacionamentos.txt` (~1.600) |
+| A Presença em Ação — Apêndice | `Flerte Homens/A Presença em Ação/Apêndice - A Presença em Ação.docx` | 1.748 (esperado — é apêndice de exercícios) | não havia RAG localizado |
+| A Arte Invisível da Elegância Masculina | `Flerte Homens/A Arte da Elegância Masculina/Arte da Elegância Masculina.docx` | 2.862 | não havia RAG localizado |
+| Guia Integral de Saúde e Beleza Masculina | `Flerte Homens/Saúde e Beleza Masculina/Guia Integral Saúde Beleza Masculina.docx` | 6.966 | `saude_masculina_integrativa.txt` (~1.700) |
+| Além do Que Você Vê (pais) | `Educação Pais e Adolescentes/Pais/Além do que você vê.docx` | 49.234 (termina "FIM DA OBRA II") | `desenvolvimento_humano_adolescencia.txt` (~1.460) |
+| Além do Que Você Sente (adolescentes) | `Educação Pais e Adolescentes/Adolescentes/Além do que você sente.docx` | 57.639 (termina "FIM DA OBRA I") | `adolescencia_desenvolvimento_integral.txt` (~1.430) |
+
+Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos com "Sumário" e capítulos numerados, e os de maior porte terminam explicitamente em "FIM DA OBRA". Estrutura de prosa corrida, sem seção de instrução ao Mentor (ausente o padrão RAG "PARA A ORIENTAÇÃO ZUNI SUPREMA").
+
+**Nota**: "Ela Tem Classe" no `.docx` interno se chama "A Arte da Elegância Feminina Moderna" (título de trabalho ≠ título comercial) — confirmado pelo casamento entre nome da pasta, HTML do flipbook (`Ela Tem Classe - Zuni Suprema.html`) e slug do catálogo; não é um arquivo trocado.
+
+**Status**: arquivos-fonte corretos identificados e documentados para as 11 obras.
+
+**ATUALIZAÇÃO 19/08/2026 — Vol. I regenerado e reativado. Pipeline de pausas SSML consolidado (v5).**
+
+**Pipeline de sanitização — versão final validada** (`src/lib/audiolivroGenerator.js`):
+- `colapsarLetrasEspacadas()`: nova função, roda antes da normalização de maiúsculas. Corrige branding espaçado manualmente (ex.: "Z U N I S U P R E M A" → "Zuni Suprema"), que o TTS soletrava letra por letra.
+- Pausas de parágrafo (`\n{2,}`): migradas de `<break time="600ms"/>` (soou "engasgado/cortado" em teste auditivo) para **`<break strength="medium"/>`** — aprovado após comparação A/B (v3 400ms vs v4 strength=medium). Motor de síntese calibra a pausa organicamente em vez de silêncio cronometrado fixo.
+- Separadores/símbolos decorativos (`===`, `✦✧★☆❖`): migrados de `500ms` fixo para **`<break strength="strong"/>`** — testado contra `x-strong`, `strong` escolhido como padrão (ajustável).
+- `dividirEmChunks()`: corrigido para estimar o tamanho real do SSML por parágrafo a partir da tag de pausa configurada (não mais `'\n\n'` cru) — bug encontrado durante os testes: chunk de vários parágrafos estourava os 5000 bytes da API porque o custo real da tag (~27+ bytes) não era contabilizado corretamente.
+- **⚠️ Calibração feita só na voz feminina (`pt-BR-Wavenet-A`)**. Antes de aplicar em qualquer obra do Universo Masculino (voz `pt-BR-Wavenet-B`), gerar piloto curto nessa voz e validar auditivamente de novo — não assumir que os mesmos valores de `strength` soam igualmente bem.
+
+**Vol. I — regenerado com manuscrito íntegro (19/08/2026):**
+- Fonte: `.docx` completo (23.442 palavras / 138.197 caracteres), localizado em `C:\Users\Silvio\Documents\1 - Obras Novas\1 - Obras Na Loja\Os Bastidores da Mente - 6 Vol\Volume I - Os Bastidores\Os Bastidores da Mente.docx` — substitui o resumo RAG usado antes (~22% do conteúdo real).
+- 36 chunks, pipeline v5 completo, voz `pt-BR-Wavenet-A`.
+- Resultado: 36.06 MB, **2h37m34s** (vs. 28m16s da versão antiga incompleta).
+- Upload feito para o mesmo objeto Supabase (`audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3`), sobrescrevendo o arquivo antigo.
+- Validado auditivamente pelo usuário (início/meio/fim) antes da reativação.
+- `audiobookDisponivel: true` reaplicado — commit `60071d4`, deploy feito (`66e897d..60071d4`).
+
+**Nota de processo**: a regeneração de produção do Vol. I rodou direto via `gerarAudiolivro()` (upload automático ao Supabase) em vez de gerar localmente primeiro para validação, como foi feito nos pilotos do Apêndice. Não houve problema porque `audiobookDisponivel` permaneceu `false` durante todo o processo (sem venda ativa), mas o padrão correto para os próximos títulos é: gerar local → validar auditivamente → só então rodar `gerarAudiolivro()` com upload.
+
+**Próximo passo autorizado**: nenhum ainda. Aguardando decisão do usuário sobre iniciar produção dos demais 9 títulos (10 candidatas menos o Apêndice já validado em piloto) — com o alerta de recalibração obrigatória para vozes do Universo Masculino.
+
+---
+
+**FECHAMENTO DO CICLO — 19/08/2026 (00:50):**
+
+**O que estava errado e foi corrigido:**
+- Áudio pago do Vol. I (R$14,90, já vendido publicamente) estava sendo gerado a partir de um resumo RAG de ~3.941 palavras — cerca de 22% do conteúdo real do livro (23.442 palavras). Um cliente que comprasse receberia uma versão incompleta vendida como obra integral.
+- Verificado no Supabase antes de qualquer correção: **0 clientes reais haviam comprado** (só existia 1 registro de teste E2E interno). Sem incidente, correção pré-lançamento.
+
+**O que está pronto agora:**
+- ✅ Vol. I regenerado a partir do manuscrito `.docx` completo (23.442 palavras), localizado fora do repositório em `Documents\1 - Obras Novas\1 - Obras Na Loja\Os Bastidores da Mente - 6 Vol\`.
+- ✅ Pipeline de sanitização/pausas SSML consolidado e validado auditivamente (voz feminina `pt-BR-Wavenet-A`):
+  - Pausa entre parágrafos: `<break strength="medium"/>` (testado contra 600ms fixo, 400ms fixo e strength=medium — strength ganhou por soar mais orgânico).
+  - Pausa em separadores/símbolos decorativos (`===`, `✦✧★☆❖`): `<break strength="strong"/>` (testado contra x-strong).
+  - Bug de chunking corrigido (estouro de 5000 bytes da API quando o texto tinha muitos parágrafos) — chunking agora estima o tamanho real do SSML, não do texto cru.
+  - Nova sanitização para branding com letras espaçadas manualmente (ex.: "Z U N I S U P R E M A").
+- ✅ `audiobookDisponivel: true` reaplicado para o Vol. I — validado auditivamente pelo usuário (início/meio/fim) antes da reativação. Commit `60071d4`, deploy em produção.
+- ✅ Preço do audiobook ajustado de R$17,90 para R$14,90 em todos os pontos do checkout (commit `728fe8a`).
+
+**O que continua pendente (não bloqueia a venda, mas falta validar):**
+- ⏳ **Teste de pagamento real via webhook MercadoPago** para o audiobook — ainda não foi feito nenhum teste ponta a ponta com pagamento de verdade (cartão/Pix real) cobrindo o fluxo audiobook: pagamento → webhook → token gerado → e-mail enviado → acesso liberado ao MP3. O teste E2E existente (`teste@e2e.com`) validou a lógica de token/acesso, não o pagamento real.
+- ⏳ Recalibração do pipeline de pausas para voz masculina (`pt-BR-Wavenet-B`) — obrigatória antes de processar qualquer obra do Universo Masculino, não assumir que `strength="medium"/"strong"` soa igual nessa voz.
+- ⏳ Produção dos outros 9 títulos candidatos (dos 10 localizados, só o Apêndice foi validado em piloto) — aguardando autorização explícita para começar.
+
+**Próximos Passos (Ordem a Decidir):**
+1. Confirmar/localizar arquivos-fonte para 3 obras incertas
+2. Adicionar `textoFonteParaLeitura` ao catalogoLivros.js para cada obra
+3. Gerar audiolivros na ordem decidida (prioridade 1 → 2 → 3)
+4. Testar webhook MercadoPago com pagamento real
+5. Definir preço final do audiobook (mudar de R$17,90 se necessário)
 
 **Status Vol. I Atualmente:**
 - ✅ `audiobookDisponivel: true` (definitiva, pronto para venda)
