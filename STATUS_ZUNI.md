@@ -4,10 +4,10 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 19/08/2026 (noite, fim de sessão por contexto crítico) — Universo
-> Feminino completo (5 obras) + "Além do Que Você Vê" (2 partes) já em produção. "Além do
-> Que Você Sente" sintetizado (3 partes) mas AINDA NÃO subiu — aguardando escuta da
-> transição entre partes na próxima sessão. Ver seção 2 (topo) para o handoff completo.
+> Última atualização: 19/08/2026 (noite) — "Além do Que Você Sente" (3 partes) aprovado por
+> escuta e ativado em produção. Ciclo de audiolivros de adolescência/pais fechado: 7/7 obras
+> com audiobook ativo no catálogo (Universo Feminino 5 + as 2 obras "Além do Que..."). Ver
+> seção "FECHAMENTO — Adolescência & Pais" logo abaixo do handoff.
 
 ---
 
@@ -27,31 +27,25 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 
 ---
 
-## 2. HANDOFF PARA PRÓXIMA SESSÃO (19/08/2026 noite — sessão encerrada por contexto crítico)
+## 2. HANDOFF PARA PRÓXIMA SESSÃO (19/08/2026 noite)
 
-**Leia isto primeiro.** Sessão foi longa (Universo Feminino completo + pipeline novo de
-partes + 2 obras de pais/adolescentes). Encerrada preventivamente por contexto crítico,
-não por bloqueio — tudo abaixo está em estado limpo e sabido.
+### FECHAMENTO — Adolescência & Pais: "Além do Que Você Sente" ativado (19/08/2026 noite)
 
-### Passo 1 imediato: ouvir a transição de "Além do Que Você Sente"
-
-- **Status**: síntese 100% CONCLUÍDA (3 partes, alinhadas por capítulo). **NÃO subiu para o
-  Supabase, NÃO está no catalogoLivros.js** — por instrução explícita, ficou pra esta sessão.
-- Arquivos locais (ainda em `.temp-audio/alem-do-que-voce-sente/`, não apagar antes de subir):
-  - `alem-do-que-voce-sente-parte1.mp3` — 35.58 MB, 155m27s (chunks 0-39)
-  - `alem-do-que-voce-sente-parte2.mp3` — 37.12 MB, 162m11s (chunks 40-81)
-  - `alem-do-que-voce-sente-parte3.mp3` — 13.30 MB, 58m7s (chunks 82-96)
-  - 16/16 capítulos confirmados, cobertura de extração 99.6% (texto em
-    `.temp-audio/alem-do-que-voce-sente-final.txt`)
-- 4 clipes de transição (4min cada) já foram enviados ao usuário nesta sessão para escuta:
-  fim-parte1→início-parte2, fim-parte2→início-parte3 (conteúdo em si já aprovado antes; só
-  os cortes entre partes precisam de nova confirmação).
-- **Quando o usuário aprovar**: subir as 3 partes ao Supabase (`uploadParaSupabase` em
-  `src/lib/audiolivroGenerator.js`, mesmo padrão usado pra "Além do Que Você Vê"), adicionar
-  em `catalogoLivros.js` na entrada `alem-do-que-voce-sente`: `audiobookPartes: [url1, url2,
-  url3]` + `audiobookDisponivel: true` + **`precoAudiobook: 19.90`** (preço já decidido pelo
-  usuário — obra menor que "Vê", que ficou em R$24,90). Commit + push (deploy automático via
-  Railway) + validar via `curl https://www.zunisuprema.com.br/api/livros/catalogo/alem-do-que-voce-sente`.
+- **Status**: aprovado por escuta nas 3 partes (2h30, 2h36, 0h56 — terceira mais curta,
+  fronteira de capítulo isolando o(s) capítulo(s) final(is)/epílogo) incluindo os cortes de
+  transição entre partes. Subida ao Supabase feita via `uploadParaSupabase`
+  (`src/lib/audiolivroGenerator.js`), mesmo padrão de "Além do Que Você Vê".
+- `catalogoLivros.js`, entrada `alem-do-que-voce-sente`: `audiobookPartes` com as 3 URLs
+  (`.../audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte{1,2,3}.mp3`),
+  `audiobookDisponivel: true`, `precoAudiobook: 19.90`.
+- Commit `b5756f9` (feat: ativa audiobook de "Além do Que Você Sente" — 3 partes). Push +
+  deploy automático via Railway confirmados. Validado ao vivo via
+  `curl https://www.zunisuprema.com.br/api/livros/catalogo/alem-do-que-voce-sente`
+  (retornou `audiobookDisponivel: true`, as 3 URLs e `precoAudiobook: 19.9`).
+- **Com isso, as duas obras da série "Além do Que..." (pais + adolescentes) estão completas
+  e publicadas** — fecha o trio de departamentos trabalhados nesta virada de sessão junto
+  com o Universo Feminino. Total agora: **7/7 obras planejadas com audiobook ativo no
+  catálogo** (5 do Universo Feminino + as 2 "Além do Que...").
 
 ### O que já está pronto e em produção (não repetir)
 
@@ -61,6 +55,8 @@ não por bloqueio — tudo abaixo está em estado limpo e sabido.
 - **"Além do Que Você Vê" — audiobook ativo em produção**, 2 partes (`audiobookPartes`),
   **`precoAudiobook: 24.90`**, confirmado ao vivo via API. Commits `6a77913` (ativação) e
   `9c842a0` (pipeline de partes).
+- **"Além do Que Você Sente" — audiobook ativo em produção**, 3 partes (`audiobookPartes`),
+  **`precoAudiobook: 19.90`**, confirmado ao vivo via API. Commit `b5756f9`.
 - **Preço generalizado por obra** (`precoAudiobook` em vez de valor fixo R$14,90 hardcoded)
   — commit `5ec9bac`.
 
@@ -80,7 +76,7 @@ só os pontos operacionais:
   partes: `audiobookPartes` (array), rota `/audiolivros/:livroId` já detecta e mostra página
   de partes.
 - Testado e validado: "Além do Que Você Vê" (2 partes, aprovado por escuta) e "Além do Que
-  Você Sente" (3 partes, sintetizado, aguardando escuta — ver Passo 1 acima).
+  Você Sente" (3 partes, aprovado por escuta incluindo transições — ambas ativas em produção).
 
 ### Voz masculina — validada, Universo Masculino não iniciado
 
