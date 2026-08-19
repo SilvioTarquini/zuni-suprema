@@ -363,7 +363,13 @@ const CATALOGO = {
     departamento: 'Desenvolvimento & Comportamento',
     capa: '/loja/capas/alem-do-que-voce-ve.jpg',
     resumo: 'Guia para pais e responsáveis de adolescentes — sobre portas batidas, silêncios, namoro e as conversas que ninguém ensinou a ter.',
-    descricao: 'Para quem tem em casa alguém entre catorze e vinte e poucos anos e sente que está lidando com uma pessoa que não conhece mais. Este não é um manual de disciplina — é algo mais básico: o que está acontecendo do outro lado. Cada capítulo mostra o que se passou nas horas anteriores, às quais o adulto não teve acesso, para que cada lado entenda o que o outro está atravessando.'
+    descricao: 'Para quem tem em casa alguém entre catorze e vinte e poucos anos e sente que está lidando com uma pessoa que não conhece mais. Este não é um manual de disciplina — é algo mais básico: o que está acontecendo do outro lado. Cada capítulo mostra o que se passou nas horas anteriores, às quais o adulto não teve acesso, para que cada lado entenda o que o outro está atravessando.',
+    audiobookPartes: [
+      'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-ve/alem-do-que-voce-ve-parte1.mp3',
+      'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-ve/alem-do-que-voce-ve-parte2.mp3'
+    ],
+    audiobookDisponivel: true,
+    precoAudiobook: 24.90
   },
   'alem-do-que-voce-sente': {
     titulo: 'Além do Que Você Sente',
