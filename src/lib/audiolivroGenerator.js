@@ -28,11 +28,29 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-async function dividirEmChunks(texto, bytesMax = 5000) {
+const PAUSA_PARAGRAFO_PADRAO = '<break strength="medium"/>';
+const PAUSA_SEPARADOR_PADRAO = '<break strength="strong"/>';
+
+async function dividirEmChunks(
+  texto,
+  bytesMax = 5000,
+  pausaParagrafo = PAUSA_PARAGRAFO_PADRAO
+) {
   const chunks = [];
   let chunkAtual = '';
   const OVERHEAD_SSML = 300;
   const limiteTexto = bytesMax - OVERHEAD_SSML;
+  // A quebra dupla de parágrafo (\n{2,}) é convertida por sanitizarTexto() na
+  // tag de pausa escolhida (ex.: <break strength="medium"/>), não nos 2 bytes
+  // de '\n\n' que ficam armazenados em chunkAtual até a sanitização. Por isso
+  // o tamanho do chunk é rastreado numa estimativa própria (estimativaBytes),
+  // não relendo Buffer.byteLength(chunkAtual) — senão o custo das quebras já
+  // incluídas no chunk é subcontado a cada novo parágrafo, e o SSML final
+  // estoura os 5000 bytes da API quando o chunk acumula vários parágrafos. O
+  // tamanho em bytes é calculado a partir da tag real passada (pausaParagrafo),
+  // não fixo, para não voltar a desalinhar se a tag mudar de formato/tamanho.
+  const BREAK_PARAGRAFO_BYTES = Buffer.byteLength(pausaParagrafo, 'utf8');
+  let estimativaBytes = 0;
 
   const paragrafos = texto.split('\n\n').filter(p => p.trim());
 
@@ -44,6 +62,7 @@ async function dividirEmChunks(texto, bytesMax = 5000) {
       if (chunkAtual) {
         chunks.push(chunkAtual.trim());
         chunkAtual = '';
+        estimativaBytes = 0;
       }
 
       const frases = textoComPausa.split(/(?<=[.!?])\s+/);
@@ -54,28 +73,33 @@ async function dividirEmChunks(texto, bytesMax = 5000) {
           if (chunkAtual) {
             chunks.push(chunkAtual.trim());
             chunkAtual = '';
+            estimativaBytes = 0;
           }
           chunks.push(frase.trim());
         } else if (
-          Buffer.byteLength(chunkAtual + ' ' + frase, 'utf8') > limiteTexto
+          estimativaBytes + (chunkAtual ? 1 : 0) + bytesFrase > limiteTexto
         ) {
           if (chunkAtual) {
             chunks.push(chunkAtual.trim());
           }
           chunkAtual = frase;
+          estimativaBytes = bytesFrase;
         } else {
+          estimativaBytes += (chunkAtual ? 1 : 0) + bytesFrase;
           chunkAtual += (chunkAtual ? ' ' : '') + frase;
         }
       }
     } else if (
-      Buffer.byteLength(chunkAtual + '\n\n' + textoComPausa, 'utf8') >
+      estimativaBytes + (chunkAtual ? BREAK_PARAGRAFO_BYTES : 0) + bytesTexto >
       limiteTexto
     ) {
       if (chunkAtual) {
         chunks.push(chunkAtual.trim());
       }
       chunkAtual = textoComPausa;
+      estimativaBytes = bytesTexto;
     } else {
+      estimativaBytes += (chunkAtual ? BREAK_PARAGRAFO_BYTES : 0) + bytesTexto;
       chunkAtual += (chunkAtual ? '\n\n' : '') + textoComPausa;
     }
   }
@@ -87,27 +111,50 @@ async function dividirEmChunks(texto, bytesMax = 5000) {
   return chunks;
 }
 
+function colapsarLetrasEspacadas(texto) {
+  return texto
+    .replace(/(?<![\p{L}])(?:\p{L}[ \t]){3,}\p{L}(?![\p{L}])/gu, (match) =>
+      match.replace(/[ \t]/g, '')
+    )
+    .replace(/ {2,}/g, ' ');
+}
+
 function normalizarMaiusculas(texto) {
   return texto.replace(/\b([A-ZÁÉÍÓÚÇÃÕ]{2,})\b/g, (match) => {
     return match.charAt(0) + match.slice(1).toLowerCase();
   });
 }
 
-function sanitizarTexto(texto) {
+function sanitizarTexto(
+  texto,
+  pausaParagrafo = PAUSA_PARAGRAFO_PADRAO,
+  pausaSeparador = PAUSA_SEPARADOR_PADRAO
+) {
   return texto
-    .replace(/([^\w\s])\1{2,}/g, '<break time="500ms"/>')
-    .replace(/\n{2,}/g, '\n');
+    .replace(/([^\w\s])\1{2,}/g, pausaSeparador)
+    .replace(/[✦✧★☆❖]+/g, pausaSeparador)
+    .replace(/\n{2,}/g, pausaParagrafo);
 }
 
-function gerarSSML(texto) {
-  const textoNormalizado = normalizarMaiusculas(texto);
-  const textoSanitizado = sanitizarTexto(textoNormalizado);
+function gerarSSML(
+  texto,
+  pausaParagrafo = PAUSA_PARAGRAFO_PADRAO,
+  pausaSeparador = PAUSA_SEPARADOR_PADRAO
+) {
+  const textoColapsado = colapsarLetrasEspacadas(texto);
+  const textoNormalizado = normalizarMaiusculas(textoColapsado);
+  const textoSanitizado = sanitizarTexto(textoNormalizado, pausaParagrafo, pausaSeparador);
   let ssml = '<speak>' + textoSanitizado + '</speak>';
   return ssml;
 }
 
-async function gerarAudioComAPI(texto, voz = 'pt-BR-Wavenet-A') {
-  const ssml = gerarSSML(texto);
+async function gerarAudioComAPI(
+  texto,
+  voz = 'pt-BR-Wavenet-A',
+  pausaParagrafo = PAUSA_PARAGRAFO_PADRAO,
+  pausaSeparador = PAUSA_SEPARADOR_PADRAO
+) {
+  const ssml = gerarSSML(texto, pausaParagrafo, pausaSeparador);
   const bytesSsml = Buffer.byteLength(ssml, 'utf8');
 
   const request = {
@@ -197,6 +244,8 @@ async function gerarAudiolivro(
     voz = 'pt-BR-Wavenet-A',
     bytesMax = 5000,
     pastaTemp = path.join(__dirname, '../../.temp-audio'),
+    pausaParagrafo = PAUSA_PARAGRAFO_PADRAO,
+    pausaSeparador = PAUSA_SEPARADOR_PADRAO,
   } = opcoes;
 
   console.log(`\n[Audiolivro] Iniciando geração para: ${livroSlug}`);
@@ -206,7 +255,7 @@ async function gerarAudiolivro(
 
   try {
     console.log('[Audiolivro] Dividindo em chunks...');
-    const chunks = await dividirEmChunks(textoFonte, bytesMax);
+    const chunks = await dividirEmChunks(textoFonte, bytesMax, pausaParagrafo);
     console.log(
       `[Audiolivro] ${chunks.length} chunks gerados (limite ${bytesMax} bytes cada)`
     );
@@ -218,7 +267,7 @@ async function gerarAudiolivro(
         `[Audiolivro] [${i + 1}/${chunks.length}] Sintetizando audio (${chunks[i].length} caracteres)...`
       );
 
-      const audioBuffer = await gerarAudioComAPI(chunks[i], voz);
+      const audioBuffer = await gerarAudioComAPI(chunks[i], voz, pausaParagrafo, pausaSeparador);
 
       const caminhoMp3 = path.join(pastaTemp, `chunk_${i + 1}.mp3`);
       await fs.writeFile(caminhoMp3, audioBuffer);
@@ -286,4 +335,9 @@ module.exports = {
   gerarAudioComAPI,
   concatenarComFFmpeg,
   uploadParaSupabase,
+  colapsarLetrasEspacadas,
+  normalizarMaiusculas,
+  sanitizarTexto,
+  PAUSA_PARAGRAFO_PADRAO,
+  PAUSA_SEPARADOR_PADRAO,
 };

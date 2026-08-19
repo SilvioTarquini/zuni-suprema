@@ -33,7 +33,7 @@ const CATALOGO = {
     descricao: 'Neste volume inaugural, explore a arquitetura profunda dos sentimentos e emoções que governam nosso comportamento. Entenda como as reações instintivas moldam nossas vidas, quais são as forças que operam por trás dos bastidores da mente, e como reconhecê-las é o primeiro passo para a verdadeira liberdade de escolha.',
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3',
-    audiobookDisponivel: false
+    audiobookDisponivel: true
   },
   'os-bastidores-da-mente-2-o-antidoto': {
     titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
