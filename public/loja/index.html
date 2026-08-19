@@ -201,6 +201,20 @@
     margin: 0 0 14px;
   }
 
+  .info .selo-audiobook {
+    display: inline-block;
+    align-self: flex-start;
+    margin: 0 0 10px;
+    padding: 4px 10px;
+    background: rgba(184, 150, 62, 0.12);
+    border: 1px solid var(--dourado);
+    border-radius: 999px;
+    color: var(--dourado-suave);
+    font-size: 0.72rem;
+    letter-spacing: 0.2px;
+    font-family: Arial, sans-serif;
+  }
+
   a.comprar {
     display: inline-block;
     text-align: center;
@@ -397,6 +411,7 @@
             <p>${livro.descricao}</p>
           </div>
           ${precoHTML}
+          ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ 14,90</span>` : ''}
           <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
           <a class="comprar" href="${urlCompra}">Comprar</a>
         </div>
