@@ -1558,6 +1558,7 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
     categoria: livro.categoria,
     audiobookDisponivel: livro.audiobookDisponivel || false,
     audiobookUrl: livro.audiobookUrl || null,
+    audiobookPartes: livro.audiobookPartes || null,
     precoAudiobook: livro.precoAudiobook || null
   });
 });

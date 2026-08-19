@@ -64,9 +64,31 @@ sem heading nativo) — não pular essa etapa nem assumir que o texto bruto já 
 
 **Disciplina de produção (não pular etapas):**
 1. Gerar localmente com `gerar-audiolivro-local.js` (sem upload).
-2. Validar auditivamente (início, meio, fim) — aprovação explícita do usuário antes de seguir.
-3. Só então subir para o Supabase e ligar `audiobookUrl` + `audiobookDisponivel: true` em
-   `catalogoLivros.js`.
+2. Validar auditivamente (início, meio, fim — e transições entre partes, se houver mais de
+   uma) — aprovação explícita do usuário antes de seguir.
+3. Só então subir para o Supabase e ligar `audiobookUrl` (obra em parte única) ou
+   `audiobookPartes` (obra dividida — ver abaixo) + `audiobookDisponivel: true` +
+   `precoAudiobook` em `catalogoLivros.js`.
+
+**Obras longas: divisão em partes alinhada por capítulo (desde 19/08/2026).** O Supabase
+Storage tem limite de tamanho por objeto (~50MB no plano padrão). `dividirEmChunks()` força
+quebra de chunk a cada início de capítulo (regex `Capítulo\s+\d+`, cobre "Capítulo N —",
+"Capítulo N:", "Capítulo N" sozinho) — isso garante que nenhum chunk atravesse dois
+capítulos, pré-requisito para `agruparChunksEmPartes()` fechar cada parte sempre em
+fronteira de capítulo completo (nunca no meio), buscando ~40MB por parte (config
+`LIMITE_BYTES_POR_PARTE`/`LIMITE_SEGUNDOS_POR_PARTE` em `audiolivroGenerator.js`) — exceto
+quando um único capítulo já excede o limite sozinho, caso em que a parte fica maior mesmo
+(preferível a cortar errado).
+- **Importante**: o agrupamento usa a **duração** de cada chunk, não o tamanho em bytes.
+  `concatenarComFFmpeg()` recodifica a saída (64kbps de síntese → ~32kbps no arquivo
+  concatenado, confirmado empiricamente), então bytes de chunks isolados não são somáveis
+  linearmente para prever o tamanho do arquivo final.
+- Obra em 1 parte só: `audiobookUrl` (string), comportamento idêntico ao de sempre.
+- Obra em 2+ partes: `audiobookPartes` (array de URLs), **sem** `audiobookUrl` — os dois
+  campos são mutuamente exclusivos. A rota `/audiolivros/:livroId` (`src/routes/livros.js`)
+  detecta automaticamente e mostra uma página listando as partes em vez do redirect direto.
+  Nada no checkout, preço ou e-mail de entrega precisa mudar (o e-mail já linka pra rota da
+  aplicação, não pro arquivo).
 
 Calibração de pausas (`strength="medium"` entre parágrafos, `strength="strong"` em
 separadores decorativos) validada tanto na voz feminina `pt-BR-Wavenet-A` quanto na

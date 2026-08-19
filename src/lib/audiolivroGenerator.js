@@ -34,12 +34,41 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const PAUSA_PARAGRAFO_PADRAO = '<break strength="medium"/>';
 const PAUSA_SEPARADOR_PADRAO = '<break strength="strong"/>';
 
+// Marca o início de um capítulo — usado para forçar quebra de chunk (ver
+// dividirEmChunks) e permitir alinhamento exato de partes por capítulo (ver
+// agruparChunksEmPartes). Cobre as convenções já vistas nos manuscritos
+// processados: "Capítulo N —", "Capítulo N:", "Capítulo N" sozinho.
+const RE_INICIO_CAPITULO = /^Capítulo\s+\d+\b/i;
+
+// Tamanho-alvo por parte quando um audiolivro precisa ser dividido em
+// múltiplos arquivos (limite de upload do Supabase Storage ~50MB por
+// objeto). Margem confortável abaixo disso.
+const LIMITE_BYTES_POR_PARTE = 40 * 1024 * 1024;
+
+// concatenarComFFmpeg() usa o filtro de concat do ffmpeg (mergeToFile), que
+// decodifica e recodifica a saída — o bitrate de cada chunk individual
+// (64kbps, padrão de síntese do Google TTS) NÃO é o bitrate do arquivo final
+// concatenado (32kbps, confirmado empiricamente e consistente em todas as
+// gerações desta sessão). Por isso o agrupamento em partes (ver
+// agruparChunksEmPartes) soma DURAÇÃO dos chunks, não bytes brutos — bytes
+// de chunks isolados não são somáveis linearmente para prever o tamanho do
+// arquivo final pós-concatenação.
+const BITRATE_SAIDA_CONCATENADA_BPS = 32000;
+const LIMITE_SEGUNDOS_POR_PARTE = Math.floor(
+  (LIMITE_BYTES_POR_PARTE * 8) / BITRATE_SAIDA_CONCATENADA_BPS
+);
+
 async function dividirEmChunks(
   texto,
   bytesMax = 5000,
   pausaParagrafo = PAUSA_PARAGRAFO_PADRAO
 ) {
   const chunks = [];
+  // Índices de chunk (no array `chunks` final) onde um novo capítulo começa.
+  // Um chunk nunca contém conteúdo de dois capítulos diferentes (ver quebra
+  // forçada abaixo), o que permite fechar "partes" de áudio sempre em
+  // fronteira de capítulo completo, nunca no meio.
+  const iniciosCapitulo = [];
   let chunkAtual = '';
   const OVERHEAD_SSML = 300;
   const limiteTexto = bytesMax - OVERHEAD_SSML;
@@ -60,6 +89,19 @@ async function dividirEmChunks(
   for (const paragrafo of paragrafos) {
     const textoComPausa = paragrafo.trim();
     const bytesTexto = Buffer.byteLength(textoComPausa, 'utf8');
+
+    // Quebra forçada de chunk a cada início de capítulo — mesmo que o chunk
+    // atual esteja longe do limite de bytes. Garante que nenhum chunk
+    // atravesse dois capítulos, pré-requisito para alinhar partes de áudio
+    // exatamente em fronteira de capítulo depois.
+    if (RE_INICIO_CAPITULO.test(textoComPausa) && chunkAtual) {
+      chunks.push(chunkAtual.trim());
+      chunkAtual = '';
+      estimativaBytes = 0;
+    }
+    if (RE_INICIO_CAPITULO.test(textoComPausa)) {
+      iniciosCapitulo.push(chunks.length);
+    }
 
     if (bytesTexto > limiteTexto) {
       if (chunkAtual) {
@@ -111,7 +153,58 @@ async function dividirEmChunks(
     chunks.push(chunkAtual.trim());
   }
 
-  return chunks;
+  return { chunks, iniciosCapitulo };
+}
+
+// Agrupa chunks já sintetizados em "partes" de áudio, fechando cada parte
+// sempre numa fronteira de capítulo (nunca no meio), tentando chegar o mais
+// perto possível de `limite` sem ultrapassar — exceto quando um único
+// capítulo já excede o limite sozinho, caso em que a parte fica maior mesmo
+// (preferível a cortar errado). `pesos` deve ser a DURAÇÃO em segundos de
+// cada chunk (não bytes — ver nota sobre BITRATE_SAIDA_CONCATENADA_BPS acima),
+// e `limite` o limite correspondente em segundos. Retorna um array de
+// [inicioChunk, fimChunkExclusivo].
+function agruparChunksEmPartes(pesos, iniciosCapitulo, limite = LIMITE_SEGUNDOS_POR_PARTE) {
+  const totalChunks = pesos.length;
+  const fronteiras = [...new Set([...iniciosCapitulo.filter((i) => i > 0), totalChunks])].sort(
+    (a, b) => a - b
+  );
+
+  const partes = [];
+  let inicioParte = 0;
+  let melhorFronteira = null;
+  let i = 0;
+
+  while (i < fronteiras.length) {
+    const fronteira = fronteiras[i];
+    let soma = 0;
+    for (let k = inicioParte; k < fronteira; k++) soma += pesos[k];
+
+    if (soma <= limite) {
+      melhorFronteira = fronteira;
+      i++;
+      continue;
+    }
+
+    if (melhorFronteira !== null) {
+      partes.push([inicioParte, melhorFronteira]);
+      inicioParte = melhorFronteira;
+      melhorFronteira = null;
+      // não avança i — reavalia a mesma fronteira contra o novo inicioParte
+    } else {
+      // nem o primeiro trecho cabe (um capítulo sozinho > limite) — aceita
+      // mesmo assim, sem cortar o capítulo no meio.
+      partes.push([inicioParte, fronteira]);
+      inicioParte = fronteira;
+      i++;
+    }
+  }
+
+  if (inicioParte < totalChunks) {
+    partes.push([inicioParte, totalChunks]);
+  }
+
+  return partes;
 }
 
 function colapsarLetrasEspacadas(texto) {
@@ -257,13 +350,14 @@ async function gerarAudiolivro(
   await fs.mkdir(pastaTemp, { recursive: true });
 
   try {
-    console.log('[Audiolivro] Dividindo em chunks...');
-    const chunks = await dividirEmChunks(textoFonte, bytesMax, pausaParagrafo);
+    console.log('[Audiolivro] Dividindo em chunks (quebra forçada a cada capítulo)...');
+    const { chunks, iniciosCapitulo } = await dividirEmChunks(textoFonte, bytesMax, pausaParagrafo);
     console.log(
-      `[Audiolivro] ${chunks.length} chunks gerados (limite ${bytesMax} bytes cada)`
+      `[Audiolivro] ${chunks.length} chunks gerados (limite ${bytesMax} bytes cada), ${iniciosCapitulo.length} capítulos detectados`
     );
 
     const caminhosMp3 = [];
+    const duracoesSegundos = [];
 
     for (let i = 0; i < chunks.length; i++) {
       console.log(
@@ -276,6 +370,7 @@ async function gerarAudiolivro(
       await fs.writeFile(caminhoMp3, audioBuffer);
 
       caminhosMp3.push(caminhoMp3);
+      duracoesSegundos.push(await obterDuracaoMp3(caminhoMp3));
 
       console.log(
         `[Audiolivro] ✅ Chunk ${i + 1}/${chunks.length} salvo (${audioBuffer.length} bytes)`
@@ -286,24 +381,47 @@ async function gerarAudiolivro(
       }
     }
 
-    console.log('[Audiolivro] Concatenando áudios com FFmpeg...');
-    const caminhoFinal = path.join(pastaTemp, `${livroSlug}_completo.mp3`);
-    await concatenarComFFmpeg(caminhosMp3, caminhoFinal);
-
-    const stats = await fs.stat(caminhoFinal);
-    const duracao = await obterDuracaoMp3(caminhoFinal);
-    const minutos = Math.floor(duracao / 60);
-    const segundos = duracao % 60;
-
+    const grupos = agruparChunksEmPartes(duracoesSegundos, iniciosCapitulo);
     console.log(
-      `[Audiolivro] ✅ Arquivo concatenado: ${(stats.size / 1024 / 1024).toFixed(2)} MB, ${minutos}m${segundos}s`
+      grupos.length === 1
+        ? '[Audiolivro] Cabe numa parte única — concatenando...'
+        : `[Audiolivro] Dividido em ${grupos.length} partes (alinhadas por capítulo) — concatenando cada uma...`
     );
 
-    console.log('[Audiolivro] Fazendo upload para Supabase Storage...');
-    const nomeObjeto = `${livroSlug}/${livroSlug}.mp3`;
-    const urlPublica = await uploadParaSupabase(caminhoFinal, nomeObjeto);
+    const partes = [];
 
-    console.log(`[Audiolivro] ✅ Upload concluído: ${urlPublica}`);
+    for (let p = 0; p < grupos.length; p++) {
+      const [inicio, fim] = grupos[p];
+      const nomeArquivo = grupos.length === 1 ? `${livroSlug}.mp3` : `${livroSlug}-parte${p + 1}.mp3`;
+      const caminhoParte = path.join(pastaTemp, nomeArquivo);
+
+      await concatenarComFFmpeg(caminhosMp3.slice(inicio, fim), caminhoParte);
+
+      const stats = await fs.stat(caminhoParte);
+      const duracao = await obterDuracaoMp3(caminhoParte);
+      const minutos = Math.floor(duracao / 60);
+      const segundos = duracao % 60;
+
+      console.log(
+        `[Audiolivro] ✅ ${nomeArquivo}: ${(stats.size / 1024 / 1024).toFixed(2)} MB, ${minutos}m${segundos}s (chunks ${inicio}-${fim - 1})`
+      );
+
+      console.log(`[Audiolivro] Fazendo upload de ${nomeArquivo} para Supabase Storage...`);
+      const nomeObjeto = `${livroSlug}/${nomeArquivo}`;
+      const urlPublica = await uploadParaSupabase(caminhoParte, nomeObjeto);
+      console.log(`[Audiolivro] ✅ Upload concluído: ${urlPublica}`);
+
+      partes.push({
+        url: urlPublica,
+        tamanhoMB: (stats.size / 1024 / 1024).toFixed(2),
+        duracaoSegundos: duracao,
+      });
+
+      try {
+        await fs.unlink(caminhoParte);
+      } catch (e) {
+      }
+    }
 
     for (const arquivo of caminhosMp3) {
       try {
@@ -311,16 +429,13 @@ async function gerarAudiolivro(
       } catch (e) {
       }
     }
-    try {
-      await fs.unlink(caminhoFinal);
-    } catch (e) {
-    }
 
     return {
       sucesso: true,
-      urlPublica,
-      tamanhoMB: (stats.size / 1024 / 1024).toFixed(2),
+      urlsPartes: partes.map((p) => p.url),
+      partes,
       chunks: chunks.length,
+      capitulos: iniciosCapitulo.length,
       voz,
     };
   } catch (erro) {
@@ -334,13 +449,17 @@ async function gerarAudiolivro(
 module.exports = {
   gerarAudiolivro,
   dividirEmChunks,
+  agruparChunksEmPartes,
   gerarSSML,
   gerarAudioComAPI,
   concatenarComFFmpeg,
   uploadParaSupabase,
+  obterDuracaoMp3,
   colapsarLetrasEspacadas,
   normalizarMaiusculas,
   sanitizarTexto,
   PAUSA_PARAGRAFO_PADRAO,
   PAUSA_SEPARADOR_PADRAO,
+  LIMITE_BYTES_POR_PARTE,
+  LIMITE_SEGUNDOS_POR_PARTE,
 };

@@ -44,18 +44,19 @@ async function main() {
     console.log('\n====================================');
     console.log('✅ SUCESSO');
     console.log('====================================');
-    console.log(`URL Pública: ${resultado.urlPublica}`);
-    console.log(`Tamanho: ${resultado.tamanhoMB} MB`);
-    console.log(`Chunks: ${resultado.chunks}`);
+    resultado.partes.forEach((p, i) => {
+      console.log(`Parte ${i + 1}/${resultado.partes.length}: ${p.url}`);
+      console.log(`  ${p.tamanhoMB} MB, ${Math.floor(p.duracaoSegundos / 60)}m${p.duracaoSegundos % 60}s`);
+    });
+    console.log(`Chunks: ${resultado.chunks} | Capítulos: ${resultado.capitulos}`);
     console.log(`Voz: ${resultado.voz}`);
     console.log(`Tempo total: ${tempoTotal.toFixed(1)}s`);
     console.log(`Tempo por chunk: ${(tempoTotal / resultado.chunks).toFixed(1)}s`);
     console.log('====================================\n');
 
     console.log('📝 Próximos passos:');
-    console.log(`1. Baixe e ouça: node scripts/validar-audiolivro.js "${resultado.urlPublica}"`);
-    console.log(`2. Procure por pausas (SSML) nos pontos mapeados`);
-    console.log(`3. Se OK, atualize catalogoLivros.js com o campo audiobookUrl`);
+    console.log('1. Ouça início/meio/fim (e transições entre partes, se houver mais de uma)');
+    console.log('2. Se OK, atualize catalogoLivros.js: audiobookUrl (1 parte) ou audiobookPartes (2+)');
   } catch (erro) {
     console.error('\n❌ ERRO NA GERAÇÃO:', erro.message);
     process.exit(1);

@@ -149,13 +149,79 @@ router.get('/livros/:livroId', exigirAcesso, async (req, res) => {
   }
 });
 
-// Acesso ao audiolivro: redireciona para URL pública do Supabase se token válido
+// Acesso ao audiolivro: redireciona para URL pública do Supabase se token
+// válido. Obras grandes (acima do limite de upload de objeto único do
+// Supabase Storage) são divididas em partes — audiobookPartes (array) em vez
+// de audiobookUrl (string única). Os dois campos são mutuamente exclusivos
+// em catalogoLivros.js. Mesmo modelo de confiança nos dois casos: depois da
+// checagem de token, o(s) link(s) entregues são URLs públicas do Supabase.
 router.get('/audiolivros/:livroId', exigirAcesso, async (req, res) => {
   const { livroId } = req.params;
 
   try {
     const livro = buscarLivro(livroId);
-    if (!livro || !livro.audiobookUrl) {
+    if (!livro) {
+      return res.status(404).sendFile(PAGINA_ACESSO_EXPIRADO);
+    }
+
+    if (Array.isArray(livro.audiobookPartes) && livro.audiobookPartes.length > 0) {
+      const links = livro.audiobookPartes
+        .map(
+          (url, i) =>
+            `<a href="${url}" class="parte-audiolivro">Parte ${i + 1} de ${livro.audiobookPartes.length}</a>`
+        )
+        .join('\n');
+
+      return res.send(`<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>${livro.titulo} — Audiolivro</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #170b11;
+    color: #e8dcc8;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    max-width: 480px;
+    width: 100%;
+    text-align: center;
+  }
+  h1 { font-size: 1.3rem; color: #e8cf8e; margin-bottom: 8px; }
+  p.aviso { font-size: 0.85rem; color: #b8a888; margin-bottom: 28px; }
+  .parte-audiolivro {
+    display: block;
+    padding: 14px 20px;
+    margin-bottom: 12px;
+    border: 1px solid #b8963e;
+    border-radius: 6px;
+    color: #e8cf8e;
+    text-decoration: none;
+    font-weight: bold;
+    transition: background 0.2s ease;
+  }
+  .parte-audiolivro:hover { background: rgba(184, 150, 62, 0.15); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>${livro.titulo}</h1>
+    <p class="aviso">Esta obra é entregue em ${livro.audiobookPartes.length} partes — baixe ou ouça cada uma na ordem.</p>
+    ${links}
+  </div>
+</body>
+</html>`);
+    }
+
+    if (!livro.audiobookUrl) {
       return res.status(404).sendFile(PAGINA_ACESSO_EXPIRADO);
     }
 
