@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 19/08/2026 (01:30) — Vol. I corrigido (manuscrito completo) e reativado para venda; pipeline de pausas SSML consolidado; selo de audiobook no card da loja implementado e validado ao vivo. Falta apenas teste de pagamento real via webhook.
+> Última atualização: 19/08/2026 (noite) — Universo Feminino completo: as 5 obras (Ela Tem Classe, Código Feminino, A Inteligência do Corpo Feminino, Inesquecível, A Mulher que Permanece Inteira) têm audiobook ativo em produção. Preço do audiobook generalizado por obra (`precoAudiobook`). Falta apenas teste de pagamento real via webhook e o piloto de recalibração de voz antes do Universo Masculino.
 
 ---
 
@@ -266,6 +266,33 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
 - ✅ `audiobookUrl` apontando para arquivo de produção (6.47 MB, 28m16s)
 - ✅ Checkout: checkbox funcional, preço somado
 - ✅ Entrega: token gerado, validado, redirecionado (100% testado)
+
+---
+
+## 2. Lançamentos Recentes (19/08/2026 noite) — Universo Feminino completo (5/5 obras com audiobook)
+
+**Marco**: as 5 obras do departamento "Universo Feminino" têm audiobook ativo em produção, todas validadas auditivamente (início/meio/fim) pelo usuário antes da publicação, seguindo a disciplina consolidada: gerar local → validar → só então subir + ativar no catálogo.
+
+| Obra | Palavras (manuscrito) | Cobertura extração | Duração áudio | Commit de ativação |
+|---|---|---|---|---|
+| Ela Tem Classe | 4.373 | 93.5% | 29m44s | (sessão anterior) |
+| Código Feminino | 8.822 | 96.2% | 65m57s | `6a135d8` |
+| A Inteligência do Corpo Feminino | 14.017 | 99.2% | 95m1s | `93225d4` |
+| Inesquecível | 15.444 | 98.3% | 105m50s | `93225d4` |
+| A Mulher que Permanece Inteira | 17.663 | 97.7% | 124m2s | `81d11c0` |
+
+**Preço generalizado por obra**: campo `precoAudiobook` adicionado a `catalogoLivros.js` (commit `5ec9bac`), substituindo o valor fixo de R$14,90 hardcoded em 3 lugares (`checkout-livro.html` + 2 endpoints de `server.js`, além do endpoint `/api/livros/catalogo/:livroId`). Todas as 5 obras atualmente com `precoAudiobook: 14.90`, mas agora ajustável por obra sem tocar em código.
+
+**Pipeline de extração de texto (`scripts/extrair-texto-docx.js`) testado contra 3 variações reais de manuscrito**:
+1. **Heading nativo do Word** (Ela Tem Classe, Código Feminino, A Inteligência do Corpo Feminino, Inesquecível) — Sumário detectado automaticamente via bloco "Sumário" + próximo `<h1-3>`, excisão de faixa (não corte simples do início — necessário porque "Os Bastidores da Mente" tem conteúdo real, a "Apresentação", ANTES do Sumário no manuscrito).
+2. **Negrito manual sem heading nativo** (série "Os Bastidores da Mente") — fallback via parágrafo 100% em negrito batendo "CAPÍTULO 1 —".
+3. **Listas aninhadas sem heading nenhum** (A Mulher que Permanece Inteira) — script automático não detectou (Sumário chamado "SUMÁRIO OFICIAL", capítulos em `<ul><li><ul><li>` em vez de heading, "Capítulo N:" com dois-pontos em vez de "—"). Tratado manualmente: cobertura calculada do mesmo jeito (97.7%), 39/39 capítulos confirmados sem lacunas antes de gerar áudio. **Não foi generalizado no script** — três convenções diferentes já cobertas é o suficiente por ora; um quarto formato deve ser tratado caso a caso, não forçado em heurística única.
+
+**Bug encontrado e corrigido nesta sessão** (nunca afetou áudio de produção): a primeira versão do `extrair-texto-docx.js` só capturava `<p>`/`<h1-3>`, descartando `<ul>`/`<ol>`/`<table>` — teria cortado ~22% de "Os Bastidores da Mente" (209 itens de lista + 1 tabela) se usado para gerar produção. Corrigido antes de qualquer uso real; o áudio de Vol. I já vendido usou extração de texto puro (sem essa falha). Checagem de cobertura (`extrair-texto-docx.js` compara contra `mammoth.extractRawText`) ficou permanente no script como rede de segurança contra regressão futura.
+
+**Vol. I — decisão registrada**: o Sumário (1m26s) continua sendo lido em voz alta no áudio já vendido. Confirmado por escuta pelo usuário. Decisão explícita: não é prioridade de correção — incômodo de escuta, não perda de conteúdo. Não regenerar sem pedido explícito.
+
+**Pendente antes do Universo Masculino**: piloto de recalibração de pausas SSML na voz `pt-BR-Wavenet-B` (calibração atual só validada na voz feminina `pt-BR-Wavenet-A`) — autorização explícita do usuário necessária antes de qualquer produção nesse universo.
 
 ---
 
