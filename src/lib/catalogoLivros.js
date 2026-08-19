@@ -379,7 +379,14 @@ const CATALOGO = {
     departamento: 'Desenvolvimento & Comportamento',
     capa: '/loja/capas/alem-do-que-voce-sente.jpg',
     resumo: 'Um mapa para adolescentes atravessarem os anos em que tudo ferve — sobre emoções, amizades, namoro, limites e situações que ninguém explicou.',
-    descricao: 'Para quem tem entre catorze e vinte e poucos anos e está atravessando a fase em que tudo é mais intenso. Um manual de instruções da própria mente, o tipo de coisa que deveria vir junto com essa idade e nunca vem. Trata com seriedade temas como cuidado vs. controle num namoro, ciúme, pressão por fotos íntimas e o direito de dizer não.'
+    descricao: 'Para quem tem entre catorze e vinte e poucos anos e está atravessando a fase em que tudo é mais intenso. Um manual de instruções da própria mente, o tipo de coisa que deveria vir junto com essa idade e nunca vem. Trata com seriedade temas como cuidado vs. controle num namoro, ciúme, pressão por fotos íntimas e o direito de dizer não.',
+    audiobookPartes: [
+      'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte1.mp3',
+      'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte2.mp3',
+      'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte3.mp3'
+    ],
+    audiobookDisponivel: true,
+    precoAudiobook: 19.90
   },
   'o-caminho-da-consciencia': {
     titulo: 'O Caminho da Consciência',
