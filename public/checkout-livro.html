@@ -176,6 +176,33 @@
   }
   .cupom-status.valido { color: #7fae6e; }
   .cupom-status.invalido { color: #e0716a; }
+  .opcao-audiolivro {
+    margin: 16px 0;
+    padding: 14px;
+    background: rgba(184, 150, 62, 0.08);
+    border: 1px solid var(--borda);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .opcao-audiolivro input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    cursor: pointer;
+  }
+  .opcao-audiolivro-texto {
+    flex: 1;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  .opcao-audiolivro-texto strong { color: var(--dourado-suave); }
+  .opcao-audiolivro-preco {
+    font-size: 0.85rem;
+    color: var(--dourado-suave);
+    font-weight: bold;
+    white-space: nowrap;
+  }
 </style>
 </head>
 <body>
@@ -205,6 +232,15 @@
     <input type="email" id="email" autocomplete="email" placeholder="Ex: maria@email.com" />
     <label for="cpf">CPF</label>
     <input type="text" id="cpf" inputmode="numeric" placeholder="000.000.000-00" maxlength="14" />
+
+    <div class="opcao-audiolivro" id="opcao-audiolivro-container" style="display:none;">
+      <input type="checkbox" id="audiolivro-checkbox" onchange="atualizarPrecoAudiolivro()" />
+      <div class="opcao-audiolivro-texto">
+        <strong>Adicionar audiolivro</strong><br>
+        <span style="font-size:0.8rem;">Versão em áudio lida profissionalmente</span>
+      </div>
+      <div class="opcao-audiolivro-preco" id="preco-audiolivro">+ R$ 17,90</div>
+    </div>
 
     <div class="metodos">
       <button type="button" id="btn-pix" onclick="selecionarMetodo('PIX')">PIX</button>
@@ -240,6 +276,8 @@
   let pollingInterval = null;
   let livroAtual = null;
   let cupomAplicado = null;
+  let audiolivroIncluido = false;
+  const precoAudiolivro = 17.90;
 
   function formatarCPF(valor) {
     return valor.replace(/\D/g, '').slice(0, 11)
@@ -278,6 +316,10 @@
       document.getElementById('preco-livro').textContent = `R$ ${livro.preco.toFixed(2).replace('.', ',')}`;
       atualizarLinkWhatsapp(livro.titulo);
 
+      if (livro.audiobookDisponivel) {
+        document.getElementById('opcao-audiolivro-container').style.display = 'flex';
+      }
+
       const cupomDaUrl = params.get('cupom');
       if (cupomDaUrl) {
         document.getElementById('cupom-input').value = cupomDaUrl;
@@ -288,6 +330,25 @@
       document.getElementById('titulo-livro').textContent = 'Livro indisponível';
       document.getElementById('card-formulario').style.display = 'none';
       atualizarLinkWhatsapp(null);
+    }
+  }
+
+  function atualizarPrecoAudiolivro() {
+    audiolivroIncluido = document.getElementById('audiolivro-checkbox').checked;
+    if (livroAtual) {
+      let precoFinal = livroAtual.precoPromocional || livroAtual.preco;
+      if (audiolivroIncluido) {
+        precoFinal += precoAudiolivro;
+      }
+      if (cupomAplicado) {
+        const cupom = cupomAplicado;
+        if (cupom.tipo === 'percentual') {
+          precoFinal = precoFinal * (1 - cupom.desconto / 100);
+        } else if (cupom.tipo === 'fixo') {
+          precoFinal = Math.max(0, precoFinal - cupom.desconto);
+        }
+      }
+      document.getElementById('preco-livro').textContent = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
     }
   }
 
@@ -369,7 +430,7 @@
         const res = await fetch('/api/checkout/livro/preference', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cpf, cupom: cupomAplicado })
+          body: JSON.stringify({ livroId, name, email, cpf, cupom: cupomAplicado, audiolivroIncluido })
         });
         const data = await res.json();
         if (!res.ok || !data.init_point) throw new Error(data.error || 'Erro ao gerar link de pagamento.');
@@ -378,7 +439,7 @@
         const res = await fetch('/api/checkout/livro', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cpf, cupom: cupomAplicado })
+          body: JSON.stringify({ livroId, name, email, cpf, cupom: cupomAplicado, audiolivroIncluido })
         });
         const data = await res.json();
         if (!res.ok || !data.qrCodeText) throw new Error(data.error || 'Erro ao gerar QR Code PIX.');

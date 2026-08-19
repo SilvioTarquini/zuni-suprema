@@ -11,7 +11,8 @@ require('dotenv').config();
 const livrosRouter = require('./routes/livros');
 const livroChatRouter = require('./routes/livroChat');
 const experimenteLivroChatRouter = require('./routes/experimenteLivroChat');
-const { criarAcesso, buscarAcessoPorEmail } = require('./lib/acessoLivros');
+const { criarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO } = require('./lib/acessoLivros');
+const crypto = require('crypto');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
@@ -1357,7 +1358,7 @@ async function marcarPagoSeAprovado(order) {
 // buscarPedidoPendente() recupera os dados reais a partir dessa
 // referência para então chamar criarAcesso().
 
-async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
+async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudiolivro) {
   try {
     const sgMail = require('@sendgrid/mail');
     const { gerarTokenHMAC } = require('./lib/brinde');
@@ -1370,6 +1371,11 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
     const linkBrinde = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(tokenBrinde)}`;
 
+    let linkAudiolivro = '';
+    if (tokenAudiolivro) {
+      linkAudiolivro = `https://www.zunisuprema.com.br/audiolivros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(tokenAudiolivro)}`;
+    }
+
     const msg = {
       to: email,
       from: process.env.SENDGRID_FROM_EMAIL,
@@ -1380,6 +1386,7 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm) {
           <p>Seu pagamento foi confirmado e o acesso ao seu livro já está liberado.</p>
           <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
           <p><a href="${linkAcesso}" style="color:#B8963E;font-weight:bold;">Acessar meu livro</a></p>
+          ${linkAudiolivro ? `<p><a href="${linkAudiolivro}" style="color:#B8963E;font-weight:bold;">▶️ Ouvir audiolivro</a></p>` : ''}
           <p style="color:#b6ab93;font-size:0.85rem;">O acesso fica disponível até ${expiraFormatado}.</p>
 
           <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#2a2620;">
@@ -1454,7 +1461,28 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
   if (!isPaid) return null;
 
   const acesso = await criarAcesso({ livroId: pedido.livroId, email: pedido.email, cpf: pedido.cpf, paymentId });
-  await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm);
+
+  let acessoAudiolivro = null;
+  if (pedido.audiolivroIncluido) {
+    const supabaseClient = assertSupabase();
+    const tokenAudiolivro = crypto.randomBytes(24).toString('hex');
+    const expiraEm = new Date(Date.now() + DIAS_DE_ACESSO * 24 * 60 * 60 * 1000);
+
+    await supabaseClient.from('acessos_livros').insert({
+      livro_id: pedido.livroId,
+      email: pedido.email,
+      cpf: pedido.cpf || null,
+      token: tokenAudiolivro,
+      payment_id: `${paymentId}-audiolivro`,
+      data_pagamento: new Date().toISOString(),
+      data_expiracao: expiraEm.toISOString(),
+      tipo_produto: 'audiolivro'
+    });
+
+    acessoAudiolivro = { token: tokenAudiolivro, expiraEm };
+  }
+
+  await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
   return acesso;
 }
 
@@ -1523,7 +1551,14 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
   if (!livro) {
     return res.status(404).json({ error: 'Livro não encontrado.' });
   }
-  return res.json({ livroId: req.params.livroId, titulo: livro.titulo, preco: livro.precoPromocional || livro.preco, categoria: livro.categoria });
+  return res.json({
+    livroId: req.params.livroId,
+    titulo: livro.titulo,
+    preco: livro.precoPromocional || livro.preco,
+    categoria: livro.categoria,
+    audiobookDisponivel: livro.audiobookDisponivel || false,
+    audiobookUrl: livro.audiobookUrl || null
+  });
 });
 
 app.get('/api/validar-cupom', async (req, res) => {
@@ -1575,7 +1610,7 @@ app.get('/api/validar-cupom', async (req, res) => {
 
 app.post('/api/checkout/livro/preference', async (req, res) => {
   try {
-    const { livroId, name, email, cpf, cupom } = req.body;
+    const { livroId, name, email, cpf, cupom, audiolivroIncluido } = req.body;
 
     if (!livroId || !name || !email || !cpf) {
       return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
@@ -1591,6 +1626,10 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
     }
 
     let precoFinal = livro.precoPromocional || livro.preco;
+    const precoAudiolivro = 17.90;
+    if (audiolivroIncluido && livro.audiobookDisponivel) {
+      precoFinal += precoAudiolivro;
+    }
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);
       if (cupomValidado) {
@@ -1601,7 +1640,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
     const frontendUrl = process.env.FRONTEND_URL;
-    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf });
+    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf, audiolivroIncluido });
 
     const preference = new Preference(mpClient);
     const result = await preference.create({
@@ -1641,7 +1680,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
 
 app.post('/api/checkout/livro', async (req, res) => {
   try {
-    const { livroId, name, email, cpf, cupom } = req.body;
+    const { livroId, name, email, cpf, cupom, audiolivroIncluido } = req.body;
 
     if (!livroId || !name || !email || !cpf) {
       return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
@@ -1653,6 +1692,10 @@ app.post('/api/checkout/livro', async (req, res) => {
     }
 
     let precoFinal = livro.precoPromocional || livro.preco;
+    const precoAudiolivro = 17.90;
+    if (audiolivroIncluido && livro.audiobookDisponivel) {
+      precoFinal += precoAudiolivro;
+    }
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);
       if (cupomValidado) {
@@ -1662,7 +1705,7 @@ app.post('/api/checkout/livro', async (req, res) => {
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
-    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf });
+    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf, audiolivroIncluido });
     const valorFormatado = precoFinal.toFixed(2);
 
     const orderBody = {

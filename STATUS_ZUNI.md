@@ -50,23 +50,24 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
    - Integração: gerarAudioComAPI() já aceita parâmetro `voz`
    - Validação: ✅ Teste com Wavenet-B (39s) aprovado auditivamente
 
-**Versão Definitiva de Produção — Vol. I (PENDENTE PRÓXIMA SESSÃO):**
-- ⏳ Será gerado com todas as correções (sanitização + normalização + duração real via ffprobe)
+**Versão Definitiva de Produção — Vol. I (✅ CONCLUÍDA 18/08/2026 22:35):**
+- ✅ Gerado com todas as correções (sanitização + normalização + duração real via ffprobe)
 - Nome arquivo: `os-bastidores-vol1/os-bastidores-vol1.mp3` (definitivo, sem "-teste")
-- Tamanho estimado: ~6.5 MB
-- Duração estimada: ~28m (via ffprobe)
+- Tamanho real: 6.47 MB
+- Duração real: 28m16s (via FFmpeg)
 - Chunks: 6 (4.3–4.7 KB SSML cada)
-- Tempo processamento: ~100s (16.5s por chunk)
-- Catálogo: `audiobookDisponivel` permanece `false` até geração definitiva ✅
-- Ação pós-geração: Atualizar `audiobookUrl` e marcar `audiobookDisponivel: true`
+- Tempo processamento: 146.7s (24.4s por chunk — pipeline completo: síntese + concat + upload)
+- Catálogo: `audiobookDisponivel` marcado `true` ✅
+- Ação pós-geração concluída: Atualizado `audiobookUrl` e marcar `audiobookDisponivel: true` ✅
+- **URL Pública**: `https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3`
 
-**Limpeza de Bucket (PENDENTE PRÓXIMA SESSÃO):**
-- ⏳ Remover 4 arquivos de teste do Supabase Storage:
-  - os-bastidores-vol1-teste (versão de teste, se ainda existir)
-  - identidade-autoestima-teste (teste piloto)
-  - teste-normalizacao-maiusculas (teste de validação)
-  - teste-voz-masculina (teste de validação)
-- Script preparado: `scripts/limpar-testes-supabase.js` ✅
+**Limpeza de Bucket (✅ CONCLUÍDA 18/08/2026 22:36):**
+- ✅ Removidos 4/4 arquivos de teste do Supabase Storage:
+  - os-bastidores-vol1-teste ✅
+  - identidade-autoestima-teste ✅
+  - teste-normalizacao-maiusculas ✅
+  - teste-voz-masculina ✅
+- Script executado: `scripts/limpar-testes-supabase.js` ✅
 
 **Resumo de Testes Realizados (nesta sessão):**
 | Teste | Entrada | Saída | Duração | Status |
@@ -104,18 +105,50 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 - Escalabilidade: Testada de 3.7 KB a 24.5 KB
 - Qualidade: ✅ Aprovada auditivamente (maiúsculas, voz, pausas naturais)
 
+**Fase 2 — Entrega via Token HMAC (✅ COMPLETA E TESTADA 18/08/2026 23:10):**
+
+**Implementação:**
+- ✅ Checkbox "Adicionar audiolivro" no checkout HTML (preço placeholder R$17,90)
+- ✅ Endpoints de checkout adaptados para `audiolivroIncluido` (somam preço)
+- ✅ Tabela `pedidos_livros_pendentes`: coluna `audiolivro_incluido` adicionada
+- ✅ Tabela `acessos_livros`: coluna `tipo_produto` adicionada para diferenciar produtos
+- ✅ Criação de token separado para audiolivro (idempotente via `payment_id-audiolivro`)
+- ✅ Email de entrega com link de audiolivro (quando incluído)
+- ✅ Rota `/audiolivros/:livroId?token=xxxx` com validação completa
+- ✅ Redirecionamento para Supabase Storage
+
+**Design Corrigido (descompasso de livroId resolvido):**
+- Token armazenado: `livro_id` puro (sem sufixo) + `tipo_produto='audiolivro'`
+- Validação: middleware compara `livro_id` + `tipo_produto` corretamente
+- Link no email: `/audiolivros/{livroId}?token=xxx` (sem sufixo)
+- Fluxo: consistente com PDFs (mesma tabela, mesma validação)
+
+**Teste End-to-End ✅ 100% PASSOU (18/08/2026 23:10):**
+```
+1. ✅ Token criado com tipo_produto='audiolivro' (validade 7 dias)
+2. ✅ GET /audiolivros/{livroId}?token=valid → 302 redirect
+3. ✅ Redirect → https://yirxjunmjfnajotcnywc.supabase.co/storage/...
+4. ✅ GET sem token → 403 Forbidden
+5. ✅ GET token inválido → 403 Forbidden
+```
+
+**Decisões Finais:**
+- Modelo: Produto separado (checkbox no checkout, +R$17,90)
+- Validade: 7 dias (padrão dos PDFs)
+- Entrega: 302 redirect para Supabase (sem tracking)
+- Armazenamento: tabela `acessos_livros` com `tipo_produto` para diferenciação
+
 **Pendências para Próxima Sessão:**
-1. ✅ Gerar versão DEFINITIVA de produção do Vol. I (slug: `os-bastidores-vol1`)
-2. ✅ Atualizar catalogoLivros.js: `audiobookUrl` + `audiobookDisponivel: true`
-3. ✅ Limpar bucket: rodar `scripts/limpar-testes-supabase.js` para remover 4 arquivos de teste
-4. ⏳ **Fase 2 (Ainda não iniciada)**: Entrega via token HMAC no checkout
-   - Rota de acesso protegida por token (similar ao PDF dos flipbooks)
-   - E-mail/WhatsApp com link de download
-   - Teste end-to-end de pagamento real
+- ⏳ Teste com webhook MercadoPago real
+- ⏳ Definir preço final do audiolivro
+- ⏳ Decidir lançamento público do audiolivro Vol. I
+- ⏳ Estender a outros volumes (opcional)
 
 **Status Vol. I Atualmente:**
-- `audiobookDisponivel: false` (aguardando geração definitiva) ✅
-- Arquivo de teste ainda em Supabase (será limpo na próxima sessão)
+- ✅ `audiobookDisponivel: true` (definitiva, pronto para venda)
+- ✅ `audiobookUrl` apontando para arquivo de produção (6.47 MB, 28m16s)
+- ✅ Checkout: checkbox funcional, preço somado
+- ✅ Entrega: token gerado, validado, redirecionado (100% testado)
 
 ---
 

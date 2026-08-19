@@ -149,4 +149,22 @@ router.get('/livros/:livroId', exigirAcesso, async (req, res) => {
   }
 });
 
+// Acesso ao audiolivro: redireciona para URL pública do Supabase se token válido
+router.get('/audiolivros/:livroId', exigirAcesso, async (req, res) => {
+  const { livroId } = req.params;
+
+  try {
+    const livro = buscarLivro(livroId);
+    if (!livro || !livro.audiobookUrl) {
+      return res.status(404).sendFile(PAGINA_ACESSO_EXPIRADO);
+    }
+
+    // Redireciona para a URL pública do audiolivro no Supabase
+    return res.redirect(livro.audiobookUrl);
+  } catch (err) {
+    console.error('Erro ao servir audiolivro:', err.message);
+    return res.status(500).send('Erro ao acessar o audiolivro. Tente novamente em instantes.');
+  }
+});
+
 module.exports = router;

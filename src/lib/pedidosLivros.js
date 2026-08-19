@@ -32,9 +32,10 @@ function assertSupabase() {
  * @param {string} [params.nome]
  * @param {string} params.email
  * @param {string} [params.cpf]
+ * @param {boolean} [params.audiolivroIncluido]
  * @returns {Promise<string>} referência (ex: "lv3f9a1c2b...")
  */
-async function criarPedidoPendente({ livroId, nome, email, cpf }) {
+async function criarPedidoPendente({ livroId, nome, email, cpf, audiolivroIncluido }) {
   const supabaseClient = assertSupabase();
   const referencia = `lv${crypto.randomBytes(16).toString('hex')}`;
 
@@ -44,6 +45,7 @@ async function criarPedidoPendente({ livroId, nome, email, cpf }) {
     nome: nome || null,
     email,
     cpf: cpf || null,
+    audiolivro_incluido: audiolivroIncluido ? true : false,
   });
 
   if (error) {
@@ -57,7 +59,7 @@ async function criarPedidoPendente({ livroId, nome, email, cpf }) {
  * Busca os dados de um pedido de livro pendente pela referência.
  *
  * @param {string} referencia
- * @returns {Promise<{livroId: string, nome: string|null, email: string, cpf: string|null}|null>}
+ * @returns {Promise<{livroId: string, nome: string|null, email: string, cpf: string|null, audiolivroIncluido: boolean}|null>}
  */
 async function buscarPedidoPendente(referencia) {
   const supabaseClient = assertSupabase();
@@ -70,7 +72,7 @@ async function buscarPedidoPendente(referencia) {
 
   if (error || !data) return null;
 
-  return { livroId: data.livro_id, nome: data.nome, email: data.email, cpf: data.cpf };
+  return { livroId: data.livro_id, nome: data.nome, email: data.email, cpf: data.cpf, audiolivroIncluido: data.audiolivro_incluido };
 }
 
 module.exports = { criarPedidoPendente, buscarPedidoPendente };
