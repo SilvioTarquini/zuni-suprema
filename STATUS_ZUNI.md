@@ -292,7 +292,7 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
 
 **Vol. I — decisão registrada**: o Sumário (1m26s) continua sendo lido em voz alta no áudio já vendido. Confirmado por escuta pelo usuário. Decisão explícita: não é prioridade de correção — incômodo de escuta, não perda de conteúdo. Não regenerar sem pedido explícito.
 
-**Pendente antes do Universo Masculino**: piloto de recalibração de pausas SSML na voz `pt-BR-Wavenet-B` (calibração atual só validada na voz feminina `pt-BR-Wavenet-A`) — autorização explícita do usuário necessária antes de qualquer produção nesse universo.
+**Piloto de recalibração de voz masculina — ✅ CONCLUÍDO E APROVADO (19/08/2026 noite)**: piloto de 1m20s gerado com `pt-BR-Wavenet-B` usando os mesmos parâmetros de pausa já validados na voz feminina (`strength="medium"` entre parágrafos, `strength="strong"` em separadores decorativos ===/✦✧★☆❖). Aprovado sem necessidade de ajuste — calibração generaliza para as duas vozes. Universo Masculino liberado para produção.
 
 ---
 

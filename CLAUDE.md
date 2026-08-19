@@ -69,9 +69,10 @@ sem heading nativo) — não pular essa etapa nem assumir que o texto bruto já 
    `catalogoLivros.js`.
 
 Calibração de pausas (`strength="medium"` entre parágrafos, `strength="strong"` em
-separadores decorativos) foi validada apenas na voz feminina `pt-BR-Wavenet-A`. Antes de
-gerar qualquer obra do Universo Masculino (`pt-BR-Wavenet-B`), validar um piloto curto
-nessa voz separadamente — não assumir que os mesmos valores soam bem.
+separadores decorativos) validada tanto na voz feminina `pt-BR-Wavenet-A` quanto na
+masculina `pt-BR-Wavenet-B` (piloto de 1m20s, aprovado 19/08/2026 — mesmos parâmetros,
+sem necessidade de ajuste). Se uma terceira voz for usada no futuro, repetir o piloto
+antes de produção — não assumir que a calibração generaliza sem validar.
 
 ## Convenções observadas
 
