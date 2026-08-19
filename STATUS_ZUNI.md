@@ -4,7 +4,7 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 19/08/2026 (00:50) — Vol. I corrigido (manuscrito completo) e reativado para venda; pipeline de pausas SSML consolidado. Falta apenas teste de pagamento real via webhook.
+> Última atualização: 19/08/2026 (01:30) — Vol. I corrigido (manuscrito completo) e reativado para venda; pipeline de pausas SSML consolidado; selo de audiobook no card da loja implementado e validado ao vivo. Falta apenas teste de pagamento real via webhook.
 
 ---
 
@@ -241,6 +241,18 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
 - ⏳ **Teste de pagamento real via webhook MercadoPago** para o audiobook — ainda não foi feito nenhum teste ponta a ponta com pagamento de verdade (cartão/Pix real) cobrindo o fluxo audiobook: pagamento → webhook → token gerado → e-mail enviado → acesso liberado ao MP3. O teste E2E existente (`teste@e2e.com`) validou a lógica de token/acesso, não o pagamento real.
 - ⏳ Recalibração do pipeline de pausas para voz masculina (`pt-BR-Wavenet-B`) — obrigatória antes de processar qualquer obra do Universo Masculino, não assumir que `strength="medium"/"strong"` soa igual nessa voz.
 - ⏳ Produção dos outros 9 títulos candidatos (dos 10 localizados, só o Apêndice foi validado em piloto) — aguardando autorização explícita para começar.
+
+---
+
+**PÓS-FECHAMENTO — 19/08/2026: Selo de audiobook na loja.**
+
+- **Problema identificado**: `audiobookDisponivel` já existia no catálogo e no checkout, mas o card da obra em `public/loja/index.html` não sinalizava a existência do audiobook antes do clique — quem navegava a loja só descobria a opção depois de entrar no checkout.
+- **Implementado**: selo `🎧 Audiobook disponível · +R$ 14,90` no card, renderizado condicionalmente a partir do mesmo campo `livro.audiobookDisponivel` já retornado por `/api/livros` (sem nova rota, sem novo dado). Some/aparece automaticamente por obra, sem alterar layout das demais.
+- **Validação técnica antes do deploy**: subida local do servidor confirmando que `/api/livros` retorna `audiobookDisponivel: true` só para o Vol. I; nenhuma quebra de sintaxe/layout.
+- **Commit**: `39f1b9e` (feat: selo de audiobook no card da loja).
+- **Deploy**: confirmado via `railway logs --service zuni-suprema` — container reiniciado limpo, sem erros, servidor respondendo.
+- **Validação visual em produção**: confirmada pelo usuário, ao vivo na loja publicada, após o deploy.
+- **Status**: ✅ 100% concluído e validado.
 
 **Próximos Passos (Ordem a Decidir):**
 1. Confirmar/localizar arquivos-fonte para 3 obras incertas
