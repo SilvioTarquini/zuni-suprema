@@ -33,7 +33,8 @@ const CATALOGO = {
     descricao: 'Neste volume inaugural, explore a arquitetura profunda dos sentimentos e emoções que governam nosso comportamento. Entenda como as reações instintivas moldam nossas vidas, quais são as forças que operam por trás dos bastidores da mente, e como reconhecê-las é o primeiro passo para a verdadeira liberdade de escolha.',
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3',
-    audiobookDisponivel: true
+    audiobookDisponivel: true,
+    precoAudiobook: 14.90
   },
   'os-bastidores-da-mente-2-o-antidoto': {
     titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
@@ -105,7 +106,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um guia de elegância que vai além da aparência — como cultivar presença, magnetismo e sofisticação genuína no dia a dia, sem depender de excesso ou performance.',
-    descricao: 'Existe uma diferença profunda entre chamar atenção e ser, de fato, inesquecível. "Ela Tem Classe" explora essa diferença em dois volumes: o primeiro dedicado à elegância, ao estilo e ao refinamento moderno; o segundo, à presença, ao magnetismo e à sofisticação avançada. Ao longo da obra, a leitora encontra reflexões práticas sobre como a verdadeira elegância nasce do encontro entre estética e inteligência emocional — a postura que comunica serenidade, a discrição que se torna mistério, a autenticidade que dispensa qualquer papel a representar. Um convite a redescobrir que sofisticação, hoje, mora na leveza.'
+    descricao: 'Existe uma diferença profunda entre chamar atenção e ser, de fato, inesquecível. "Ela Tem Classe" explora essa diferença em dois volumes: o primeiro dedicado à elegância, ao estilo e ao refinamento moderno; o segundo, à presença, ao magnetismo e à sofisticação avançada. Ao longo da obra, a leitora encontra reflexões práticas sobre como a verdadeira elegância nasce do encontro entre estética e inteligência emocional — a postura que comunica serenidade, a discrição que se torna mistério, a autenticidade que dispensa qualquer papel a representar. Um convite a redescobrir que sofisticação, hoje, mora na leveza.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/ela-tem-classe/ela-tem-classe.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 14.90
   },
   'codigo-feminino': {
     titulo: 'Código Feminino',

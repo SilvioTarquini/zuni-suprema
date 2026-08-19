@@ -277,7 +277,6 @@
   let livroAtual = null;
   let cupomAplicado = null;
   let audiolivroIncluido = false;
-  const precoAudiolivro = 14.90;
 
   function formatarCPF(valor) {
     return valor.replace(/\D/g, '').slice(0, 11)
@@ -318,6 +317,7 @@
 
       if (livro.audiobookDisponivel) {
         document.getElementById('opcao-audiolivro-container').style.display = 'flex';
+        document.getElementById('preco-audiolivro').textContent = `+ R$ ${livro.precoAudiobook.toFixed(2).replace('.', ',')}`;
       }
 
       const cupomDaUrl = params.get('cupom');
@@ -338,7 +338,7 @@
     if (livroAtual) {
       let precoFinal = livroAtual.precoPromocional || livroAtual.preco;
       if (audiolivroIncluido) {
-        precoFinal += precoAudiolivro;
+        precoFinal += livroAtual.precoAudiobook;
       }
       if (cupomAplicado) {
         const cupom = cupomAplicado;

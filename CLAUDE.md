@@ -45,6 +45,34 @@ railway variable list --project zuni-suprema
 
 `railway variable set` muda segredos em produção — nunca rodar sem confirmação explícita.
 
+## Pipeline de audiolivros
+
+Geração de audiolivros pagos (Google Cloud TTS) a partir de manuscritos `.docx`. Peças:
+
+- `scripts/extrair-texto-docx.js` — extrai o corpo real do manuscrito (mammoth), descartando
+  título/Sumário automaticamente.
+- `scripts/gerar-audiolivro-local.js` — roda o pipeline (chunking + SSML + síntese +
+  concatenação) e salva o MP3 **local**, sem subir para o Supabase.
+- `src/lib/audiolivroGenerator.js` — motor do pipeline (chunking, SSML v5, upload).
+
+**Regra fixa: a seção de Sumário/Índice do manuscrito é sempre removida antes de gerar
+áudio.** Motivo: no `.docx` bruto os números de página costumam ficar colados ao texto do
+Sumário (ex.: "Introdução3", "Capítulo 1 — ...5"), e o TTS lê isso de forma incompreensível.
+`extrair-texto-docx.js` já faz essa remoção automaticamente (heading semântico do Word
+como marcador do início do conteúdo real, com fallback para negrito manual em manuscritos
+sem heading nativo) — não pular essa etapa nem assumir que o texto bruto já está limpo.
+
+**Disciplina de produção (não pular etapas):**
+1. Gerar localmente com `gerar-audiolivro-local.js` (sem upload).
+2. Validar auditivamente (início, meio, fim) — aprovação explícita do usuário antes de seguir.
+3. Só então subir para o Supabase e ligar `audiobookUrl` + `audiobookDisponivel: true` em
+   `catalogoLivros.js`.
+
+Calibração de pausas (`strength="medium"` entre parágrafos, `strength="strong"` em
+separadores decorativos) foi validada apenas na voz feminina `pt-BR-Wavenet-A`. Antes de
+gerar qualquer obra do Universo Masculino (`pt-BR-Wavenet-B`), validar um piloto curto
+nessa voz separadamente — não assumir que os mesmos valores soam bem.
+
 ## Convenções observadas
 
 - Nomes de função e variável em português (`calcularMapaNatal`, `validarCupom`, `criarPedidoPendente`), mesmo com o resto do código em inglês/JS padrão.

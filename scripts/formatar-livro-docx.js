@@ -186,4 +186,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { formatarLivro };
+module.exports = { formatarLivro, textoPuro, ehNegritoTotal, encontrarInicioReal, classificarParagrafo };

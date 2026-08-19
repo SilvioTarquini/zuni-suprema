@@ -1557,7 +1557,8 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
     preco: livro.precoPromocional || livro.preco,
     categoria: livro.categoria,
     audiobookDisponivel: livro.audiobookDisponivel || false,
-    audiobookUrl: livro.audiobookUrl || null
+    audiobookUrl: livro.audiobookUrl || null,
+    precoAudiobook: livro.precoAudiobook || null
   });
 });
 
@@ -1626,9 +1627,8 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
     }
 
     let precoFinal = livro.precoPromocional || livro.preco;
-    const precoAudiolivro = 14.90;
     if (audiolivroIncluido && livro.audiobookDisponivel) {
-      precoFinal += precoAudiolivro;
+      precoFinal += livro.precoAudiobook;
     }
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);
@@ -1692,9 +1692,8 @@ app.post('/api/checkout/livro', async (req, res) => {
     }
 
     let precoFinal = livro.precoPromocional || livro.preco;
-    const precoAudiolivro = 14.90;
     if (audiolivroIncluido && livro.audiobookDisponivel) {
-      precoFinal += precoAudiolivro;
+      precoFinal += livro.precoAudiobook;
     }
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);

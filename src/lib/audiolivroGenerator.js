@@ -1,3 +1,6 @@
+// Texto-fonte de manuscritos .docx deve passar por scripts/extrair-texto-docx.js
+// antes de chegar aqui — remove Sumário/Índice automaticamente (números de página
+// colados ao texto do Sumário são lidos de forma incompreensível pelo TTS). Ver CLAUDE.md.
 const fs = require('fs').promises;
 const path = require('path');
 const textToSpeech = require('@google-cloud/text-to-speech');
