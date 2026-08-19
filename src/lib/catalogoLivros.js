@@ -117,7 +117,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um guia completo de saúde integrativa feminina — do autocuidado diário ao equilíbrio hormonal, da sexualidade em todas as fases da vida à segurança e autonomia sobre o próprio corpo.',
-    descricao: '"Código Feminino" reúne, em 12 partes e dois apêndices práticos, o que a medicina integrativa sabe sobre a saúde da mulher — da pele aos hormônios, do sono ao prazer, da prevenção às fases mais delicadas da vida, como a menopausa. A obra dedica atenção especial à sexualidade feminina em suas várias etapas: desejo, anatomia do prazer, ciclo menstrual, puerpério, maturidade, disfunções e terapia sexual — sempre em diálogo com temas de comunicação, autoestima, espiritualidade e segurança nos relacionamentos. Pensado para ser lido com calma e revisitado aos poucos, é um mapa de autocuidado real, não uma lista de regras rígidas.'
+    descricao: '"Código Feminino" reúne, em 12 partes e dois apêndices práticos, o que a medicina integrativa sabe sobre a saúde da mulher — da pele aos hormônios, do sono ao prazer, da prevenção às fases mais delicadas da vida, como a menopausa. A obra dedica atenção especial à sexualidade feminina em suas várias etapas: desejo, anatomia do prazer, ciclo menstrual, puerpério, maturidade, disfunções e terapia sexual — sempre em diálogo com temas de comunicação, autoestima, espiritualidade e segurança nos relacionamentos. Pensado para ser lido com calma e revisitado aos poucos, é um mapa de autocuidado real, não uma lista de regras rígidas.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/codigo-feminino/codigo-feminino.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 14.90
   },
   'a-inteligencia-do-corpo-feminino': {
     titulo: 'A Inteligência do Corpo Feminino',
