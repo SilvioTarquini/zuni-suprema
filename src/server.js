@@ -1626,7 +1626,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
     }
 
     let precoFinal = livro.precoPromocional || livro.preco;
-    const precoAudiolivro = 17.90;
+    const precoAudiolivro = 14.90;
     if (audiolivroIncluido && livro.audiobookDisponivel) {
       precoFinal += precoAudiolivro;
     }
@@ -1692,7 +1692,7 @@ app.post('/api/checkout/livro', async (req, res) => {
     }
 
     let precoFinal = livro.precoPromocional || livro.preco;
-    const precoAudiolivro = 17.90;
+    const precoAudiolivro = 14.90;
     if (audiolivroIncluido && livro.audiobookDisponivel) {
       precoFinal += precoAudiolivro;
     }
