@@ -87,37 +87,35 @@ corpo do bloco...
 corpo...
 ```
 
-### Formato B — colchetes, variante com separador único (mais comum em fontes antigas)
+### Formato B — colchetes, separador entre blocos (mais comum em fontes antigas)
+
+O separador entre blocos é `\n={5,}\n?` (cinco ou mais sinais de igual, com quebra de
+linha antes) — fica só entre um bloco e o próximo, nunca dentro de um bloco:
 
 ```
 [Título do Bloco]
+corpo do bloco até o próximo separador...
 ==========
-corpo do bloco até o próximo título...
-
 [Próximo Título]
-==========
-corpo...
-```
-
-### Formato B2 — colchetes, variante com separador duplo (existe em alguns arquivos
-"vertical_*" mais antigos — cada bloco é fechado por separador dos dois lados)
-
-```
-[Título do Bloco]
-==========
-corpo...
-==========
-
-[Próximo Título]
-==========
 corpo...
 ==========
 ```
 
-**Cuidado**: os formatos B e B2 usam a mesma sintaxe de separador (`==========`), mas
-com posição diferente, e são incompatíveis entre si no parser padrão. Um arquivo B2
-processado com a lógica de B falha silenciosamente ou gera blocos vazios/errados.
-Sempre teste a extração antes de indexar (ver Etapa 4).
+Dentro desse formato, `parseBlocosColchetes()` reconhece **duas variantes de título
+na mesma passagem** — não são formatos incompatíveis entre si, o parser trata as duas
+juntas em cada arquivo:
+
+- **Variante A** — o título inteiro fica dentro dos colchetes: `[Título do Bloco]`.
+- **Variante B** — `[TEMA]` é um rótulo fixo e o título vem depois, fora dos
+  colchetes: `[TEMA] Título do Bloco`.
+
+**Cuidado real**: o que quebra a extração não é misturar variante A e B num mesmo
+arquivo (isso o parser já trata), é um marcador malformado — colchete sem fechar, ou
+um bloco no meio do arquivo que não bate com nenhuma das duas variantes. Nesse caso o
+parser lança erro explícito ("Bloco fora do formato [TEMA] esperado"). Um segmento
+fora do padrão só passa batido em silêncio se for o primeiro ou o último do arquivo
+(tratado como cabeçalho/rodapé e descartado). Sempre teste a extração antes de indexar
+(ver Etapa 4).
 
 Se o arquivo-fonte não estiver em nenhum desses formatos (por exemplo, é um `.docx`
 de prosa corrida sem marcação), monte você mesmo os blocos no Formato A, dividindo por
@@ -134,10 +132,10 @@ estimados), que quebrariam a chamada de API se enviados como estão.
 
 1. Calcule a contagem de palavras de cada bloco (`corpo.split(/\s+/).length`).
 2. Estime tokens como `palavras * 1.35` (aproximação razoável para português).
-3. Qualquer bloco acima de ~4.000 palavras (~5.400 tokens estimados) deve ser
+3. Qualquer bloco acima de ~2.500 palavras (~3.400 tokens estimados) deve ser
    sub-dividido, respeitando fronteiras de parágrafo (nunca cortar uma frase ao meio).
    O `indexarTema.js` já faz isso automaticamente via `expandirBlocosParaChunks()`
-   com `MAX_PALAVRAS_POR_CHUNK = 4000` — mas sempre rode o teste abaixo para confirmar
+   com `MAX_PALAVRAS_POR_CHUNK = 2500` — mas sempre rode o teste abaixo para confirmar
    que nenhum chunk final ainda excede o limite, especialmente se um único parágrafo
    isolado for anormalmente longo.
 4. **Teste o parser real antes de rodar a indexação de verdade.** Nunca confie em uma
@@ -150,7 +148,7 @@ const { parseBlocos, expandirBlocosParaChunks } = require('./src/indexarTema.js'
 const fs = require('fs');
 const raw = fs.readFileSync('caminho/do/arquivo.txt', 'utf8');
 const blocos = parseBlocos(raw);
-const chunks = expandirBlocosParaChunks(blocos, 4000);
+const chunks = expandirBlocosParaChunks(blocos, 2500);
 const maior = Math.max(...chunks.map(c => c.corpo.split(/\s+/).length));
 console.log(blocos.length, 'blocos ->', chunks.length, 'chunks | maior:', maior, 'palavras');
 ```

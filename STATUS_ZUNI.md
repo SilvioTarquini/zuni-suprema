@@ -4,10 +4,12 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 19/08/2026 (noite) — "Além do Que Você Sente" (3 partes) aprovado por
-> escuta e ativado em produção. Ciclo de audiolivros de adolescência/pais fechado: 7/7 obras
-> com audiobook ativo no catálogo (Universo Feminino 5 + as 2 obras "Além do Que..."). Ver
-> seção "FECHAMENTO — Adolescência & Pais" logo abaixo do handoff.
+> Última atualização: 20/08/2026 — Auditoria completa do pipeline RAG (indexação, busca
+> híbrida, fluxo do Mapa Integrado). Causa-raiz do Mapa Integrado diagnosticada: a rota
+> nunca consultou RAG. Decisão tomada: astrologia/numerologia serão reformuladas do zero
+> em tabela própria (`documentos_astro`). Ver seção "HANDOFF PARA PRÓXIMA SESSÃO
+> (20/08/2026) — Auditoria RAG" logo abaixo. Fechamento de audiolivros (19/08/2026 noite)
+> permanece registrado na seção seguinte.
 
 ---
 
@@ -24,6 +26,111 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## 2. HANDOFF PARA PRÓXIMA SESSÃO (20/08/2026) — Auditoria RAG + causa-raiz do Mapa Integrado
+
+**Status**: sessão só de investigação — nenhuma alteração aplicada em código ou banco.
+Documento completo em `documentos-zuni/AUDITORIA_RAG_INDEXARTEMA.md` (ainda não commitado).
+
+### Causa-raiz diagnosticada — Mapa Integrado
+
+A rota do Mapa Integrado **nunca chamou `searchKnowledge()`** — nunca consultou RAG. O
+`MAPA_INTEGRADO_PROMPT` é montado só com dados estruturais, com duas lacunas: (a)
+planetas são enviados com signo e grau, mas **sem a casa associada** — a associação
+planeta→casa fica a cargo de inferência do modelo, que executa isso de forma
+inconsistente; (b) a numerologia entrega só `caminhoDeVida` e `essencia` — faltam
+expressão, motivação, impressão, dia natalício, maturidade, ano pessoal, pináculos,
+desafios e cármicos. Isso explica o sintoma relatado nos testes (texto curto, genérico,
+poucos pontos) — a causa está na montagem do prompt, não na recuperação. **O Mapa do
+Amor não existe no repositório** — é construção do zero.
+
+### Arquitetura da busca — achados
+
+- `buscar_documentos_hibrido()` **não é híbrida**: busca vetorial pura, sem full-text e
+  sem rerank. "Híbrido" refere-se só à mistura tema (60%) / geral (40%).
+- O `titulo` não é vetorizado — o embedding vem exclusivamente de `corpo`.
+- O pool "geral" é `tema IS DISTINCT FROM p_tema` — traz qualquer outro tema, inclusive
+  os 530 registros sem tema.
+- Índice ivfflat com `lists=100` para 1.472 linhas; `probes` padrão = 1 — cada consulta
+  varre ~1% da base e pode devolver menos chunks que o `LIMIT`.
+- As três funções SQL (`buscar_documentos`, `buscar_documentos_hibrido`,
+  `match_documents_livro`) existem **só no Supabase**, nunca commitadas como migration —
+  restaurar o projeto a partir do Git não as recria.
+
+### Estado das bases
+
+- Não existem os temas `astrologia` nem `numerologia`. O material está em
+  `documentos-zuni/` com tema **nulo** (15 chunks de astro, 8 de numerologia),
+  inalcançável pelo filtro de tema.
+- `indexar.js` ingeriu esses arquivos ignorando as fronteiras de bloco (separadores
+  `==========` e títulos `[...]` ficaram dentro do texto vetorizado, chunks começando
+  no meio de frases) — 42 blocos viraram 8 chunks.
+- Duplicação confirmada: 4 obras indexadas 2x (`a_bussola_humana`, `o_antidoto`,
+  `zuni_a_travessia`, `os_bastidores_da_mente`) por pipelines diferentes; drafts
+  `amostra_curadoria_astrologia_planetas.txt` e `curadoria_astrologia_salvaguardas.txt`
+  duplicam texto já em `vertical_astrologica_base_mentor.txt`.
+- `src/indexar.js` usa `upsert` por `id` **sem `delete` prévio** — chunks órfãos nunca
+  são removidos. É a mecânica que fez o pool geral crescer para 278 registros.
+
+### Salvaguarda executada
+
+O tema `cabala_astrologia_numerologia_integrativa` (25 chunks) não tinha arquivo-fonte
+no repositório — existia só no Postgres, e seria destruído por qualquer execução de
+`indexarTema.js` com esse nome de tema. Conteúdo extraído e reconstituído como
+`documentos-zuni/cabala_astrologia_numerologia_integrativa_base_mentor.txt` (Formato A,
+25 blocos, 10.209 palavras) — **ainda não commitado**.
+**Atenção**: não deixar esse arquivo na raiz de `documentos-zuni/` sem tratamento —
+`indexar.js` varre a pasta inteira e o reindexaria uma segunda vez com tema nulo.
+
+### Decisões da sessão (20/08/2026)
+
+1. Astrologia e numerologia serão **reformuladas do zero** — reindexar os `vertical_*`
+   antigos perdeu o sentido, sai da lista de correções.
+2. Base nova vai para **tabela própria** (`documentos_astro`) com RPC dedicada.
+   Verificado no banco: nenhuma view/FK/trigger depende de `documentos`, então isso não
+   quebra o Mentor. Isola o `DELETE` por tema, elimina o pool geral de 40%, permite
+   dimensionar o índice pro volume novo. Precisa nascer com RLS habilitado sem policies,
+   igual à atual.
+3. Granularidade definida: um bloco = uma unidade interpretativa fechada, 300–1.200
+   palavras, autossuficiente (nomeando o objeto por extenso no corpo, já que o título
+   não é vetorizado). Modelo híbrido: matriz escrita à mão para Sol/Lua/Ascendente em
+   signo, Sol/Lua em casa, Mercúrio/Vênus/Marte em signo e aspectos com luminares e
+   Saturno; composição em tempo de consulta para o resto. Núcleo estimado em ~230
+   blocos.
+4. Fronteira fixada: `sintese.js` entrega o **calculado** (posições, planeta→casa,
+   aspectos com orbe, regências, distribuição, configurações, numerologia completa,
+   ciclos); o RAG entrega só o **qualitativo**. Nenhuma derivação estrutural no corpo
+   dos blocos.
+5. O gerador do Mapa fará **consultas dirigidas** — uma por posicionamento do JSON de
+   síntese — montando dossiê antes de escrever, em vez de uma consulta ampla.
+   `limite_geral` deve ser 0 nesse fluxo.
+
+### Prática nova
+
+Toda saída de mapa gerada em teste passa a ser salva em `/testes/mapas/` com data e
+dados de entrada, para permitir comparação antes/depois de cada correção.
+
+### Pendências (ordem sugerida)
+
+1. Dump da tabela `documentos` antes de qualquer reindexação (o `DELETE` de
+   `indexarTema.js` roda antes dos embeddings — falha de API deixa o tema vazio).
+2. Mover o `DELETE` da linha 243 para junto do `insert`.
+3. **Corrigir `sintese.js`**: entregar planeta→casa explícito e a numerologia completa
+   — correção de maior retorno, melhora os mapas mesmo sem RAG nenhum.
+4. Redimensionar o índice ivfflat (`lists` ~20-40) ou migrar para HNSW.
+5. Commitar as três funções SQL como migration.
+6. Triagem do pool `documentos-zuni` (278 chunks): descartar duplicatas, reindexar
+   material único sob tema próprio. Não apagar em bloco — a maioria é conteúdo sem
+   contrapartida em outro tema.
+7. Reindexar bases de granularidade grossa (`namoro_conquista_romance`, `depressao`,
+   `consequencias_causa_efeito` estão acima do `MAX_PALAVRAS_POR_CHUNK` atual).
+
+**Pendência imediata de housekeeping**: commitar
+`documentos-zuni/AUDITORIA_RAG_INDEXARTEMA.md` e
+`documentos-zuni/cabala_astrologia_numerologia_integrativa_base_mentor.txt` (ainda não
+rastreados no git nesta sessão).
 
 ---
 
