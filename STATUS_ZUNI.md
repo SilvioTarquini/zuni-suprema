@@ -9,7 +9,9 @@
 > nunca consultou RAG. Decisão tomada: astrologia/numerologia serão reformuladas do zero
 > em tabela própria (`documentos_astro`). Ver seção "HANDOFF PARA PRÓXIMA SESSÃO
 > (20/08/2026) — Auditoria RAG" logo abaixo. Fechamento de audiolivros (19/08/2026 noite)
-> permanece registrado na seção seguinte.
+> permanece registrado na seção seguinte. Também em 20/08/2026: abertura da frente
+> "ZUNI Horizontes — obra Tempo para Viver" (plano editorial fechado, sumário de 32
+> capítulos aprovado, 4 capítulos em produção) — ver seção própria logo abaixo.
 
 ---
 
@@ -26,6 +28,55 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## ZUNI Horizontes — obra "Tempo para Viver" (frente nova, aberta em 20/08/2026)
+
+### Decisões fechadas
+- Título: **Tempo para Viver** — subtítulo: *Guia de vida e bem-estar para uma
+  maturidade em movimento*. Selo de coleção: ZUNI Horizontes. "Vida & Bem-Estar"
+  permanece como categoria de catálogo, fora da capa.
+- Extensão: Edição Completa, ~110.000 palavras (32 capítulos, 8 partes).
+- Moldura: cosmologia iniciática **não** é framework primário nesta obra —
+  restrita ao cap. 30. Voz "nós" mantida. Vale a separação em 6 níveis
+  (evidência / institucional / campo / tradição / reflexão / proposta ZUNI).
+- Sumário de 32 capítulos aprovado. Parte V renomeada para "O Mundo Que Convida"
+  (o "ainda" carregava subtexto de condescendência).
+- Protocolo de linguagem e acolhimento (item 2.1 do plano) é regra obrigatória
+  de todos os capítulos e de todas as derivações.
+
+### Em produção, funcionando
+- Plano editorial completo (11 itens da entrega 1) — `zuni_horizontes_plano_editorial.md`
+- Cap. 26 (Golpes, manipulação e desinformação) — capítulo-piloto, tom aprovado
+- Cap. 24 (Autonomia digital: o celular como aliado)
+- Cap. 14 (Solidão e presença)
+- Cap. 06 (Continuar em movimento)
+- Cada capítulo acompanha ficha de derivação editorial + ficha técnica ZHKE (YAML)
+- Onda 1 do site coberta pelos 4 capítulos acima
+
+### Regras permanentes criadas nesta frente
+- Nenhum produto ZUNI — Companheiro incluído — pode ser posicionado como
+  substituto de convívio humano. Toda peça aponta para contato real.
+- Cap. 14 não se monetiza isoladamente (sem produto unitário sobre solidão).
+- Comunidade ligada ao cap. 14 exige moderação humana treinada, com
+  encaminhamento de sinais de sofrimento grave.
+- Toda demonstração audiovisual de exercício exige profissional habilitado em
+  cena e apoio visível. Sem séries, cargas ou repetições-alvo.
+- Nenhuma estatística sem fonte e data verificadas na própria redação.
+  Os 4 capítulos estão marcados `sem_estatisticas: true`, exceto a recomendação
+  institucional da OMS 2020 no cap. 6, rotulada como tal.
+
+### Pendências
+1. Redigir os 28 capítulos restantes (onda 2: caps. 23, 11, 2, 10).
+2. Criar tema RAG `zuni_horizontes` — exportar em Formato A para `indexarTema.js`.
+3. Definir se o ZHKE consome as fichas técnicas YAML direto ou via conversão.
+4. Verificações pendentes registradas nas fichas: nomenclatura do bloqueio de
+   consignado no Meu INSS (cap. 26), prazos do MED (cap. 26), nomes de menus
+   Android/iOS antes de gravar vídeos (cap. 24), vigência das diretrizes da OMS
+   (cap. 6), programas municipais antes de citar nominalmente (caps. 6 e 14).
+5. Decidir repositório: mesmo repo do ZUNI Suprema ou separado.
+6. Site ZUNI Horizontes — base já constituída, integrar os 4 capítulos.
 
 ---
 
