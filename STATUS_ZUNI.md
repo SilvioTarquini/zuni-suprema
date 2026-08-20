@@ -32,7 +32,8 @@ manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
 ## 2. HANDOFF PARA PRÓXIMA SESSÃO (20/08/2026) — Auditoria RAG + causa-raiz do Mapa Integrado
 
 **Status**: sessão só de investigação — nenhuma alteração aplicada em código ou banco.
-Documento completo em `documentos-zuni/AUDITORIA_RAG_INDEXARTEMA.md` (ainda não commitado).
+Documento completo em `documentos-zuni/AUDITORIA_RAG_INDEXARTEMA.md`. Commit `b5b335e`
+(docs: auditoria completa do pipeline RAG), push para `origin/main` confirmado.
 
 ### Causa-raiz diagnosticada — Mapa Integrado
 
@@ -80,7 +81,7 @@ O tema `cabala_astrologia_numerologia_integrativa` (25 chunks) não tinha arquiv
 no repositório — existia só no Postgres, e seria destruído por qualquer execução de
 `indexarTema.js` com esse nome de tema. Conteúdo extraído e reconstituído como
 `documentos-zuni/cabala_astrologia_numerologia_integrativa_base_mentor.txt` (Formato A,
-25 blocos, 10.209 palavras) — **ainda não commitado**.
+25 blocos, 10.209 palavras) — commitado em `b5b335e`.
 **Atenção**: não deixar esse arquivo na raiz de `documentos-zuni/` sem tratamento —
 `indexar.js` varre a pasta inteira e o reindexaria uma segunda vez com tema nulo.
 
@@ -127,10 +128,10 @@ dados de entrada, para permitir comparação antes/depois de cada correção.
 7. Reindexar bases de granularidade grossa (`namoro_conquista_romance`, `depressao`,
    `consequencias_causa_efeito` estão acima do `MAX_PALAVRAS_POR_CHUNK` atual).
 
-**Pendência imediata de housekeeping**: commitar
-`documentos-zuni/AUDITORIA_RAG_INDEXARTEMA.md` e
-`documentos-zuni/cabala_astrologia_numerologia_integrativa_base_mentor.txt` (ainda não
-rastreados no git nesta sessão).
+**Housekeeping desta sessão — concluído**: `documentos-zuni/AUDITORIA_RAG_INDEXARTEMA.md`,
+`documentos-zuni/cabala_astrologia_numerologia_integrativa_base_mentor.txt` e a correção
+do `SKILL.md` de `zuni-rag-tema` (valor real de `MAX_PALAVRAS_POR_CHUNK` e formato do
+Formato B) foram commitados e enviados a `origin/main` em `b5b335e`.
 
 ---
 
