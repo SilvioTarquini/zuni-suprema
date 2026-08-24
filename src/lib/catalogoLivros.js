@@ -165,7 +165,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Masculino',
     resumo: 'Presença vale mais que performance. Um guia sobre como desenvolver magnetismo, segurança emocional e elegância masculina genuína — sem personagens, sem manipulação, sem teatralidade.',
-    descricao: 'Esta obra nasce de uma percepção simples e profundamente humana: muitos homens perderam a naturalidade da presença, não por falta de valor, mas por excesso de ruído — social, emocional, cultural. Ao longo de 21 capítulos, o livro percorre o que realmente sustenta o magnetismo masculino: a calma, a segurança sem arrogância, a comunicação elegante, a capacidade de gerar conforto emocional em quem está por perto. Trata também de temas práticos — imagem, voz, postura, o primeiro encontro, o poder da discrição — sempre a partir de um princípio central: presença não se atua, se constrói. Não é um manual de conquista nem de estratégia; é um convite à maturidade emocional como forma real de magnetismo.'
+    descricao: 'Esta obra nasce de uma percepção simples e profundamente humana: muitos homens perderam a naturalidade da presença, não por falta de valor, mas por excesso de ruído — social, emocional, cultural. Ao longo de 21 capítulos, o livro percorre o que realmente sustenta o magnetismo masculino: a calma, a segurança sem arrogância, a comunicação elegante, a capacidade de gerar conforto emocional em quem está por perto. Trata também de temas práticos — imagem, voz, postura, o primeiro encontro, o poder da discrição — sempre a partir de um princípio central: presença não se atua, se constrói. Não é um manual de conquista nem de estratégia; é um convite à maturidade emocional como forma real de magnetismo.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-arte-da-presenca-masculina/a-arte-da-presenca-masculina.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 19.90
   },
   'a-presenca-em-acao-apendice': {
     titulo: 'A Presença em Ação',
@@ -175,7 +178,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Masculino',
     resumo: 'Doze exercícios objetivos, um por capítulo, para transformar princípio em hábito — presença que se constrói na prática, não na teoria.',
-    descricao: 'Presença não se decora — se constrói na prática. Cada capítulo corresponde a uma dimensão da presença masculina refinada — confiança, controle emocional, comunicação, linguagem corporal, charme, aproximação, flerte saudável e relacionamentos — e traz um exercício objetivo para aplicar no cotidiano, seguido de uma reflexão para fechar com clareza. Inclui ainda um desafio estruturado de 21 dias, dividido em três semanas de progressão gradual. Não são fórmulas nem scripts — são convites à prática consciente e repetida.'
+    descricao: 'Presença não se decora — se constrói na prática. Cada capítulo corresponde a uma dimensão da presença masculina refinada — confiança, controle emocional, comunicação, linguagem corporal, charme, aproximação, flerte saudável e relacionamentos — e traz um exercício objetivo para aplicar no cotidiano, seguido de uma reflexão para fechar com clareza. Inclui ainda um desafio estruturado de 21 dias, dividido em três semanas de progressão gradual. Não são fórmulas nem scripts — são convites à prática consciente e repetida.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-presenca-em-acao-apendice/a-presenca-em-acao-apendice.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 9.90
   },
   'a-arte-invisivel-elegancia-masculina': {
     titulo: 'A Arte Invisível da Elegância Masculina',
@@ -185,7 +191,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Masculino',
     resumo: 'Roupas impressionam por alguns minutos — presença permanece na memória. Um guia sobre o refinamento invisível masculino: o que não se compra, não se veste, mas se percebe.',
-    descricao: 'Existe um nível de sofisticação masculina que vai muito além da roupa, da aparência física ou do status — é o refinamento invisível, aquele que se manifesta na postura, na serenidade, na voz, no olhar, na forma de tratar as pessoas. Em 12 capítulos, esta obra aprofunda os aspectos mais sofisticados da presença masculina contemporânea: da psicologia da presença ao magnetismo moderno, da elegância emocional à linguagem corporal, passando por voz refinada, estética contemporânea, perfumes e estilo por ocasião. Um guia para o homem que entende que valor real não precisa ser anunciado constantemente — ele já se comunica antes de qualquer palavra.'
+    descricao: 'Existe um nível de sofisticação masculina que vai muito além da roupa, da aparência física ou do status — é o refinamento invisível, aquele que se manifesta na postura, na serenidade, na voz, no olhar, na forma de tratar as pessoas. Em 12 capítulos, esta obra aprofunda os aspectos mais sofisticados da presença masculina contemporânea: da psicologia da presença ao magnetismo moderno, da elegância emocional à linguagem corporal, passando por voz refinada, estética contemporânea, perfumes e estilo por ocasião. Um guia para o homem que entende que valor real não precisa ser anunciado constantemente — ele já se comunica antes de qualquer palavra.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-arte-invisivel-elegancia-masculina/a-arte-invisivel-elegancia-masculina.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 9.90
   },
   'guia-integral-saude-beleza-masculina': {
     titulo: 'Guia Integral de Saúde e Beleza Masculina',
@@ -195,7 +204,10 @@ const CATALOGO = {
     categoria: 'principal',
     departamento: 'Universo Masculino',
     resumo: 'O guia definitivo de saúde masculina integrativa — corpo, hormônios, nootrópicos, longevidade e presença, com protocolos práticos e fórmulas de referência para acompanhamento com profissional de saúde.',
-    descricao: 'Reunindo 23 capítulos em 4 partes, este é o guia mais completo do Universo Masculino: cuidados essenciais (pele, cabelo, barba, higiene), saúde interna e desempenho (testosterona, libido, próstata, cardiovascular, cerebral), presença e estilo, e uma seção de ferramentas — checklists, exames preventivos, receitas funcionais, nootrópicos e um guia de referência hormonal completo, incluindo fórmulas magistrais. As formulações e sugestões de suplementação que aparecem ao longo da obra foram avaliadas por uma equipe multidisciplinar de saúde integrativa — mas nada aqui substitui o acompanhamento de um profissional que conhece a história e os exames de cada leitor. Um mapa completo do corpo masculino, não um substituto do cuidado clínico individual.'
+    descricao: 'Reunindo 23 capítulos em 4 partes, este é o guia mais completo do Universo Masculino: cuidados essenciais (pele, cabelo, barba, higiene), saúde interna e desempenho (testosterona, libido, próstata, cardiovascular, cerebral), presença e estilo, e uma seção de ferramentas — checklists, exames preventivos, receitas funcionais, nootrópicos e um guia de referência hormonal completo, incluindo fórmulas magistrais. As formulações e sugestões de suplementação que aparecem ao longo da obra foram avaliadas por uma equipe multidisciplinar de saúde integrativa — mas nada aqui substitui o acompanhamento de um profissional que conhece a história e os exames de cada leitor. Um mapa completo do corpo masculino, não um substituto do cuidado clínico individual.',
+    audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/guia-integral-saude-beleza-masculina/guia-integral-saude-beleza-masculina.mp3',
+    audiobookDisponivel: true,
+    precoAudiobook: 14.90
   },
   'protocolo-90s-executive-black': {
     titulo: 'Protocolo 90\'s Executive Black',

@@ -429,7 +429,7 @@
           </div>
           <div class="rodape-card">
             ${precoHTML}
-            ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ 14,90</span>` : ''}
+            ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ ${livro.precoAudiobook.toFixed(2).replace('.', ',')}</span>` : ''}
             <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
             <a class="comprar" href="${urlCompra}">${livro.preco === 0 ? 'Ler grátis' : 'Comprar'}</a>
           </div>

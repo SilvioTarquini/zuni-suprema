@@ -4,16 +4,20 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 24/08/2026 (sessão de audiolivros) — Ciclo de correção da loja
+> Última atualização: 24/08/2026 (sessão de audiolivros — ativação) — Os quatro
+> audiolivros do Universo Masculino (A Arte da Presença Masculina, Guia Integral de
+> Saúde e Beleza Masculina, A Arte Invisível da Elegância Masculina, A Presença em
+> Ação) foram aprovados por escuta, subidos ao Supabase Storage e ativados no
+> catálogo com preço por faixa de duração (R$19,90 / R$14,90 / R$9,90 / R$9,90) — ver
+> seção "Universo Masculino completo" logo abaixo. Corrigido também o selo de
+> audiobook da loja (`public/loja/index.html`), que mostrava "+R$ 14,90" fixo no
+> template mesmo para obras com `precoAudiobook` diferente — agora lê o campo do
+> catálogo.
+>
+> Nota anterior (24/08/2026, sessão de audiolivros): Ciclo de correção da loja
 > (capa quebrada, filtro `teaser`, alinhamento de cards) fechado e confirmado em
 > produção. "A Presença em Ação" reclassificada de apêndice para obra independente —
 > título, resumo, descrição e capa sem subordinação a outra obra (commit `f2e237b`).
-> Quatro audiolivros do Universo Masculino gerados localmente (Elegância Invisível,
-> Guia Integral, Presença Masculina, Presença em Ação), aguardando validação por
-> escuta antes do upload ao Supabase — arquivos fora do repo em
-> `_audiolivros-pendentes-validacao/` (ver pendências, seção 3). Decisão tomada:
-> preço de audiolivro passa a faixas por duração, ainda não aplicado — ver "Decisões
-> estratégicas" logo abaixo.
 >
 > Nota anterior (24/08/2026, sessão de radar): Adicionado `RADAR_OPORTUNIDADES.md`
 > (raiz) como documento irmão deste arquivo; ver seção "Radar de oportunidades" logo
@@ -106,8 +110,10 @@ que expôs um problema mais amplo de catálogo vs. vitrine.
    `f2e237b`). O `livroId` permanece `a-presenca-em-acao-apendice` — identificador
    interno, não muda.
 8. **Preços de audiolivro: decidido adotar faixas por duração** em vez de valor único.
-   Faixas propostas: até 25min R$ 9,90 / 25min a 1h R$ 14,90 / acima de 1h R$ 19,90.
-   Ainda não aplicado.
+   Faixas: até 25min R$ 9,90 / 25min a 1h R$ 14,90 / acima de 1h R$ 19,90. Aplicado às
+   quatro obras do Universo Masculino em 24/08/2026 (ver "Universo Masculino completo"
+   abaixo). Os 7 audiolivros publicados antes desta decisão permanecem no preço fixo
+   anterior — reclassificá-los nas faixas continua em aberto (ver seção 3, pendências).
 
 ### 24/08/2026
 
@@ -374,6 +380,26 @@ Pipeline de extração testado em 3 variações de estrutura de manuscrito (head
 negrito manual, listas aninhadas sem heading). Bug de listas/tabelas descartadas
 encontrado e corrigido durante a sessão — nunca afetou áudio de produção (detalhe completo
 no commit `5ec9bac` e no `CLAUDE.md`).
+
+---
+
+## Universo Masculino completo (4/4 obras com audiobook) — detalhe (24/08/2026)
+
+Gerados localmente, aprovados por escuta e subidos ao Supabase Storage nesta sessão.
+Preço aplicado pela faixa por duração decidida em 24/08/2026 (ver "Decisões
+estratégicas"), não o valor fixo R$14,90 usado nos 7 audiolivros anteriores.
+
+| Obra | Duração | Preço audiobook | Objeto no Storage |
+|---|---|---|---|
+| A Arte da Presença Masculina | 1h59m0s | R$19,90 | `a-arte-da-presenca-masculina/a-arte-da-presenca-masculina.mp3` |
+| Guia Integral de Saúde e Beleza Masculina | 52m7s | R$14,90 | `guia-integral-saude-beleza-masculina/guia-integral-saude-beleza-masculina.mp3` |
+| A Arte Invisível da Elegância Masculina | 20m53s | R$9,90 | `a-arte-invisivel-elegancia-masculina/a-arte-invisivel-elegancia-masculina.mp3` |
+| A Presença em Ação | 14m7s | R$9,90 | `a-presenca-em-acao-apendice/a-presenca-em-acao-apendice.mp3` |
+
+`audiobookUrl` + `audiobookDisponivel: true` + `precoAudiobook` aplicados às quatro
+entradas em `catalogoLivros.js`. Selo de preço da loja (`public/loja/index.html`)
+corrigido no mesmo commit — antes mostrava "+R$ 14,90" fixo no template para todas as
+obras com audiobook, independente do `precoAudiobook` real de cada uma.
 
 ---
 
@@ -1212,24 +1238,15 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
   urgente.
 - Decisão de produto pendente: se a degustação deve ter presença própria na loja além
   da faixa `.faixa-mentor`.
-- **Quatro audiolivros do Universo Masculino gerados localmente**, aguardando validação
-  por escuta antes do upload ao Supabase e ativação no catálogo: A Arte Invisível da
-  Elegância Masculina (20m53s), Guia Integral de Saúde e Beleza Masculina (52m7s), A
-  Arte da Presença Masculina (1h59m) e A Presença em Ação (14m7s — abertura falada já
-  usa o título novo do catálogo). Arquivos movidos para fora do repo (não protegidos
-  pelo git, `.temp-audio/` está no `.gitignore`):
-  `C:\Users\Silvio\Documents\1 - Obras Novas\1 - Obras Na Loja\_audiolivros-pendentes-validacao\`.
-- Após upload: ativar `audiobookDisponivel` nas quatro entradas de `catalogoLivros.js`
-  — sem isso o áudio existe no Storage mas não pode ser comprado.
 - Script de extração (`extrair-texto-docx.js`) não reconhece um quarto formato de
   capítulo (número solto em linha, sem heading nativo nem "CAPÍTULO N —" em negrito) —
   tratado manualmente no Guia Integral de Saúde e Beleza Masculina. Generalizar.
-- Definir se o valor do audiolivro vira campo do catálogo de fato — hoje `checkout-livro.html`
-  já usa `precoAudiobook` por obra, mas o selo do grid da loja (`public/loja/index.html`)
-  mostra "+R$ 14,90" fixo no template, incorreto para "Além do Que Você Vê" (R$24,90) e
-  "Além do Que Você Sente" (R$19,90) — bug já em produção, independente da decisão de
-  faixas por duração. E decidir se os 7 audiolivros já publicados serão reclassificados
-  nas faixas propostas (ver "Decisões estratégicas" acima).
+- Decidir se os 7 audiolivros publicados antes da decisão de faixas por duração
+  (todos hoje em R$14,90 fixo, exceto "Além do Que Você Vê" R$24,90 e "Além do Que
+  Você Sente" R$19,90) serão reclassificados nas faixas propostas (ver "Decisões
+  estratégicas" acima). Selo de preço fixo do grid da loja — que exibia "+R$ 14,90"
+  para todas as obras independente do `precoAudiobook` real — já corrigido em
+  24/08/2026.
 - Base RAG `vida_madura_bem_estar.txt` pronta (120 blocos, obra "Tempo para Viver"
   Versão 1), aguardando Etapa 4 e indexação.
 
