@@ -4,7 +4,14 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 20/08/2026 — Auditoria completa do pipeline RAG (indexação, busca
+> Última atualização: 24/08/2026 — Adicionado `RADAR_OPORTUNIDADES.md` (raiz) como
+> documento irmão deste arquivo; ver seção "Radar de oportunidades" logo abaixo.
+> Registradas decisões desta sessão: migração do cálculo astrológico para motor próprio
+> (Swiss Ephemeris), reposicionamento do VITA como camada longitudinal, sistema de
+> consulta empresarial por camadas como frente ativa, e base ampliada de
+> astrologia-numerologia em conclusão — ver seção "Decisões estratégicas" logo abaixo.
+>
+> Nota anterior (20/08/2026): Auditoria completa do pipeline RAG (indexação, busca
 > híbrida, fluxo do Mapa Integrado). Causa-raiz do Mapa Integrado diagnosticada: a rota
 > nunca consultou RAG. Decisão tomada: astrologia/numerologia serão reformuladas do zero
 > em tabela própria (`documentos_astro`). Ver seção "HANDOFF PARA PRÓXIMA SESSÃO
@@ -28,6 +35,42 @@ Deploy via `git push origin main`.
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
 código → revisão linha a linha do código real (nunca resumo) → aprovação → aplicar
 manualmente. Mudanças de banco são sempre manuais via Supabase SQL Editor.
+
+---
+
+## Radar de oportunidades
+
+O arquivo `RADAR_OPORTUNIDADES.md` (raiz) registra o horizonte estratégico do projeto:
+referências de mercado, canais de venda, produtos a criar e ferramentas. Enquanto o
+`STATUS_ZUNI.md` registra o que **está feito** e o que está **pendente**, o radar
+registra o que **pode ser feito**.
+
+**Regra de migração**: quando um item do radar entrar em execução, ele é movido para a
+seção correspondente do `STATUS_ZUNI.md` e marcado como migrado no radar. Os dois
+arquivos nunca devem divergir sobre o mesmo item.
+
+---
+
+## Decisões estratégicas
+
+Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
+datados no topo desta seção — nunca criam uma seção nova.
+
+### 24/08/2026
+
+Decisões tomadas nesta sessão, detalhadas em `RADAR_OPORTUNIDADES.md` (seções 3, 6 e 7):
+
+- **Motor astrológico próprio**: o AstroWay passa a servir apenas como fonte de cálculo.
+  Decisão: migrar para motor próprio de efemérides (Swiss Ephemeris, pacote `swisseph`).
+  Justificativa: remove dependência de terceiro e o teto de créditos, e é pré-requisito
+  de calculadoras gratuitas, sinastria social, Assinatura Ciclos e Retorno Solar.
+- **VITA reposicionado**: mantém-se produto independente (repo/domínio/checkout
+  próprios), mas a Roda Vital passa a ser camada longitudinal que conecta todos os
+  produtos.
+- **Sistema de consulta empresarial por camadas**: registrado como frente ativa, com
+  convergência arquitetural provável com o white-label B2B2C (mesma necessidade de
+  multi-tenancy).
+- **Base ampliada de astrologia-numerologia**: em conclusão.
 
 ---
 
