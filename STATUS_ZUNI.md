@@ -8,11 +8,13 @@
 > de preços) — Os quatro audiolivros do Universo Masculino (A Arte da Presença
 > Masculina, Guia Integral de Saúde e Beleza Masculina, A Arte Invisível da Elegância
 > Masculina, A Presença em Ação) foram aprovados por escuta, subidos ao Supabase
-> Storage e ativados no catálogo. Faixa de preço por duração ajustada um degrau acima
-> da proposta inicial (até 25min R$14,90 / 25min-1h R$19,90 / acima de 1h R$24,90) e
-> aplicada às 12 obras com audiobook do catálogo — as 4 novas e as 8 já publicadas
-> antes (Vol. I, Universo Feminino, "Além do Que Você..."), nenhuma com redução de
-> preço. Ver seções "Universo Masculino completo", "Universo Feminino completo" e
+> Storage e ativados no catálogo. Faixa de preço por duração passou por dois ajustes:
+> primeiro um degrau acima da proposta inicial, depois uma quarta faixa (acima de
+> 2h30) para não igualar obras de 1h05 e 6h15 no mesmo teto. Escala final: até 25min
+> R$14,90 / 25min-1h R$19,90 / 1h-2h30 R$24,90 / acima de 2h30 R$34,90 — aplicada às
+> 12 obras com audiobook do catálogo, as 4 novas e as 8 já publicadas antes (Vol. I,
+> Universo Feminino, "Além do Que Você..."), nenhuma com redução de preço. Ver seções
+> "Universo Masculino completo", "Universo Feminino completo" e
 > "Vol. I e 'Além do Que Você...'" logo abaixo. Corrigido também o selo de audiobook
 > da loja (`public/loja/index.html`), que mostrava "+R$ 14,90" fixo no template mesmo
 > para obras com `precoAudiobook` diferente — agora lê o campo do catálogo.
@@ -113,11 +115,11 @@ que expôs um problema mais amplo de catálogo vs. vitrine.
    `f2e237b`). O `livroId` permanece `a-presenca-em-acao-apendice` — identificador
    interno, não muda.
 8. **Preços de audiolivro: decidido adotar faixas por duração** em vez de valor único.
-   Faixas (ajustadas em 24/08/2026, um degrau acima da proposta inicial, alinhadas ao
-   que os audiolivros antigos já praticavam): até 25min R$ 14,90 / 25min a 1h R$ 19,90
-   / acima de 1h R$ 24,90. Aplicado às quatro obras do Universo Masculino em
-   24/08/2026 (ver "Universo Masculino completo" abaixo). Reclassificação dos
-   audiolivros publicados antes desta decisão — ver seção 3, pendências.
+   Escala final (24/08/2026), com uma quarta faixa acrescentada depois de perceber que
+   o teto de 3 faixas igualava obras de 1h05 e 6h15 no mesmo preço: até 25min R$14,90
+   / 25min a 1h R$19,90 / 1h a 2h30 R$24,90 / acima de 2h30 R$34,90. Aplicada às 12
+   obras com audiobook do catálogo (ver "Universo Masculino completo", "Universo
+   Feminino completo" e "Vol. I e 'Além do Que Você...'" abaixo).
 
 ### 24/08/2026
 
@@ -412,18 +414,21 @@ obras com audiobook, independente do `precoAudiobook` real de cada uma.
 ## Vol. I e "Além do Que Você..." — preços reclassificados (24/08/2026)
 
 Três audiolivros fora das tabelas acima (não pertencem ao Universo Feminino/Masculino),
-reclassificados na mesma faixa por duração:
+reclassificados na escala final de 4 faixas por duração (até 25min R$14,90 / 25min-1h
+R$19,90 / 1h-2h30 R$24,90 / acima de 2h30 R$34,90):
 
 | Obra | Duração | Preço antes | Preço depois |
 |---|---|---|---|
-| Os Bastidores da Mente — Vol. I | 2h37m34s | R$14,90 | R$24,90 |
-| Além do Que Você Vê | 5h18m17s (2 partes) | R$24,90 | R$24,90 (sem mudança) |
-| Além do Que Você Sente | 6h15m45s (3 partes) | R$19,90 | R$24,90 |
+| Os Bastidores da Mente — Vol. I | 2h37m34s | R$14,90 | R$34,90 |
+| Além do Que Você Vê | 5h18m17s (2 partes) | R$24,90 | R$34,90 |
+| Além do Que Você Sente | 6h15m45s (3 partes) | R$19,90 | R$34,90 |
 
 Duração de "Além do Que Você Vê/Sente" nunca havia sido registrada em texto neste
 arquivo — medida via ffprobe direto contra as URLs do Supabase Storage nesta sessão
-(soma das partes). Nenhuma das 12 obras com audiobook teve preço reduzido nesta
-reclassificação — todas subiram de faixa ou permaneceram iguais.
+(soma das partes). Escala inicial de 3 faixas (teto R$24,90) igualava essas obras de
+2h30-6h15 a "Código Feminino" (1h05m) — corrigido com a quarta faixa acima de 2h30.
+Nenhuma das 12 obras com audiobook teve preço reduzido nesta reclassificação — todas
+subiram de faixa.
 
 ---
 

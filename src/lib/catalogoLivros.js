@@ -34,7 +34,7 @@ const CATALOGO = {
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 34.90
   },
   'os-bastidores-da-mente-2-o-antidoto': {
     titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
@@ -383,7 +383,7 @@ const CATALOGO = {
       'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-ve/alem-do-que-voce-ve-parte2.mp3'
     ],
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 34.90
   },
   'alem-do-que-voce-sente': {
     titulo: 'Além do Que Você Sente',
@@ -400,7 +400,7 @@ const CATALOGO = {
       'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte3.mp3'
     ],
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 34.90
   },
   'o-caminho-da-consciencia': {
     titulo: 'O Caminho da Consciência',
