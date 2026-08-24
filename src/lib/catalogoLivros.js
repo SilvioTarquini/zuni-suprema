@@ -168,14 +168,14 @@ const CATALOGO = {
     descricao: 'Esta obra nasce de uma percepção simples e profundamente humana: muitos homens perderam a naturalidade da presença, não por falta de valor, mas por excesso de ruído — social, emocional, cultural. Ao longo de 21 capítulos, o livro percorre o que realmente sustenta o magnetismo masculino: a calma, a segurança sem arrogância, a comunicação elegante, a capacidade de gerar conforto emocional em quem está por perto. Trata também de temas práticos — imagem, voz, postura, o primeiro encontro, o poder da discrição — sempre a partir de um princípio central: presença não se atua, se constrói. Não é um manual de conquista nem de estratégia; é um convite à maturidade emocional como forma real de magnetismo.'
   },
   'a-presenca-em-acao-apendice': {
-    titulo: 'A Presença em Ação — Apêndice Prático',
+    titulo: 'A Presença em Ação',
     preco: 37.90,
     precoOriginal: 57.00,
     precoPromocional: 37.90,
     categoria: 'principal',
     departamento: 'Universo Masculino',
-    resumo: 'O complemento prático de "A Arte da Presença Masculina" — 12 exercícios objetivos, um por capítulo, para transformar princípio em hábito no dia a dia.',
-    descricao: '"A Arte da Presença Masculina" apresentou princípios. Este apêndice apresenta prática. Cada capítulo corresponde a uma dimensão da presença masculina refinada — confiança, controle emocional, comunicação, linguagem corporal, charme, aproximação, flerte saudável e relacionamentos — e traz um exercício objetivo para aplicar no cotidiano, seguido de uma reflexão para fechar com clareza. Inclui ainda um desafio estruturado de 21 dias, dividido em três semanas de progressão gradual. Não são fórmulas nem scripts — são convites à prática consciente e repetida, porque presença não se decora, se constrói.'
+    resumo: 'Doze exercícios objetivos, um por capítulo, para transformar princípio em hábito — presença que se constrói na prática, não na teoria.',
+    descricao: 'Presença não se decora — se constrói na prática. Cada capítulo corresponde a uma dimensão da presença masculina refinada — confiança, controle emocional, comunicação, linguagem corporal, charme, aproximação, flerte saudável e relacionamentos — e traz um exercício objetivo para aplicar no cotidiano, seguido de uma reflexão para fechar com clareza. Inclui ainda um desafio estruturado de 21 dias, dividido em três semanas de progressão gradual. Não são fórmulas nem scripts — são convites à prática consciente e repetida.'
   },
   'a-arte-invisivel-elegancia-masculina': {
     titulo: 'A Arte Invisível da Elegância Masculina',
