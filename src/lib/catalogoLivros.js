@@ -34,7 +34,7 @@ const CATALOGO = {
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/os-bastidores-vol1/os-bastidores-vol1.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 24.90
   },
   'os-bastidores-da-mente-2-o-antidoto': {
     titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
@@ -111,7 +111,7 @@ const CATALOGO = {
     descricao: 'Existe uma diferença profunda entre chamar atenção e ser, de fato, inesquecível. "Ela Tem Classe" explora essa diferença em dois volumes: o primeiro dedicado à elegância, ao estilo e ao refinamento moderno; o segundo, à presença, ao magnetismo e à sofisticação avançada. Ao longo da obra, a leitora encontra reflexões práticas sobre como a verdadeira elegância nasce do encontro entre estética e inteligência emocional — a postura que comunica serenidade, a discrição que se torna mistério, a autenticidade que dispensa qualquer papel a representar. Um convite a redescobrir que sofisticação, hoje, mora na leveza.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/ela-tem-classe/ela-tem-classe.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 19.90
   },
   'codigo-feminino': {
     titulo: 'Código Feminino',
@@ -122,7 +122,7 @@ const CATALOGO = {
     descricao: '"Código Feminino" reúne, em 12 partes e dois apêndices práticos, o que a medicina integrativa sabe sobre a saúde da mulher — da pele aos hormônios, do sono ao prazer, da prevenção às fases mais delicadas da vida, como a menopausa. A obra dedica atenção especial à sexualidade feminina em suas várias etapas: desejo, anatomia do prazer, ciclo menstrual, puerpério, maturidade, disfunções e terapia sexual — sempre em diálogo com temas de comunicação, autoestima, espiritualidade e segurança nos relacionamentos. Pensado para ser lido com calma e revisitado aos poucos, é um mapa de autocuidado real, não uma lista de regras rígidas.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/codigo-feminino/codigo-feminino.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 24.90
   },
   'a-inteligencia-do-corpo-feminino': {
     titulo: 'A Inteligência do Corpo Feminino',
@@ -133,7 +133,7 @@ const CATALOGO = {
     descricao: 'Por trás do inchaço abdominal, da celulite que resiste mesmo em corpos magros e do cansaço que o sono não resolve, existe quase sempre a mesma origem silenciosa: a inflamação de baixo grau. "A Inteligência do Corpo Feminino" decifra esse processo capítulo a capítulo — intestino, fígado, sistema linfático, pele — sempre trocando a lógica da culpa ("falta de disciplina") pela lógica da escuta do corpo. Traz ainda anexos práticos de consulta rápida: checklist diário de rotina e a Escala de Bristol para observar a própria saúde intestinal sem constrangimento. Um livro que ensina a interpretar sinais, não a se punir por eles.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/inteligencia-corpo-feminino/inteligencia-corpo-feminino.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 24.90
   },
   'inesquecivel-charme-feminino': {
     titulo: 'Inesquecível',
@@ -144,7 +144,7 @@ const CATALOGO = {
     descricao: '"Inesquecível" parte de uma constatação simples: o magnetismo verdadeiro nunca nasce de competição — nasce de verdade. Ao longo de cinco partes (o verdadeiro charme feminino, presença e comunicação, maturidade afetiva, feminilidade e relacionamentos saudáveis, e um bloco final de perguntas para o autoconhecimento), a obra guia a leitora por uma jornada que começa na autoestima e termina na capacidade de se conectar com leveza e valor próprio. É o volume mais extenso e estruturado do lote — uma edição cuidadosamente diagramada, pensada para ser lida como uma experiência completa, não apenas consultada por partes.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/inesquecivel/inesquecivel.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 24.90
   },
   'a-mulher-que-permanece-inteira': {
     titulo: 'A Mulher que Permanece Inteira',
@@ -155,7 +155,7 @@ const CATALOGO = {
     descricao: '"O amor saudável não destrói o amor-próprio; pelo contrário, o fortalece." É a partir dessa premissa que a obra percorre seis partes: autoestima feminina profunda, perfis emocionais masculinos (um bloco raro e especialmente valioso, que ajuda a leitora a reconhecer padrões antes de se envolver), relacionamentos tóxicos e proteção emocional, sedução emocional refinada, comunicação moderna e elegância digital, e exercícios práticos de desenvolvimento. É a obra mais extensa e psicologicamente densa do lote — pensada não apenas para inspirar, mas para equipar a leitora com discernimento real diante de vínculos afetivos.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-mulher-que-permanece-inteira/a-mulher-que-permanece-inteira.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 24.90
   },
   'a-arte-da-presenca-masculina': {
     titulo: 'A Arte da Presença Masculina',
@@ -168,7 +168,7 @@ const CATALOGO = {
     descricao: 'Esta obra nasce de uma percepção simples e profundamente humana: muitos homens perderam a naturalidade da presença, não por falta de valor, mas por excesso de ruído — social, emocional, cultural. Ao longo de 21 capítulos, o livro percorre o que realmente sustenta o magnetismo masculino: a calma, a segurança sem arrogância, a comunicação elegante, a capacidade de gerar conforto emocional em quem está por perto. Trata também de temas práticos — imagem, voz, postura, o primeiro encontro, o poder da discrição — sempre a partir de um princípio central: presença não se atua, se constrói. Não é um manual de conquista nem de estratégia; é um convite à maturidade emocional como forma real de magnetismo.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-arte-da-presenca-masculina/a-arte-da-presenca-masculina.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 19.90
+    precoAudiobook: 24.90
   },
   'a-presenca-em-acao-apendice': {
     titulo: 'A Presença em Ação',
@@ -181,7 +181,7 @@ const CATALOGO = {
     descricao: 'Presença não se decora — se constrói na prática. Cada capítulo corresponde a uma dimensão da presença masculina refinada — confiança, controle emocional, comunicação, linguagem corporal, charme, aproximação, flerte saudável e relacionamentos — e traz um exercício objetivo para aplicar no cotidiano, seguido de uma reflexão para fechar com clareza. Inclui ainda um desafio estruturado de 21 dias, dividido em três semanas de progressão gradual. Não são fórmulas nem scripts — são convites à prática consciente e repetida.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-presenca-em-acao-apendice/a-presenca-em-acao-apendice.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 9.90
+    precoAudiobook: 14.90
   },
   'a-arte-invisivel-elegancia-masculina': {
     titulo: 'A Arte Invisível da Elegância Masculina',
@@ -194,7 +194,7 @@ const CATALOGO = {
     descricao: 'Existe um nível de sofisticação masculina que vai muito além da roupa, da aparência física ou do status — é o refinamento invisível, aquele que se manifesta na postura, na serenidade, na voz, no olhar, na forma de tratar as pessoas. Em 12 capítulos, esta obra aprofunda os aspectos mais sofisticados da presença masculina contemporânea: da psicologia da presença ao magnetismo moderno, da elegância emocional à linguagem corporal, passando por voz refinada, estética contemporânea, perfumes e estilo por ocasião. Um guia para o homem que entende que valor real não precisa ser anunciado constantemente — ele já se comunica antes de qualquer palavra.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-arte-invisivel-elegancia-masculina/a-arte-invisivel-elegancia-masculina.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 9.90
+    precoAudiobook: 14.90
   },
   'guia-integral-saude-beleza-masculina': {
     titulo: 'Guia Integral de Saúde e Beleza Masculina',
@@ -207,7 +207,7 @@ const CATALOGO = {
     descricao: 'Reunindo 23 capítulos em 4 partes, este é o guia mais completo do Universo Masculino: cuidados essenciais (pele, cabelo, barba, higiene), saúde interna e desempenho (testosterona, libido, próstata, cardiovascular, cerebral), presença e estilo, e uma seção de ferramentas — checklists, exames preventivos, receitas funcionais, nootrópicos e um guia de referência hormonal completo, incluindo fórmulas magistrais. As formulações e sugestões de suplementação que aparecem ao longo da obra foram avaliadas por uma equipe multidisciplinar de saúde integrativa — mas nada aqui substitui o acompanhamento de um profissional que conhece a história e os exames de cada leitor. Um mapa completo do corpo masculino, não um substituto do cuidado clínico individual.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/guia-integral-saude-beleza-masculina/guia-integral-saude-beleza-masculina.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 14.90
+    precoAudiobook: 19.90
   },
   'protocolo-90s-executive-black': {
     titulo: 'Protocolo 90\'s Executive Black',
@@ -400,7 +400,7 @@ const CATALOGO = {
       'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte3.mp3'
     ],
     audiobookDisponivel: true,
-    precoAudiobook: 19.90
+    precoAudiobook: 24.90
   },
   'o-caminho-da-consciencia': {
     titulo: 'O Caminho da Consciência',

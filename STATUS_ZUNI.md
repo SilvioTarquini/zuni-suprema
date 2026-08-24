@@ -4,15 +4,18 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 24/08/2026 (sessão de audiolivros — ativação) — Os quatro
-> audiolivros do Universo Masculino (A Arte da Presença Masculina, Guia Integral de
-> Saúde e Beleza Masculina, A Arte Invisível da Elegância Masculina, A Presença em
-> Ação) foram aprovados por escuta, subidos ao Supabase Storage e ativados no
-> catálogo com preço por faixa de duração (R$19,90 / R$14,90 / R$9,90 / R$9,90) — ver
-> seção "Universo Masculino completo" logo abaixo. Corrigido também o selo de
-> audiobook da loja (`public/loja/index.html`), que mostrava "+R$ 14,90" fixo no
-> template mesmo para obras com `precoAudiobook` diferente — agora lê o campo do
-> catálogo.
+> Última atualização: 24/08/2026 (sessão de audiolivros — ativação e reclassificação
+> de preços) — Os quatro audiolivros do Universo Masculino (A Arte da Presença
+> Masculina, Guia Integral de Saúde e Beleza Masculina, A Arte Invisível da Elegância
+> Masculina, A Presença em Ação) foram aprovados por escuta, subidos ao Supabase
+> Storage e ativados no catálogo. Faixa de preço por duração ajustada um degrau acima
+> da proposta inicial (até 25min R$14,90 / 25min-1h R$19,90 / acima de 1h R$24,90) e
+> aplicada às 12 obras com audiobook do catálogo — as 4 novas e as 8 já publicadas
+> antes (Vol. I, Universo Feminino, "Além do Que Você..."), nenhuma com redução de
+> preço. Ver seções "Universo Masculino completo", "Universo Feminino completo" e
+> "Vol. I e 'Além do Que Você...'" logo abaixo. Corrigido também o selo de audiobook
+> da loja (`public/loja/index.html`), que mostrava "+R$ 14,90" fixo no template mesmo
+> para obras com `precoAudiobook` diferente — agora lê o campo do catálogo.
 >
 > Nota anterior (24/08/2026, sessão de audiolivros): Ciclo de correção da loja
 > (capa quebrada, filtro `teaser`, alinhamento de cards) fechado e confirmado em
@@ -110,10 +113,11 @@ que expôs um problema mais amplo de catálogo vs. vitrine.
    `f2e237b`). O `livroId` permanece `a-presenca-em-acao-apendice` — identificador
    interno, não muda.
 8. **Preços de audiolivro: decidido adotar faixas por duração** em vez de valor único.
-   Faixas: até 25min R$ 9,90 / 25min a 1h R$ 14,90 / acima de 1h R$ 19,90. Aplicado às
-   quatro obras do Universo Masculino em 24/08/2026 (ver "Universo Masculino completo"
-   abaixo). Os 7 audiolivros publicados antes desta decisão permanecem no preço fixo
-   anterior — reclassificá-los nas faixas continua em aberto (ver seção 3, pendências).
+   Faixas (ajustadas em 24/08/2026, um degrau acima da proposta inicial, alinhadas ao
+   que os audiolivros antigos já praticavam): até 25min R$ 14,90 / 25min a 1h R$ 19,90
+   / acima de 1h R$ 24,90. Aplicado às quatro obras do Universo Masculino em
+   24/08/2026 (ver "Universo Masculino completo" abaixo). Reclassificação dos
+   audiolivros publicados antes desta decisão — ver seção 3, pendências.
 
 ### 24/08/2026
 
@@ -365,41 +369,61 @@ iniciado.
 
 ---
 
-## Universo Feminino completo (5/5 obras com audiobook) — detalhe (19/08/2026)
+## Universo Feminino completo (5/5 obras com audiobook) — detalhe (19/08/2026, preços reclassificados 24/08/2026)
 
 | Obra | Palavras (manuscrito) | Cobertura extração | Duração áudio | Preço audiobook | Commit de ativação |
 |---|---|---|---|---|---|
-| Ela Tem Classe | 4.373 | 93.5% | 29m44s | R$14,90 | (sessão anterior) |
-| Código Feminino | 8.822 | 96.2% | 65m57s | R$14,90 | `6a135d8` |
-| A Inteligência do Corpo Feminino | 14.017 | 99.2% | 95m1s | R$14,90 | `93225d4` |
-| Inesquecível | 15.444 | 98.3% | 105m50s | R$14,90 | `93225d4` |
-| A Mulher que Permanece Inteira | 17.663 | 97.7% | 124m2s | R$14,90 | `81d11c0` |
+| Ela Tem Classe | 4.373 | 93.5% | 29m44s | R$19,90 | (sessão anterior) |
+| Código Feminino | 8.822 | 96.2% | 65m57s | R$24,90 | `6a135d8` |
+| A Inteligência do Corpo Feminino | 14.017 | 99.2% | 95m1s | R$24,90 | `93225d4` |
+| Inesquecível | 15.444 | 98.3% | 105m50s | R$24,90 | `93225d4` |
+| A Mulher que Permanece Inteira | 17.663 | 97.7% | 124m2s | R$24,90 | `81d11c0` |
 
 Preço generalizado por obra (`precoAudiobook` em `catalogoLivros.js`) — commit `5ec9bac`.
 Pipeline de extração testado em 3 variações de estrutura de manuscrito (heading nativo,
 negrito manual, listas aninhadas sem heading). Bug de listas/tabelas descartadas
 encontrado e corrigido durante a sessão — nunca afetou áudio de produção (detalhe completo
-no commit `5ec9bac` e no `CLAUDE.md`).
+no commit `5ec9bac` e no `CLAUDE.md`). Preços reclassificados em 24/08/2026 pela faixa
+por duração (ver "Decisões estratégicas") — todas as cinco obras passam de R$14,90 fixo
+para o valor da faixa correspondente à duração real.
 
 ---
 
 ## Universo Masculino completo (4/4 obras com audiobook) — detalhe (24/08/2026)
 
 Gerados localmente, aprovados por escuta e subidos ao Supabase Storage nesta sessão.
-Preço aplicado pela faixa por duração decidida em 24/08/2026 (ver "Decisões
-estratégicas"), não o valor fixo R$14,90 usado nos 7 audiolivros anteriores.
+Preço aplicado pela faixa por duração (ajustada em 24/08/2026 — ver "Decisões
+estratégicas": até 25min R$14,90 / 25min-1h R$19,90 / acima de 1h R$24,90).
 
 | Obra | Duração | Preço audiobook | Objeto no Storage |
 |---|---|---|---|
-| A Arte da Presença Masculina | 1h59m0s | R$19,90 | `a-arte-da-presenca-masculina/a-arte-da-presenca-masculina.mp3` |
-| Guia Integral de Saúde e Beleza Masculina | 52m7s | R$14,90 | `guia-integral-saude-beleza-masculina/guia-integral-saude-beleza-masculina.mp3` |
-| A Arte Invisível da Elegância Masculina | 20m53s | R$9,90 | `a-arte-invisivel-elegancia-masculina/a-arte-invisivel-elegancia-masculina.mp3` |
-| A Presença em Ação | 14m7s | R$9,90 | `a-presenca-em-acao-apendice/a-presenca-em-acao-apendice.mp3` |
+| A Arte da Presença Masculina | 1h59m0s | R$24,90 | `a-arte-da-presenca-masculina/a-arte-da-presenca-masculina.mp3` |
+| Guia Integral de Saúde e Beleza Masculina | 52m7s | R$19,90 | `guia-integral-saude-beleza-masculina/guia-integral-saude-beleza-masculina.mp3` |
+| A Arte Invisível da Elegância Masculina | 20m53s | R$14,90 | `a-arte-invisivel-elegancia-masculina/a-arte-invisivel-elegancia-masculina.mp3` |
+| A Presença em Ação | 14m7s | R$14,90 | `a-presenca-em-acao-apendice/a-presenca-em-acao-apendice.mp3` |
 
 `audiobookUrl` + `audiobookDisponivel: true` + `precoAudiobook` aplicados às quatro
 entradas em `catalogoLivros.js`. Selo de preço da loja (`public/loja/index.html`)
 corrigido no mesmo commit — antes mostrava "+R$ 14,90" fixo no template para todas as
 obras com audiobook, independente do `precoAudiobook` real de cada uma.
+
+---
+
+## Vol. I e "Além do Que Você..." — preços reclassificados (24/08/2026)
+
+Três audiolivros fora das tabelas acima (não pertencem ao Universo Feminino/Masculino),
+reclassificados na mesma faixa por duração:
+
+| Obra | Duração | Preço antes | Preço depois |
+|---|---|---|---|
+| Os Bastidores da Mente — Vol. I | 2h37m34s | R$14,90 | R$24,90 |
+| Além do Que Você Vê | 5h18m17s (2 partes) | R$24,90 | R$24,90 (sem mudança) |
+| Além do Que Você Sente | 6h15m45s (3 partes) | R$19,90 | R$24,90 |
+
+Duração de "Além do Que Você Vê/Sente" nunca havia sido registrada em texto neste
+arquivo — medida via ffprobe direto contra as URLs do Supabase Storage nesta sessão
+(soma das partes). Nenhuma das 12 obras com audiobook teve preço reduzido nesta
+reclassificação — todas subiram de faixa ou permaneceram iguais.
 
 ---
 
@@ -1241,12 +1265,13 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
 - Script de extração (`extrair-texto-docx.js`) não reconhece um quarto formato de
   capítulo (número solto em linha, sem heading nativo nem "CAPÍTULO N —" em negrito) —
   tratado manualmente no Guia Integral de Saúde e Beleza Masculina. Generalizar.
-- Decidir se os 7 audiolivros publicados antes da decisão de faixas por duração
-  (todos hoje em R$14,90 fixo, exceto "Além do Que Você Vê" R$24,90 e "Além do Que
-  Você Sente" R$19,90) serão reclassificados nas faixas propostas (ver "Decisões
-  estratégicas" acima). Selo de preço fixo do grid da loja — que exibia "+R$ 14,90"
-  para todas as obras independente do `precoAudiobook` real — já corrigido em
-  24/08/2026.
+- Selo de preço fixo do grid da loja — que exibia "+R$ 14,90" para todas as obras
+  independente do `precoAudiobook` real — corrigido em 24/08/2026. Os 8 audiolivros
+  publicados antes da decisão de faixas por duração (Vol. I, as 5 do Universo
+  Feminino e as 2 "Além do Que Você...") foram reclassificados na mesma faixa em
+  24/08/2026 — ver "Vol. I e 'Além do Que Você...' — preços reclassificados" e as
+  tabelas de Universo Feminino/Masculino acima. Nenhuma reclassificação baixou preço
+  de obra já publicada.
 - Base RAG `vida_madura_bem_estar.txt` pronta (120 blocos, obra "Tempo para Viver"
   Versão 1), aguardando Etapa 4 e indexação.
 
