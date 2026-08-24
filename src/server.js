@@ -1543,7 +1543,13 @@ async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
 
 app.get('/api/livros', (req, res) => {
   const { CATALOGO } = require('./lib/catalogoLivros');
-  return res.json(CATALOGO);
+  // teaser: true é metadado interno (ex.: degustação usada só pelo chat de
+  // /experimente.html) — não é produto de loja, não deve aparecer em nenhuma listagem
+  // pública. Lookup por ID (/api/livros/catalogo/:livroId) continua funcionando normalmente.
+  const catalogoPublico = Object.fromEntries(
+    Object.entries(CATALOGO).filter(([, livro]) => !livro.teaser)
+  );
+  return res.json(catalogoPublico);
 });
 
 app.get('/api/livros/catalogo/:livroId', (req, res) => {

@@ -93,13 +93,10 @@ const CATALOGO = {
   },
   'os-bastidores-da-mente-1-degustacao': {
     titulo: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal (Capítulo 1 - Degustação)',
-    // Título exibido ao cliente (card da loja). `titulo` acima permanece intacto como
-    // identificador interno — não usar tituloPublico em lugares que dependem do título completo.
-    tituloPublico: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal — Capítulo 1, leitura gratuita',
     preco: 0,
+    // Metadado interno para o chat de /experimente.html (Módulo D) resolver título/resumo
+    // via buscarLivro(). Não é produto de loja — filtrado de /api/livros em server.js.
     teaser: true,
-    // Mesma obra do volume completo — reaproveita a capa existente em vez de duplicar arquivo.
-    capa: '/loja/capas/os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal.png',
     categoria: 'principal',
     departamento: 'Desenvolvimento Humano',
     resumo: 'Leia gratuitamente o primeiro capítulo: "O cérebro que reage antes de pensar". Converse com a obra e descubra os mecanismos ocultos por trás de nossas reações automáticas.',

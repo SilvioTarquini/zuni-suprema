@@ -305,6 +305,13 @@
   <p class="aviso-digital">Produto 100% digital — não há envio de exemplar físico. O acesso é liberado por link, direto após a confirmação do pagamento.</p>
 </header>
 
+<div class="faixa-mentor">
+  <div class="cartao">
+    <p>Antes de comprar, leia grátis o primeiro capítulo de "Os Bastidores da Mente — Volume I" e converse com a obra.</p>
+    <a class="btn-mentor" href="/experimente.html#modulo-livro">Ler grátis + conversar</a>
+  </div>
+</div>
+
 <main>
   <h2 style="margin-top: 56px; margin-bottom: 28px; font-size: 1.4rem; font-weight: normal; letter-spacing: 0.5px; color: var(--dourado-suave);">Livros</h2>
   <div class="grade" id="grade-livros">
@@ -390,9 +397,7 @@
       const universoMasculino = ['a-arte-da-presenca-masculina', 'a-presenca-em-acao-apendice', 'a-arte-invisivel-elegancia-masculina', 'guia-integral-saude-beleza-masculina'];
       const novasObras = ['protocolo-90s-executive-black', 'executive-black-standalone', 'a-arquitetura-da-decisao-humana', 'a-arte-e-a-ciencia-de-viver', 'a-inteligencia-da-vida', 'a-jornada-interior', 'excelencia-humana', 'o-retorno-da-clareza', 'a-neurobiologia-integrativa-da-depressao', 'a-visao-integrativa-da-obesidade', 'medicina-natural-integrativa', 'mentes-esgotadas', 'o-elo-invisivel', 'rejuvenesca', 'transforma-te-protocolos-90s', 'alem-do-que-voce-ve', 'alem-do-que-voce-sente', 'o-caminho-da-consciencia', 'inteligencia-artificial-volume-1', 'empresas-inteligentes-volume-2', 'consequencias-edicao-essencial'];
       const ext = universosFeminino.includes(livroId) || universoMasculino.includes(livroId) || novasObras.includes(livroId) ? 'jpg' : 'png';
-      // Campo `capa` no catálogo tem prioridade — usado quando o arquivo não segue a
-      // convenção livroId.ext (ex.: teaser reaproveitando a capa da obra completa).
-      const urlCapa = livro.capa || `/loja/capas/${livroId}.${ext}`;
+      const urlCapa = `/loja/capas/${livroId}.${ext}`;
 
       let precoHTML = '';
       if (livro.preco === 0) {
