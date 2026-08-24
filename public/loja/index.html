@@ -340,7 +340,7 @@
     const card = document.createElement('article');
     card.className = 'livro';
     card.innerHTML = `
-      <div class="capa"><img src="/loja/capas/mapa-integrado.png" alt="Capa — Mapa Integrado ZUNI" loading="lazy"></div>
+      <div class="capa"><img src="/loja/capas/mapa-integrado.png" alt="Capa — Mapa Integrado ZUNI" loading="lazy" onerror="console.error('[loja] capa não carregou para', 'mapa-integrado', '→', this.src)"></div>
       <div class="info">
         <h2>${servico.titulo}</h2>
         <p class="resumo">${servico.resumo}</p>
@@ -348,7 +348,7 @@
         <div class="descricao-expandida" role="region">
           <p>${servico.descricao}</p>
         </div>
-        <p class="preco">R$ ${servico.preco.toFixed(2)}</p>
+        <p class="preco">R$ ${servico.preco.toFixed(2).replace('.', ',')}</p>
         <p class="etiqueta-digital">Relatório assíncrono · entrega por e-mail</p>
         <button class="comprar" disabled>Disponível em breve</button>
         <div class="aviso-disponivel">Estamos finalizando a validação. Será liberado em breve.</div>
@@ -390,21 +390,27 @@
       const universoMasculino = ['a-arte-da-presenca-masculina', 'a-presenca-em-acao-apendice', 'a-arte-invisivel-elegancia-masculina', 'guia-integral-saude-beleza-masculina'];
       const novasObras = ['protocolo-90s-executive-black', 'executive-black-standalone', 'a-arquitetura-da-decisao-humana', 'a-arte-e-a-ciencia-de-viver', 'a-inteligencia-da-vida', 'a-jornada-interior', 'excelencia-humana', 'o-retorno-da-clareza', 'a-neurobiologia-integrativa-da-depressao', 'a-visao-integrativa-da-obesidade', 'medicina-natural-integrativa', 'mentes-esgotadas', 'o-elo-invisivel', 'rejuvenesca', 'transforma-te-protocolos-90s', 'alem-do-que-voce-ve', 'alem-do-que-voce-sente', 'o-caminho-da-consciencia', 'inteligencia-artificial-volume-1', 'empresas-inteligentes-volume-2', 'consequencias-edicao-essencial'];
       const ext = universosFeminino.includes(livroId) || universoMasculino.includes(livroId) || novasObras.includes(livroId) ? 'jpg' : 'png';
-      const urlCapa = `/loja/capas/${livroId}.${ext}`;
+      // Campo `capa` no catálogo tem prioridade — usado quando o arquivo não segue a
+      // convenção livroId.ext (ex.: teaser reaproveitando a capa da obra completa).
+      const urlCapa = livro.capa || `/loja/capas/${livroId}.${ext}`;
 
       let precoHTML = '';
-      if (livro.precoOriginal && livro.precoPromocional) {
-        precoHTML = `<p class="preco"><span class="preco-original">R$ ${livro.precoOriginal.toFixed(2)}</span> <span class="preco-promocional">R$ ${livro.precoPromocional.toFixed(2)}</span></p>`;
+      if (livro.preco === 0) {
+        precoHTML = `<p class="preco">Grátis</p>`;
+      } else if (livro.precoOriginal && livro.precoPromocional) {
+        precoHTML = `<p class="preco"><span class="preco-original">R$ ${livro.precoOriginal.toFixed(2).replace('.', ',')}</span> <span class="preco-promocional">R$ ${livro.precoPromocional.toFixed(2).replace('.', ',')}</span></p>`;
       } else {
-        precoHTML = `<p class="preco">R$ ${livro.preco.toFixed(2)}</p>`;
+        precoHTML = `<p class="preco">R$ ${livro.preco.toFixed(2).replace('.', ',')}</p>`;
       }
+
+      const tituloExibido = livro.tituloPublico || livro.titulo;
 
       const card = document.createElement('article');
       card.className = 'livro';
       card.innerHTML = `
-        <div class="capa"><img src="${urlCapa}" alt="Capa — ${livro.titulo}" loading="lazy"></div>
+        <div class="capa"><img src="${urlCapa}" alt="Capa — ${tituloExibido}" loading="lazy" onerror="console.error('[loja] capa não carregou para', '${livroId}', '→', this.src)"></div>
         <div class="info">
-          <h2>${livro.titulo}</h2>
+          <h2>${tituloExibido}</h2>
           <p class="resumo">${livro.resumo}</p>
           <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
           <div class="descricao-expandida" role="region">
@@ -413,7 +419,7 @@
           ${precoHTML}
           ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ 14,90</span>` : ''}
           <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-          <a class="comprar" href="${urlCompra}">Comprar</a>
+          <a class="comprar" href="${urlCompra}">${livro.preco === 0 ? 'Ler grátis' : 'Comprar'}</a>
         </div>
       `;
 
