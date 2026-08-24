@@ -56,6 +56,41 @@ arquivos nunca devem divergir sobre o mesmo item.
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
 
+### 24/08/2026 (loja)
+
+Investigação e correção do card de capa quebrada na loja (`public/loja/index.html`),
+que expôs um problema mais amplo de catálogo vs. vitrine.
+
+1. **Catálogo mistura produtos e metadado de feature.** `catalogoLivros.js` continha a
+   entrada da degustação, que nunca foi produto de loja — é metadado usado só pelo chat
+   de `/experimente.html` (Módulo D). Vazou para a vitrine porque o grid iterava o
+   catálogo inteiro sem filtro. Consequências: card com capa quebrada, checkout que
+   rejeitaria R$ 0,00 nas duas vias de pagamento (Preference e Orders), e ausência de
+   pasta em `private/livros/` — não havia nada a entregar. Regra derivada: **estar no
+   catálogo não significa estar à venda.** Toda entrada nova deve declarar
+   explicitamente se é produto.
+2. **Filtro teaser isolado no chokepoint único.** `GET /api/livros` (`server.js`) agora
+   exclui `teaser: true` antes de responder. O contrato da rota mudou. Lookup por ID e
+   `buscarLivro()` continuam resolvendo normalmente. Auditoria confirmou ser a única
+   rota de listagem do projeto.
+3. **Caminho de capa era derivado, não declarado.** `index.html` montava
+   `/loja/capas/${livroId}.${ext}` com extensão decidida por arrays literais; livro
+   novo fora dos arrays recebia `.png` em silêncio e quebrava sem erro. Mitigado com
+   `onerror` que loga o `livroId`. Campo `capa` implementado e revertido (sem
+   consumidor). Campo `tituloPublico` permanece disponível, também sem consumidor hoje.
+4. **Auditoria de capas concluída** — 38 entradas no catálogo, 30 no array `.jpg`
+   (todas confirmadas em disco, comparação case-sensitive) e 8 dependentes do fallback
+   `.png` (7 corretas, 1 quebrada — a degustação, causa raiz deste ciclo). Removidos 9
+   PNGs órfãos (duplicatas pré-compressão do Universo Feminino/Masculino, artes
+   originais preservadas fora do repositório) — diretório e catálogo agora consistentes
+   1:1.
+5. **Faixa de topo de funil** adicionada à loja apontando para
+   `/experimente.html#modulo-livro`, sem preço nem botão de compra — substitui o card
+   de degustação removido.
+6. **Alinhamento dos cards corrigido** — `.rodape-card` com `margin-top: auto` ancora
+   preço/selo/etiqueta/botão ao rodapé; `align-items: start` removido da `.grade`
+   (stretch é o default do Grid). Validado em desktop e mobile 390px, sem media query.
+
 ### 24/08/2026
 
 Decisões tomadas nesta sessão, detalhadas em `RADAR_OPORTUNIDADES.md` (seções 3, 6 e 7):
@@ -1154,6 +1189,11 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
 - Banner discreto na 8ª troca da sessão avulsa (oferecendo Sessões Extras, Mapa
   Integrado, obras) — planejado, não implementado.
 - **Audiobook pago (Google Cloud WaveNet)**: estrutura de leitura por voz generalizada pronta. Aguarda: (1) credencial de serviço do Google Cloud, (2) aprovação de orçamento para custos de síntese premium.
+- Consolidação do próprio STATUS_ZUNI.md, que virou log em vez de retrato de estado:
+  "## 2." reutilizado em 11 seções, "Lançamentos Recentes" duplicado por data. Não
+  urgente.
+- Decisão de produto pendente: se a degustação deve ter presença própria na loja além
+  da faixa `.faixa-mentor`.
 
 ## 4. Frente ativa — Questionários pós-checkout + bases RAG por tema
 
