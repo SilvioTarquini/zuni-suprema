@@ -83,7 +83,6 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 32px 28px;
-    align-items: start;
   }
 
   .livro {
@@ -140,7 +139,12 @@
     color: var(--texto-suave);
     line-height: 1.5;
     margin: 0 0 18px;
-    flex: 1;
+  }
+
+  /* Empurra preço/etiqueta/selo/botão para o rodapé do card, alinhando com os vizinhos
+     da fileira mesmo quando o resumo tem tamanhos diferentes. */
+  .info .rodape-card {
+    margin-top: auto;
   }
 
   .info .descricao-expandida {
@@ -355,10 +359,12 @@
         <div class="descricao-expandida" role="region">
           <p>${servico.descricao}</p>
         </div>
-        <p class="preco">R$ ${servico.preco.toFixed(2).replace('.', ',')}</p>
-        <p class="etiqueta-digital">Relatório assíncrono · entrega por e-mail</p>
-        <button class="comprar" disabled>Disponível em breve</button>
-        <div class="aviso-disponivel">Estamos finalizando a validação. Será liberado em breve.</div>
+        <div class="rodape-card">
+          <p class="preco">R$ ${servico.preco.toFixed(2).replace('.', ',')}</p>
+          <p class="etiqueta-digital">Relatório assíncrono · entrega por e-mail</p>
+          <button class="comprar" disabled>Disponível em breve</button>
+          <div class="aviso-disponivel">Estamos finalizando a validação. Será liberado em breve.</div>
+        </div>
       </div>
     `;
 
@@ -421,10 +427,12 @@
           <div class="descricao-expandida" role="region">
             <p>${livro.descricao}</p>
           </div>
-          ${precoHTML}
-          ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ 14,90</span>` : ''}
-          <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-          <a class="comprar" href="${urlCompra}">${livro.preco === 0 ? 'Ler grátis' : 'Comprar'}</a>
+          <div class="rodape-card">
+            ${precoHTML}
+            ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ 14,90</span>` : ''}
+            <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
+            <a class="comprar" href="${urlCompra}">${livro.preco === 0 ? 'Ler grátis' : 'Comprar'}</a>
+          </div>
         </div>
       `;
 
