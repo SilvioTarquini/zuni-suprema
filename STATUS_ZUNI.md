@@ -4,20 +4,29 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 24/08/2026 (sessão de audiolivros — ativação e reclassificação
-> de preços) — Os quatro audiolivros do Universo Masculino (A Arte da Presença
-> Masculina, Guia Integral de Saúde e Beleza Masculina, A Arte Invisível da Elegância
-> Masculina, A Presença em Ação) foram aprovados por escuta, subidos ao Supabase
-> Storage e ativados no catálogo. Faixa de preço por duração passou por dois ajustes:
-> primeiro um degrau acima da proposta inicial, depois uma quarta faixa (acima de
-> 2h30) para não igualar obras de 1h05 e 6h15 no mesmo teto. Escala final: até 25min
-> R$14,90 / 25min-1h R$19,90 / 1h-2h30 R$24,90 / acima de 2h30 R$34,90 — aplicada às
-> 12 obras com audiobook do catálogo, as 4 novas e as 8 já publicadas antes (Vol. I,
-> Universo Feminino, "Além do Que Você..."), nenhuma com redução de preço. Ver seções
-> "Universo Masculino completo", "Universo Feminino completo" e
-> "Vol. I e 'Além do Que Você...'" logo abaixo. Corrigido também o selo de audiobook
-> da loja (`public/loja/index.html`), que mostrava "+R$ 14,90" fixo no template mesmo
-> para obras com `precoAudiobook` diferente — agora lê o campo do catálogo.
+> Última atualização: 25/08/2026 (sessão de loja — grade mobile) — Grade "Livros" da
+> loja (`public/loja/index.html`) reformulada para mobile: card enxuto (capa + título +
+> preço) em grid de 2 colunas, toque abre painel de detalhe alimentado pelo catálogo já
+> em memória (sem rota nova, sem fetch adicional; `server.js` e `catalogoLivros.js`
+> intocados). Testada em celular real via rede local — 2 colunas ok, capas legíveis,
+> recorte sem perdas. Commit `dfa28e9`, aplicado só localmente (sem deploy ainda). Ver
+> seção "25/08/2026 (loja)" logo abaixo para detalhe e pendências novas (títulos curtos
+> por obra, badge de volume, filtros por departamento, ícone de audiobook pesado).
+>
+> Nota anterior (24/08/2026, sessão de audiolivros — ativação e reclassificação de
+> preços): Os quatro audiolivros do Universo Masculino (A Arte da Presença Masculina,
+> Guia Integral de Saúde e Beleza Masculina, A Arte Invisível da Elegância Masculina, A
+> Presença em Ação) foram aprovados por escuta, subidos ao Supabase Storage e ativados
+> no catálogo. Faixa de preço por duração passou por dois ajustes: primeiro um degrau
+> acima da proposta inicial, depois uma quarta faixa (acima de 2h30) para não igualar
+> obras de 1h05 e 6h15 no mesmo teto. Escala final: até 25min R$14,90 / 25min-1h R$19,90
+> / 1h-2h30 R$24,90 / acima de 2h30 R$34,90 — aplicada às 12 obras com audiobook do
+> catálogo, as 4 novas e as 8 já publicadas antes (Vol. I, Universo Feminino, "Além do
+> Que Você..."), nenhuma com redução de preço. Ver seções "Universo Masculino completo",
+> "Universo Feminino completo" e "Vol. I e 'Além do Que Você...'" logo abaixo. Corrigido
+> também o selo de audiobook da loja (`public/loja/index.html`), que mostrava
+> "+R$ 14,90" fixo no template mesmo para obras com `precoAudiobook` diferente — agora
+> lê o campo do catálogo.
 >
 > Nota anterior (24/08/2026, sessão de audiolivros): Ciclo de correção da loja
 > (capa quebrada, filtro `teaser`, alinhamento de cards) fechado e confirmado em
@@ -75,6 +84,53 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 25/08/2026 (loja)
+
+Grade "Livros" da loja (`public/loja/index.html`) reformulada para mobile — testada em
+celular real via rede local (2 colunas, capas legíveis, recorte sem perdas). Escopo:
+apenas `public/loja/index.html`; `server.js` e `catalogoLivros.js` intocados, sem rota
+nova, sem fetch adicional (painel de detalhe consome o `CATALOGO` já carregado em
+memória por `renderizarLivros()`).
+
+1. **Problema**: cada card ocupava mais de uma tela inteira no celular (capa em
+   tamanho cheio + resumo + "+ Leia mais" + selo de audiobook + etiqueta + botão),
+   exigindo vários swipes por obra — com 37 títulos no catálogo, sem visão geral
+   possível.
+2. **Solução ("B-leve")**: `#grade-livros` passa a 2 colunas fixas no mobile
+   (`repeat(2, minmax(0,1fr))`, gap 12px; revertendo para o `auto-fill minmax(220px,1fr)`
+   de sempre a partir de 640px). Card enxuto contém só capa (2/3, `object-fit: cover`),
+   título (2 linhas, `-webkit-line-clamp`) e preço. Toque no card abre um painel de
+   detalhe (overlay) com capa maior, resumo, descrição completa, preço, selo de
+   audiobook e botão Comprar — reaproveitando as mesmas classes/CSS do card antigo
+   (`.info`, `.resumo`, `.descricao-expandida.ativa`, `.rodape-card`, `.preco`,
+   `.selo-audiobook`, `.etiqueta-digital`, `a.comprar`), sem duplicar a lógica de preço
+   (`precoInternoHTML()` única, usada pelos dois).
+3. **Escopo isolado**: 2 colunas e `line-clamp` do título escopados em `#grade-livros`
+   — `#grade-servicos` (card do Mapa Integrado) mantém o `auto-fill` e o título sem
+   truncar.
+4. **Acessibilidade**: card é `<article role="button" tabindex="0" aria-label="<título>">`,
+   acionável por Enter/Espaço; painel fecha por X, clique fora ou Esc, devolve foco ao
+   card de origem, trava scroll do body enquanto aberto.
+5. **Validação**: testado localmente (`PORT=8091 node src/server.js`) e no celular via
+   rede local (`http://192.168.18.6:8091/loja/`) — 2 colunas funcionando, capas legíveis
+   na miniatura, recorte sem perdas.
+6. Commit `dfa28e9` (só `public/loja/index.html`) — **local, não deployado ainda**.
+
+**Pendências novas** (ordem de prioridade):
+1. Títulos curtos por obra no card — a série "Os Bastidores da Mente" trunca em
+   títulos quase idênticos entre si no card enxuto (`-webkit-line-clamp: 2`), sem se
+   distinguir uma obra da outra na grade. Decisão de catálogo: o campo `tituloPublico`
+   já existe em `catalogoLivros.js` (hoje sem consumidor consistente) — candidato
+   natural para um título curto por volume.
+2. Badge de `volume`: campo hoje só preenchido em `arquitetura-excelencia-humana-ii` —
+   não aparece na série Bastidores (que mais precisaria dele) e, onde aparece, cobre
+   parte da arte da capa. Revisar posição do badge e preenchimento do campo no
+   catálogo.
+3. Filtros por departamento na loja — fora do escopo desta rodada, registrado para
+   decisão futura.
+4. Ícone de audiobook no card (`.badge-audio`, círculo 26px com borda) está visualmente
+   pesado — reduzir.
 
 ### 24/08/2026 (loja)
 
