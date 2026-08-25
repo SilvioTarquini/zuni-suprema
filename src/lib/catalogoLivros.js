@@ -432,6 +432,18 @@ const CATALOGO = {
     resumo: 'Guia prático de implementação com diagnósticos, exercícios, checklists e planos de automação e IA para empresas e profissionais.',
     descricao: 'Oferece um caminho estruturado e progressivo para incorporar IA de forma consciente e verdadeiramente útil — identificando gargalos, organizando processos, automatizando tarefas e ampliando capacidades humanas. Reúne diagnósticos, exercícios, checklists e centenas de aplicações práticas.'
   },
+  'tempo-para-viver': {
+    titulo: 'Tempo para Viver',
+    preco: 67.00,
+    precoOriginal: 97.00,
+    precoPromocional: 67.00,
+    categoria: 'principal',
+    departamento: 'Vida & Bem-Estar',
+    resumo: 'Trinta capítulos sobre atravessar a maturidade com autonomia, capacidade e sentido — não um manual de envelhecimento, mas um guia de decisões para quem continua no comando da própria vida.',
+    descricao: 'A maturidade costuma ser tratada como um período de perdas a administrar. Esta obra parte de outra premissa: há decisões a tomar, capacidades a manter e um tempo de vida que ainda comporta escolha, movimento e propósito.\n\nO livro se organiza em seis horizontes — Autonomia, Continuidade, Capacidade, Conexão, Curiosidade e Significado — que atravessam trinta capítulos sobre corpo, mente, relações, dinheiro, tecnologia, propósito e o modo como cada um desses campos sustenta ou limita a liberdade de decidir.\n\nCada capítulo se sustenta sozinho: pode ser lido na ordem ou consultado conforme a necessidade do momento. O tom é direto e sem idealização — não promete juventude prolongada nem fórmulas de bem-estar. Onde o assunto exige acompanhamento profissional, o texto diz isso com clareza, em vez de substituí-lo.\n\nUma obra do selo ZUNI Horizontes, escrita para ser usada — e revisitada — ao longo dos anos.',
+    audiobookDisponivel: false,
+    precoAudiobook: 39.90
+  },
 };
 
 function buscarLivro(livroId) {
