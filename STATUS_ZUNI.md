@@ -4,8 +4,26 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 25/08/2026 (sessão de loja — grade mobile) — Grade "Livros" da
-> loja (`public/loja/index.html`) reformulada para mobile: card enxuto (capa + título +
+> Última atualização: 25/08/2026 (sessão de loja — Tempo para Viver + RAG) — Obra
+> "Tempo para Viver" (Versão 1, selo ZUNI Horizontes) publicada na loja: R$ 97,00
+> riscado → R$ 67,00, departamento "Vida & Bem-Estar", flipbook em
+> `private/livros/tempo-para-viver/`, capa em `public/loja/capas/`. Caminho de entrega
+> validado localmente antes do commit (token válido devolve o flipbook de 4.457.024
+> bytes; sem token ou token inválido, 403). Em paralelo, indexado o tema RAG
+> `vida_madura_bem_estar` (118 blocos) a partir da mesma Versão 1 — dois blocos do
+> Cap. 9 excluídos inteiros e cortes cirúrgicos nos Caps. 7 e 25 por material canônico
+> não parafraseável (sinais de emergência médica, lista de alerta de memória, conflito
+> de interesse financeiro). Ajuste de CSS (`white-space: pre-line` em
+> `.info .descricao-expandida`) permite descrição em múltiplos parágrafos no painel da
+> loja — primeira obra a usar isso. Audiobook adiado para setembro/2026 (cota mensal do
+> TTS já consumida em agosto pelas 4 obras do Universo Masculino; esta obra tem ~697 mil
+> caracteres) — `audiobookDisponivel: false`, `precoAudiobook: 39.90` já gravado.
+> Commit `86583bf`, push feito, deploy confirmado em produção. Ver seção "25/08/2026
+> (Tempo para Viver — publicação + base RAG)" logo abaixo para detalhe completo e
+> pendências novas.
+>
+> Nota anterior (25/08/2026, sessão de loja — grade mobile): Grade "Livros" da loja
+> (`public/loja/index.html`) reformulada para mobile: card enxuto (capa + título +
 > preço) em grid de 2 colunas, toque abre painel de detalhe alimentado pelo catálogo já
 > em memória (sem rota nova, sem fetch adicional; `server.js` e `catalogoLivros.js`
 > intocados). Testada em celular via rede local e, após o deploy, validada em produção
@@ -87,6 +105,78 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 25/08/2026 (Tempo para Viver — publicação + base RAG)
+
+Duas frentes fechadas na mesma sessão a partir do mesmo arquivo-fonte: publicação da
+obra na loja e indexação de um tema RAG novo para o Mentor. Fonte única: manuscrito
+completo da Versão 1 de "Tempo para Viver" (`vida_madura_bem_estar.txt`, ~104 mil
+palavras, já formatado em blocos `=== TEMA: ... ===`) — **não conflita** com a Versão 2
+que o restante deste arquivo acompanha (ver "ZUNI Horizontes — obra 'Tempo para
+Viver'" mais abaixo).
+
+**Publicação na loja**
+1. Entrada nova em `catalogoLivros.js`: `tempo-para-viver` — R$ 67,00 (de R$ 97,00),
+   departamento "Vida & Bem-Estar", `audiobookDisponivel: false`.
+2. Flipbook copiado para `private/livros/tempo-para-viver/index.html` (4.457.024
+   bytes, bundle autocontido, mesmo padrão das demais obras); capa em
+   `public/loja/capas/tempo-para-viver.jpg`; `tempo-para-viver` adicionado ao array
+   `novasObras` de `public/loja/index.html` (decide extensão `.jpg` vs `.png` do card).
+3. **Caminho de entrega testado ponta a ponta antes do commit**: token gerado via
+   `criarAcesso()` (mesma função do webhook pós-checkout, não reimplementação) →
+   `GET /livros/tempo-para-viver?token=...` devolve 200 com o flipbook completo
+   (4.457.024 bytes, tamanho idêntico ao arquivo-fonte); sem token ou com token
+   inválido, 403. Linha de teste em `acessos_livros` criada e removida logo depois.
+4. **Ajuste de CSS**: `white-space: pre-line` adicionado a `.info .descricao-expandida`
+   (`public/loja/index.html`) — necessário porque a descrição desta obra tem 4
+   parágrafos (`\n\n` na string) e o painel de detalhe da loja, até então, colapsava
+   qualquer quebra (testado empiricamente antes e depois da mudança, com screenshot de
+   Chrome real, inclusive com clique real no card em produção). Primeira obra do
+   catálogo a usar parágrafo múltiplo; regra é inócua para as demais 38 entradas
+   (nenhuma tem `\n` na `descricao`).
+5. Commit `86583bf`, push e deploy confirmados em produção: `/loja/` responde 200 com
+   a obra no catálogo servido, capa responde 200 `image/jpeg`.
+
+**Base RAG do tema `vida_madura_bem_estar`**
+1. Triagem (Etapa 1): arquivo único (não pasta, como se presumia inicialmente) já em
+   Formato A, 120 blocos, sem bastidor de conversa com IA, sem conteúdo de posologia
+   farmacológica fora de escopo.
+2. **Decisão: material canônico não parafraseável fica fora da base RAG** — motivo: o
+   Mentor parafraseia os chunks ao responder, e listas/avisos canônicos não devem ser
+   reformulados livremente.
+   - Exclusão de bloco inteiro: os dois blocos do Cap. 9 que misturavam critérios de
+     alerta com conteúdo tranquilizador ("Esquecer um nome não é o mesmo que esquecer
+     uma pessoa..." e "Quando uma avaliação merece ser antecipada...").
+   - Corte cirúrgico (só a sentença, resto do bloco preservado): Cap. 7 (critérios de
+     urgência médica) e Cap. 25 (aviso de conflito de interesse financeiro).
+3. Indexado com `indexarTema.js` (parser real, não reimplementação): **118 blocos**,
+   118 chunks, maior chunk 1.644 palavras — nenhum precisou de sub-divisão automática.
+   Confirmado no Supabase: `documentos WHERE tema='vida_madura_bem_estar'` = 118
+   linhas; nenhum outro tema afetado (total da tabela bateu exato: 1.472 + 118 = 1.590).
+4. Indexação é só dado no Supabase — **sem commit associado**, não aparece no
+   histórico git.
+
+**Decisão de audiobook**: R$ 39,90 pelo conjunto (produção em três partes, venda
+única — mesmo padrão de "Além do Que Você Sente"), preço já gravado no catálogo com
+`audiobookDisponivel: false`. Abre uma faixa nova na escala de preço por duração (a
+escala atual — ver "Decisões estratégicas" de 24/08 — termina em R$ 34,90 para "acima
+de 2h30"; os ~697 mil caracteres desta obra ficam acima disso). Produção adiada para
+setembro/2026: cota mensal gratuita do Google Cloud TTS já foi consumida em agosto
+pelos 4 audiolivros do Universo Masculino. **Fila de produção**: Rejuvenesça fica
+depois de Tempo para Viver.
+
+**Pendências novas**:
+1. `/api/livros/catalogo/:livroId` (`server.js`) não devolve `precoOriginal` — o
+   checkout mostra só o preço final, sem o valor riscado. Afeta **todas** as obras com
+   desconto, não só esta (confirmado testando "A Arte da Presença Masculina" também).
+   A âncora de valor desaparece justamente na tela de decisão de compra.
+2. Chat do livro (`src/routes/livroChat.js`, RAG por `livro_id`) nunca foi indexado
+   para `tempo-para-viver` (`src/indexarLivro.js` não rodado) — degrada com aviso
+   gentil ("tema não tratado nesta obra"), não quebra. Se for indexado no futuro, a
+   decisão de excluir material canônico precisa ser revisitada, porque o chat também
+   cita trechos recuperados ao responder.
+3. Escala de preços de audiobook (documentada em "Decisões estratégicas" de 24/08)
+   precisa registrar a faixa nova (R$ 39,90) junto das existentes.
 
 ### 25/08/2026 (loja)
 
