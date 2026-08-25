@@ -4,7 +4,15 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 25/08/2026 (sessão de loja — Tempo para Viver + RAG) — Obra
+> Última atualização: 25/08/2026 (sessão de loja — botão do Mentor + checkout) — Ver
+> seção "25/08/2026 (loja — botão do Mentor na faixa + checkout do Mapa Integrativo)"
+> logo abaixo para detalhe completo. Resumo: segundo botão ("Conheça o Mentor ZUNI")
+> adicionado ao cartão `.faixa-mentor` de `public/loja/index.html`, ao lado do já
+> existente ("Ler grátis + conversar"); item "15 trocas" removido do checkout
+> (`public/checkout.html`) por não haver número fixo correto a exibir. **Aplicado
+> localmente, sem commit** (a pedido do usuário nesta sessão).
+>
+> Nota anterior (25/08/2026, sessão de loja — Tempo para Viver + RAG) — Obra
 > "Tempo para Viver" (Versão 1, selo ZUNI Horizontes) publicada na loja: R$ 97,00
 > riscado → R$ 67,00, departamento "Vida & Bem-Estar", flipbook em
 > `private/livros/tempo-para-viver/`, capa em `public/loja/capas/`. Caminho de entrega
@@ -105,6 +113,70 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 25/08/2026 (loja — botão do Mentor na faixa + checkout do Mapa Integrativo)
+
+**Botão do Mentor na `.faixa-mentor` (`public/loja/index.html`)**
+1. A faixa já existente logo abaixo do header (`.faixa-mentor .cartao`) tinha só um
+   botão — "Ler grátis + conversar", para `/experimente.html#modulo-livro`. Adicionado
+   um segundo botão secundário, "Conheça o Mentor ZUNI", para `/checkout.html` (href
+   relativo, sem preço no rótulo), dentro do mesmo cartão — não foi criada faixa nova.
+2. Os dois botões passaram a viver num wrapper `.faixa-mentor .acoes`: empilham em
+   largura total no mobile (`flex-direction: column`, `width: 100%`, `gap: 12px`,
+   esticados por `align-items: stretch` default) e ficam lado a lado a partir de
+   `640px` (mesmo breakpoint já usado em `#grade-livros`).
+3. `.btn-mentor` (classe base, compartilhada pelos dois) ganhou `min-height: 44px` +
+   `inline-flex` centralizado — o botão primário também não tinha essa altura mínima
+   de toque antes (ficava em ~38px); ambos os botões passaram a cumprir 44px.
+4. Botão secundário (`.btn-mentor-secundario`): fundo transparente, borda 1px e texto
+   na cor `var(--dourado)`, herdando o resto (tamanho, padding, tipografia) da classe
+   base — não compete visualmente com o primário (fundo dourado sólido).
+5. Texto do cartão ajustado para mencionar as duas opções: "...e converse com a obra.
+   Ou, se preferir ir direto ao ponto, converse com o Mentor ZUNI Suprema."
+6. **Validação**: primeiro tentativa com `chrome.exe --headless=new --screenshot`
+   mostrou um artefato de recorte horizontal (conteúdo cortado na borda direita,
+   idêntico no HTML original e no modificado — não era bug do CSS). Trocado para
+   Playwright (`playwright` já é dependência do projeto, `package.json`) com emulação
+   de viewport real — screenshots em 390px (mobile, empilhado) e 1280px (desktop, lado
+   a lado) confirmaram o layout correto. **Lição para sessões futuras**: preferir
+   Playwright a `chrome.exe --headless` cru para screenshot de verificação local nesse
+   projeto — o CLI puro tem se mostrado não confiável para viewport estreito neste
+   ambiente.
+7. **Aplicado localmente, sem commit** (a pedido do usuário).
+
+**Checkout do Mapa Integrativo (`public/checkout.html`)**
+- Item da lista `<li>15 trocas com o Mentor ZUNI Suprema</li>` trocado por
+  `<li>Sessão completa de perguntas e respostas com o Mentor</li>` — sem número.
+  **Aplicado localmente, sem commit.**
+
+**Investigação do limite de interações — regra pretendida vs. código real**
+
+A intenção verbalizada nesta sessão foi: quem responde o questionário pós-checkout
+ganha 10 perguntas livres *além* das do questionário; quem não responde mantém 15.
+**Essa regra não existe no código hoje** — rastreamento completo:
+- Único incremento do contador: `session.counter += 1;` em `/api/chat`
+  (`src/server.js:2274`), a cada mensagem enviada nessa rota.
+- Único limite: `const LIMITE_INTERACOES = 15;` (`src/server.js:2276`), fixo, sem
+  nenhum `if` por tema, `pacoteId` ou flag de questionário nas proximidades.
+- O endpoint do questionário (`/api/questionario/salvar-respostas`,
+  `src/server.js:2545-2628`) só grava `session.temaQuestionario = tema` — nunca toca
+  `session.counter`. Esse campo serve só para direcionar a busca RAG
+  (`searchKnowledge(message, 5, session.temaQuestionario)`, linha 2298), não para o
+  limite.
+- Existe uma flag com nome parecido, `questionario_respondido`
+  (`src/lib/creditosSessao.js:252`), mas pertence a um produto diferente — o pacote
+  "Sessões Extras" (3 sessões por R$74,90) — e só evita repetir o questionário entre
+  sessões do mesmo pacote; nunca é lida por `/api/chat`.
+- **Conclusão**: hoje todo mundo tem exatamente 15 trocas fixas na sessão avulsa,
+  respondendo ou não o questionário. A regra de +10/15 variável é uma pendência de
+  implementação, não um comportamento existente.
+
+**Pendência registrada**: `src/server.js:3425` (mensagem injetada no prompt da IA na
+última troca gratuita do Experimente) e `src/lib/brinde.js:323` (e-mail do brinde) —
+ambos dizem "uma jornada de até 15 trocas". Continuam corretos **enquanto o limite for
+fixo em 15** (é exatamente o valor atual). Se a regra variável acima for implementada,
+revisar os dois — "até 15" deixaria de descrever a experiência de quem respondeu o
+questionário.
 
 ### 25/08/2026 (Tempo para Viver — publicação + base RAG)
 

@@ -370,9 +370,26 @@
     color: var(--texto-suave);
     max-width: 640px;
   }
+  .faixa-mentor .acoes {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+
+  @media (min-width: 640px) {
+    .faixa-mentor .acoes {
+      flex-direction: row;
+      width: auto;
+    }
+  }
+
   .faixa-mentor a.btn-mentor {
     flex-shrink: 0;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
     padding: 11px 20px;
     background: var(--dourado);
     color: #0f0f0f;
@@ -384,6 +401,12 @@
     font-family: Arial, sans-serif;
     font-weight: bold;
     white-space: nowrap;
+  }
+
+  .faixa-mentor a.btn-mentor-secundario {
+    background: transparent;
+    border: 1px solid var(--dourado);
+    color: var(--dourado);
   }
 
   /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
@@ -471,8 +494,11 @@
 
 <div class="faixa-mentor">
   <div class="cartao">
-    <p>Antes de comprar, leia grátis o primeiro capítulo de "Os Bastidores da Mente — Volume I" e converse com a obra.</p>
-    <a class="btn-mentor" href="/experimente.html#modulo-livro">Ler grátis + conversar</a>
+    <p>Antes de comprar, leia grátis o primeiro capítulo de "Os Bastidores da Mente — Volume I" e converse com a obra. Ou, se preferir ir direto ao ponto, converse com o Mentor ZUNI Suprema.</p>
+    <div class="acoes">
+      <a class="btn-mentor" href="/experimente.html#modulo-livro">Ler grátis + conversar</a>
+      <a class="btn-mentor btn-mentor-secundario" href="/checkout.html">Conheça o Mentor ZUNI</a>
+    </div>
   </div>
 </div>
 
