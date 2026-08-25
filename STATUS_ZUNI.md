@@ -4,13 +4,24 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 25/08/2026 (sessão de loja — botão do Mentor + checkout) — Ver
-> seção "25/08/2026 (loja — botão do Mentor na faixa + checkout do Mapa Integrativo)"
-> logo abaixo para detalhe completo. Resumo: segundo botão ("Conheça o Mentor ZUNI")
-> adicionado ao cartão `.faixa-mentor` de `public/loja/index.html`, ao lado do já
-> existente ("Ler grátis + conversar"); item "15 trocas" removido do checkout
-> (`public/checkout.html`) por não haver número fixo correto a exibir. **Aplicado
-> localmente, sem commit** (a pedido do usuário nesta sessão).
+> Última atualização: 25/08/2026 (sessão de loja — aviso de produto digital em
+> destaque) — Ver seção "25/08/2026 (loja — aviso de produto digital em destaque)"
+> logo abaixo para detalhe completo. Resumo: o aviso "produto 100% digital, sem envio
+> físico" deixou de ser parágrafo discreto e virou bloco com borda laranja (#D85A30,
+> texto #F0997B, primeira frase em #F5C4B3) — aplicado em `public/loja/index.html`
+> (header) e `public/checkout-livro.html` (dentro do card, texto adaptado para
+> preservar a permissão de ler/baixar/imprimir que só existia ali). **Não aplicado**
+> em `public/checkout.html` (Mentor) — produto é sessão de conversa, aviso de exemplar
+> físico não se aplica. Commit `43cf877`, push feito, deploy confirmado em produção
+> (200 + HTML verificado nos dois pontos).
+>
+> Nota anterior (25/08/2026, sessão de loja — botão do Mentor + checkout): segundo
+> botão ("Conheça o Mentor ZUNI") adicionado ao cartão `.faixa-mentor` de
+> `public/loja/index.html`, ao lado do já existente ("Ler grátis + conversar"); item
+> "15 trocas" removido do checkout do Mentor (`public/checkout.html`) por não haver
+> número fixo correto a exibir. Commit `0800e2b`, push feito, deploy confirmado em
+> produção. Ver seção "25/08/2026 (loja — botão do Mentor na faixa + checkout do Mapa
+> Integrativo)" logo abaixo para detalhe completo.
 >
 > Nota anterior (25/08/2026, sessão de loja — Tempo para Viver + RAG) — Obra
 > "Tempo para Viver" (Versão 1, selo ZUNI Horizontes) publicada na loja: R$ 97,00
@@ -113,6 +124,55 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 25/08/2026 (loja — aviso de produto digital em destaque)
+
+**Problema**: o aviso "produto 100% digital, sem envio físico" — o que evita o engano
+de esperar exemplar físico — era um parágrafo com o mesmo tom e tamanho dos outros no
+header da loja (`public/loja/index.html`), terceiro numa sequência de três, e ficava
+abaixo da dobra no celular. Passava despercebido.
+
+**Solução**: bloco com borda laranja (`#D85A30`), fundo transparente, texto
+`#F0997B`, primeira frase destacada em `#F5C4B3` (mais clara), `border-radius: 8px`,
+padding `11px 12px`.
+1. `public/loja/index.html` (header): texto encurtado para "Produto 100% digital —
+   sem envio físico. O acesso chega por link logo após a confirmação do pagamento."
+2. `public/checkout-livro.html` (dentro do `.card`, antes do formulário): **texto
+   adaptado**, não copiado ao pé da letra — o parágrafo antigo tinha uma permissão
+   explícita ("ler na tela, baixar e imprimir por conta própria") que o texto curto da
+   loja não menciona; mantida como complemento após o destaque: "Produto 100% digital
+   — sem envio físico. Após a confirmação do pagamento, você recebe acesso para ler na
+   tela, baixar e imprimir por conta própria." A etiqueta curta já existente ali
+   (`.etiqueta-digital`, "Edição Interativa digital · sem envio físico") foi mantida
+   sem alteração — rotula o item, papel diferente do aviso.
+3. **Sem ícone**: chegou a ser testado com emoji (🔗, depois 📱) alinhado à esquerda
+   via `display:flex`, mas nenhum renderizou de forma legível/consistente nos
+   screenshots de verificação — descartado. Decisão final: só borda + texto, sem
+   `display:flex`, sem `gap`, sem elemento de ícone.
+4. **Não aplicado em `public/checkout.html`** (checkout do Mentor) — ali o produto é
+   uma sessão de conversa, não um item com exemplar físico possível; o aviso não se
+   aplica a esse fluxo.
+5. Commit `43cf877`, push feito, deploy confirmado em produção: `/loja/` e
+   `/checkout-livro.html?livro=tempo-para-viver` respondem 200, HTML servido contém
+   `#D85A30` e o `<span class="aviso-digital-destaque">` nos dois.
+
+**Lição de método (reforça a de 25/08 acima)**: todos os screenshots de verificação
+local desta sessão foram gerados com Playwright (`playwright`, já dependência do
+projeto), nunca com `chrome.exe --headless` cru — o CLI puro voltou a produzir
+artefato de recorte em viewport estreito quando testado de novo. Confirma-se: preferir
+Playwright para esse tipo de verificação neste projeto.
+
+**Pendências que seguem abertas** (nenhuma delas foi tocada nesta sessão — só
+reafirmando para a próxima):
+- Limite variável de interações (10 com questionário / 15 sem) — decidido em
+  conversa, ainda **não implementado** no código (ver "25/08/2026 (loja — botão do
+  Mentor na faixa + checkout do Mapa Integrativo)" abaixo, seção "Investigação do
+  limite de interações", para o rastreamento completo).
+- `precoOriginal` ausente no retorno de `/api/livros/catalogo/:livroId` — o checkout
+  das obras não mostra o valor riscado (ver "25/08/2026 (Tempo para Viver —
+  publicação + base RAG)", "Pendências novas", item 1).
+- Audiobook de "Tempo para Viver" adiado para setembro/2026, quando a cota mensal do
+  Google Cloud TTS resetar (ver mesma seção, "Decisão de audiobook").
 
 ### 25/08/2026 (loja — botão do Mentor na faixa + checkout do Mapa Integrativo)
 
