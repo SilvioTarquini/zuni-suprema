@@ -85,6 +85,20 @@
     gap: 32px 28px;
   }
 
+  /* Grade "Livros": 2 colunas fixas no mobile (card enxuto, capa 2/3), sem
+     afetar #grade-servicos, que mantém o auto-fill de sempre. */
+  #grade-livros {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  @media (min-width: 640px) {
+    #grade-livros {
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 32px 28px;
+    }
+  }
+
   .livro {
     background: var(--fundo-carta);
     border: 1px solid var(--borda);
@@ -100,6 +114,7 @@
   }
 
   .capa {
+    position: relative;
     aspect-ratio: 3 / 4;
     background: linear-gradient(160deg, #1e1a13, #0b0a08);
     display: flex;
@@ -119,6 +134,63 @@
     object-fit: cover;
   }
 
+  /* Card enxuto (grade "Livros"): capa mais alongada, badges sobre a capa,
+     card inteiro clicável — abre o painel de detalhe em vez de expandir inline. */
+  .livro-slim .capa {
+    aspect-ratio: 2 / 3;
+  }
+
+  .livro-slim {
+    cursor: pointer;
+  }
+
+  /* :focus (default do navegador) suprimido só porque :focus-visible abaixo
+     assume o estado de foco visível — nunca remover sem substituir. */
+  #grade-livros .livro-slim:focus {
+    outline: none;
+  }
+
+  #grade-livros .livro-slim:focus-visible {
+    outline: 2px solid var(--dourado);
+    outline-offset: 2px;
+  }
+
+  .livro-slim .info {
+    padding: 10px 10px 12px;
+  }
+
+  .badge-volume,
+  .badge-audio {
+    position: absolute;
+    font-family: Arial, sans-serif;
+  }
+
+  .badge-volume {
+    top: 8px;
+    left: 8px;
+    background: rgba(15, 15, 15, 0.75);
+    color: var(--dourado-suave);
+    border: 1px solid var(--dourado);
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-size: 0.68rem;
+    letter-spacing: 0.3px;
+  }
+
+  .badge-audio {
+    bottom: 8px;
+    right: 8px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: rgba(15, 15, 15, 0.75);
+    border: 1px solid var(--dourado);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+  }
+
   .info {
     padding: 18px 18px 20px;
     display: flex;
@@ -132,6 +204,20 @@
     color: var(--texto);
     margin: 0 0 6px;
     line-height: 1.35;
+  }
+
+  /* Título do card enxuto: truncado em 2 linhas. Escopado em #grade-livros
+     para não afetar o título do card de #grade-servicos (Mapa Integrado)
+     nem o título do painel de detalhe (fora de #grade-livros, sempre inteiro). */
+  #grade-livros .info h2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .info h2.painel-titulo {
+    font-size: 1.2rem;
   }
 
   .info p.resumo {
@@ -298,6 +384,79 @@
     font-weight: bold;
     white-space: nowrap;
   }
+
+  /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
+     O corpo (.info) reaproveita as mesmas classes/estilos do card antigo
+     (resumo, descricao-expandida.ativa, rodape-card, preco, selo-audiobook,
+     etiqueta-digital, a.comprar) — nenhuma regra nova precisa duplicar essa lógica. */
+  .painel-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    z-index: 1000;
+  }
+
+  .painel-overlay[hidden] {
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .painel-overlay {
+      align-items: center;
+      padding: 24px;
+    }
+  }
+
+  .painel-detalhe {
+    position: relative;
+    background: var(--fundo-carta);
+    border: 1px solid var(--borda);
+    border-radius: 12px 12px 0 0;
+    width: 100%;
+    max-width: 480px;
+    max-height: 88vh;
+    overflow-y: auto;
+  }
+
+  @media (min-width: 640px) {
+    .painel-detalhe {
+      border-radius: 12px;
+      max-height: 85vh;
+    }
+  }
+
+  .painel-fechar {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    border: 1px solid var(--borda);
+    background: var(--fundo-carta);
+    color: var(--texto);
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .painel-capa {
+    aspect-ratio: 3 / 4;
+    max-height: 320px;
+    overflow: hidden;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  .painel-capa img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
 </style>
 </head>
 <body>
@@ -331,6 +490,26 @@
 <footer>
   ZUNI Suprema — acesso liberado por tempo determinado após a confirmação do pagamento.
 </footer>
+
+<div class="painel-overlay" id="painel-overlay" hidden>
+  <div class="painel-detalhe" role="dialog" aria-modal="true" aria-labelledby="painel-titulo">
+    <button class="painel-fechar" type="button" aria-label="Fechar">×</button>
+    <div class="painel-capa"><img id="painel-capa-img" alt=""></div>
+    <div class="info">
+      <h2 id="painel-titulo" class="painel-titulo"></h2>
+      <p class="resumo" id="painel-resumo"></p>
+      <div class="descricao-expandida ativa">
+        <p id="painel-descricao"></p>
+      </div>
+      <div class="rodape-card">
+        <p class="preco" id="painel-preco"></p>
+        <span class="selo-audiobook" id="painel-selo-audiobook" hidden></span>
+        <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
+        <a class="comprar" id="painel-comprar" href="#"></a>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
   let CATALOGO = {};
@@ -381,6 +560,83 @@
     });
   }
 
+  // Preço: mesma lógica de sempre (Grátis / riscado+promocional / preço simples),
+  // isolada em função porque o card enxuto e o painel de detalhe usam os dois.
+  function precoInternoHTML(livro) {
+    if (livro.preco === 0) {
+      return 'Grátis';
+    } else if (livro.precoOriginal && livro.precoPromocional) {
+      return `<span class="preco-original">R$ ${livro.precoOriginal.toFixed(2).replace('.', ',')}</span> <span class="preco-promocional">R$ ${livro.precoPromocional.toFixed(2).replace('.', ',')}</span>`;
+    }
+    return `R$ ${livro.preco.toFixed(2).replace('.', ',')}`;
+  }
+
+  // --- Painel de detalhe (aberto ao tocar num card da grade "Livros") ---
+  let painelOverlay = null;
+  let painelFechar = null;
+  let painelCapaImg = null;
+  let painelTitulo = null;
+  let painelResumo = null;
+  let painelDescricao = null;
+  let painelPreco = null;
+  let painelSeloAudiobook = null;
+  let painelComprar = null;
+  let cardComFocoAnterior = null;
+
+  function iniciarPainel() {
+    painelOverlay = document.getElementById('painel-overlay');
+    painelFechar = painelOverlay.querySelector('.painel-fechar');
+    painelCapaImg = document.getElementById('painel-capa-img');
+    painelTitulo = document.getElementById('painel-titulo');
+    painelResumo = document.getElementById('painel-resumo');
+    painelDescricao = document.getElementById('painel-descricao');
+    painelPreco = document.getElementById('painel-preco');
+    painelSeloAudiobook = document.getElementById('painel-selo-audiobook');
+    painelComprar = document.getElementById('painel-comprar');
+
+    painelFechar.addEventListener('click', fecharPainel);
+    painelOverlay.addEventListener('click', (evento) => {
+      if (evento.target === painelOverlay) fecharPainel();
+    });
+    document.addEventListener('keydown', (evento) => {
+      if (evento.key === 'Escape' && !painelOverlay.hidden) fecharPainel();
+    });
+  }
+
+  function abrirPainelDetalhe(livroId, livro, urlCapa, cardOrigem, cupom) {
+    const tituloExibido = livro.tituloPublico || livro.titulo;
+    const urlCompra = `/checkout-livro.html?livro=${encodeURIComponent(livroId)}${cupom ? `&cupom=${encodeURIComponent(cupom)}` : ''}`;
+
+    painelCapaImg.src = urlCapa;
+    painelCapaImg.alt = `Capa — ${tituloExibido}`;
+    painelTitulo.textContent = tituloExibido;
+    painelResumo.textContent = livro.resumo;
+    painelDescricao.textContent = livro.descricao;
+    painelPreco.innerHTML = precoInternoHTML(livro);
+
+    if (livro.audiobookDisponivel) {
+      painelSeloAudiobook.hidden = false;
+      painelSeloAudiobook.innerHTML = `🎧 Audiobook disponível · +R$ ${livro.precoAudiobook.toFixed(2).replace('.', ',')}`;
+    } else {
+      painelSeloAudiobook.hidden = true;
+    }
+
+    painelComprar.href = urlCompra;
+    painelComprar.textContent = livro.preco === 0 ? 'Ler grátis' : 'Comprar';
+
+    cardComFocoAnterior = cardOrigem;
+    painelOverlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+    painelFechar.focus();
+  }
+
+  function fecharPainel() {
+    if (painelOverlay.hidden) return;
+    painelOverlay.hidden = true;
+    document.body.style.overflow = '';
+    if (cardComFocoAnterior) cardComFocoAnterior.focus();
+  }
+
   // Renderizar cards dos livros
   async function renderizarLivros() {
     const gradiLivros = document.getElementById('grade-livros');
@@ -397,7 +653,6 @@
     }
 
     Object.entries(CATALOGO).forEach(([livroId, livro]) => {
-      const urlCompra = `/checkout-livro.html?livro=${encodeURIComponent(livroId)}${cupom ? `&cupom=${encodeURIComponent(cupom)}` : ''}`;
       // Usar .jpg para Universo Feminino + Masculino (comprimidos) + 15 novas obras, .png para o resto
       const universosFeminino = ['codigo-feminino', 'ela-tem-classe', 'inesquecivel-charme-feminino', 'a-inteligencia-do-corpo-feminino', 'a-mulher-que-permanece-inteira'];
       const universoMasculino = ['a-arte-da-presenca-masculina', 'a-presenca-em-acao-apendice', 'a-arte-invisivel-elegancia-masculina', 'guia-integral-saude-beleza-masculina'];
@@ -405,54 +660,41 @@
       const ext = universosFeminino.includes(livroId) || universoMasculino.includes(livroId) || novasObras.includes(livroId) ? 'jpg' : 'png';
       const urlCapa = `/loja/capas/${livroId}.${ext}`;
 
-      let precoHTML = '';
-      if (livro.preco === 0) {
-        precoHTML = `<p class="preco">Grátis</p>`;
-      } else if (livro.precoOriginal && livro.precoPromocional) {
-        precoHTML = `<p class="preco"><span class="preco-original">R$ ${livro.precoOriginal.toFixed(2).replace('.', ',')}</span> <span class="preco-promocional">R$ ${livro.precoPromocional.toFixed(2).replace('.', ',')}</span></p>`;
-      } else {
-        precoHTML = `<p class="preco">R$ ${livro.preco.toFixed(2).replace('.', ',')}</p>`;
-      }
-
       const tituloExibido = livro.tituloPublico || livro.titulo;
 
       const card = document.createElement('article');
-      card.className = 'livro';
+      card.className = 'livro livro-slim';
+      card.tabIndex = 0;
+      card.setAttribute('role', 'button');
+      card.setAttribute('aria-label', tituloExibido);
       card.innerHTML = `
-        <div class="capa"><img src="${urlCapa}" alt="Capa — ${tituloExibido}" loading="lazy" onerror="console.error('[loja] capa não carregou para', '${livroId}', '→', this.src)"></div>
+        <div class="capa">
+          <img src="${urlCapa}" alt="Capa — ${tituloExibido}" loading="lazy" onerror="console.error('[loja] capa não carregou para', '${livroId}', '→', this.src)">
+          ${livro.volume ? `<span class="badge-volume">Vol. ${livro.volume}</span>` : ''}
+          ${livro.audiobookDisponivel ? `<span class="badge-audio" aria-hidden="true">🎧</span>` : ''}
+        </div>
         <div class="info">
           <h2>${tituloExibido}</h2>
-          <p class="resumo">${livro.resumo}</p>
-          <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
-          <div class="descricao-expandida" role="region">
-            <p>${livro.descricao}</p>
-          </div>
-          <div class="rodape-card">
-            ${precoHTML}
-            ${livro.audiobookDisponivel ? `<span class="selo-audiobook">🎧 Audiobook disponível · +R$ ${livro.precoAudiobook.toFixed(2).replace('.', ',')}</span>` : ''}
-            <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-            <a class="comprar" href="${urlCompra}">${livro.preco === 0 ? 'Ler grátis' : 'Comprar'}</a>
-          </div>
+          <p class="preco">${precoInternoHTML(livro)}</p>
         </div>
       `;
 
       gradiLivros.appendChild(card);
 
-      // Funcionalidade de expandir/colapsar
-      const btnExpandir = card.querySelector('.expandir');
-      const descExpandida = card.querySelector('.descricao-expandida');
-
-      btnExpandir.addEventListener('click', function () {
-        const estaAberta = descExpandida.classList.contains('ativa');
-        descExpandida.classList.toggle('ativa');
-        btnExpandir.setAttribute('aria-expanded', !estaAberta);
-        btnExpandir.textContent = estaAberta ? '+ Leia mais' : '- Fechar';
+      const abrir = () => abrirPainelDetalhe(livroId, livro, urlCapa, card, cupom);
+      card.addEventListener('click', abrir);
+      card.addEventListener('keydown', (evento) => {
+        if (evento.key === 'Enter' || evento.key === ' ' || evento.key === 'Spacebar') {
+          evento.preventDefault();
+          abrir();
+        }
       });
     });
   }
 
   // Renderizar ao carregar
   document.addEventListener('DOMContentLoaded', () => {
+    iniciarPainel();
     renderizarLivros();
     renderizarServicos();
   });
