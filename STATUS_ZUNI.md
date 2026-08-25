@@ -8,10 +8,13 @@
 > loja (`public/loja/index.html`) reformulada para mobile: card enxuto (capa + título +
 > preço) em grid de 2 colunas, toque abre painel de detalhe alimentado pelo catálogo já
 > em memória (sem rota nova, sem fetch adicional; `server.js` e `catalogoLivros.js`
-> intocados). Testada em celular real via rede local — 2 colunas ok, capas legíveis,
-> recorte sem perdas. Commit `dfa28e9`, aplicado só localmente (sem deploy ainda). Ver
-> seção "25/08/2026 (loja)" logo abaixo para detalhe e pendências novas (títulos curtos
-> por obra, badge de volume, filtros por departamento, ícone de audiobook pesado).
+> intocados). Testada em celular via rede local e, após o deploy, validada em produção
+> pelo celular — grade, painel de detalhe e botão Comprar funcionando. Commits
+> `dfa28e9` (loja) e `b7c99f7` (status) — push feito, deploy automático via Railway
+> concluído. Decisões desta sessão: títulos curtos por obra e badge de `volume` ficam
+> sem prioridade por ora (capas dos Bastidores já mostram o volume na arte, ordem do
+> catálogo evidencia a sequência — ressalva registrada abaixo); próxima prioridade da
+> loja passa a ser filtros por departamento. Ver seção "25/08/2026 (loja)" logo abaixo.
 >
 > Nota anterior (24/08/2026, sessão de audiolivros — ativação e reclassificação de
 > preços): Os quatro audiolivros do Universo Masculino (A Arte da Presença Masculina,
@@ -114,23 +117,26 @@ memória por `renderizarLivros()`).
    card de origem, trava scroll do body enquanto aberto.
 5. **Validação**: testado localmente (`PORT=8091 node src/server.js`) e no celular via
    rede local (`http://192.168.18.6:8091/loja/`) — 2 colunas funcionando, capas legíveis
-   na miniatura, recorte sem perdas.
-6. Commit `dfa28e9` (só `public/loja/index.html`) — **local, não deployado ainda**.
+   na miniatura, recorte sem perdas. Depois do deploy, validado também em produção pelo
+   celular (`https://www.zunisuprema.com.br/loja/`) — grade, painel de detalhe e botão
+   Comprar funcionando.
+6. Commits `dfa28e9` (só `public/loja/index.html`) e `b7c99f7` (`STATUS_ZUNI.md`) — push
+   feito para `origin/main`, deploy automático via Railway concluído, **em produção**.
 
-**Pendências novas** (ordem de prioridade):
-1. Títulos curtos por obra no card — a série "Os Bastidores da Mente" trunca em
-   títulos quase idênticos entre si no card enxuto (`-webkit-line-clamp: 2`), sem se
-   distinguir uma obra da outra na grade. Decisão de catálogo: o campo `tituloPublico`
-   já existe em `catalogoLivros.js` (hoje sem consumidor consistente) — candidato
-   natural para um título curto por volume.
-2. Badge de `volume`: campo hoje só preenchido em `arquitetura-excelencia-humana-ii` —
-   não aparece na série Bastidores (que mais precisaria dele) e, onde aparece, cobre
-   parte da arte da capa. Revisar posição do badge e preenchimento do campo no
-   catálogo.
-3. Filtros por departamento na loja — fora do escopo desta rodada, registrado para
-   decisão futura.
-4. Ícone de audiobook no card (`.badge-audio`, círculo 26px com borda) está visualmente
+**Pendências (loja)** — ordem de prioridade:
+1. Filtros por departamento na loja — próxima prioridade.
+2. Ícone de audiobook no card (`.badge-audio`, círculo 26px com borda) está visualmente
    pesado — reduzir.
+
+**Decidido não fazer por ora (sem prioridade)**:
+- Títulos curtos por obra no card: decidido que não é necessário — as capas da série
+  "Os Bastidores da Mente" já exibem o número do volume na própria arte, e a ordem do
+  catálogo deixa a sequência evidente na grade. **Ressalva**: essa leitura depende da
+  ordem de inserção no `CATALOGO` (`catalogoLivros.js`) e pode quebrar quando entrarem
+  filtros por departamento — reordenar a exibição sem revisar a sequência visual do
+  Bastidores é o gatilho que reabriria este item.
+- Badge de `volume`: mantido como está (só preenchido em `arquitetura-excelencia-humana-ii`,
+  cobre parte da arte da capa onde aparece) — sem prioridade.
 
 ### 24/08/2026 (loja)
 
