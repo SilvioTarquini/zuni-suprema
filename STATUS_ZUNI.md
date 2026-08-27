@@ -4,19 +4,33 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 26/08/2026 (redesenho do checkout do Mentor — Etapa 1, ainda
-> **não commitada**) — Ver seção "26/08/2026 (checkout do Mentor — Etapa 1: sem
-> dados pessoais + entrega de PDF sob demanda)" logo abaixo para detalhe completo.
-> Resumo: `public/checkout.html` não pede mais nome/e-mail/CPF (botão único →
-> Checkout Pro do MP, `sessionId` em `localStorage` como rede de segurança); PIX
-> manual (`/api/checkout` via Orders API) removido; e-mail automático ao fim da
+> Última atualização: 27/08/2026 (Etapa 1 do checkout do Mentor commitada + achados
+> pendentes do teste no celular) — Ver seção "27/08/2026 (teste no celular do Mentor
+> — achados pendentes)" logo abaixo para a lista completa. Resumo: a Etapa 1 (ver
+> nota seguinte e seção "26/08/2026" abaixo) foi commitada em `5f2d5a1` — **sem
+> push, sem deploy**. Um teste manual no celular no dia seguinte encontrou sete
+> achados ainda não corrigidos que bloqueiam o push: um bug crítico (encaminhamento
+> ao WhatsApp reporta sucesso mas não entrega nada), dois erros de fluxo no discurso
+> do Mentor (inverte quem contata quem; e ainda manda pedir o PDF por WhatsApp,
+> contradizendo a própria Etapa 1), duas pendências de copy (menção excessiva à
+> equipe integrativa + "gratuito" sem qualificar; sugestão de médico antes de
+> entregar valor) e dois achados de UX (possível regressão no scroll do chat;
+> aviso de download do relatório com contraste baixo no celular).
+>
+> Nota anterior (26/08/2026, checkout do Mentor — Etapa 1: sem dados pessoais +
+> entrega de PDF sob demanda) — Ver seção "26/08/2026 (checkout do Mentor — Etapa 1:
+> sem dados pessoais + entrega de PDF sob demanda)" logo abaixo para detalhe
+> completo. Resumo: `public/checkout.html` não pede mais nome/e-mail/CPF (botão
+> único → Checkout Pro do MP, `sessionId` em `localStorage` como rede de segurança);
+> PIX manual (`/api/checkout` via Orders API) removido; e-mail automático ao fim da
 > sessão removido — `public/chat.html` agora oferece "Baixar Dossiê em PDF" (sempre)
 > ou "receber por e-mail" (opcional, grava na sessão nesse momento) via nova rota
 > `POST /api/relatorio/enviar-email`. No caminho, corrigido bug pré-existente de
 > `reportText` (undefined) em `gerarEEnviarRelatorio` que quebrava silenciosamente o
 > `triggerMake` desde 28/07/2026. Brinde (Estudo Integrativo) **não foi tocado** —
 > fica para rodada futura junto com `experimente.html`. Trabalho aplicado localmente,
-> validado com `node --check` e boot manual do servidor — **sem commit, sem deploy**.
+> validado com `node --check` e boot manual do servidor; commitado em `5f2d5a1` no
+> dia seguinte (27/08/2026) — **sem push, sem deploy** — ver nota mais recente acima.
 >
 > Nota anterior (25/08/2026, sessão de loja — aviso de produto digital em
 > destaque) — Ver seção "25/08/2026 (loja — aviso de produto digital em destaque)"
@@ -139,11 +153,57 @@ arquivos nunca devem divergir sobre o mesmo item.
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
 
+### 27/08/2026 (teste no celular do Mentor — achados pendentes)
+
+Teste manual no celular contra o Mentor (sessão paga via checkout novo, dia seguinte
+ao commit da Etapa 1 abaixo) encontrou sete achados. **Nenhum foi corrigido nesta
+sessão** — só registrados. Bloqueiam o push/deploy da Etapa 1 (pelo menos o bug
+crítico do WhatsApp precisa ser resolvido antes de subir).
+
+**BUG CRÍTICO — falha silenciosa no encaminhamento ao WhatsApp**
+- A tela mostra "✓ Sua solicitação foi encaminhada com sucesso! Um membro da nossa
+  equipe entrará em contato via WhatsApp", mas nada chega ao destino. Nenhum erro é
+  exibido ao usuário. Se acontecer com cliente real, a pessoa espera um contato que
+  nunca vem.
+
+**ERRO DE FLUXO — direção do contato invertida**
+- O Mentor promete que "a equipe entra em contato". O correto é o oposto: é a pessoa
+  quem clica no botão de WhatsApp da própria página e fala com a ZUNI.
+
+**ERRO DE FLUXO — instrução de PDF contradiz a Etapa 1**
+- No encerramento da sessão, o Mentor disse que o PDF deve ser pedido pelo WhatsApp.
+  Contradiz a mudança commitada em `5f2d5a1` (ver seção abaixo): o download do
+  Dossiê é imediato, pelo botão no próprio chat, sem precisar pedir a ninguém.
+
+**COPY — menção excessiva à equipe integrativa + "gratuito" sem qualificar**
+- O Mentor menciona a equipe integrativa em 4 das 7 respostas de uma mesma sessão, e
+  chama o atendimento de "gratuito" sem qualificar o quê é gratuito — soa como isca
+  para empurrar para uma consulta paga. Correção: deixar claro que é a **primeira
+  avaliação** que é gratuita, e reduzir a frequência das menções.
+
+**COPY — sugestão de médico antes de entregar valor**
+- O Mentor sugere procurar avaliação médica antes de oferecer qualquer orientação
+  prática, zerando a percepção de valor da conversa paga. A avaliação médica deve
+  continuar sendo mencionada quando houver sinal clínico real, mas **depois** de
+  entregar valor — não como primeira resposta.
+
+**UX — possível regressão no scroll das respostas do Mentor**
+- As respostas aparecem com a tela rolada para o meio do texto, não para o início.
+  Já havia sido corrigido antes (sessão anterior não identificada nesta auditoria) —
+  verificar se é regressão de alguma mudança recente em `chat.html`.
+
+**UX — aviso de download do relatório quase invisível no celular**
+- A frase "Você pode baixar o relatório de sua conversa, se quiser" (texto trocado em
+  26/08/2026, ver seção abaixo) está com contraste e tamanho insuficientes no
+  celular — passa despercebida.
+
 ### 26/08/2026 (checkout do Mentor — Etapa 1: sem dados pessoais + entrega de PDF sob demanda)
 
-**Status: aplicado localmente (`public/checkout.html`, `public/chat.html`,
-`src/server.js`), validado com `node --check` e boot manual do servidor. Sem
-commit, sem push, sem deploy — aguardando aprovação final do usuário.**
+**Status: commitado em `5f2d5a1` (27/08/2026) — aplicado em `public/checkout.html`,
+`public/chat.html`, `src/server.js`, validado com `node --check` e boot manual do
+servidor. Sem push, sem deploy — aguardando a correção dos achados do teste no
+celular (ver seção "27/08/2026 (teste no celular do Mentor — achados pendentes)"
+acima) antes de subir.**
 
 **Checkout (`public/checkout.html` + `/api/checkout/preference`)**
 1. Removidos os campos de nome/e-mail/CPF da tela — só copy de venda e um botão
