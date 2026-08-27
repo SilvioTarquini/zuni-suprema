@@ -4,20 +4,36 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 27/08/2026 (Etapa 1 do checkout do Mentor commitada + achados
-> pendentes do teste no celular) — Ver seção "27/08/2026 (teste no celular do Mentor
-> — achados pendentes)" logo abaixo para a lista completa. Resumo: a Etapa 1 (ver
-> nota seguinte e seção "26/08/2026" abaixo) foi commitada em `5f2d5a1` — **sem
-> push, sem deploy**. Um teste manual no celular no dia seguinte encontrou oito
-> achados ainda não corrigidos que bloqueiam o push, o mais importante deles: **o
-> download do PDF do Dossiê não foi validado** — o relatório não chegou ao celular,
-> e é exatamente isso que o cliente paga para receber. Os demais: um bug crítico
-> (encaminhamento ao WhatsApp reporta sucesso mas não entrega nada), dois erros de
-> fluxo no discurso do Mentor (inverte quem contata quem; e ainda manda pedir o PDF
-> por WhatsApp, contradizendo a própria Etapa 1), duas pendências de copy (menção
-> excessiva à equipe integrativa + "gratuito" sem qualificar; sugestão de médico
-> antes de entregar valor) e dois achados de UX (possível regressão no scroll do
-> chat; aviso de download do relatório com contraste baixo no celular).
+> Última atualização: 27/08/2026 (rodada de correções do chat do Mentor, commit
+> `fd2d2f9`) — Ver seção "27/08/2026 (rodada de correções do chat do Mentor —
+> commit `fd2d2f9`)" logo abaixo para detalhe completo. Resumo: dos sete achados do
+> teste no celular (ver nota seguinte), dois eram exigência de HTTPS do navegador
+> (microfone e download bloqueado) — confirmados sem correção necessária, devem
+> funcionar em produção. Quatro foram corrigidos e commitados **sem push, sem
+> deploy**: cabeçalho limpo (saiu "Explorar Loja" e o aviso inline), tela única do
+> Dossiê (aprovada, implementada e testada — não ficou só na proposta — unifica o
+> botão do header e o fim de sessão num só componente), aviso de espera some após a
+> primeira mensagem, e o scroll corrigido de verdade (causa raiz era outra: quem
+> rola é a janela, não `#messages`, por falta de teto de altura em `.chat-container`
+> — não regressão no `scrollIntoView` como se pensava antes). Contraste e tamanho de
+> textos auxiliares revisados com cálculo WCAG. **Restam dois itens investigados e
+> propostos, mas não implementados**: PDF com capa de astrologia errada (causa
+> localizada, ~2,78MB vindo de uma imagem hardcoded) e título desatualizado
+> ("Mapa Integrativo"); e o Mentor sem acesso ao catálogo próprio (recomendou obra
+> de outro autor existindo 38 obras da casa sobre o mesmo tema).
+>
+> Nota anterior (27/08/2026, Etapa 1 do checkout do Mentor commitada + achados do
+> teste no celular) — Etapa 1 (ver nota seguinte) commitada em `5f2d5a1` — sem push,
+> sem deploy. Teste manual no celular no dia seguinte encontrou oito achados: o mais
+> importante, download do PDF do Dossiê não validado no celular; um bug crítico
+> (encaminhamento ao WhatsApp reporta sucesso mas não entrega nada); dois erros de
+> fluxo no discurso do Mentor (inverte quem contata quem; manda pedir o PDF por
+> WhatsApp); duas pendências de copy (menção excessiva à equipe integrativa +
+> "gratuito" sem qualificar; sugestão de médico antes de entregar valor); dois
+> achados de UX (scroll e contraste). Ver seções "27/08/2026 (diagnóstico dos
+> achados do teste...)" e "27/08/2026 (teste no celular do Mentor...)" logo abaixo
+> para o detalhe completo — a rodada seguinte (nota mais recente acima) fechou a
+> confirmação de HTTPS e corrigiu quatro dos sete achados.
 >
 > Nota anterior (26/08/2026, checkout do Mentor — Etapa 1: sem dados pessoais +
 > entrega de PDF sob demanda) — Ver seção "26/08/2026 (checkout do Mentor — Etapa 1:
@@ -154,6 +170,146 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 27/08/2026 (rodada de correções do chat do Mentor — commit `fd2d2f9`)
+
+Segunda rodada sobre os sete achados do teste no celular (ver seção "27/08/2026
+(teste no celular do Mentor — achados pendentes)" abaixo). Três frentes: confirmação
+de dois "bugs" que não eram nossos, quatro correções aplicadas e commitadas, duas
+investigadas e propostas mas **não implementadas**.
+
+**Confirmado — microfone e download bloqueado são exigência de HTTPS do Chrome, não bug**
+- `navigator.mediaDevices.getUserMedia()` só existe em contexto seguro (HTTPS ou
+  `localhost`) — testar via IP de rede (`http://192.168.18.6:...`) não conta como
+  seguro, então `navigator.mediaDevices` vem `undefined` e cai no `catch` já
+  existente em `chat.html` (mostra "Não foi possível acessar o microfone.").
+- Chrome bloqueia downloads inteiros — não é aviso, é bloqueio — quando a página não
+  está em HTTPS ("Insecure download blocked"), independente do tipo de arquivo.
+  Mensagem do teste ("não é possível salvar o arquivo com segurança") bate com isso.
+- **Nenhuma correção necessária**: produção é HTTPS (`https://www.zunisuprema.com.br`
+  via Railway) — os dois devem funcionar normalmente lá. Não testado ao vivo em
+  produção nesta sessão (só confirmado via documentação/comportamento conhecido do
+  Chrome), mas não há nada no nosso código para corrigir.
+
+**Aplicado e commitado (`fd2d2f9`, sem push, sem deploy)**
+1. **Item 1 — tela unificada do Dossiê**: proposta apresentada, **aprovada com
+   unificação** (botão do header e fim de sessão abrem o mesmo componente, sem UI
+   duplicada) e **implementada** — não ficou só na proposta. `abrirModalRelatorio()`
+   substitui o antigo `mostrarPainelEncerramento()` (removido); tela com botão de
+   fechar de 44×44px, textos em 16-17px, link da loja discreto no rodapé (recebeu o
+   link removido do header no item 2). Testado com Playwright em viewport de iPhone
+   13, dois cenários (aberto pelo header; aberto automaticamente no fim da sessão) —
+   screenshots confirmaram close button no tamanho certo, textos legíveis, e a
+   frase extra "Sua sessão terminou." aparecendo só no cenário de encerramento.
+2. **Item 2 — cabeçalho limpo**: removidos o botão "Explorar Loja" e o aviso
+   "Você pode baixar o relatório..." do header (o link da loja migrou para a tela
+   do item 1). CSS órfão removido junto (`.btn-loja`, `.header-center` e as duas
+   media queries que só existiam para eles).
+3. **Item 3 — aviso de espera some após a primeira mensagem**: mesmo padrão já
+   usado para o painel de instruções (`.remove()` dentro de `enviar()`).
+4. **Item 4 — scroll corrigido de verdade (causa raiz era outra)**: o diagnóstico
+   anterior (sessão passada) tinha descartado regressão no código, mas não
+   encontrou a causa real. Encontrada agora: `#messages` tem `overflow-y:auto` no
+   CSS, mas `.chat-container` usa `min-height` (não `height`) e nada acima limita a
+   altura — na prática **quem rola é a janela**, não `#messages` (confirmado
+   empiricamente: `#messages.scrollTop` ficava travado em `0` mesmo com
+   `scrollHeight` de 24.000px, enquanto `window.scrollY` de fato mudava).
+   `scrollIntoView({block:'start'})` alinhava a mensagem ao topo da *janela*, que
+   fica atrás do cabeçalho fixo — daí "abre no meio do texto", mais perceptível em
+   respostas longas. Trocado por cálculo manual (`scrollParaInicioDaMensagem`) que
+   desconta a altura real do cabeçalho no momento do scroll. Verificado com
+   Playwright (viewport mobile, resposta longa de ~3.900px): screenshot confirma o
+   rótulo "Mentor ZUNI" e o início do texto visíveis logo abaixo do cabeçalho.
+5. **Item 5 — contraste e tamanho revisados com cálculo WCAG, não no olho**:
+   contador do header (11px `#e8e8e8`, contraste 1.13:1 — praticamente ilegível)
+   virou 15px branco + sombra; aviso de espera (14px itálico `#5a4a30`) virou 15px
+   negrito `#3a2e1c` (12.16:1); status do Dossiê (13px `#555`) virou 15-17px
+   `#3a3a3a`/`#1f5c22`/`#8f1e17` conforme o estado (10.46:1 / 7.39:1 / contraste
+   alto). Botão do header e da tela do Dossiê usavam paletas diferentes por causa
+   de fundos diferentes (vidro escuro vs. cartão claro) — simplificado para uma só
+   paleta depois que o item 1 unificou os dois em um único componente sobre fundo
+   claro.
+
+**Investigado e proposto, NÃO implementado — aguardando decisão**
+6. **PDF com capa errada e título desatualizado**: causa localizada —
+   `generatePdf()` (`server.js:1070-1075`) embute incondicionalmente
+   `public/capa-astrologia-numerologia.png` (2.789.603 bytes — bate quase exato com
+   os ~2,78MB do PDF final, confirma que é ela o peso todo) em **qualquer**
+   relatório, sem checar `productType`. Proposta: desenhar a capa do Chat Mentor em
+   vetor via PDFKit (texto, não imagem) — corrige a capa e derruba o peso do
+   arquivo ao mesmo tempo; manter a imagem de astrologia só para o produto
+   `mapa-integrado`. Título "Mapa Integrativo/Integrado" a corrigir no
+   `REPORT_PROMPT` (exclusivo do Chat Mentor): `server.js:467`, `481`, `504`,
+   `510`. Achado relacionado, fora do pedido original: `server.js:286`, no
+   `SYSTEM_PROMPT` da conversa ao vivo, tem a mesma frase desatualizada — decisão
+   pendente sobre incluir essa linha na correção.
+7. **Mentor sem acesso ao catálogo próprio** (recomendou "Como Fazer Amigos e
+   Influenciar Pessoas", de Dale Carnegie, tendo 38 obras próprias sobre o mesmo
+   tema): proposta é gerar um resumo (`título — departamento: resumo`) direto do
+   `CATALOGO` em `catalogoLivros.js` (nunca reescrito à mão, para nunca
+   dessincronizar), excluindo `teaser: true` (mesmo filtro de `GET /api/livros`),
+   injetado no prompt com regras contra propaganda forçada (só recomendar quando o
+   tema conectar de verdade, nunca indicar autor externo havendo equivalente
+   próprio, no máximo uma recomendação por resposta/relatório). Decisão pendente:
+   injetar só no `REPORT_PROMPT` (recomendado — resolve o incidente relatado, zero
+   custo de tokens no chat ao vivo) ou também no `SYSTEM_PROMPT` da conversa
+   (cobre recomendações mid-chat, mas custo recorrente por mensagem).
+
+### 27/08/2026 (diagnóstico dos achados do teste — nenhuma correção aplicada ainda)
+
+Investigação de código dos sete achados de código/prompt da seção seguinte (não
+inclui o achado de UX de contraste, que é autoexplicativo). **Só diagnóstico —
+nada foi corrigido nesta etapa.**
+
+**Falha no encaminhamento ao WhatsApp — causa tripla, não única**
+1. `MAKE_WEBHOOK_URL` não está configurada em produção — o guard em `triggerMake`
+   (`server.js:1201-1208`) descarta a chamada em silêncio (`console.warn`, sem
+   lançar erro).
+2. Mesmo que estivesse configurada, o disparo só acontece `if (session?.email)`
+   (`server.js:2536`) — e o checkout do Mentor (Etapa 1) não coleta e-mail; toda
+   sessão nova nasce com `email` nulo, então o disparo nem é tentado.
+3. **Mesmo com as duas condições acima resolvidas**, a rota
+   `POST /api/questionario/gerar-resposta-b/:sessionId` (`server.js:2471`) sempre
+   responde `{ success: true }` quando o `UPDATE` no banco funciona — o resultado
+   de `triggerMake` (`true`/`false`) nunca é devolvido na resposta HTTP. Ou seja,
+   mesmo com o webhook disparando e falhando de verdade (URL errada, Make fora do
+   ar), o front não teria como saber — a mensagem de sucesso em `chat.html:876` é
+   incondicional em relação ao webhook, só depende do `UPDATE` ter funcionado.
+
+**Download do PDF — a rota funciona, mas é lenta e sem feedback**
+- Testado `GET /api/relatorio/download/:sessionId` contra uma sessão paga real do
+  banco (`47cf0312-3d7f-4b20-96fe-b2149b97721f`, `paid: true`): `HTTP 200`, PDF
+  válido, 2.780.109 bytes — testado também sob emulação de viewport mobile
+  (Playwright, iPhone 13) com o mesmo resultado (download completo e íntegro).
+- **A rota não tem cache**: cada requisição chama `generateReportText()` (nova
+  chamada à API da Anthropic, `claude-sonnet-4-6`) e `generatePdf()` do zero.
+  Tempo observado: **~45-50 segundos** até a resposta começar a chegar.
+- `baixarDossie()` (`chat.html:782-784`, antes desta sessão) e o botão do header
+  (`chat.html:630`) eram só um `window.open(url, '_blank')` sem spinner, sem
+  aviso de tempo de espera e sem tratamento de erro — hipótese plausível (não
+  confirmada como causa única) para "o PDF não chegou": a pessoa fecha a aba ou
+  troca de app antes dos ~50s, sem nenhum sinal de que algo estava em andamento.
+
+**SYSTEM_PROMPT — as duas suspeitas do usuário eram improcedentes**
+- "A equipe entra em contato": o prompt atual **proíbe explicitamente** essa
+  frase (`server.js:251`: "NUNCA diga ou implique que 'alguém vai entrar em
+  contato' proativamente"). A frase que o usuário viu vem de **texto estático do
+  front-end** (`chat.html:876`, disparado pelo fluxo do botão de WhatsApp), não
+  de nada gerado pela IA na conversa.
+- "PDF pelo WhatsApp": não existe essa instrução em nenhuma versão do código
+  (nem na atual, `server.js:221` e `server.js:2095`, que dizem "baixe agora ou
+  receba por e-mail"; nem na anterior à Etapa 1, que falava em envio por
+  e-mail). Não há fonte identificável no prompt ou no código — é provável que
+  tenha sido **geração livre do modelo** (desvio de instrução), não um bug de
+  código a corrigir. Vale reobservar se se repete.
+
+**Scroll das respostas — sem regressão encontrada no diff**
+- `addMsg()` (`chat.html:696-706`) usa `scrollIntoView({block:'start'})` com
+  `setTimeout` de 100ms desde o commit `d5e626a`, anterior à Etapa 1. Conferido
+  no diff de `5f2d5a1`: a Etapa 1 não tocou essa função. Não foi possível
+  confirmar a causa raiz só pela leitura do código (candidatos: interação com o
+  header fixo/padding compensatório no mobile, ou timing do `setTimeout` para
+  respostas longas) — precisaria reproduzir no celular para isolar.
 
 ### 27/08/2026 (teste no celular do Mentor — achados pendentes)
 
@@ -387,6 +543,20 @@ no checkout, `session.email` fica nulo)**
   Mentor), deixando nome e CPF a cargo do Checkout Pro do MP — mesmo padrão do
   Mentor, mas sem tirar o e-mail. Avaliar também selo do Mercado Pago visível
   (mesma pendência do item 4 do Mentor, ver acima). Nada disso foi tocado ainda.
+- **Complemento à pendência acima (27/08/2026)**: além da fricção dos campos, a
+  página não explica o que acontece depois do clique — a pessoa sai do site para
+  pagar no ambiente do Mercado Pago e não sabe se volta, quando volta, ou se
+  perde o acesso. Diferente do Mentor, aqui existe segunda via: o link de acesso
+  também chega por e-mail (`enviarEmailAcessoLivro`), o que dá uma rede de
+  segurança que vale comunicar. Texto a avaliar: "Ao continuar, você conclui o
+  pagamento no ambiente do Mercado Pago. Assim que for aprovado, o acesso à obra
+  é liberado e o link também chega no seu e-mail." **Cuidado ao redigir**: evitar
+  prometer redirecionamento "automático" de volta ao site — o `auto_return` do MP
+  não é garantido em todos os meios de pagamento, e a confirmação de acesso
+  depende do webhook, não do retorno do navegador. O mesmo cuidado (não prometer
+  automático) vale para a mensagem equivalente no checkout do Mentor
+  (`public/checkout.html`), ainda que lá não exista e-mail como segunda via. Nada
+  disso foi implementado ainda — só a redação foi esboçada.
 
 ### 25/08/2026 (loja — aviso de produto digital em destaque)
 
