@@ -625,8 +625,8 @@
         <a class="btn-loja" href="/loja">📚 Explorar Loja</a>
       </div>
       <div class="header-right">
-        <div class="counter">Mensagens: <span id="cnt">0</span>/15</div>
-        <span style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#5a4a30;">Você pode baixar seu relatório aqui</span>
+        <div class="counter">Mensagens: <span id="cnt">0</span></div>
+        <span style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#5a4a30;">Você pode baixar o relatório de sua conversa, se quiser</span>
         <button id="btn-pdf" onclick="window.open('/api/relatorio/download/' + sessionId, '_blank')" style="font-family:'Inter',sans-serif;font-size:13px;font-weight:500;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:8px 16px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;box-shadow:0 2px 8px rgba(212,175,55,0.35);">📄 Baixar relatório</button>
       </div>
     </header>
@@ -639,7 +639,6 @@
       <p>🎤 <strong>Falar:</strong> toque no <strong>microfone</strong> para iniciar a gravação, fale sua mensagem com calma, e toque novamente no microfone para parar.</p>
       <p>⏳ <strong>Aguarde a resposta:</strong> após enviar sua mensagem, o Mentor leva alguns segundos para responder. Isso é normal — ele está processando com atenção.</p>
     </div>
-    <div class="painel-hint">Esta mensagem desaparecerá quando você enviar sua primeira pergunta.</div>
   </div>
 </div>
 
@@ -694,13 +693,6 @@
 
     if (!sessionId) { window.location.href = '/checkout.html'; }
 
-    let currentAudio = null;
-
-    function stopCurrentAudio() {
-      if (currentAudio) { currentAudio.pause(); currentAudio.currentTime = 0; }
-      currentAudio = null;
-    }
-
     function addMsg(role, text) {
       const div = document.createElement('div');
       div.className = role === 'assistant' ? 'msg-mentor' : 'msg-usuario';
@@ -722,38 +714,6 @@
           sessionStorage.removeItem('respostaA');
         }, 500);
       }
-    }
-
-    function attachAudio(msgDiv, base64) {
-      const audioEl = new Audio(`data:audio/mpeg;base64,${base64}`);
-
-      const acoes = document.createElement('div');
-      acoes.className = 'acoes-resposta';
-
-      const jaLiBtn = document.createElement('button');
-      jaLiBtn.className = 'btn-ja-li';
-      jaLiBtn.title = 'Prefiro só ler — parar o áudio';
-      jaLiBtn.innerHTML = '<span aria-hidden="true">✓</span> Já li, obrigado';
-
-      jaLiBtn.addEventListener('click', () => {
-        if (currentAudio === audioEl) {
-          stopCurrentAudio();
-        }
-      });
-
-      audioEl.addEventListener('ended', () => {
-        if (currentAudio === audioEl) {
-          currentAudio = null;
-        }
-      });
-
-      acoes.appendChild(jaLiBtn);
-      msgDiv.appendChild(acoes);
-
-      stopCurrentAudio();
-      audioEl.play().then(() => {
-        currentAudio = audioEl;
-      }).catch(() => {});
     }
 
     async function enviar() {
@@ -779,16 +739,13 @@ addMsg('user', msg);
         const data = await res.json();
         typing.remove();
         if (data.texto) {
-          const msgDiv = addMsg('assistant', data.texto);
+          addMsg('assistant', data.texto);
           contador = data.contador || contador + 1;
           document.getElementById('cnt').textContent = contador;
-          if (data.audio) {
-            attachAudio(msgDiv, data.audio);
-          }
           if (data.sessaoEncerrada) {
             document.getElementById('input-mensagem').disabled = true;
             document.getElementById('btn-enviar').disabled = true;
-            setTimeout(() => { window.location.href = '/obrigado.html'; }, 2500);
+            mostrarPainelEncerramento();
           }
         } else {
           addMsg('assistant', data.error || 'Erro ao processar resposta.');
@@ -798,6 +755,70 @@ addMsg('user', msg);
         addMsg('assistant', 'Erro de conexão. Tente novamente.');
       }
       document.getElementById('btn-enviar').disabled = false;
+    }
+
+    function mostrarPainelEncerramento() {
+      if (document.getElementById('painel-encerramento')) return;
+
+      const wrap = document.createElement('div');
+      wrap.id = 'painel-encerramento';
+      wrap.style.cssText = 'background:#f8f5f0;border-radius:12px;padding:24px;margin:16px 0;box-shadow:0 4px 16px rgba(0,0,0,0.08);';
+      wrap.innerHTML = `
+        <p style="font-family:'Inter',sans-serif;font-size:14px;color:#555;margin-bottom:16px;">Sua sessão terminou. Leve o que conversamos com você — receber por e-mail é opcional, o download funciona sem informar nada.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <button id="btn-baixar-dossie" onclick="baixarDossie()" style="flex:1;min-width:200px;background:#D4AF37;color:#0a0a0a;border:none;border-radius:6px;padding:12px;font-weight:600;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.5px;">📄 Baixar meu Dossiê em PDF</button>
+          <button id="btn-preferir-email" onclick="mostrarFormularioEmailDossie()" style="flex:1;min-width:200px;background:transparent;color:#D4AF37;border:1px solid #D4AF37;border-radius:6px;padding:12px;font-weight:600;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.5px;">✉️ Prefiro receber por e-mail</button>
+        </div>
+        <div id="form-email-dossie" style="display:none;margin-top:16px;">
+          <input type="email" id="input-email-dossie" placeholder="seu@email.com" style="width:100%;padding:10px;border:1px solid #ccc;border-radius:6px;font-family:'Inter',sans-serif;font-size:14px;margin-bottom:8px;box-sizing:border-box;">
+          <button id="btn-enviar-email-dossie" onclick="enviarDossiePorEmail()" style="width:100%;background:#D4AF37;color:#0a0a0a;border:none;border-radius:6px;padding:10px;font-weight:600;cursor:pointer;font-family:'Georgia',serif;">Enviar</button>
+          <p id="status-email-dossie" style="display:none;font-family:'Inter',sans-serif;font-size:13px;margin-top:8px;color:#555;"></p>
+        </div>
+      `;
+      document.getElementById('messages').appendChild(wrap);
+      setTimeout(() => wrap.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+
+    function baixarDossie() {
+      window.open('/api/relatorio/download/' + sessionId, '_blank');
+    }
+
+    function mostrarFormularioEmailDossie() {
+      document.getElementById('form-email-dossie').style.display = 'block';
+      document.getElementById('input-email-dossie').focus();
+    }
+
+    async function enviarDossiePorEmail() {
+      const input = document.getElementById('input-email-dossie');
+      const status = document.getElementById('status-email-dossie');
+      const btn = document.getElementById('btn-enviar-email-dossie');
+      const email = input.value.trim();
+
+      status.style.display = 'block';
+
+      if (!email) {
+        status.textContent = 'Informe um e-mail válido.';
+        return;
+      }
+
+      btn.disabled = true;
+      input.disabled = true;
+      status.textContent = 'Enviando...';
+
+      try {
+        const res = await fetch('/api/relatorio/enviar-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, email })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Erro ao enviar.');
+        status.textContent = `Enviamos para ${email}. Verifique sua caixa de entrada (e o spam).`;
+      } catch (e) {
+        status.textContent = e.message || 'Erro ao enviar. Tente novamente.';
+        btn.disabled = false;
+        input.disabled = false;
+      }
     }
 
     async function gerarRelatorio() {

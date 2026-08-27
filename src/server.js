@@ -218,7 +218,7 @@ FASE 3 — DIRECIONAMENTO (trocas 12 a 14)
 Ofereça direcionamentos específicos para esta pessoa, neste momento, com base no que foi revelado na sessão. Conecte sempre ação e justificativa — o "o quê" e o "por quê".
 
 ENCERRAMENTO (troca 15)
-Sinalize que a sessão está chegando ao fim. Ofereça um resumo do que foi revelado e anuncie que o Mapa Integrativo — o relatório personalizado — será gerado e enviado por email.
+Sinalize que a sessão está chegando ao fim. Ofereça um resumo do que foi revelado e informe que o Dossiê em PDF desta sessão já pode ser baixado ou recebido por e-mail, como a pessoa preferir. Encerre com uma despedida calorosa.
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 USO DA BASE DE CONHECIMENTO
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -646,55 +646,6 @@ function buildCancelUrl() {
   return `${baseUrl}/checkout`;
 }
 
-async function textToSpeechBase64(text) {
-  // Integração ElevenLabs pausada propositalmente (2026-07-19) para evitar consumo de créditos
-  // enquanto a feature de áudio não está em uso. Remover a linha abaixo para reativar.
-  return '';
-  try {
-    const voiceId = process.env.ELEVENLABS_VOICE_ID;
-    const apiKey = process.env.ELEVENLABS_API_KEY;
-
-    if (!voiceId || !apiKey) {
-      console.warn('ElevenLabs não configurado — áudio desativado.');
-      return '';
-    }
-
-    const response = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': apiKey,
-          'Content-Type': 'application/json',
-          'Accept': 'audio/mpeg'
-        },
-        body: JSON.stringify({
-          text,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75
-          }
-        })
-      }
-    );
-
-    if (!response.ok) {
-      const erro = await response.text();
-      console.error('Erro ElevenLabs:', erro);
-      return '';
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = Buffer.from(arrayBuffer).toString('base64');
-    return base64;
-
-  } catch (error) {
-    console.error('Erro em textToSpeechBase64:', error);
-    return '';
-  }
-}
-
 async function generateClaudeResponse(messages, systemPrompt) {
   try {
     const Anthropic = require('@anthropic-ai/sdk');
@@ -834,10 +785,12 @@ async function generateReportText(session) {
 
     // Ajustar conteúdo baseado no tipo de produto
     let userContent;
+    const nomeParaPrompt = session.name || 'não informado';
+    const emailParaPrompt = session.email || 'não informado';
     if (session.productType === 'mapa-integrado') {
-      userContent = `Nome: ${session.name}\nEmail: ${session.email}\n\nContexto (o que a pessoa buscava ao solicitar seu mapa):\n${historico}`;
+      userContent = `Nome: ${nomeParaPrompt}\nEmail: ${emailParaPrompt}\n\nContexto (o que a pessoa buscava ao solicitar seu mapa):\n${historico}`;
     } else {
-      userContent = `Nome: ${session.name}\nEmail: ${session.email}\n\nHistórico da sessão:\n${historico}`;
+      userContent = `Nome: ${nomeParaPrompt}\nEmail: ${emailParaPrompt}\n\nHistórico da sessão:\n${historico}`;
     }
 
     // Se houver dados de mapa natal, incluir informações astrológicas
@@ -1183,6 +1136,9 @@ async function sendEmail(email, name, pdfPath, cupom) {
     const pdfAttachment = fs.readFileSync(pdfPath).toString('base64');
 
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
+    const saudacao = name ? `Olá, ${name}!` : 'Olá!';
+    const assunto = name ? `${name}, seu Chat Mentor ZUNI está pronto` : 'Seu Chat Mentor ZUNI está pronto';
+    const nomeArquivo = (name || 'chat-mentor-zuni').toLowerCase().replace(/\s+/g, '-');
 
     const blocoCupom = cupom ? `
           <div style="margin:24px 0; padding:18px 20px; border:1px solid #d9c68f; border-radius:8px; background:#faf7ef;">
@@ -1207,13 +1163,13 @@ async function sendEmail(email, name, pdfPath, cupom) {
     const msg = {
       to: email,
       from: process.env.SENDGRID_FROM_EMAIL,
-      subject: `${name}, seu Mapa Integrativo ZUNI Suprema está pronto`,
+      subject: assunto,
       html: `
 
-          Olá, ${name}!
+          ${saudacao}
           Sua sessão com o Mentor ZUNI Suprema foi concluída.
 
-          Em anexo você encontra o seu **Mapa Integrativo** — um relatório personalizado com os insights da sua jornada.
+          Em anexo você encontra o seu **Dossiê em PDF** — um relatório personalizado com os insights da sua jornada.
 
           ${blocoCupom}
           ${blocobrinde}
@@ -1226,7 +1182,7 @@ www.zunisuprema.com.br
       attachments: [
         {
           content: pdfAttachment,
-          filename: `mapa-integrativo-${name.toLowerCase().replace(/\s+/g, '-')}.pdf`,
+          filename: `${nomeArquivo}.pdf`,
           type: 'application/pdf',
           disposition: 'attachment'
         }
@@ -1285,7 +1241,12 @@ async function gerarEEnviarRelatorio(sessionId) {
   }
 
   await sendEmail(session.email, session.name, pdfPath, cupom);
-  await triggerMake(session.name, session.email, reportText.slice(0, 1200));
+
+  try {
+    await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
+  } catch (err) {
+    console.error(`[MAKE] Falha ao disparar webhook para ${sessionId}:`, err.message);
+  }
 
   // ── MEMÓRIA DE JORNADA (background) ──────────────────
   // Gerar e salvar resumo da sessão para continuidade futura
@@ -1933,11 +1894,7 @@ app.get('/api/mercadopago/public-key', (req, res) => {
 
 app.post('/api/checkout/preference', async (req, res) => {
   try {
-    const { name, email, cpf, cupom } = req.body;
-
-    if (!name || !email || !cpf) {
-      return res.status(400).json({ error: 'Nome, email e CPF são obrigatórios.' });
-    }
+    const { cupom } = req.body;
 
     if (!mpClient) {
       return res.status(500).json({ error: 'Mercado Pago não configurado.' });
@@ -1957,8 +1914,6 @@ app.post('/api/checkout/preference', async (req, res) => {
     const sessionId = uuidv4();
     const session = {
       sessionId,
-      name,
-      email,
       history: [],
       counter: 0,
       paid: unitPrice === 0,
@@ -1978,8 +1933,6 @@ app.post('/api/checkout/preference', async (req, res) => {
       });
     }
 
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
     const frontendUrl = process.env.FRONTEND_URL;
 
     const preference = new Preference(mpClient);
@@ -1987,19 +1940,13 @@ app.post('/api/checkout/preference', async (req, res) => {
       body: {
         items: [
           {
-            id: 'mapa-integrativo',
-            title: 'Mapa Integrativo',
+            id: 'chat-mentor-zuni',
+            title: 'Chat Mentor ZUNI',
             quantity: 1,
             unit_price: unitPrice,
             currency_id: 'BRL'
           }
         ],
-        payer: {
-          name: firstName,
-          surname: lastName,
-          email,
-          identification: { type: 'CPF', number: cpf }
-        },
         external_reference: sessionId,
         back_urls: {
           success: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno`,
@@ -2027,111 +1974,6 @@ app.get('/api/checkout/session-status/:sessionId', async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/checkout/session-status:', error);
     return res.status(500).json({ pago: false });
-  }
-});
-
-app.post('/api/checkout', async (req, res) => {
-  try {
-    const { name, email, cpf, metodoPagamento, cupom } = req.body;
-
-    if (!name || !email || !cpf || !metodoPagamento) {
-      return res.status(400).json({ error: 'Nome, email, CPF e método de pagamento são obrigatórios.' });
-    }
-
-    // Validar e calcular desconto se cupom fornecido
-    let totalAmount = 29.90;
-    if (cupom) {
-      const cupomValidado = await validarCupom(cupom);
-      if (!cupomValidado) {
-        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
-      }
-      const desconto = calcularDesconto({ preco: 29.90, categoria: undefined }, cupomValidado);
-      totalAmount = desconto.precoFinal;
-    }
-
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      name,
-      email,
-      history: [],
-      counter: 0,
-      paid: totalAmount === 0,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
-    if (totalAmount === 0) {
-      console.log(`[CHECKOUT] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
-      return res.json({
-        sessionId,
-        pedidoId: `CUPOM-100-${sessionId}`,
-        qrCodeText: 'CUPOM 100% DESCONTO - PAGAMENTO AUTOMÁTICO',
-        qrCodeImage: '',
-        cupom100: true
-      });
-    }
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-
-    const paymentMethod = { id: 'pix', type: 'bank_transfer' };
-
-    const payment = {
-      amount: totalAmount.toFixed(2),
-      payment_method: paymentMethod
-    };
-
-    const orderBody = {
-      type: 'online',
-      total_amount: totalAmount.toFixed(2),
-      external_reference: sessionId,
-      processing_mode: 'automatic',
-      transactions: {
-        payments: [payment]
-      },
-      payer: {
-        email,
-        first_name: firstName,
-        last_name: lastName,
-        identification: { type: 'CPF', number: cpf }
-      }
-    };
-
-    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': uuidv4()
-      },
-      body: JSON.stringify(orderBody)
-    });
-
-    if (!mpRes.ok) {
-      const errText = await mpRes.text();
-      const requestId = mpRes.headers.get('x-request-id');
-      console.error('Erro Mercado Pago:', mpRes.status, errText, '| x-request-id:', requestId);
-      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
-    }
-
-    const order = await mpRes.json();
-    const paymentResponse = order.transactions?.payments?.[0];
-
-    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
-    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
-
-    if (!qrCodeText) {
-      console.error('Mercado Pago não retornou QR Code PIX:', JSON.stringify(order));
-      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
-    }
-
-    return res.json({ sessionId, pedidoId: order.id, qrCodeText, qrCodeImage });
-  } catch (error) {
-    console.error('Erro em /api/checkout:', error);
-    return res.status(500).json({ error: 'Erro ao criar pedido.' });
   }
 });
 
@@ -2188,32 +2030,6 @@ app.post('/api/pagamento/webhook', async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/pagamento/webhook:', error);
     return res.status(400).json({ error: error.message });
-  }
-});
-
-app.get('/api/checkout/status/:pedidoId', async (req, res) => {
-  try {
-    const { pedidoId } = req.params;
-
-    // Se for pedido fake de cupom 100%, verificar se sessão está marcada como paga
-    if (pedidoId.startsWith('CUPOM-100-')) {
-      const sessionId = pedidoId.replace('CUPOM-100-', '');
-      const session = await getSession(sessionId);
-
-      if (!session) {
-        console.error(`[CHECKOUT] Sessão não encontrada para pedido cupom 100%: ${sessionId}`);
-        return res.json({ pago: false });
-      }
-
-      return res.json({ pago: session.paid === true });
-    }
-
-    const order = await consultarPedidoMercadoPago(pedidoId);
-    const pago = await marcarPagoSeAprovado(order);
-    return res.json({ pago });
-  } catch (error) {
-    console.error('Erro em /api/checkout/status:', error);
-    return res.status(500).json({ pago: false });
   }
 });
 
@@ -2276,22 +2092,14 @@ app.post('/api/chat', async (req, res) => {
     const LIMITE_INTERACOES = 15;
 
     if (session.counter > LIMITE_INTERACOES) {
-      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida — vou preparar agora o seu Mapa Integrativo, que será enviado para o seu email em breve. Se quiser continuar essa jornada com acompanhamento mais profundo, nossa equipe de suporte natural integrativo está sempre à disposição pelo WhatsApp, no canto da tela. Cuide-se.`;
+      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida. Seu Dossiê em PDF está pronto — baixe agora ou receba por e-mail, como preferir. Se quiser continuar essa jornada com acompanhamento mais profundo, nossa equipe de suporte natural integrativo está sempre à disposição pelo WhatsApp, no canto da tela. Cuide-se.`;
 
       if (!session.relatorioGerado) {
         session.relatorioGerado = true;
         await upsertSession(session);
-        setTimeout(async () => {
-          try {
-            await gerarEEnviarRelatorio(sessionId);
-            console.log(`[RELATORIO] Gerado por limite de interações — sessão ${sessionId}`);
-          } catch (err) {
-            console.error(`[RELATORIO] Erro:`, err);
-          }
-        }, 2000);
       }
 
-      return res.json({ texto: mensagemEncerramento, audio: '', contador: session.counter, sessaoEncerrada: true });
+      return res.json({ texto: mensagemEncerramento, contador: session.counter, sessaoEncerrada: true });
     }
     // ────────────────────────────────────────────────────────
     // Busca RAG: usa tema da sessão se disponível (busca híbrida), senão genérica
@@ -2369,7 +2177,6 @@ app.post('/api/chat', async (req, res) => {
     // ────────────────────────────────────────────────────────
 
     const responseText = await generateClaudeResponse(messagesParaClaude, systemPromptFinal);
-    const audioBase64 = await textToSpeechBase64(responseText);
 
     session.history.push({ role: 'user', message });
     session.history.push({ role: 'assistant', message: responseText });
@@ -2381,6 +2188,7 @@ app.post('/api/chat', async (req, res) => {
       'relatório completo e personalizado',
       'esta sessão está chegando ao seu momento',
       'vou preparar o seu mapa',
+      'dossiê em pdf',
       'cuide-se',
       'até logo'
     ];
@@ -2392,18 +2200,13 @@ app.post('/api/chat', async (req, res) => {
     if (encerramentoDetetado && !session.relatorioGerado) {
       session.relatorioGerado = true;
       await upsertSession(session);
-      setTimeout(async () => {
-        try {
-          await gerarEEnviarRelatorio(sessionId);
-          console.log(`[RELATORIO] Gerado por encerramento — sessão ${sessionId}`);
-        } catch (err) {
-          console.error(`[RELATORIO] Erro:`, err);
-        }
-      }, 2000);
     }
     // ────────────────────────────────────────────────────────
+    // NOTA: encerramentoDetetado NÃO controla sessaoEncerrada (não afeta a UI) —
+    // é só um sinal interno fragil (match de substring) para marcar relatorioGerado.
+    // Só o limite rígido de 15 trocas, acima, encerra a sessão de fato.
 
-    return res.json({ texto: responseText, audio: audioBase64, contador: session.counter });
+    return res.json({ texto: responseText, contador: session.counter });
   } catch (error) {
     console.error('Erro em /api/chat:', error);
     return res.status(500).json({ error: 'Erro ao processar a mensagem de chat.' });
@@ -2455,11 +2258,49 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="mapa-integrativo-${session.name.toLowerCase().replace(/\s+/g, '-')}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="dossie-chat-mentor-zuni-${sessionId.slice(0, 8)}.pdf"`);
     res.sendFile(pdfPath);
   } catch (error) {
     console.error('Erro em /api/relatorio/download:', error);
     res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
+  }
+});
+
+app.post('/api/relatorio/enviar-email', async (req, res) => {
+  try {
+    const { sessionId, email } = req.body;
+
+    if (!sessionId || !email) {
+      return res.status(400).json({ error: 'sessionId e email são obrigatórios.' });
+    }
+
+    const emailNormalizado = String(email).trim();
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalizado);
+    if (!emailValido) {
+      return res.status(400).json({ error: 'Informe um e-mail válido.' });
+    }
+
+    const session = await getSession(sessionId);
+
+    if (!session) {
+      return res.status(404).json({ error: 'Sessão não encontrada.' });
+    }
+
+    if (!session.paid) {
+      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
+    }
+
+    if (session.email !== emailNormalizado) {
+      session.email = emailNormalizado;
+      await upsertSession(session);
+    }
+
+    await gerarEEnviarRelatorio(sessionId);
+
+    return res.json({ enviado: true });
+  } catch (error) {
+    console.error('Erro em /api/relatorio/enviar-email:', error);
+    return res.status(500).json({ error: 'Erro ao enviar o relatório por e-mail.' });
   }
 });
 // ROTA DE DESENVOLVIMENTO — permite gerar o relatório de qualquer sessão

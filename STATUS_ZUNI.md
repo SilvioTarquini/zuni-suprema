@@ -4,7 +4,21 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 25/08/2026 (sessão de loja — aviso de produto digital em
+> Última atualização: 26/08/2026 (redesenho do checkout do Mentor — Etapa 1, ainda
+> **não commitada**) — Ver seção "26/08/2026 (checkout do Mentor — Etapa 1: sem
+> dados pessoais + entrega de PDF sob demanda)" logo abaixo para detalhe completo.
+> Resumo: `public/checkout.html` não pede mais nome/e-mail/CPF (botão único →
+> Checkout Pro do MP, `sessionId` em `localStorage` como rede de segurança); PIX
+> manual (`/api/checkout` via Orders API) removido; e-mail automático ao fim da
+> sessão removido — `public/chat.html` agora oferece "Baixar Dossiê em PDF" (sempre)
+> ou "receber por e-mail" (opcional, grava na sessão nesse momento) via nova rota
+> `POST /api/relatorio/enviar-email`. No caminho, corrigido bug pré-existente de
+> `reportText` (undefined) em `gerarEEnviarRelatorio` que quebrava silenciosamente o
+> `triggerMake` desde 28/07/2026. Brinde (Estudo Integrativo) **não foi tocado** —
+> fica para rodada futura junto com `experimente.html`. Trabalho aplicado localmente,
+> validado com `node --check` e boot manual do servidor — **sem commit, sem deploy**.
+>
+> Nota anterior (25/08/2026, sessão de loja — aviso de produto digital em
 > destaque) — Ver seção "25/08/2026 (loja — aviso de produto digital em destaque)"
 > logo abaixo para detalhe completo. Resumo: o aviso "produto 100% digital, sem envio
 > físico" deixou de ser parágrafo discreto e virou bloco com borda laranja (#D85A30,
@@ -125,6 +139,186 @@ arquivos nunca devem divergir sobre o mesmo item.
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
 
+### 26/08/2026 (checkout do Mentor — Etapa 1: sem dados pessoais + entrega de PDF sob demanda)
+
+**Status: aplicado localmente (`public/checkout.html`, `public/chat.html`,
+`src/server.js`), validado com `node --check` e boot manual do servidor. Sem
+commit, sem push, sem deploy — aguardando aprovação final do usuário.**
+
+**Checkout (`public/checkout.html` + `/api/checkout/preference`)**
+1. Removidos os campos de nome/e-mail/CPF da tela — só copy de venda e um botão
+   único ("Acessar o Chat Mentor — R$ 29,90"). CPF nunca foi persistido (servia só
+   ao payload do MP); nome/e-mail agora ficam a cargo do próprio Checkout Pro,
+   quando ele precisar.
+2. `/api/checkout/preference` cria a sessão só com `sessionId` (colunas `name` e
+   `email` de `sessions` são nullable — confirmado via schema do Supabase antes de
+   mexer, nenhuma migration necessária). Bloco `payer` removido da preferência MP.
+   `item.id`/`title` renomeados de `mapa-integrativo`/"Mapa Integrativo" para
+   `chat-mentor-zuni`/"Chat Mentor ZUNI" (aparece no ambiente do próprio MP).
+3. `sessionId` gravado em `localStorage` ao criar a preferência; a página recupera
+   dali se a pessoa voltar sem query string — repõe a rede de segurança que o
+   e-mail dava antes para recuperação de acesso perdido.
+4. PIX manual (`POST /api/checkout` via Orders API + `GET /api/checkout/status/:pedidoId`,
+   com QR code próprio) removido por completo — confirmado por grep que só
+   `checkout.html` chamava essas rotas; o Checkout Pro já oferece PIX nativamente.
+   Nenhum outro checkout do site (`checkout-livro`, `checkout-mapa-astral`,
+   `checkout-mapa-integrado`) foi tocado — todos usam a Orders API para seus
+   próprios produtos e continuam intactos.
+5. Polling de confirmação ("Confirmando seu pagamento") mantido, contra
+   `/api/checkout/session-status/:sessionId` — nunca confia em parâmetro de URL,
+   sempre valida `session.paid` no servidor.
+
+**Entrega do relatório (Etapa 2 antecipada em parte — necessário porque sem e-mail
+no checkout, `session.email` fica nulo)**
+1. Envio automático de e-mail ao fim da sessão (`gerarEEnviarRelatorio` disparado
+   pelo limite de 15 trocas e por um gatilho semântico de frases) **removido**. O
+   botão "📄 Baixar relatório" do header do chat (`chat.html`, sempre visível,
+   independente do estado da sessão) já cobria o download sem depender de e-mail —
+   confirmado que continua intacto e funcional durante toda a sessão.
+2. Ao atingir o limite de 15 trocas (`sessaoEncerrada: true` — único gatilho que
+   afeta a UI, ver decisão sobre falso positivo abaixo), o chat mostra um painel
+   inline com duas opções: "Baixar meu Dossiê em PDF" (download imediato, sem pedir
+   nada) e "Prefiro receber por e-mail" (campo simples, confirma na própria tela).
+3. Nova rota `POST /api/relatorio/enviar-email`: valida `sessionId` existe e
+   `session.paid` no servidor antes de qualquer coisa, valida formato do e-mail,
+   grava o e-mail na sessão só nesse momento, então gera e envia o PDF.
+   `/api/relatorio/download/:sessionId`: `Content-Disposition` trocado de `inline`
+   para `attachment` (garante download real no mobile) e nome de arquivo deixou de
+   depender de `session.name` (evitava crash silencioso em sessão sem nome).
+4. `sendEmail` e `generateReportText` deixaram de assumir que `name`/`email`
+   sempre existem (fallback genérico) — necessário porque agora é o caso normal
+   para sessões novas, não uma exceção.
+
+**Bug pré-existente corrigido: `reportText` indefinido em `gerarEEnviarRelatorio`**
+- `server.js` (linha da chamada a `triggerMake`) referenciava uma variável
+  `reportText` que não existe nesse escopo (o certo é `reportData.text`) —
+  `ReferenceError` toda vez, **depois** do e-mail já ter sido enviado.
+- **Investigado via git history**: o bug nasceu no commit `37c496f`
+  (28/07/2026, refatoração que passou `generateReportText` a devolver
+  `{text, ascendenteInvalido}` em vez de string). Essa refatoração corrigiu a
+  mesma referência em `/api/relatorio` e `/api/relatorio/teste`, mas **esqueceu**
+  `gerarEEnviarRelatorio`. Antes disso (desde a criação da função em `a02396a`,
+  23/06/2026), `triggerMake` funcionava normalmente. Ou seja: **não é verdade que
+  nunca disparou** — funcionou por ~5 semanas (23/06 a 28/07/2026) e está quebrado
+  há ~4 semanas (28/07 a hoje).
+- Antes da correção, o erro ficava mascarado: as duas chamadas automáticas
+  antigas eram `setTimeout` fire-and-forget com try/catch próprio que só
+  logava — ninguém via, e o e-mail saía normalmente antes do crash. Ao expor
+  `gerarEEnviarRelatorio` na nova rota síncrona, o mesmo bug passaria a devolver
+  HTTP 500 pro usuário mesmo quando o e-mail foi enviado com sucesso — por isso a
+  correção virou bloqueante antes de aprovar a Etapa 1.
+- **Checado antes de reativar**: `MAKE_WEBHOOK_URL` não está configurada em
+  produção (Railway) hoje — `triggerMake` já tem um guard próprio que ignora a
+  chamada silenciosamente sem a variável. Corrigir o bug não dispara nada
+  inesperado agora. Fica registrado para o futuro: no dia em que essa variável for
+  configurada em produção, `triggerMake` passa a disparar de verdade a cada sessão
+  encerrada — ser deliberado nesse momento. Chamada também envolvida em try/catch
+  agora (mesmo padrão do `criarCupomSessao`), para não voltar a derrubar o envio de
+  e-mail se o Make falhar no futuro.
+
+**Gatilho semântico de encerramento — decisão sobre falso positivo (Opção A)**
+- Risco identificado: ligar a detecção por substring (`'dossiê em pdf'`,
+  `'cuide-se'`, `'até logo'`, etc. em `responseText`) a `sessaoEncerrada` faria
+  qualquer menção incidental ao dossiê no meio da conversa (ex.: cliente pergunta
+  "isso vira PDF no final?") desabilitar o campo de mensagem e encerrar a sessão
+  antes da hora.
+- **Decisão**: `sessaoEncerrada` só fica `true` no limite rígido de 15 trocas. O
+  gatilho semântico volta a ser só um sinal interno (`relatorioGerado = true`),
+  sem efeito na UI — confirmado que esse flag não é lido em nenhum outro ponto do
+  código para gatear comportamento.
+- **Melhoria futura registrada (não implementada)**: trocar a detecção por
+  substring frágil por um marcador explícito que o modelo é instruído a emitir
+  literalmente só na troca real de encerramento (ex.: uma tag reconhecível no fim
+  da resposta, removida antes de exibir ao usuário) — mais robusto que casar
+  frases naturais, mas exige tocar de novo no `SYSTEM_PROMPT` e no parsing da
+  resposta em `/api/chat`. Avaliar quando o limite fixo de 15 trocas for
+  substituído pela regra variável (10/15) já pendente (ver "Investigação do
+  limite de interações" abaixo).
+
+**Ajustes de copy pós-teste no celular (checkout + chat)**
+- `public/checkout.html`: removido "Questionário opcional para respostas mais
+  ajustadas" da lista de benefícios e a frase "A ZUNI não solicita CPF nesta
+  etapa."; linha abaixo do botão passou a "Você será direcionado ao ambiente
+  seguro do Mercado Pago. PIX, cartão ou saldo." — linha do cadeado
+  (`🔒 Pagamento 100% seguro via Mercado Pago`) mantida como estava.
+- `public/chat.html`: removida a dica "Esta mensagem desaparecerá quando você
+  enviar sua primeira pergunta" do painel de instruções (classe CSS
+  `.painel-hint` ficou órfã, não removida); texto do botão de download do
+  header trocado de "Você pode baixar seu relatório aqui" para "Você pode
+  baixar o relatório de sua conversa, se quiser".
+- **Contador de mensagens corrigido**: `Mensagens: <span id="cnt">0</span>/15`
+  virou `Mensagens: <span id="cnt">0</span>` (sem o total). O `/15` era
+  **texto estático digitado direto no HTML** (`chat.html`), sem nenhuma
+  ligação com `LIMITE_INTERACOES = 15` de `server.js` — dois números mantidos
+  à mão em arquivos diferentes, que podiam divergir sem nenhum aviso (se um
+  mudasse e o outro não, o contador passaria a mentir silenciosamente).
+  **Quando a regra variável 10/15 for implementada** (ver "Investigação do
+  limite de interações" abaixo), o total exibido deve vir do servidor —
+  provavelmente disponibilizado já na abertura do `chat.html` (não só nas
+  respostas de `/api/chat`, que só chegam depois da primeira mensagem) — e
+  **não** deve voltar como texto fixo no HTML.
+- Pendente (não implementado, só marcado como ideia futura): logo do Mercado
+  Pago como selo de confiança abaixo da linha do cadeado em
+  `checkout.html`, fora do botão (marca de terceiro dentro do CTA dourado
+  esbarra em regras de uso da marca). Proposta: `<img>` de ~20px de altura,
+  centralizado, margem pequena acima, arquivo esperado em
+  `public/mercadopago-logo.png` (ou `.svg`, preferível se disponível) —
+  nenhum logo do MP existe hoje em `public/` (conferido antes de propor).
+  Usuário vai providenciar o arquivo.
+
+**Regressão encontrada e corrigida no teste do celular: questionário falhava para sessão sem e-mail**
+- Sintoma: "Erro ao enviar formulário: Erro ao salvar respostas." ao responder o
+  questionário pós-checkout com uma sessão criada pelo checkout novo (sem e-mail).
+- Causa-raiz confirmada por reprodução manual: `POST /api/questionario/salvar-respostas`
+  (`server.js:2418-2426`) grava `email: session.email` em `respostas_questionario`,
+  coluna que era `NOT NULL` — Postgres `23502`. Testado também com sessão antiga
+  (com e-mail preenchido) na mesma rota: sucesso — confirma que é regressão da
+  Etapa 1, não bug preexistente.
+- Varredura por outras tabelas com risco parecido: `cupons_desconto.email_cliente`
+  já era nullable; `resumos_sessoes.email` era `NOT NULL` mas inatingível hoje
+  (`MEMORIA_JORNADA_ATIVA` desligada local e em produção); `acessos_livros`,
+  `creditos_sessao`, `resgates_brinde_astro_numero` pertencem a checkouts
+  separados (livro, Sessões Extras, brinde) que continuam exigindo e-mail —
+  fora do alcance do fluxo novo.
+- **Correção**: `migrations/004_respostas_questionario_email_nullable.sql` —
+  `DROP NOT NULL` em `respostas_questionario.email` **e** `resumos_sessoes.email`
+  (esta última preventiva, mesma causa-raiz, para não virar susto de quem
+  reativar a memória de jornada no futuro sem esse contexto). Rodada em
+  produção (Supabase é o mesmo banco local/produção) e confirmada via
+  `information_schema.columns` (`is_nullable = YES` nas duas) **antes** do
+  deploy do código novo — ordem deliberada, já que é uma migration que relaxa
+  a constraint (inofensiva pro código antigo, que nunca manda e-mail nulo).
+  Reproduzido de novo depois da migration, com sessão nova via checkout:
+  `HTTP 200`, `success: true`.
+
+**Pendências que seguem abertas desta rodada**
+- Brinde (Estudo Integrativo, token HMAC por e-mail) **não foi tocado** — segue
+  prometido em 3 e-mails transacionais (`sendEmail`, `enviarEmailAcessoLivro`,
+  `enviarEmailConfirmacaoSessoesExtras`) e em `public/experimente.html` (promessa
+  direta ligada ao Mentor). Remoção planejada para rodada futura, junto da revisão
+  de `experimente.html`.
+- Achado de ambiente, não é bug do código: testar `/api/checkout/preference` contra
+  a API real do MP localmente devolveu `PA_UNAUTHORIZED_RESULT_FROM_POLICIES`
+  (403) — isolado que acontece **igual com e sem** o bloco `payer`, ou seja, não
+  tem relação com a remoção de nome/e-mail/CPF; é uma condição do token/conta
+  configurada neste ambiente local. Testar com credenciais de produção antes de
+  considerar a Etapa 1 validada ponta a ponta.
+- `public/obrigado.html` ficou órfão neste fluxo (o chat não redireciona mais pra
+  lá ao encerrar) — ainda existe no repositório, texto antigo ("foi enviado para
+  seu email") não foi corrigido porque nada mais aponta pra ele. Decidir depois se
+  vale apagar ou redirecionar para outro lugar.
+- **Nova pendência registrada (27/08/2026), não implementada — checkout de livros
+  tem a mesma fricção que motivou o redesenho do Mentor**: `public/checkout-livro.html`
+  pede nome, e-mail e CPF antes do pagamento, com tickets maiores (R$ 57,90 a
+  R$ 67,00 — bem acima dos R$ 29,90 do Mentor). Diferença crítica em relação ao
+  Mentor: aqui o **e-mail é indispensável** — é por ele que o link de acesso ao
+  flipbook é entregue (`enviarEmailAcessoLivro`), não é opcional como virou no
+  chat. Direção a avaliar numa rodada futura: manter só o campo de e-mail, com
+  justificativa explícita na tela (por que ele é pedido, ao contrário do
+  Mentor), deixando nome e CPF a cargo do Checkout Pro do MP — mesmo padrão do
+  Mentor, mas sem tirar o e-mail. Avaliar também selo do Mercado Pago visível
+  (mesma pendência do item 4 do Mentor, ver acima). Nada disso foi tocado ainda.
+
 ### 25/08/2026 (loja — aviso de produto digital em destaque)
 
 **Problema**: o aviso "produto 100% digital, sem envio físico" — o que evita o engano
@@ -230,6 +424,13 @@ ganha 10 perguntas livres *além* das do questionário; quem não responde mant�
 - **Conclusão**: hoje todo mundo tem exatamente 15 trocas fixas na sessão avulsa,
   respondendo ou não o questionário. A regra de +10/15 variável é uma pendência de
   implementação, não um comportamento existente.
+
+**Nota (26/08/2026)**: o "/15" mostrado no contador de `public/chat.html` era só
+texto estático, sem ligação nenhuma com `LIMITE_INTERACOES` — foi removido da UI
+(mostra só a contagem, sem total) até a regra variável acima ser implementada.
+Ver "Ajustes de copy pós-teste no celular" na seção de 26/08/2026 acima para o
+detalhe completo; quando a regra 10/15 entrar em produção, o total exibido deve
+vir do servidor, não voltar como número fixo no HTML.
 
 **Pendência registrada**: `src/server.js:3425` (mensagem injetada no prompt da IA na
 última troca gratuita do Experimente) e `src/lib/brinde.js:323` (e-mail do brinde) —
