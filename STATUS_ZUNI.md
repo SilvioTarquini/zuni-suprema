@@ -8,14 +8,16 @@
 > pendentes do teste no celular) — Ver seção "27/08/2026 (teste no celular do Mentor
 > — achados pendentes)" logo abaixo para a lista completa. Resumo: a Etapa 1 (ver
 > nota seguinte e seção "26/08/2026" abaixo) foi commitada em `5f2d5a1` — **sem
-> push, sem deploy**. Um teste manual no celular no dia seguinte encontrou sete
-> achados ainda não corrigidos que bloqueiam o push: um bug crítico (encaminhamento
-> ao WhatsApp reporta sucesso mas não entrega nada), dois erros de fluxo no discurso
-> do Mentor (inverte quem contata quem; e ainda manda pedir o PDF por WhatsApp,
-> contradizendo a própria Etapa 1), duas pendências de copy (menção excessiva à
-> equipe integrativa + "gratuito" sem qualificar; sugestão de médico antes de
-> entregar valor) e dois achados de UX (possível regressão no scroll do chat;
-> aviso de download do relatório com contraste baixo no celular).
+> push, sem deploy**. Um teste manual no celular no dia seguinte encontrou oito
+> achados ainda não corrigidos que bloqueiam o push, o mais importante deles: **o
+> download do PDF do Dossiê não foi validado** — o relatório não chegou ao celular,
+> e é exatamente isso que o cliente paga para receber. Os demais: um bug crítico
+> (encaminhamento ao WhatsApp reporta sucesso mas não entrega nada), dois erros de
+> fluxo no discurso do Mentor (inverte quem contata quem; e ainda manda pedir o PDF
+> por WhatsApp, contradizendo a própria Etapa 1), duas pendências de copy (menção
+> excessiva à equipe integrativa + "gratuito" sem qualificar; sugestão de médico
+> antes de entregar valor) e dois achados de UX (possível regressão no scroll do
+> chat; aviso de download do relatório com contraste baixo no celular).
 >
 > Nota anterior (26/08/2026, checkout do Mentor — Etapa 1: sem dados pessoais +
 > entrega de PDF sob demanda) — Ver seção "26/08/2026 (checkout do Mentor — Etapa 1:
@@ -156,9 +158,16 @@ datados no topo desta seção — nunca criam uma seção nova.
 ### 27/08/2026 (teste no celular do Mentor — achados pendentes)
 
 Teste manual no celular contra o Mentor (sessão paga via checkout novo, dia seguinte
-ao commit da Etapa 1 abaixo) encontrou sete achados. **Nenhum foi corrigido nesta
+ao commit da Etapa 1 abaixo) encontrou oito achados. **Nenhum foi corrigido nesta
 sessão** — só registrados. Bloqueiam o push/deploy da Etapa 1 (pelo menos o bug
 crítico do WhatsApp precisa ser resolvido antes de subir).
+
+**TESTE PENDENTE — download do PDF não validado no celular**
+- O relatório **não chegou ao celular** no teste de ontem. O documento usado para
+  revisar a copy do encerramento foi uma cópia manual do texto da tela, **não** o
+  PDF gerado pela rota `/api/relatorio/download/:sessionId`. A entrega do produto —
+  o Dossiê em PDF, que é o que o cliente paga para receber — segue **sem
+  confirmação de que funciona no celular**. É o teste mais importante que falta.
 
 **BUG CRÍTICO — falha silenciosa no encaminhamento ao WhatsApp**
 - A tela mostra "✓ Sua solicitação foi encaminhada com sucesso! Um membro da nossa
