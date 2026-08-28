@@ -283,7 +283,7 @@ Quando identificar um dos três critérios acima, diga com naturalidade:
 "O que você está descrevendo merece atenção além do que esta sessão pode oferecer. Nossa equipe de profissionais habilitados oferece uma avaliação inicial gratuita — sem compromisso — para entender melhor o seu caso e indicar o melhor caminho. Posso direcionar você agora pelo WhatsApp. Deseja?"
 
 Se a pessoa confirmar, informe:
-"Ótimo. Você pode falar com nossa equipe agora mesmo clicando no botão verde do WhatsApp no canto inferior direito da tela. Ao entrar em contato, mencione que veio do Mapa Integrativo ZUNI Suprema para que o atendimento seja priorizado."
+"Ótimo. Você pode falar com nossa equipe agora mesmo clicando no botão verde do WhatsApp no canto inferior direito da tela. Ao entrar em contato, mencione que veio do Chat Mentor ZUNI para que o atendimento seja priorizado."
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 LIMITES ÉTICOS INVIOLÁVEIS
@@ -464,7 +464,7 @@ Inclua um parágrafo de aviso no início do relatório (após a Abertura) avisan
 
 USE TODOS ESSES DADOS. Não ignore nenhum deles.`;
 
-const REPORT_PROMPT = `Você é o sistema de geração do Mapa Integrativo ZUNI Suprema — o relatório personalizado entregue ao final de cada sessão de mentoria.
+const REPORT_PROMPT = `Você é o sistema de geração do Dossiê da Sessão do Chat Mentor ZUNI — o relatório personalizado entregue ao final de cada sessão de mentoria.
 
 Com base no histórico completo da sessão, gere um documento profundo, preciso e genuinamente personalizado. Este não é um relatório genérico — é o espelho da jornada desta pessoa específica, escrito com a linguagem e a filosofia da ZUNI Suprema.
 
@@ -478,7 +478,7 @@ DIRETRIZES DE TOM E ESTILO
 - Extensão: suficiente para ser substancial, não tão longo que se torne difuso.
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
-ESTRUTURA DO MAPA INTEGRATIVO
+ESTRUTURA DO DOSSIÊ
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ABERTURA — O MOMENTO ATUAL
@@ -501,13 +501,13 @@ Sugira: uma perspectiva filosófica ou psicológica relevante, uma área de conh
 
 SEÇÃO 6 — PRÓXIMOS PASSOS E SUPORTE DISPONÍVEL
 Encerre com:
-"Este Mapa é o começo de uma jornada, não o fim dela. O que foi revelado aqui pode ser aprofundado, sustentado e expandido com o suporte certo.
+"Este Dossiê é o começo de uma jornada, não o fim dela. O que foi revelado aqui pode ser aprofundado, sustentado e expandido com o suporte certo.
 
 Se o que viveu nesta sessão tocou algo que merece atenção mais profunda — ou se deseja continuar esse processo com acompanhamento profissional personalizado — nossa equipe oferece uma avaliação inicial gratuita, sem compromisso.
 
 É uma conversa real com um profissional habilitado, focada em entender seu momento e indicar o melhor caminho para você.
 
-Para agendar, clique no botão verde do WhatsApp no canto da tela e mencione que veio do Mapa Integrativo ZUNI Suprema."
+Para agendar, clique no botão verde do WhatsApp no canto da tela e mencione que veio do Chat Mentor ZUNI."
 
 ENCERRAMENTO
 Um parágrafo final que honre o que a pessoa trouxe e o que foi construído na sessão. Sem exagero emocional — com autenticidade e precisão.
@@ -1051,7 +1051,63 @@ function renderMarkdownToPDF(doc, texto, opcoes = {}) {
   });
 }
 
-async function generatePdf(reportText, sessionId, userName, ascendenteInvalido = false) {
+// Decide se o PDF leva a capa PNG de astrologia/numerologia. Positivo por
+// identidade: é o produto Mapa Integrado, ou é uma leitura de Mapa Astral que de
+// fato calculou o mapa natal. Tudo o mais — Chat Mentor ('chat-mentor'), sessões
+// antigas do Mentor gravadas como 'mapa-astral' antes de existir esse tipo (sem
+// mapa natal), productType nulo/desconhecido — recebe a capa em vetor.
+function usaCapaAstro(productType, temMapaNatal) {
+  return productType === 'mapa-integrado' || (Boolean(temMapaNatal) && String(productType || '').startsWith('mapa-astral'));
+}
+
+// Capa em vetor do Dossiê do Chat Mentor — sem imagem, fundo creme, só texto.
+// Mantém o PDF leve (a capa PNG de astrologia sozinha pesa ~2,7 MB).
+function desenharCapaVetorMentor(doc, userName) {
+  const w = doc.page.width;
+  const h = doc.page.height;
+  const cx = w / 2;
+
+  // Fundo creme full-bleed
+  doc.save();
+  doc.rect(0, 0, w, h).fill('#f8f5f0');
+  doc.restore();
+
+  // Eyebrow — assinatura da marca
+  doc.fillColor('#B8963E').font('Helvetica').fontSize(12)
+     .text('Z U N I   S U P R E M A', 0, h * 0.30, { align: 'center', width: w, characterSpacing: 2 });
+
+  // Filete fino centralizado
+  const filete = 120;
+  doc.moveTo(cx - filete / 2, h * 0.30 + 24).lineTo(cx + filete / 2, h * 0.30 + 24)
+     .lineWidth(1).strokeColor('#B8963E').stroke();
+
+  // Título
+  doc.fillColor('#2c2c2c').font('Helvetica-Bold').fontSize(32)
+     .text('Dossiê da\nSessão', 0, h * 0.42, { align: 'center', width: w, lineGap: 4 });
+
+  // Subtítulo — o produto
+  doc.fillColor('#555555').font('Helvetica').fontSize(15)
+     .text('Chat Mentor ZUNI', 0, h * 0.42 + 92, { align: 'center', width: w, characterSpacing: 1 });
+
+  // Destinatário — só quando há nome na sessão
+  if (userName) {
+    doc.fillColor('#555555').font('Helvetica').fontSize(12)
+       .text(`Preparado para ${userName}`, 0, h * 0.42 + 122, { align: 'center', width: w });
+  }
+
+  // Metadado
+  doc.fillColor('#888888').font('Helvetica').fontSize(10)
+     .text('Gerado em ' + new Date().toLocaleString('pt-BR'), 0, h * 0.82, { align: 'center', width: w });
+
+  // Tagline — mesma frase do rodapé das páginas internas
+  doc.fillColor('#B8963E').font('Helvetica').fontSize(10)
+     .text('ZUNI Suprema — A ciência da excelência humana', 0, h * 0.86, { align: 'center', width: w });
+
+  // Reset de estilo para não vazar cor/fonte para o resto do documento
+  doc.fillColor('black').font('Helvetica').fontSize(11).lineWidth(1).strokeColor('black');
+}
+
+async function generatePdf(reportText, sessionId, userName, ascendenteInvalido = false, productType = null, temMapaNatal = false) {
   return new Promise((resolve, reject) => {
     const PDFDocument = require('pdfkit');
     const fs = require('fs');
@@ -1067,10 +1123,16 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
     let currentPage = 0;
     doc.on('pageAdded', () => { currentPage++; });
 
-    // Página de capa
-    const capaPath = path.join(__dirname, '../public/capa-astrologia-numerologia.png');
-    if (fs.existsSync(capaPath)) {
-      doc.image(capaPath, 0, 0, { fit: [595.28, 841.89], align: 'center', valign: 'center' });
+    // Página de capa — por identidade do produto
+    if (usaCapaAstro(productType, temMapaNatal)) {
+      const capaPath = path.join(__dirname, '../public/capa-astrologia-numerologia.png');
+      if (fs.existsSync(capaPath)) {
+        doc.image(capaPath, 0, 0, { fit: [doc.page.width, doc.page.height], align: 'center', valign: 'center' });
+        doc.addPage();
+      }
+    } else {
+      // chat-mentor (e qualquer productType não reconhecido / sessão antiga sem mapa natal)
+      desenharCapaVetorMentor(doc, userName);
       doc.addPage();
     }
 
@@ -1231,7 +1293,7 @@ async function gerarEEnviarRelatorio(sessionId) {
   if (!session) throw new Error(`Sessão ${sessionId} não encontrada para gerar relatório.`);
 
   const reportData = await generateReportText(session);
-  const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
+  const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
 
   let cupom = null;
   try {
@@ -1914,6 +1976,7 @@ app.post('/api/checkout/preference', async (req, res) => {
     const sessionId = uuidv4();
     const session = {
       sessionId,
+      productType: 'chat-mentor',
       history: [],
       counter: 0,
       paid: unitPrice === 0,
@@ -2231,7 +2294,7 @@ app.post('/api/relatorio', async (req, res) => {
     }
 
     const reportData = await generateReportText(session);
-    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
+    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
     await sendEmail(session.email, session.name, pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
@@ -2255,7 +2318,7 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
     }
 
     const reportData = await generateReportText(session);
-    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
+    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="dossie-chat-mentor-zuni-${sessionId.slice(0, 8)}.pdf"`);
@@ -2332,7 +2395,7 @@ app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
     }
 
     const reportData = await generateReportText(session);
-    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido);
+    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
     await sendEmail(session.email, session.name, pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 

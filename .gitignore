@@ -7,3 +7,6 @@ scripts/*.mp3
 .temp-audio/
 audiolivro-piloto.log
 .git-rewrite/
+
+# Screenshots de validacao local (Playwright), nao versionar
+screenshots-validacao/
