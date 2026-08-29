@@ -79,7 +79,7 @@ async function validarCodigo(codigo) {
  * Registra acesso (para métricas de campanha)
  * Opcional: registra em tabela acessos_experimente
  */
-async function registrarAcesso(codigo, ipOrigem, emailCapturado = null) {
+async function registrarAcesso(codigo, emailCapturado = null) {
   try {
     const db = assertSupabase();
 
@@ -117,7 +117,6 @@ async function registrarAcesso(codigo, ipOrigem, emailCapturado = null) {
         .from('acessos_experimente')
         .insert({
           codigo_id: codigoData.id,
-          ip_origem: ipOrigem,
           timestamp: new Date().toISOString(),
           email_capturado: emailCapturado
         });

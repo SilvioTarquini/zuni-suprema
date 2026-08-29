@@ -550,7 +550,7 @@ function verificarRateLimit(ip, email, maxTentativas = 5, janelaHoras = 1) {
     const proximaTentativaEmMs = timestampMaisAntigo + janela;
     const minutosAteReset = Math.ceil((proximaTentativaEmMs - agora) / 60000);
 
-    console.warn(`[BRINDE][RATELIMIT] IP ${ip} | Email ${email.substring(0, 5)}*** | Bloqueado por ${minutosAteReset}m | Tentativas: ${tentativasValidas.length}/${maxTentativas}`);
+    console.warn(`[BRINDE][RATELIMIT] Email ${email.substring(0, 5)}*** | Bloqueado por ${minutosAteReset}m | Tentativas: ${tentativasValidas.length}/${maxTentativas}`);
 
     return {
       bloqueado: true,

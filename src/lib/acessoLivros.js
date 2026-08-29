@@ -32,11 +32,10 @@ const DIAS_DE_ACESSO = parseInt(process.env.LIVRO_ACESSO_DIAS || '7', 10);
  * @param {Object} params
  * @param {string} params.livroId - identificador do livro (ex: 'os-bastidores-vol-5')
  * @param {string} params.email - e-mail do comprador
- * @param {string} [params.cpf] - CPF do comprador (opcional)
  * @param {string} [params.paymentId] - ID do pagamento no MercadoPago
  * @returns {Promise<{token: string, expiraEm: Date}>}
  */
-async function criarAcesso({ livroId, email, cpf, paymentId }) {
+async function criarAcesso({ livroId, email, paymentId }) {
   const supabaseClient = assertSupabase();
 
   // Idempotente: o webhook do MercadoPago pode reenviar a mesma notificação
@@ -61,7 +60,6 @@ async function criarAcesso({ livroId, email, cpf, paymentId }) {
   const { error } = await supabaseClient.from('acessos_livros').insert({
     livro_id: livroId,
     email,
-    cpf: cpf || null,
     token,
     payment_id: paymentId || null,
     data_pagamento: new Date().toISOString(),

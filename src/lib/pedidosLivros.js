@@ -1,11 +1,11 @@
 // lib/pedidosLivros.js
 //
-// Guarda temporariamente os dados de um pedido de livro (nome, email, cpf)
+// Guarda temporariamente os dados de um pedido de livro (nome, email)
 // entre a criação do pedido no MercadoPago e a confirmação via webhook.
 //
 // Necessário porque o external_reference da API de orders do MercadoPago
 // só aceita [A-Za-z0-9_-], com no máximo 64 caracteres — curto demais para
-// carregar e-mail e CPF diretamente. Em vez disso, geramos uma referência
+// carregar nome e e-mail diretamente. Em vez disso, geramos uma referência
 // curta e opaca (prefixo "lv" + hex aleatório) e guardamos os dados reais
 // aqui, indexados por ela.
 
@@ -31,11 +31,10 @@ function assertSupabase() {
  * @param {string} params.livroId
  * @param {string} [params.nome]
  * @param {string} params.email
- * @param {string} [params.cpf]
  * @param {boolean} [params.audiolivroIncluido]
  * @returns {Promise<string>} referência (ex: "lv3f9a1c2b...")
  */
-async function criarPedidoPendente({ livroId, nome, email, cpf, audiolivroIncluido }) {
+async function criarPedidoPendente({ livroId, nome, email, audiolivroIncluido }) {
   const supabaseClient = assertSupabase();
   const referencia = `lv${crypto.randomBytes(16).toString('hex')}`;
 
@@ -44,7 +43,6 @@ async function criarPedidoPendente({ livroId, nome, email, cpf, audiolivroInclui
     livro_id: livroId,
     nome: nome || null,
     email,
-    cpf: cpf || null,
     audiolivro_incluido: audiolivroIncluido ? true : false,
   });
 
@@ -59,7 +57,7 @@ async function criarPedidoPendente({ livroId, nome, email, cpf, audiolivroInclui
  * Busca os dados de um pedido de livro pendente pela referência.
  *
  * @param {string} referencia
- * @returns {Promise<{livroId: string, nome: string|null, email: string, cpf: string|null, audiolivroIncluido: boolean}|null>}
+ * @returns {Promise<{livroId: string, nome: string|null, email: string, audiolivroIncluido: boolean}|null>}
  */
 async function buscarPedidoPendente(referencia) {
   const supabaseClient = assertSupabase();
@@ -72,7 +70,7 @@ async function buscarPedidoPendente(referencia) {
 
   if (error || !data) return null;
 
-  return { livroId: data.livro_id, nome: data.nome, email: data.email, cpf: data.cpf, audiolivroIncluido: data.audiolivro_incluido };
+  return { livroId: data.livro_id, nome: data.nome, email: data.email, audiolivroIncluido: data.audiolivro_incluido };
 }
 
 module.exports = { criarPedidoPendente, buscarPedidoPendente };

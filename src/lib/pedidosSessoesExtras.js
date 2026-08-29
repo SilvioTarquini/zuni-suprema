@@ -1,6 +1,6 @@
 // lib/pedidosSessoesExtras.js
 //
-// Guarda temporariamente os dados de um pedido de sessões extras (nome, email, cpf)
+// Guarda temporariamente os dados de um pedido de sessões extras (nome, email)
 // entre a criação do pedido no MercadoPago e a confirmação via webhook.
 //
 // Usa o mesmo padrão de pedidosLivros.js, mas com prefixo "se" para sessões extras.
@@ -26,10 +26,9 @@ function assertSupabase() {
  * @param {Object} params
  * @param {string} [params.nome]
  * @param {string} params.email
- * @param {string} [params.cpf]
  * @returns {Promise<string>} referência (ex: "se3f9a1c2b...")
  */
-async function criarPedidoPendente({ nome, email, cpf }) {
+async function criarPedidoPendente({ nome, email }) {
   const supabaseClient = assertSupabase();
   const referencia = `se${crypto.randomBytes(16).toString('hex')}`;
 
@@ -37,7 +36,6 @@ async function criarPedidoPendente({ nome, email, cpf }) {
     referencia,
     nome: nome || null,
     email,
-    cpf: cpf || null,
   });
 
   if (error) {
@@ -51,7 +49,7 @@ async function criarPedidoPendente({ nome, email, cpf }) {
  * Busca os dados de um pedido de sessões extras pendente pela referência.
  *
  * @param {string} referencia
- * @returns {Promise<{nome: string|null, email: string, cpf: string|null}|null>}
+ * @returns {Promise<{nome: string|null, email: string}|null>}
  */
 async function buscarPedidoPendente(referencia) {
   const supabaseClient = assertSupabase();
@@ -64,7 +62,7 @@ async function buscarPedidoPendente(referencia) {
 
   if (error || !data) return null;
 
-  return { nome: data.nome, email: data.email, cpf: data.cpf };
+  return { nome: data.nome, email: data.email };
 }
 
 /**

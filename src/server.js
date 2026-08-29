@@ -1432,7 +1432,7 @@ async function marcarPagoSeAprovado(order) {
 // criarPedidoPendente() (tabela pedidos_livros_pendentes) e usam a
 // referência curta devolvida como external_reference no MercadoPago —
 // a API de orders só aceita [A-Za-z0-9_-] com no máximo 64 caracteres,
-// curto demais para carregar e-mail e CPF diretamente. No webhook,
+// curto demais para carregar nome e e-mail diretamente. No webhook,
 // buscarPedidoPendente() recupera os dados reais a partir dessa
 // referência para então chamar criarAcesso().
 
@@ -1538,7 +1538,7 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
                  Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
   if (!isPaid) return null;
 
-  const acesso = await criarAcesso({ livroId: pedido.livroId, email: pedido.email, cpf: pedido.cpf, paymentId });
+  const acesso = await criarAcesso({ livroId: pedido.livroId, email: pedido.email, paymentId });
 
   let acessoAudiolivro = null;
   if (pedido.audiolivroIncluido) {
@@ -1549,7 +1549,6 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
     await supabaseClient.from('acessos_livros').insert({
       livro_id: pedido.livroId,
       email: pedido.email,
-      cpf: pedido.cpf || null,
       token: tokenAudiolivro,
       payment_id: `${paymentId}-audiolivro`,
       data_pagamento: new Date().toISOString(),
@@ -1703,10 +1702,10 @@ app.get('/api/validar-cupom', async (req, res) => {
 
 app.post('/api/checkout/livro/preference', async (req, res) => {
   try {
-    const { livroId, name, email, cpf, cupom, audiolivroIncluido } = req.body;
+    const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
 
-    if (!livroId || !name || !email || !cpf) {
-      return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
+    if (!livroId || !name || !email) {
+      return res.status(400).json({ error: 'Livro, nome e email são obrigatórios.' });
     }
 
     const livro = buscarLivro(livroId);
@@ -1732,7 +1731,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
     const frontendUrl = process.env.FRONTEND_URL;
-    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf, audiolivroIncluido });
+    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, audiolivroIncluido });
 
     const preference = new Preference(mpClient);
     const result = await preference.create({
@@ -1749,8 +1748,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
         payer: {
           name: firstName,
           surname: lastName,
-          email,
-          identification: { type: 'CPF', number: cpf }
+          email
         },
         external_reference: externalReference,
         back_urls: {
@@ -1772,10 +1770,10 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
 
 app.post('/api/checkout/livro', async (req, res) => {
   try {
-    const { livroId, name, email, cpf, cupom, audiolivroIncluido } = req.body;
+    const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
 
-    if (!livroId || !name || !email || !cpf) {
-      return res.status(400).json({ error: 'Livro, nome, email e CPF são obrigatórios.' });
+    if (!livroId || !name || !email) {
+      return res.status(400).json({ error: 'Livro, nome e email são obrigatórios.' });
     }
 
     const livro = buscarLivro(livroId);
@@ -1796,7 +1794,7 @@ app.post('/api/checkout/livro', async (req, res) => {
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
-    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, cpf, audiolivroIncluido });
+    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, audiolivroIncluido });
     const valorFormatado = precoFinal.toFixed(2);
 
     const orderBody = {
@@ -1812,8 +1810,7 @@ app.post('/api/checkout/livro', async (req, res) => {
       payer: {
         email,
         first_name: firstName,
-        last_name: lastName,
-        identification: { type: 'CPF', number: cpf }
+        last_name: lastName
       }
     };
 
@@ -1887,10 +1884,10 @@ app.use('/', experimenteLivroChatRouter);
 
 app.post('/api/checkout/sessoes-extras/preference', async (req, res) => {
   try {
-    const { name, email, cpf } = req.body;
+    const { name, email } = req.body;
 
-    if (!name || !email || !cpf) {
-      return res.status(400).json({ error: 'Nome, email e CPF são obrigatórios.' });
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
     }
 
     if (!mpClient) {
@@ -1900,7 +1897,7 @@ app.post('/api/checkout/sessoes-extras/preference', async (req, res) => {
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
     const frontendUrl = process.env.FRONTEND_URL;
-    const externalReference = await criarPedidoPendenteSE({ nome: name, email, cpf });
+    const externalReference = await criarPedidoPendenteSE({ nome: name, email });
 
     const preference = new Preference(mpClient);
     const result = await preference.create({
@@ -1917,8 +1914,7 @@ app.post('/api/checkout/sessoes-extras/preference', async (req, res) => {
         payer: {
           name: firstName,
           surname: lastName,
-          email,
-          identification: { type: 'CPF', number: cpf }
+          email
         },
         external_reference: externalReference,
         back_urls: {
@@ -2682,9 +2678,9 @@ app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
 // ── MAPA ASTRAL: checkout com dados de nascimento ────────────────
 app.post('/api/checkout/mapa-astral', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology, metodoPagamento } = req.body;
+    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology, metodoPagamento } = req.body;
 
-    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
+    if (!name || !email || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
@@ -2727,8 +2723,7 @@ app.post('/api/checkout/mapa-astral', async (req, res) => {
       payer: {
         email,
         first_name: firstName,
-        last_name: lastName,
-        identification: { type: 'CPF', number: cpf }
+        last_name: lastName
       }
     };
 
@@ -2781,9 +2776,9 @@ app.get('/api/checkout/mapa-astral/status/:pedidoId', async (req, res) => {
 
 app.post('/api/checkout/mapa-astral/preference', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology } = req.body;
+    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology } = req.body;
 
-    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
+    if (!name || !email || !birthDate || !birthTime || !birthLocation) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
@@ -2829,8 +2824,7 @@ app.post('/api/checkout/mapa-astral/preference', async (req, res) => {
         payer: {
           name: firstName,
           surname: lastName,
-          email,
-          identification: { type: 'CPF', number: cpf }
+          email
         },
         external_reference: sessionId,
         back_urls: {
@@ -2908,9 +2902,9 @@ app.post('/api/checkout/mapa-astral/test', async (req, res) => {
 
 app.post('/api/checkout/mapa-integrado', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, metodoPagamento, cupom } = req.body;
+    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, metodoPagamento, cupom } = req.body;
 
-    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
+    if (!name || !email || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
@@ -3021,8 +3015,7 @@ app.post('/api/checkout/mapa-integrado', async (req, res) => {
       payer: {
         email,
         first_name: firstName,
-        last_name: lastName,
-        identification: { type: 'CPF', number: cpf }
+        last_name: lastName
       }
     };
 
@@ -3083,9 +3076,9 @@ app.get('/api/checkout/mapa-integrado/status/:pedidoId', async (req, res) => {
 
 app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
   try {
-    const { name, email, cpf, birthDate, birthTime, birthLocation, birthNameFull, cupom } = req.body;
+    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, cupom } = req.body;
 
-    if (!name || !email || !cpf || !birthDate || !birthTime || !birthLocation) {
+    if (!name || !email || !birthDate || !birthTime || !birthLocation) {
       return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
     }
 
@@ -3184,8 +3177,7 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
         payer: {
           name: firstName,
           surname: lastName,
-          email,
-          identification: { type: 'CPF', number: cpf }
+          email
         },
         external_reference: sessionId,
         back_urls: {
@@ -3237,8 +3229,7 @@ app.post('/api/experimente-validar-codigo', async (req, res) => {
     const validacao = await validarCodigo(codigo);
 
     // Registrar acesso (para métricas)
-    const ipOrigem = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    registrarAcesso(codigo, ipOrigem);
+    registrarAcesso(codigo);
 
     return res.json(validacao);
   } catch (error) {
@@ -3298,9 +3289,8 @@ app.post('/api/experimente-capturar-lead', async (req, res) => {
     await registrarCaptura(nomeCompleto, dataNascimento, email, resultado, codigo);
 
     // Registrar que e-mail foi capturado (para métrica de código)
-    const ipOrigem = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     if (codigo) {
-      registrarAcesso(codigo, ipOrigem, email);
+      registrarAcesso(codigo, email);
     }
 
     return res.json({ sucesso: true, mensagem: 'E-mail enviado com sucesso!' });
@@ -3586,7 +3576,7 @@ app.post('/api/brinde/gerar', async (req, res) => {
     // ──────────────────────────────────────────────────────────────
     const rateLimitStatus = verificarRateLimit(clientIp, email, 5, 1);
     if (rateLimitStatus.bloqueado) {
-      console.warn(`[BRINDE] Rate limit atingido para ${email} (IP: ${clientIp}). Tentativas: ${rateLimitStatus.tentativas}/${rateLimitStatus.maxTentativas}`);
+      console.warn(`[BRINDE] Rate limit atingido para ${email}. Tentativas: ${rateLimitStatus.tentativas}/${rateLimitStatus.maxTentativas}`);
       return res.status(429).json({
         sucesso: false,
         erro: `Muitas tentativas. Tente novamente em ${rateLimitStatus.minutosAteReset} minuto(s).`,
@@ -3621,7 +3611,7 @@ app.post('/api/brinde/gerar', async (req, res) => {
     // ──────────────────────────────────────────────────────────────
     // GERAR ESTUDO
     // ──────────────────────────────────────────────────────────────
-    console.log(`[BRINDE] Iniciando geração para ${email} (IP: ${clientIp})...`);
+    console.log(`[BRINDE] Iniciando geração para ${email}...`);
     const estudo = await gerarEstudoCompleto(
       nomeCompleto,
       dataNascimento,
