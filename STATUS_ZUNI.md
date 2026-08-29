@@ -4,7 +4,32 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 27/08/2026 (rodada de correções do chat do Mentor, commit
+> Última atualização: 29/08/2026 (sessão de privacidade, retenção e correções —
+> commits `a7afc1e`, `d5e24c3`, `ae7fddf`, `c40b148`, **sem push, sem deploy**). Ver
+> seção "29/08/2026 (privacidade, retenção de dados e correções de catálogo/URLs)"
+> logo abaixo para detalhe completo. Resumo: encerrada a investigação da
+> contaminação de contexto (causa raiz = sessão de teste `zztest` semeada à mão,
+> nunca esteve vazia; sem cross-sessão, cross-pessoa ou RAG — reteste limpo
+> confirmou). Quatro frentes commitadas: (1) Mentor passa a conhecer o catálogo
+> próprio — campo `indicadoPara` nas 38 obras + bloco ACERVO ZUNI SUPREMA no
+> `SYSTEM_PROMPT` do chat ao vivo, testado em 3 cenários (`a7afc1e`); (2) links
+> internos quebrados — apex→www, `/mentor`→`/checkout`, paths com `.html`,
+> `/loja/livros`→`/loja/` (`d5e24c3`); (3) privacidade — CPF fora de todo o checkout,
+> IP não mais gravado nem logado (rate-limit em memória intacto), Pixel do Meta
+> removido das 4 páginas (`ae7fddf`); (4) rotina de retenção — nova lib
+> `limpezaSessoes.js` que zera `history` e dados de nascimento quando
+> `message_count >= 15` ou 10 dias de inatividade, agendada no boot + a cada 24h, e
+> PDF temporário apagado após entrega (`c40b148`). Limpeza pontual no banco: 51
+> `sessions` e 14 `respostas_questionario` de teste apagadas (produção nunca teve
+> tráfego real; `sessions` 177→126). **Bloqueadores antes de tráfego pago** (detalhe
+> na seção): DNS do apex; ausência de auth em `/api/relatorio/download` e
+> `POST /api/chat` (também vetor de custo); páginas `/privacidade` e `/termos`
+> inexistentes (9 links); teste de pagamento real — agora urgente, `payer.identification`
+> saiu das chamadas ao MP; Supabase Free sem backup nem PITR. **Próximo item**:
+> `mapa_natal` não persiste — nenhuma sessão tem `mapa_natal`/`caminho_de_vida`/
+> `essencia` gravados; a segunda via do Mapa Integrado (R$ 147) já sai degradada.
+>
+> Nota anterior (27/08/2026, rodada de correções do chat do Mentor, commit
 > `fd2d2f9`) — Ver seção "27/08/2026 (rodada de correções do chat do Mentor —
 > commit `fd2d2f9`)" logo abaixo para detalhe completo. Resumo: dos sete achados do
 > teste no celular (ver nota seguinte), dois eram exigência de HTTPS do navegador
@@ -170,6 +195,108 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 29/08/2026 (privacidade, retenção de dados e correções de catálogo/URLs)
+
+Sessão longa via Claude Code. Encerrou a investigação da contaminação de contexto,
+entregou quatro frentes commitadas (**sem push, sem deploy**) e fez uma limpeza
+pontual no banco de produção.
+
+**ENCERRADOS**
+
+- **Contaminação de contexto** — causa raiz: a sessão `zztest` usada no teste foi
+  semeada à mão e nunca esteve vazia; não há vazamento cross-sessão, cross-pessoa nem
+  via RAG. Reteste limpo (3 sessões novas pelo fluxo normal) confirmou o isolamento.
+  Item fechado.
+- **Catálogo no Mentor** (`a7afc1e`) — campo `indicadoPara` nas 38 obras públicas de
+  `src/lib/catalogoLivros.js` (consumo interno; filtrado de `GET /api/livros`). Bloco
+  "ACERVO ZUNI SUPREMA" montado no boot a partir do catálogo (título + `indicadoPara`,
+  agrupado por departamento) e anexado ao `SYSTEM_PROMPT` do chat ao vivo via
+  `SYSTEM_PROMPT_CHAT_AO_VIVO` — não toca `SYSTEM_PROMPT_DEMO` nem
+  `MAPA_INTEGRADO_PROMPT`. Regras no prompt: só indicar obra do acervo, no máx. 2 por
+  sessão, perto do encerramento, sem URL nem preço. Testado em 3 cenários (tema no
+  acervo → indica; tema fora → diz que não há e não inventa título; desabafo → não
+  recomenda). Ressalva do cenário 2: não inventou livro, mas sugeriu YouTube/Cifra
+  Club — ver MENORES.
+- **URLs internas** (`d5e24c3`) — apex `zunisuprema.com.br` → `www.`; `/mentor` →
+  `/checkout` (9 ocorrências, inclui o texto do prompt DEMO em `server.js`);
+  `/mapa-integrado` e `/checkout-mapa-integrado` → `/checkout-mapa-integrado.html`;
+  `/loja/livros` → `/loja/`. `capturasExperimente.js` passou a usar `${frontendUrl}`
+  em vez de host hardcoded. `/privacidade` e `/termos` deixados como estão.
+- **Privacidade** (`ae7fddf`) — CPF removido do fluxo de compra: campo fora das 3
+  páginas de checkout; guarda dos 7 endpoints passa a exigir só nome + e-mail;
+  `payer.identification` retirado das 7 chamadas ao Mercado Pago; `cpf` não é mais
+  gravado em `pedidos_livros_pendentes`, `acessos_livros` nem
+  `pedidos_sessoes_extras_pendentes` (colunas mantidas — sem migration). IP: não é
+  mais gravado em `acessos_experimente.ip_origem` nem logado (`server.js:3589/3624`,
+  `brinde.js:553`); o rate-limit em memória do brinde continua usando IP na chave.
+  Pixel do Meta (`fbq`, id `840645502240564`) removido de `chat.html`,
+  `checkout.html`, `checkout-mapa-astral.html` e `obrigado.html` — snippet base + as
+  5 chamadas `Purchase`.
+- **Rotina de retenção** (`c40b148`) — nova `src/lib/limpezaSessoes.js`:
+  `limparSessoesExpiradas()` faz UPDATE (não DELETE) zerando `history` → `[]` e
+  `birth_date/birth_time/birth_location/birth_name_full` → `null` onde `history`
+  não-vazio E (`message_count >= 15` OU `updated_at` há mais de 10 dias). Metadados
+  (`paid`, `product_type`, `created_at`, `message_count`, `updated_at`) ficam. Loga só
+  o número de linhas, sem `session_id`; nunca lança. Agendada no boot (dentro do
+  callback de `app.listen`, sem `await` — Supabase lento/fora não atrasa a subida) +
+  `setInterval` de 24h com `.unref()`. Helper `apagarPdfTemp()` apaga o PDF do
+  dossiê/relatório do `tmpdir` após `sendEmail` (em `gerarEEnviarRelatorio`,
+  `POST /api/relatorio`, `GET /api/relatorio/teste`) e após o stream em
+  `GET /api/relatorio/download` (dentro do callback de `res.sendFile`). PDF do brinde
+  já tinha limpeza própria.
+- **Limpeza pontual no banco** — 51 `sessions` (history não-vazio E [`message_count`
+  >= 15 OU inativa > 10 dias]) e as 14 linhas de `respostas_questionario` ligadas a
+  elas apagadas por DELETE (lista fixa de IDs, `respostas_questionario` primeiro).
+  Todas de teste; produção nunca teve tráfego real. Estado final: `sessions` 177 →
+  126, com `history` não-vazio 54 → 3, `respostas_questionario` 20 → 6, zero órfãos.
+  Nenhuma FK aponta para `sessions`.
+
+**BLOQUEADORES ANTES DE TRÁFEGO PAGO**
+
+- **DNS** — apex `zunisuprema.com.br` não resolve (sem registro A); só
+  `www.zunisuprema.com.br` (CNAME → Railway). Correção no painel do registrador, fora
+  do repo. Todo link para o apex está morto até isso.
+- **Auth** — `GET /api/relatorio/download/:sessionId` e `POST /api/chat` não têm
+  autenticação além de conhecer o `sessionId` (que trafega em URL). Também é vetor de
+  custo: cada `download` chama `generateReportText` + Claude API do zero (sem cache;
+  `relatorio_texto` não é coluna).
+- **`/privacidade` e `/termos`** — páginas não existem (nem arquivo, nem rota). 9
+  links apontam para elas (`experimente.html`, `capturasExperimente.js`, `brinde.js`).
+  Decidir: criar as páginas ou remover os links.
+- **Teste de pagamento real** — agora mais urgente: `payer.identification` (CPF) saiu
+  das chamadas ao Mercado Pago; o efeito na aprovação do PIX no MP-BR é desconhecido
+  e não verificável pelo código.
+- **Supabase** — organização no plano Free: sem backup diário, sem PITR, sem rollback.
+  Qualquer operação destrutiva em produção é definitiva.
+
+**PRÓXIMO ITEM (escopo claro)**
+
+`mapa_natal` não persiste. Nenhuma sessão no banco tem `mapa_natal`, `caminho_de_vida`
+ou `essencia` gravados (`com_mapa_natal = 0` em todos os `product_type`). As 9 sessões
+`mapa-integrado` (todas de teste, 21/07) só têm `casas` e `aspectos`. Consequência: a
+segunda via do produto de R$ 147 já sai degradada hoje — o relatório regenera a partir
+de `mapa_natal`/`caminho_de_vida`/`essencia`, que estão nulos. Investigar onde
+`calcularMapaNatal` ou `upsertSession` perde os campos: o handler de
+`/api/checkout/mapa-integrado` seta `mapaNatal: mapaNatal.mapaNatal` e
+`caminhoDeVida`/`essencia` no objeto da sessão, mas chegam nulos ao banco.
+
+**MENORES**
+
+- "Explorar a Loja" pequeno demais no celular.
+- Regra 1 do acervo (Mentor): decidir se deve barrar também recomendação de recursos
+  externos não-livro (YouTube, plataformas), não só títulos de terceiros — cenário 2
+  do teste sugeriu Cifra Club.
+- Botão do Mapa Integrado na loja desabilitado desde 23/07/2026 ("em validação",
+  commit `7aae510`); `servico.url` (`/checkout-mapa-integrado.html`) órfão. Único
+  ponto de entrada vivo hoje é `experimente.html` (cujo link estava quebrado —
+  corrigido em `d5e24c3`).
+- Auditoria dos `.txt` indexados por tema no RAG.
+
+**GUARDADO**
+
+- Bloco de RAG sobre creatina e ômega-3 para desempenho mental — material levantado,
+  não indexado. (Candidato também a `RADAR_OPORTUNIDADES.md`.)
 
 ### 27/08/2026 (rodada de correções do chat do Mentor — commit `fd2d2f9`)
 
