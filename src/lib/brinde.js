@@ -323,7 +323,7 @@ async function enviarBrindeEmail(email, nomeDados, pdfPath) {
       <p class="intro">Obrigado por explorar a ZUNI Suprema. Se este estudo tocou algo importante, considere conhecer nossa <strong>Sessão Completa com o Mentor</strong> — uma jornada de até 15 trocas, com análise integrada e acompanhamento profundo.</p>
 
       <p class="intro" style="text-align: center;">
-        <a href="${frontendUrl}/mentor" class="cta-button">Conhecer o Mentor ZUNI</a>
+        <a href="${frontendUrl}/checkout" class="cta-button">Conhecer o Mentor ZUNI</a>
       </p>
     </div>
 

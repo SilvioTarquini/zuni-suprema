@@ -44,6 +44,8 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
     // Processar interpretação para HTML (markdown → HTML)
     const interpretacaoHTML = markdownParaHTML(interpretacao);
 
+    const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
+
     const htmlContent = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -112,9 +114,9 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
 
       <div class="cta-section">
         <p>Pronto para aprofundar a experiência?</p>
-        <a href="https://zunisuprema.com.br/mentor" class="cta-button">💬 Chat com Mentor (R$ 29,90)</a>
-        <a href="https://zunisuprema.com.br/loja/livros" class="cta-button">📚 Livros Vivos (R$ 57,90)</a>
-        <a href="https://zunisuprema.com.br/mapa-integrado" class="cta-button">🌟 Mapa Integrado</a>
+        <a href="${frontendUrl}/checkout" class="cta-button">💬 Chat com Mentor (R$ 29,90)</a>
+        <a href="${frontendUrl}/loja/" class="cta-button">📚 Livros Vivos (R$ 57,90)</a>
+        <a href="${frontendUrl}/checkout-mapa-integrado.html" class="cta-button">🌟 Mapa Integrado</a>
       </div>
     </div>
 

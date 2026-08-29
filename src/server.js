@@ -3388,7 +3388,7 @@ app.post('/api/experimente-chat', async (req, res) => {
 
     // Se é a última troca (antes do limite), adicionar CTA de upgrade
     if (limite.ultimaTroca) {
-      promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em zunisuprema.com.br/mentor (R$ 29,90 via PIX)."`;
+      promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em www.zunisuprema.com.br/checkout (R$ 29,90 via PIX)."`;
     }
 
     // ── LOG: Prompt final completo ──
