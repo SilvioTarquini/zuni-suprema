@@ -328,6 +328,61 @@ Prefira frases curtas. Uma ideia por vez.
 
 Se usar qualquer palavra que o público possa não conhecer, explique logo em seguida, entre parênteses ou na frase seguinte.`;
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ACERVO ZUNI SUPREMA — bloco anexado APENAS ao SYSTEM_PROMPT do chat ao vivo.
+// Montado UMA vez no boot a partir de src/lib/catalogoLivros.js: para cada obra
+// não-teaser, só titulo + indicadoPara, agrupado por departamento. Sem preço,
+// capa, URL, chave/slug, resumo, descricao ou audiobook. Não entra no
+// SYSTEM_PROMPT_DEMO nem no MAPA_INTEGRADO_PROMPT.
+// ─────────────────────────────────────────────────────────────────────────────
+const ACERVO_ZUNI_BLOCK = (() => {
+  const { CATALOGO } = require('./lib/catalogoLivros');
+
+  const porDepartamento = new Map();
+  for (const obra of Object.values(CATALOGO)) {
+    if (obra.teaser) continue;
+    if (!porDepartamento.has(obra.departamento)) porDepartamento.set(obra.departamento, []);
+    porDepartamento.get(obra.departamento).push(obra);
+  }
+
+  const secoes = [];
+  for (const [departamento, obras] of porDepartamento) {
+    const itens = obras.map(o => `- ${o.titulo}\n  ${o.indicadoPara}`).join('\n');
+    secoes.push(`## ${departamento}\n${itens}`);
+  }
+
+  const regras = `ACERVO ZUNI SUPREMA
+
+Abaixo está o acervo completo de obras da ZUNI Suprema, agrupado por
+departamento, com a indicação de a quem cada obra serve.
+
+Regras de uso:
+
+1. NUNCA recomende livros, autores ou obras que não estejam nesta lista.
+   Se a pessoa pedir indicação de leitura, indique apenas obras deste
+   acervo. Se nenhuma servir ao tema, diga que não há obra do acervo
+   sobre aquilo — não preencha com títulos de terceiros.
+2. Recomende no máximo DUAS obras por sessão inteira. A sessão é curta e
+   existe para escutar, não para vender.
+3. Recomende apenas quando a pessoa pedir indicação, ou quando o tema
+   central da conversa corresponder claramente a uma obra. Nunca ofereça
+   leitura como resposta a um desabafo em curso.
+4. Prefira mencionar perto do encerramento da sessão, junto do Dossiê.
+5. Cite a obra pelo título e diga onde encontrar: a Loja ZUNI Suprema.
+   NUNCA escreva URL, link, endereço ou preço — você não os conhece e
+   eles mudam.
+6. "Além do Que Você Sente" é escrita para adolescentes. Indique-a apenas
+   a um pai, mãe ou responsável, como material para o filho ler. Nunca
+   como leitura do próprio usuário.
+7. Se o texto de indicação de uma obra disser que ela é complemento ou
+   alternativa de outra, respeite isso.`;
+
+  return `\n\n${regras}\n\n${secoes.join('\n\n')}`;
+})();
+
+// SYSTEM_PROMPT do chat ao vivo já com o acervo da Loja anexado (só aqui).
+const SYSTEM_PROMPT_CHAT_AO_VIVO = SYSTEM_PROMPT + ACERVO_ZUNI_BLOCK;
+
 const MAPA_INTEGRADO_PROMPT = `Você é o sistema de geração do Mapa Integrado ZUNI Suprema — relatório astrológico e numerológico personalizado.
 
 Você está gerando um documento que será entregue por email a uma pessoa que solicitou seu mapa astral e análise numerológica. Este não é um chat, não é uma sessão — é um RELATÓRIO COMPLETO E AUTOSSUFICIENTE que a pessoa lerá para entender a si mesma através dos dados de seu mapa natal e números de vida.
@@ -1569,8 +1624,15 @@ app.get('/api/livros', (req, res) => {
   // teaser: true é metadado interno (ex.: degustação usada só pelo chat de
   // /experimente.html) — não é produto de loja, não deve aparecer em nenhuma listagem
   // pública. Lookup por ID (/api/livros/catalogo/:livroId) continua funcionando normalmente.
+  // indicadoPara é metadado interno consumido só pelo prompt do Mentor —
+  // nunca vai para a loja nem para nenhum cliente. Removido na serialização.
   const catalogoPublico = Object.fromEntries(
-    Object.entries(CATALOGO).filter(([, livro]) => !livro.teaser)
+    Object.entries(CATALOGO)
+      .filter(([, livro]) => !livro.teaser)
+      .map(([id, livro]) => {
+        const { indicadoPara, ...publico } = livro;
+        return [id, publico];
+      })
   );
   return res.json(catalogoPublico);
 });
@@ -2180,7 +2242,7 @@ app.post('/api/chat', async (req, res) => {
     ];
 
     // ── INJEÇÃO DE CONTEXTOS (Mapa Astral, Numerologia, Pacote, Jornada) ──
-    let systemPromptFinal = SYSTEM_PROMPT;
+    let systemPromptFinal = SYSTEM_PROMPT_CHAT_AO_VIVO;
     let pacoteAtivo = null;
 
     // Injetar contexto de Mapa Astral se dados de nascimento disponíveis
