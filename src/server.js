@@ -25,6 +25,7 @@ const { validarCodigo, registrarAcesso } = require('./lib/codigosExperimente');
 const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturasExperimente');
 const { calcularAstrologiaB } = require('./lib/astrologia-b');
 const { verificarLimite, registrarUso, auditarConsumo, gerarVisitorHash } = require('./lib/rateLimitExperimente');
+const { limparSessoesExpiradas } = require('./lib/limpezaSessoes');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -1242,6 +1243,18 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
   });
 }
 
+// Remove o PDF temporário do dossiê/relatório depois de entregue (e-mail
+// enviado ou stream de download concluído). Best-effort: se falhar, só loga
+// — o tmpdir do container é efêmero de qualquer forma.
+function apagarPdfTemp(pdfPath) {
+  if (!pdfPath) return;
+  try {
+    require('fs').unlinkSync(pdfPath);
+  } catch (err) {
+    console.warn(`[RELATORIO] Não foi possível apagar o PDF temporário ${pdfPath}: ${err.message}`);
+  }
+}
+
 async function sendEmail(email, name, pdfPath, cupom) {
   try {
     const sgMail = require('@sendgrid/mail');
@@ -1358,6 +1371,7 @@ async function gerarEEnviarRelatorio(sessionId) {
   }
 
   await sendEmail(session.email, session.name, pdfPath, cupom);
+  apagarPdfTemp(pdfPath);
 
   try {
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
@@ -2354,6 +2368,7 @@ app.post('/api/relatorio', async (req, res) => {
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
     await sendEmail(session.email, session.name, pdfPath);
+    apagarPdfTemp(pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
     return res.json({ relatório: reportText });
@@ -2380,7 +2395,16 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="dossie-chat-mentor-zuni-${sessionId.slice(0, 8)}.pdf"`);
-    res.sendFile(pdfPath);
+    // unlink só no callback — depois de o stream terminar (sucesso ou erro)
+    res.sendFile(pdfPath, (err) => {
+      if (err && !res.headersSent) {
+        console.error('Erro ao enviar PDF de download:', err.message);
+        res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
+      } else if (err) {
+        console.warn(`[RELATORIO] Falha no stream do PDF de download: ${err.message}`);
+      }
+      apagarPdfTemp(pdfPath);
+    });
   } catch (error) {
     console.error('Erro em /api/relatorio/download:', error);
     res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
@@ -2455,6 +2479,7 @@ app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
     await sendEmail(session.email, session.name, pdfPath);
+    apagarPdfTemp(pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
     return res.json({ relatório: reportText });
@@ -3696,5 +3721,15 @@ app.use(express.static(path.join(__dirname, '../public')));
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
   console.log(`Servidor ZUNI Suprema escutando na porta ${PORT}`);
+
+  // Retenção de sessões: uma passada no boot e depois a cada 24h.
+  // A chamada NÃO é aguardada — quando este callback roda o servidor já
+  // está aceitando conexões, então Supabase lento/fora não atrasa a subida.
+  // limparSessoesExpiradas() nunca rejeita; o .catch é só defesa extra.
+  const UM_DIA_MS = 24 * 60 * 60 * 1000;
+  limparSessoesExpiradas().catch((e) => console.error('[LIMPEZA-SESSOES] boot:', e.message));
+  setInterval(() => {
+    limparSessoesExpiradas().catch((e) => console.error('[LIMPEZA-SESSOES] intervalo:', e.message));
+  }, UM_DIA_MS).unref();
 });
 
