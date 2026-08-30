@@ -246,6 +246,17 @@ encontrou (e resolveu) um incidente de acesso ao Supabase em produção.
   **e** painel do Railway, não só num dos dois. Vale para `SUPABASE_KEY` e qualquer
   outra: `ANTHROPIC_API_KEY`, `MERCADOPAGO_TOKEN`, `SENDGRID_API_KEY` etc.
 
+**VERIFICADO — DNS do apex NÃO está resolvido (correção sobre o bloqueador de 29/08)**
+
+- Reverificado em 30/08/2026 às 17h: `zunisuprema.com.br` continua sem registro A,
+  AAAA ou CNAME — resposta negativa via 8.8.8.8, 1.1.1.1 e o resolvedor local; `curl`
+  falha com "Could not resolve host". O navegador Chrome desta máquina carregou o
+  apex sem `www` durante a sessão, mas isso não é evidência de que o DNS está
+  correto — provavelmente DNS-over-HTTPS próprio do navegador ou cache local; não é
+  comportamento reproduzível para outros usuários. **CONCLUSÃO: só divulgar links com
+  `www.` até a correção.** Segue pendente no painel do registrador: criar registro A
+  no apex apontando para o Railway, ou configurar redirect de apex para `www`.
+
 **PRÓXIMO**
 
 - Teste de pagamento real (PIX e cartão) para validar a remoção do
