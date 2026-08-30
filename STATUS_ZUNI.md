@@ -4,10 +4,28 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 29/08/2026 (sessão de privacidade, retenção e correções —
-> commits `a7afc1e`, `d5e24c3`, `ae7fddf`, `c40b148`, **sem push, sem deploy**). Ver
-> seção "29/08/2026 (privacidade, retenção de dados e correções de catálogo/URLs)"
-> logo abaixo para detalhe completo. Resumo: encerrada a investigação da
+> Última atualização: 30/08/2026 (push dos 11 commits pendentes + deploy + incidente
+> do Supabase resolvido). Ver seção "30/08/2026 (push dos 11 commits pendentes +
+> deploy + incidente do Supabase resolvido)" logo abaixo para detalhe completo.
+> Resumo: os 11 commits acumulados desde 26/08 (`5f2d5a1` até `12cf315`) foram para
+> `origin/main`; deploy do `12cf315` buildou e está no ar. No meio do processo,
+> achado um incidente: a `SUPABASE_KEY` do Railway estava rotacionada (chave antiga,
+> `sb_secret_ccnCi...`, divergindo do `.env` local e do projeto Supabase, que já
+> usavam `sb_secret_3XyWR...`) — produção ficou **3 dias sem acesso ao banco** (desde
+> o deploy de 27/08) sem nenhum sinal, porque não houve tráfego real. Descoberto pelo
+> log de boot da rotina de retenção nova (`[LIMPEZA-SESSOES] Falha ao limpar sessões:
+> Unregistered API key` em vez da contagem esperada). Corrigido atualizando a
+> variável no painel do Railway; confirmado no deploy seguinte com
+> `[LIMPEZA-SESSOES] 0 sessao(oes)...`. Lição: chave rotacionada precisa ser
+> atualizada em todos os ambientes (.env local **e** Railway), vale para qualquer
+> chave de API do projeto. **Próximo**: teste de pagamento real (PIX e cartão), agora
+> mais urgente porque o deploy sem `payer.identification` já está em produção.
+>
+> Nota anterior (29/08/2026, sessão de privacidade, retenção e correções — commits
+> `a7afc1e`, `d5e24c3`, `ae7fddf`, `c40b148`, **sem push, sem deploy** nessa sessão —
+> push e deploy só ocorreram na sessão seguinte, 30/08). Ver seção "29/08/2026
+> (privacidade, retenção de dados e correções de catálogo/URLs)" logo abaixo para
+> detalhe completo. Resumo: encerrada a investigação da
 > contaminação de contexto (causa raiz = sessão de teste `zztest` semeada à mão,
 > nunca esteve vazia; sem cross-sessão, cross-pessoa ou RAG — reteste limpo
 > confirmou). Quatro frentes commitadas: (1) Mentor passa a conhecer o catálogo
@@ -195,6 +213,45 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 30/08/2026 (push dos 11 commits pendentes + deploy + incidente do Supabase resolvido)
+
+Sessão curta via Claude Code. Confirmou que o Railway observa a branch `main` com
+deploy automático no push, publicou os 11 commits que estavam commitados sem push
+desde 26/08 (`5f2d5a1` até `12cf315`), acompanhou o deploy do commit `12cf315` e
+encontrou (e resolveu) um incidente de acesso ao Supabase em produção.
+
+**ENCERRADOS**
+
+- **Push + deploy** — os 11 commits pendentes (`5f2d5a1` até `12cf315`, acumulados
+  desde a Etapa 1 do checkout do Mentor) foram para `origin/main`. Deploy do commit
+  `12cf315` buildou com sucesso e está no ar.
+- **INCIDENTE RESOLVIDO — Supabase fora desde 27/08** — a `SUPABASE_KEY` configurada
+  no Railway estava com uma chave rotacionada (`sb_secret_ccnCi...`), enquanto o
+  projeto Supabase e o `.env` local já usavam a chave correta (`sb_secret_3XyWR...`).
+  Produção ficou 3 dias sem acesso ao banco (desde o deploy anterior, `6a044d87` de
+  27/08), sem nenhum sinal de alerta porque não houve tráfego real batendo nas rotas
+  que dependem do Supabase — confirmado no log desse deploy: uma única chamada real,
+  em `/api/experimente-livro-chat`, falhou com "Unregistered API key" e não gerou
+  mais nenhum alarme depois disso. Descoberto só hoje pelo log de boot da rotina de
+  retenção nova (`limpezaSessoes.js`, commitada ontem em `c40b148`): em vez da
+  contagem esperada, logou `[LIMPEZA-SESSOES] Falha ao limpar sessões: Unregistered
+  API key`. Corrigido atualizando a variável `SUPABASE_KEY` no painel do Railway;
+  confirmado no deploy seguinte com `[LIMPEZA-SESSOES] 0 sessao(oes) tiveram history
+  e dados de nascimento zerados.` (0 é resultado plausível — não é sinal de falha).
+
+**LIÇÃO**
+
+- Chave rotacionada precisa ser atualizada em **todos** os ambientes — `.env` local
+  **e** painel do Railway, não só num dos dois. Vale para `SUPABASE_KEY` e qualquer
+  outra: `ANTHROPIC_API_KEY`, `MERCADOPAGO_TOKEN`, `SENDGRID_API_KEY` etc.
+
+**PRÓXIMO**
+
+- Teste de pagamento real (PIX e cartão) para validar a remoção do
+  `payer.identification` — já era bloqueador anotado no bloco de 29/08, segue em
+  aberto, agora mais urgente porque o deploy que remove o CPF do checkout já está em
+  produção.
 
 ### 29/08/2026 (privacidade, retenção de dados e correções de catálogo/URLs)
 
