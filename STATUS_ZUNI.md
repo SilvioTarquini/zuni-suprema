@@ -4,8 +4,50 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 30/08/2026 (push dos 11 commits pendentes + deploy + incidente
-> do Supabase resolvido). Ver seção "30/08/2026 (push dos 11 commits pendentes +
+> Última atualização: 31/08/2026 (gating de acesso audiolivro × flipbook +
+> diagnóstico de venda avulsa de audiolivro e divulgação do Livro-Vivo). Ver seção
+> "31/08/2026 (gating de acesso audiolivro × flipbook + diagnóstico venda avulsa e
+> divulgação do Livro-Vivo)" logo abaixo para detalhe completo. Resumo: corrigido bug
+> de controle de acesso pré-existente — `verificarAcesso` (`lib/acessoLivros.js`)
+> validava token + `livro_id` + prazo mas ignorava `tipo_produto` (coluna que já
+> existia na tabela, default `'livro'`), então o token de audiolivro abria o flipbook
+> e o token do livro abria o audiolivro, sem diferenciação. Agora `verificarAcesso`
+> recebe `tiposPermitidos` e `exigirAcesso` (`routes/livros.js`) virou fábrica de
+> middleware: `/livros/:livroId` exige token `'livro'`; `/audiolivros/:livroId`
+> aceita `'livro'` (combo) ou `'audiolivro'`; `POST /api/livro-chat` também
+> restrito a `'livro'`. Testado com dois tokens temporários inseridos e removidos no
+> Supabase de produção (não há cliente real hoje — as 2 linhas pré-existentes em
+> `acessos_livros` são de teste e já expiradas) contra `ela-tem-classe`: 6 cenários
+> confirmados por `curl` (token livro abre flipbook 200; token audiolivro barrado do
+> flipbook com **403**; ambos os tokens abrem o audiolivro 302; token inválido segue
+> 403; token audiolivro barrado do chat com **401**). **Sem push, sem deploy**.
+> Ajuste de preço na mesma sessão: `precoAudiobook` de "Além do Que Você Vê" e
+> "Além do Que Você Sente" corrigido de R$ 34,90 para R$ 29,90 nas duas
+> (`catalogoLivros.js`) — as duas eram exceção fora do critério de faixa por duração;
+> os demais preços de audiobook do catálogo não mudaram.
+> Diagnóstico completo de venda avulsa (o que falta em cada camada; 12 obras com
+> áudio hoje; onde e para quais 4 obras o chat por livro funciona) feito na sessão
+> imediatamente anterior, sem código alterado. Na continuação da mesma sessão:
+> **badge "Livro-Vivo" implementado** (`chatDisponivel: true` explícito nas 4 obras
+> em `catalogoLivros.js` + badge no card e selo no painel de detalhe da loja —
+> validado só por API/código, não visualmente no navegador); e **investigado o
+> esforço de indexar as demais obras** — confirmado que os 4 `.txt` dos Bastidores
+> são texto **editado/cortado** do próprio livro (~47% do original, blocos
+> pequenos e densos), não uma síntese escrita do zero, mas também não o manuscrito
+> integral; ao contrário do RAG **temático** de "Tempo para Viver"
+> (`vida_madura_bem_estar`), que é o manuscrito quase integral chunkeado por
+> capítulo, sem edição — formato nunca testado no chat-por-livro
+> (`/api/livro-chat`) especificamente. `dividirEmChunks()`
+> (`lib/audiolivroGenerator.js`, já usada no pipeline de audiolivro) é reaproveitável
+> para automatizar esse chunking por capítulo, o que pode reduzir bastante o esforço
+> por obra **se** um piloto confirmar que a qualidade do chat não cai demais com
+> blocos maiores/menos editados. **Pendente**: rodar esse piloto numa obra;
+> `_template/index.html` não traz o widget de chat embutido — cada obra nova exige
+> rodar `scripts/injetar-chat-livros.js` manualmente. Ver seção logo abaixo para o
+> detalhe completo de todos os itens.
+>
+> Nota anterior (30/08/2026, push dos 11 commits pendentes + deploy + incidente do
+> Supabase resolvido): Ver seção "30/08/2026 (push dos 11 commits pendentes +
 > deploy + incidente do Supabase resolvido)" logo abaixo para detalhe completo.
 > Resumo: os 11 commits acumulados desde 26/08 (`5f2d5a1` até `12cf315`) foram para
 > `origin/main`; deploy do `12cf315` buildou e está no ar. No meio do processo,
@@ -213,6 +255,313 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 31/08/2026 (gating de acesso audiolivro × flipbook + diagnóstico venda avulsa e divulgação do Livro-Vivo)
+
+Sessão via Claude Code, duas frentes. Frente 1 (diagnóstico): o que falta para vender
+audiolivro avulso, hoje só disponível como adicional na compra do livro. Frente 2
+(diagnóstico): onde e para quais obras o recurso "Livro-Vivo" (ler, ouvir, baixar,
+imprimir, conversar com a obra) é divulgado. O diagnóstico da frente 1 revelou um bug
+de controle de acesso que virou prioridade e foi corrigido nesta mesma sessão — as
+demais pendências das duas frentes seguem como decisão de produto, não implementadas.
+**Sem push, sem deploy.**
+
+**ENCERRADO — bug de gating audiolivro × flipbook corrigido**
+
+- **Achado**: `verificarAcesso` (`src/lib/acessoLivros.js`) validava token +
+  `livro_id` + prazo, mas nunca lia a coluna `tipo_produto` da tabela
+  `acessos_livros` (já existia, default `'livro'`; gravada como `'audiolivro'`
+  quando `criarAcessoLivroSeAplicavel`, em `server.js`, cria o segundo token do
+  combo livro+áudio). Consequência: o token do audiolivro abria o flipbook completo
+  (`/livros/:livroId`) e o token do livro abria o audiolivro (`/audiolivros/:livroId`)
+  — sem nenhuma diferenciação. Bloqueador direto para vender audiolivro avulso: quem
+  comprasse só o áudio ganharia o livro de brinde.
+- **Correção**: `verificarAcesso(token, livroId, tiposPermitidos = ['livro'])` agora
+  filtra por `tipo_produto`. `exigirAcesso` (`src/routes/livros.js`) virou fábrica de
+  middleware — `/livros/:livroId` usa `exigirAcesso(['livro'])`;
+  `/audiolivros/:livroId` usa `exigirAcesso(['livro', 'audiolivro'])` (quem comprou o
+  combo tem o token `'livro'` e continua abrindo os dois). `POST /api/livro-chat`
+  (`src/routes/livroChat.js`) também restrito a `['livro']` — conversar com a obra
+  exige o texto completo, não só o áudio.
+- **Verificado antes de aplicar**: consulta direta em `acessos_livros` (produção)
+  mostrou só 2 linhas, ambas de teste (`teste-leitor-voz@zuni.local`,
+  `teste@e2e.com`, `payment_id` nulo ou `teste-...`) e ambas já expiradas —
+  **nenhum cliente real seria afetado pela mudança**. Confirma o que já estava
+  registrado em sessões anteriores: produção nunca teve tráfego pago real.
+- **Testado contra o Supabase de produção** (não só `node --check`): dois tokens
+  temporários inseridos via SQL direto (`livro_id: 'ela-tem-classe'`, expiração de
+  1h, um com `tipo_produto: 'livro'` e outro `'audiolivro'`), servidor local
+  (`PORT=8091 node src/server.js`, apontando para o Supabase real de produção — não
+  há Supabase local neste projeto). 6 cenários confirmados por `curl`: token livro →
+  `/livros/` 200; token audiolivro → `/livros/` **403** (bloqueio, comportamento
+  novo); token livro → `/audiolivros/` 302; token audiolivro → `/audiolivros/` 302;
+  token inválido → `/livros/` 403 (comportamento antigo preservado); token audiolivro
+  → `/api/livro-chat` **401** (bloqueio). Os dois tokens de teste foram removidos do
+  banco por `DELETE ... WHERE token IN (...)` ao final — tabela `acessos_livros`
+  voltou ao estado anterior (as mesmas 2 linhas de teste antigas, expiradas).
+
+**ENCERRADO — preço do audiolivro corrigido em duas obras**
+
+- `precoAudiobook` de "Além do Que Você Vê" e "Além do Que Você Sente"
+  (`src/lib/catalogoLivros.js`) corrigido de R$ 34,90 para **R$ 29,90** nas duas —
+  eram as duas únicas obras fora do critério de faixa por duração usado no resto do
+  catálogo (ver escala de 24/08/2026, seção mais abaixo). Demais preços de audiobook
+  do catálogo não foram tocados.
+
+**ENCERRADO — preços de audiolivro fora do critério corrigidos**
+
+- `precoAudiobook` de "Além do Que Você Vê" e "Além do Que Você Sente"
+  (`src/lib/catalogoLivros.js`) corrigido de R$ 34,90 para **R$ 29,90** nas duas —
+  eram as duas únicas obras fora do critério de faixa por duração usado no resto do
+  catálogo (ver escala de 24/08/2026, seção mais abaixo). Demais preços de audiobook
+  do catálogo não foram tocados.
+
+**ENCERRADO — badge "Livro-Vivo" implementado**
+
+- Campo explícito `chatDisponivel: true` adicionado às 4 obras com chat indexado
+  (Bastidores I–IV) em `src/lib/catalogoLivros.js`, mesmo padrão de
+  `audiobookDisponivel` — decisão confirmada pelo usuário (campo explícito, não
+  consulta ao vivo à base RAG, para o card nunca anunciar recurso que não existe de
+  fato para aquela obra).
+- `public/loja/index.html`: badge circular `.badge-chat` (💬) no canto superior
+  direito da capa, no card da grade — espelha `.badge-audio` (🎧, canto inferior
+  direito; os dois só coexistem hoje no Vol. I, que tem audiobook e chat). Selo
+  `.selo-chat` ("💬 Converse com o livro") no painel de detalhe, mesmo padrão visual
+  de `.selo-audiobook`, visibilidade ligada a `chatDisponivel`.
+- Verificado via `/api/livros` local: só as 4 obras certas retornam
+  `chatDisponivel: true`. **Não validado visualmente no navegador** — extensão
+  Claude in Chrome não estava conectada na sessão — só revisão de código e
+  `node --check`. Vale conferir visualmente antes de considerar encerrado de vez.
+
+**PENDÊNCIAS NOVAS — chat por livro (frente 2)**
+
+- Só 4 obras têm RAG indexado por `livro_id` (confirmado por SQL direto na tabela
+  `documentos`, coluna `livro_id`): `os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal`
+  (12 blocos), `os-bastidores-da-mente-2-o-antidoto` (80),
+  `os-bastidores-da-mente-3-a-bussola-humana` (86),
+  `os-bastidores-da-mente-4-a-travessia` (66). Nenhuma outra obra do catálogo
+  (~30 títulos) tem chat funcional — incluindo os Vol. V e VI da mesma série, e obras
+  com RAG **temático** já indexado para o Mentor geral (ex. "Tempo para Viver",
+  tema `vida_madura_bem_estar`), porque `/api/livro-chat` filtra estritamente por
+  `livro_id`, não por `tema` — são bases separadas dentro da mesma tabela
+  `documentos`. Indexar as demais obras por `livro_id` é pendência aberta — mesmo
+  pipeline de `indexarTema.js`/skill `zuni-rag-tema`, adaptado para filtrar por
+  `livro_id` em vez de `tema`.
+- `private/livros/_template/index.html` **não** tem o widget de chat
+  (`templates/chat-livro-widget.html`) embutido — cada obra nova precisa rodar
+  `node scripts/injetar-chat-livros.js` manualmente depois de gerar o HTML do livro
+  (confirmado: só os 4 HTMLs de Bastidores I–IV têm o marcador
+  `ZUNI-CHAT-WIDGET-START` hoje, apesar de o script varrer todas as pastas de
+  `private/livros/` exceto `_template`).
+- Divulgação: hoje o recurso "Livro-Vivo" só é mencionado publicamente em
+  `public/loja/index.html` (bloco `.faixa-mentor`, linha ~508), e mesmo assim só
+  sobre o capítulo grátis de Bastidores Vol. I via `/experimente.html`. Nenhuma
+  menção em `checkout-livro.html`, no painel de detalhe da loja nem no e-mail de
+  entrega (`enviarEmailAcessoLivro`, `server.js`). A frase fixa
+  `"Edição Interativa digital · sem envio físico"` (`checkout-livro.html:229`,
+  `loja/index.html:545`) fala só de não ter envio físico — não comunica
+  ler/ouvir/baixar/imprimir/conversar.
+
+**INVESTIGADO — esforço de indexação e formato do conteúdo (síntese curada × texto integral)**
+
+Antes de decidir indexar as ~30 obras restantes, duas perguntas: qual o esforço real
+por obra, e se dá pra usar o texto integral do manuscrito (mecânico, barato) em vez de
+uma síntese curada (manual, caro) — comparando com o padrão já usado no RAG **temático**
+de "Tempo para Viver" (`vida_madura_bem_estar`), que foi indexado com texto integral,
+sem reescrita.
+
+- **Confirmado por SQL direto em `documentos`**: os 4 arquivos-fonte dos Bastidores
+  (`*_base_mentor.txt`) não são o manuscrito integral. Comparando Vol. II ("O
+  Antídoto") — texto visível do flipbook completo ≈ 151 mil caracteres — contra o
+  `.txt` indexado (70.773 caracteres, 80 blocos, 309–1.504 chars cada, média 776):
+  sobra cerca de **47% do texto original**, organizado em blocos autocontidos por
+  tema. **Não é síntese escrita do zero** — encontrei uma frase do bloco
+  ("lubrificante social") reproduzida quase literalmente no texto do flipbook — é
+  mais próximo de **edição/corte** (remove transição, repetição e enchimento
+  narrativo, preserva a frase original) do que de resumo reescrito. Ainda assim, é
+  trabalho editorial manual, obra por obra — sem esse tipo de arquivo pronto para as
+  ~30 restantes.
+- **Contraste com "Tempo para Viver"**: os 118 blocos de `vida_madura_bem_estar`
+  somam ≈ 682 mil caracteres (bate com a nota de 25/08/2026 sobre a obra ter ~697 mil
+  caracteres) — é o manuscrito quase integral, cortado mecanicamente por capítulo
+  (um bloco chega a ter o título literal "Capítulo 23 — ..."), sem edição de conteúdo.
+  Blocos bem maiores e mais variáveis (336–11.321 chars, média 5.781) que os dos
+  Bastidores. **Ressalva importante**: essa é uma base **temática** (`tema`), usada
+  pelo Mentor geral — nenhuma obra foi indexada com texto integral filtrado por
+  `livro_id` para o chat-por-livro especificamente. O formato "texto integral" nunca
+  foi testado nesse endpoint (`/api/livro-chat`/`match_documents_livro`).
+- **Diferença prática esperada para a qualidade do chat** (raciocínio sobre a
+  mecânica de `buscarContextoLivro`, que busca só `match_count: 5` blocos por
+  pergunta): blocos pequenos e densos (padrão Bastidores) tendem a ter recuperação
+  mais precisa — cada bloco já é uma resposta autocontida a um subtema, então o
+  embedding da pergunta casa bem com o embedding do bloco certo, e os 5 blocos
+  cobrem 5 subtemas distintos com pouco desperdício de contexto. Blocos grandes e
+  variados (padrão Tempo para Viver) tendem a diluir a precisão — um capítulo cobre
+  vários subtemas ao mesmo tempo, então o embedding do bloco é uma média borrada e
+  pode competir mal com outro capítulo tangencialmente relacionado; os 5 blocos
+  retornados custam ~6x mais caracteres de contexto por pergunta (custo de API por
+  mensagem sobe, resposta pode ficar mais lenta ou menos focada por ter mais texto
+  irrelevante para o modelo filtrar). Não é uma abordagem "quebrada" — é uma troca de
+  precisão de recuperação e custo por mensagem contra esforço de preparo. **Não
+  testado na prática** para o chat-por-livro — recomendo pilotar em 1 obra antes de
+  decidir para as ~30 restantes.
+- **Achado que muda a conta**: `src/lib/audiolivroGenerator.js` já tem
+  `dividirEmChunks()`, que quebra texto extraído de `.docx` em fronteiras de
+  capítulo (regex `Capítulo\s+\d+`, já cobre "Capítulo N —", "Capítulo N:", "Capítulo
+  N" sozinho) — mesma lógica usada para dividir audiolivros longos em partes. Essa
+  função (ou uma adaptação leve dela) é reaproveitável para gerar automaticamente o
+  `.txt` em blocos `[TEMA] Capítulo N — <título>\n<corpo>\n==========` a partir do
+  manuscrito, sem reescrita manual — juntando com `extrair-texto-docx.js` (já usado
+  no pipeline de audiolivro), o caminho "texto integral, chunking mecânico" pode ser
+  quase totalmente automatizável **se a qualidade do chat se confirmar aceitável no
+  piloto**.
+
+**ENCERRADO — piloto de texto integral rodado em "Tempo para Viver"**
+
+Aprovado pelo usuário. Em vez de escrever um novo `.txt`, reaproveitei os 118 blocos
+já indexados no RAG **temático** (`vida_madura_bem_estar`) — reconstruídos direto do
+Supabase (não havia mais nenhum `.txt`-fonte local para esse tema, ao contrário do
+que se supunha) e reinjetados via `src/indexarLivro.js tempo-para-viver <arquivo>`
+normalmente, gerando 118 chunks com `livro_id: 'tempo-para-viver'` (698.311 caracteres
+de entrada). Viraram texto integral do manuscrito, sem edição, testado agora pela
+primeira vez no endpoint real `/api/livro-chat`.
+
+- **Widget injetado só nessa obra** — não rodei `scripts/injetar-chat-livros.js`
+  puro (ele reescreveria os HTMLs de todos os livros de uma vez, fora do escopo do
+  piloto); usei a função `injetarWidget()` exportada por esse script, chamada num
+  script auxiliar que tocou só `private/livros/tempo-para-viver/index.html`.
+- **Medição de contexto** (replicando `buscarContextoLivro`, `match_count: 5`, fora
+  do servidor): 5 perguntas em "Tempo para Viver" (2 específicas, 3 amplas)
+  recuperaram entre **17.076 e 32.166 caracteres** de contexto por pergunta (média
+  ≈ 23.140). Nas mesmas condições, 2 perguntas equivalentes em "O Antídoto"
+  (Bastidores Vol. II, formato curado) recuperaram **3.460–3.620 caracteres** — ou
+  seja, **texto integral usou de ~5x a ~9x mais contexto por pergunta** que o formato
+  curado, confirmando a estimativa de "~6x" feita antes do piloto.
+- **Ruído de recuperação observado**: em 3 das 5 perguntas sobre "Tempo para Viver",
+  um dos 5 blocos recuperados foi um bloco genérico de abertura ("NOTA AO LEITOR" ou
+  "COMO USAR ESTE GUIA") — texto de front-matter que combina com muitas perguntas
+  diferentes por ser vago, deslocando um bloco potencialmente mais relevante. Isso
+  não aconteceu nas 2 perguntas testadas em "O Antídoto": os 5 blocos recuperados
+  foram, nos dois casos, todos claramente sobre o tema perguntado.
+- **Qualidade da resposta final, apesar do ruído**: nas 5 respostas reais obtidas via
+  `POST /api/livro-chat` para "Tempo para Viver", o modelo ignorou os blocos de
+  abertura irrelevantes e respondeu com precisão, citando corretamente o capítulo
+  certo em todas — nenhuma resposta pareceu prejudicada pelo ruído na amostra
+  testada. Ou seja: nesse teste pontual, **a resposta final não caiu visivelmente de
+  qualidade** — o custo do formato integral apareceu no tamanho do contexto (e,
+  portanto, no custo de API por mensagem), não na resposta que o cliente vê. Amostra
+  pequena (5 perguntas, 1 obra) — não é prova estatística, é um primeiro sinal.
+- **Conclusão prática**: texto integral parece uma opção viável para obras onde
+  curar manualmente não compensa, mas custa de 5 a 9x mais por mensagem de chat (API
+  Claude cobra por token de contexto) e recupera algum ruído de front-matter que o
+  formato curado não tem. Decisão de formato por obra (curado vs. integral) segue em
+  aberto — o usuário está avaliando as respostas lado a lado antes de decidir.
+- Estado deixado no ar: `tempo-para-viver` está indexado com `livro_id` e com o
+  widget de chat funcionando de verdade (mesma trilha que um cliente pagante veria),
+  mas **sem** `chatDisponivel: true` no catálogo — não fica visível na loja como
+  recurso disponível até decisão final.
+
+**DECISÃO — adotar formato integral, com filtro de front-matter**
+
+Decisão do usuário: texto integral é o formato escolhido para as próximas obras,
+condicionado ao filtro de front-matter revelado necessário pelo piloto acima.
+
+**ENCERRADO — reindexação sem front-matter confirmou que o ruído some**
+
+- Reconstruí o `.txt` de "Tempo para Viver" excluindo os 4 blocos administrativos
+  identificados (`APRESENTAÇÃO`, `COMO USAR ESTE GUIA`, `NOTA AO LEITOR`,
+  `NOTA DE RESPONSABILIDADE E LIMITES` — 9.111 caracteres, 4 de 118 blocos).
+  **Mantive de propósito** `EPÍLOGO — TEMPO PARA VIVER` (conteúdo substantivo, não
+  administrativo) e os 10 blocos do framework "Seis Horizontes" (`OS SEIS
+  HORIZONTES`, `1. AUTONOMIA` a `6. SIGNIFICADO`, `Os horizontes se encontram`,
+  `Um mapa, não uma prova`, `A pergunta central`) — **achado importante**: esses 10
+  blocos ficam todos ANTES do primeiro "Capítulo 1" no manuscrito (blocos 5–14 de
+  118, na mesma região que os 4 administrativos, blocos 1–4), então uma regra
+  puramente mecânica de "descartar tudo antes do Capítulo 1" teria apagado conteúdo
+  valioso junto com o ruído — a exclusão precisou ser por título específico, não por
+  posição no manuscrito.
+- Reindexado: 114 chunks (`node src/indexarLivro.js tempo-para-viver <arquivo>`).
+  Repeti as mesmas 5 perguntas: **nenhuma das 5 recuperações voltou a trazer os
+  blocos de front-matter** — os 5 blocos retornados em cada pergunta agora são todos
+  substantivos e tematicamente relevantes (`EPÍLOGO` apareceu uma vez, de forma
+  pertinente, na pergunta sobre silêncio). Respostas reais via `/api/livro-chat`
+  ligeiramente mais ricas que a rodada anterior (mais detalhes específicos citados —
+  ex. menção à OCDE sobre ageísmo, exercício dos "quatro quadrantes"), provavelmente
+  porque um bloco substantivo passou a ocupar o slot que antes ia para ruído.
+
+**ENCERRADO — custo real calculado (modelo `claude-sonnet-4-6`: US$3/1M tokens de
+entrada, US$15/1M de saída; câmbio USD/BRL consultado nesta sessão: R$5,18)**
+
+Sessão de 10 perguntas, sem prompt caching (não implementado em `livroChat.js` — todo
+turno é cobrado a preço cheio, incluindo a persona fixa de 1.302 caracteres/326
+tokens repetida a cada chamada). Contexto integral = 23.000 caracteres/pergunta
+(premissa pedida pelo usuário; minha própria medição pós-limpeza ficou em ≈25.200,
+próxima). Contexto curado = 3.540 caracteres/pergunta (medido em "O Antídoto").
+Resposta ≈ 1.800 caracteres/450 tokens em ambos os formatos (mesma instrução de
+concisão no prompt, não deveria variar por formato). Histórico de conversa cresce a
+cada troca e é limitado a 6 trocas (12 mensagens) por `sanitizarHistorico`.
+
+| | Custo estimado / sessão de 10 perguntas | Custo médio / mensagem (regime estável, turnos 7–10) |
+|---|---|---|
+| **Texto integral** | US$ 0,307 → **R$ 1,59** | R$ 0,175 |
+| **Formato curado** | US$ 0,161 → **R$ 0,83** | R$ 0,099 |
+
+**Achado que tempera a intuição**: o contexto bruto do formato integral é ~6,5x maior
+que o curado, mas o custo total da sessão é só ~1,9x maior (e por mensagem, em regime
+estável, ~1,76x) — porque a saída (tokens de resposta, cobrados a US$15/1M, 5x o
+preço da entrada) é igual nos dois formatos, e o histórico de conversa (também
+igual nos dois formatos) dilui a diferença proporcional. **Conclusão: o custo não é
+o fator limitante** — R$ 0,76 a mais por sessão de 10 perguntas, num produto vendido
+por R$ 37–97, é irrelevante para a decisão de formato. A limitação real do formato
+curado é o tempo de curadoria manual (ver sessão anterior), não o preço da API.
+
+**PROPOSTA — pipeline automatizado para as ~30 obras restantes (não implementado)**
+
+Peças já existentes, nenhuma delas precisa ser reescrita do zero:
+
+1. `scripts/extrair-texto-docx.js` — já extrai o corpo do manuscrito `.docx`, remove
+   Sumário/Índice automaticamente. Sem mudança.
+2. `dividirEmChunks()` (`src/lib/audiolivroGenerator.js`, hoje só usada no pipeline
+   de audiolivro) — **verificado nesta sessão que já devolve texto puro** (chunks
+   separados por `\n\n`, sem nenhuma tag SSML injetada — o parâmetro `pausaParagrafo`
+   só serve para estimar bytes, a tag real de pausa é inserida por uma etapa
+   posterior do pipeline de áudio, que não entraria aqui). Quebra forçada em cada
+   `Capítulo N`, com sub-divisão por frase se um parágrafo sozinho for grande demais
+   — dá pra chamar direto com um `bytesMax` maior (~6000–8000, calibrar) para gerar
+   blocos no mesmo formato dos que o pipeline de tema já produz. Sem mudança na
+   função, só um novo ponto de chamada.
+3. **Peça nova a escrever** (pequena, ~30–50 linhas): script que costura 1+2, aplica
+   o filtro de front-matter e grava o `.txt` no formato `=== TEMA: <título> ===`
+   esperado por `indexarLivro.js`. O filtro de front-matter **não pode ser** "descartar
+   tudo antes do Capítulo 1" (achado desta sessão: isso apagaria conteúdo bom); a
+   abordagem seguinte é uma lista/regex de títulos administrativos conhecidos
+   (`NOTA AO LEITOR`, `APRESENTAÇÃO`, `COMO USAR`, `PREFÁCIO`, `NOTA DE
+   RESPONSABILIDADE`/`AVISO LEGAL`, e variantes) aplicada só à primeira linha de
+   cada chunk antes do Capítulo 1 — reduz mas não elimina a chance de erro.
+4. `src/indexarLivro.js <livro_id> <arquivo.txt>` — já genérico, sem mudança.
+5. `injetarWidget()` (exportada de `scripts/injetar-chat-livros.js`) — já genérica,
+   sem mudança; só precisa ser chamada por obra em vez de rodar o script inteiro (que
+   reescreve todos os livros de uma vez).
+
+**Passos manuais por obra, uma vez que a peça 3 exista**: essencialmente **um só** —
+abrir o `.txt` gerado e conferir rapidamente se o filtro de front-matter não
+descartou nem manteve algo errado (achado desta sessão: o filtro por título não é
+infalível). É uma checagem de minutos, não a curadoria de horas que o formato
+curado exigia. Rodar os passos 1, 2/3, 4 e 5 é tudo automático depois que a peça 3
+estiver escrita — essa peça é custo único (escrever uma vez), não recorrente por
+obra.
+
+**PRÓXIMO**
+
+- Decidir se "Tempo para Viver" fica com chat habilitado publicamente
+  (`chatDisponivel: true` + badge) — segue **não habilitado** por instrução
+  explícita do usuário nesta sessão.
+- Escrever o script novo (peça 3 da proposta acima) — só depois de aprovação
+  explícita, é código novo, não só configuração.
+- Validar visualmente no navegador o badge "Livro-Vivo" (não testado nesta sessão —
+  extensão Chrome desconectada).
+- Decidir preço e caminho de checkout para audiolivro avulso antes de construir
+  qualquer rota nova (frente 1 do diagnóstico de 31/08).
 
 ### 30/08/2026 (push dos 11 commits pendentes + deploy + incidente do Supabase resolvido)
 
