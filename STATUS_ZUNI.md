@@ -284,6 +284,79 @@ arquivos nunca devem divergir sobre o mesmo item.
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
 
+### 01/09/2026 (Livro-Vivo — escopo de resposta, limite diário e custo por pergunta, dimensionando a extensão às 38 obras)
+
+Continuação da mesma sessão de 01/09 (ver blocos abaixo sobre o Livro-Vivo e sobre a
+investigação do chat do Mentor). Nenhum código do repositório alterado nesta frente
+— só uma variável de ambiente no Railway (limite diário, abaixo) e registro de
+decisão/dados levantados; ver PENDÊNCIA NOVA ao final sobre o que falta implementar.
+
+**DECISÃO — escopo do Livro-Vivo: só capítulo atual e anteriores**
+
+- As respostas do chat se limitam ao capítulo que o leitor está lendo e aos
+  anteriores; nada do que está adiante na obra é antecipado. Perguntas sobre trecho
+  ainda não lido devem ser sinalizadas ("isso é retomado mais adiante no livro"),
+  nunca negadas (dizer que a obra não trata do assunto seria falso) nem respondidas
+  antecipadamente. Motivo: preservar a construção da obra — o leitor não deveria
+  poder pular a experiência de leitura perguntando ao chat.
+- Custo não é fator nessa escolha de escopo: `buscarContextoLivro` recupera 5 chunks
+  (`match_count: 5`, `src/routes/livroChat.js:94`) independentemente do tamanho do
+  escopo permitido — limitar o escopo não reduz o volume de contexto recuperado por
+  pergunta, é uma regra de conteúdo, não de custo.
+- **Ainda não implementado**: hoje `buscarContextoLivro` busca no `livro_id` inteiro,
+  sem noção de "onde o leitor está" — não há capítulo atual em nenhum parâmetro da
+  chamada. Implementar essa decisão exige passar o capítulo/progresso do leitor para
+  o backend e filtrar ou pós-processar a recuperação por ele; não existe hoje.
+
+**DECISÃO — limite diário de perguntas sobe de 15 para 30**
+
+- `CHAT_LIVRO_LIMITE_DIARIO` passa de 15 (default atual em
+  `src/lib/usoChatLivro.js:26`) para 30. Motivo: o teto existe contra abuso
+  programático (token do livro não expira por sessão e `/api/livro-chat` aceita
+  chamada programática — só exige token+livro_id válidos), não contra o leitor
+  legítimo. A R$ 0,16/pergunta (ver registro de custo abaixo), 30 perguntas/dia
+  custam no máximo R$ 4,80 por leitor. Remoção total do limite foi considerada e
+  descartada pelo mesmo motivo do teto (abuso programático). Revisar o valor para
+  cima se aparecerem 429 de leitores reais no log (hoje não há tráfego real para
+  medir isso).
+- Variável `CHAT_LIVRO_LIMITE_DIARIO=30` setada no Railway (produção) em
+  01/09/2026. O default no código segue `'15'`
+  (`parseInt(process.env.CHAT_LIVRO_LIMITE_DIARIO || '15', 10)`,
+  `src/lib/usoChatLivro.js:26`) — não foi alterado, e não precisa ser: a variável de
+  ambiente é a fonte da verdade em produção, o default só vale para quem rodar local
+  sem a variável setada.
+- Mensagem de 429 no widget já cobre esta mudança sem ajuste necessário: já explica
+  que o limite renova no dia seguinte ("Você atingiu o limite de perguntas de hoje
+  para este livro. Volte amanhã para continuar.",
+  `templates/chat-livro-widget.html:388`) e existe um contador visível de perguntas
+  restantes antes de bater o teto (`atualizarContador`, mesma arquivo, linhas
+  378-384). Nada a ajustar ali.
+
+**REGISTRO — custo por pergunta no Livro-Vivo**
+
+- **R$ 0,16/pergunta** (US$ 0,0306) — caso médio, primeiro turno, sem histórico de
+  conversa: persona fixa do prompt (2.025 caracteres/≈506 tokens, já com a regra de
+  emergência médica desta sessão) + 5 chunks recuperados do tamanho médio de
+  `tempo-para-viver` (5.904 caracteres cada, 29.520 caracteres/≈7.380 tokens de
+  contexto) + pergunta (~150 caracteres/≈38 tokens) de entrada, ~450 tokens de
+  saída. Premissas: 4 caracteres ≈ 1 token (razão já validada empiricamente nesta
+  obra em 31/08: resposta real de 1.800 caracteres/450 tokens); preço do
+  `claude-sonnet-4-6` = US$3/1M tokens de entrada, US$15/1M de saída; câmbio
+  US$/R$ 5,18 (cotação de 31/08/2026, não reverificada nesta sessão).
+- Caso-teto (5 chunks todos no tamanho máximo de 11.321 caracteres, improvável na
+  prática): ≈ R$ 0,26/pergunta.
+- **R$ 0,175/mensagem** em regime estável com histórico de conversa acumulado
+  (turnos 7–10 de uma sessão de 10 perguntas) — valor **medido de verdade** (não
+  estimado) no piloto de "Tempo para Viver" em 31/08/2026, maior que o cálculo de
+  primeiro turno porque inclui o histórico que `sanitizarHistorico` acumula a cada
+  troca (até 6 trocas/12 mensagens).
+
+**PENDÊNCIA NOVA — escopo por capítulo ainda não implementado**
+
+- Exige mudança de arquitetura (`buscarContextoLivro` não sabe onde o leitor está na
+  obra hoje). O limite diário (acima) já foi aplicado via variável de ambiente nesta
+  sessão — só o escopo por capítulo segue pendente.
+
 ### 01/09/2026 (Livro-Vivo — proteção de material canônico no prompt, regra de acesso registrada, pendências de vocabulário e granularidade)
 
 Continuação da mesma sessão de 01/09 (ver bloco abaixo sobre a investigação do chat do
