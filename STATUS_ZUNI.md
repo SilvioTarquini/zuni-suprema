@@ -284,6 +284,93 @@ arquivos nunca devem divergir sobre o mesmo item.
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
 
+### 01/09/2026 (audiolivro de "Tempo para Viver" — pipeline de produção, ajuste de ritmo, redivisão em 7 partes)
+
+Frente separada do Livro-Vivo (chat), mesma obra. Produção do audiolivro pago, ainda
+**não publicada** — só geração e validação local até aqui.
+
+**REGISTRO — fonte confirmada**: manuscrito é
+`C:\Users\Silvio\Documents\1 - Obras Novas\1 - Obras Na Loja\Tempo-Para-Viver.docx`
+(não um dos rascunhos V1/V2/V3 encontrados em `Últimas Obras 08.26\` — esse é o único
+cujos 30 capítulos batem com o que já está indexado no Livro-Vivo). Extraído via
+`scripts/extrair-texto-docx.js` (Sumário detectado e removido, cobertura 99,6%):
+**106.369 palavras / 728.189 caracteres** limpos.
+
+**REGISTRO — rodapés de navegação removidos do texto que vai ao TTS**: o manuscrito
+tem um rodapé "Este capítulo se conecta especialmente com:" com lista de capítulos
+relacionados — só **2 ocorrências no livro inteiro** (depois do Cap.1 e do Cap.2, não
+30 como se supôs inicialmente nesta sessão), mas cada uma continha linhas começando
+com `Capítulo N —`, o mesmo padrão que `RE_INICIO_CAPITULO` usa para forçar quebra de
+capítulo — gerava falso positivo de início de capítulo. Removido por inteiro (não só
+corrigida a colagem de espaço) do `.txt` usado para síntese; confirmado depois que
+`RE_INICIO_CAPITULO` encontra exatamente 30 ocorrências no texto limpo.
+
+**REGISTRO — ajuste de ritmo aprovado por escuta**: `speakingRate: 0.95` (era 1.0) e
+pausa de parágrafo `<break strength="strong"/>` (era `medium`) — testado em duas
+amostras comparativas (A: só pausa maior; B: pausa maior + rate reduzido), B aprovado.
+Vale só para este audiolivro nesta sessão — não é mudança no default de
+`audiolivroGenerator.js` (`speakingRate: 1.0` continua o valor do arquivo; o 0.95 foi
+passado à parte na síntese ad-hoc desta obra).
+
+**REGISTRO — vozes alternadas por bloco de capítulos** (nunca trocam no meio de uma
+parte): `pt-BR-Wavenet-A` (front-matter–Cap.12), `pt-BR-Wavenet-B` (Cap.13–27),
+`pt-BR-Wavenet-A` (Cap.28–30+Epílogo).
+
+**REGISTRO — cota do Google TTS de setembro**: consumida em ~728 mil caracteres numa
+única rodada (a obra inteira, uma vez). **Sem margem para regerar conteúdo grande de
+novo este mês** — qualquer nova rodada de síntese do texto inteiro (não só
+anunciações, que são poucas dezenas de caracteres cada) precisa esperar o próximo
+ciclo de cota ou ser avaliada com cuidado.
+
+**REGISTRO — a estimativa de palavras/minuto errou 13-17% para menos**: a calibração
+usada para planejar os cortes (143,4 palavras/min, tirada de 5 audiolivros reais do
+Universo Feminino) subestimou a duração real desta obra/voz em 10-17% conforme a
+parte. **Lição para próximos cortes: usar duração REAL medida (ffprobe), nunca a
+estimativa de palavras/minuto**, sobretudo perto de um teto rígido de tamanho.
+
+**REGISTRO — limite do Supabase Storage confirmado**: **50MB fixo, plano Free, não
+configurável** — visto direto em Storage → Settings do Dashboard (não é config de
+bucket: `file_size_limit` do bucket `audiolivros` está `null`, o teto vem do limite
+global do projeto). Encerra a dúvida que motivou os itens abaixo.
+
+**REGISTRO — estado atual: redivisão de 5 para 7 partes, em andamento**: as 5 partes
+originais (cortadas por estimativa de palavras/minuto) ficaram desequilibradas —
+P2 49,52MB / P3 49,32MB / P4 50,66MB (**estourou o teto de 50MB**) contra P5 com só
+20,50MB. Recalculado com duração real + alvo de 45MB (folga) + regra de nunca misturar
+voz numa mesma parte → mínimo possível é **7 partes** (não cabe em 6 sem violar o alvo
+de 45MB ou a regra de voz única por parte), tabela aprovada:
+
+| Parte | Voz | Capítulos | Duração (real calibrada) | Tamanho estimado |
+|---|---|---|---|---|
+| 1 | A | front-matter – Cap.4 | 1h57m48s | 28,27 MB |
+| 2 | A | Cap.5 – Cap.8 | 2h2m4s | 29,30 MB |
+| 3 | A | Cap.9 – Cap.12 | 2h21m56s | 34,06 MB |
+| 4 | B | Cap.13 – Cap.17 | 2h18m4s | 33,14 MB |
+| 5 | B | Cap.18 – Cap.23 | 2h30m53s | 36,21 MB |
+| 6 | B | Cap.24 – Cap.27 | 2h7m35s | 30,62 MB |
+| 7 | A | Cap.28 – Cap.30 (+Epílogo) | 1h25m26s | 20,50 MB |
+
+Montagem feita **sem sintetizar conteúdo novo** — cortando (`ffmpeg -c copy`) e
+recombinando os áudios já renderizados das 5 partes originais (mais a divisão em duas
+que a Parte 4 original já tinha sofrido por estourar 50MB sozinha). Só as 6
+anunciações ("Tempo para Viver. Parte N.") das Partes 2 a 7 precisaram ser
+sintetizadas de novo (poucos segundos cada, custo desprezível) — a Parte 1 reaproveita
+a anunciação original, que já dizia o número certo.
+
+**PENDÊNCIA — antes de considerar este audiolivro pronto para publicar**:
+- Escutar as fronteiras novas das 7 partes (início/fim de cada uma e as 6 transições)
+  — os pontos de corte são estimados por proporção de caracteres, não medidos
+  exatamente; podem cair um pouco antes/depois do silêncio real entre parágrafos.
+- Upload para o Supabase Storage (bucket `audiolivros`) — **não feito ainda**.
+- Atualizar `catalogoLivros.js`: `audiobookPartes` com as 7 URLs, `audiobookDisponivel:
+  true`, `precoAudiobook` (preço já decidido em sessão anterior pela faixa de duração,
+  ver seção mais abaixo).
+
+**CORREÇÃO DE REGISTRO**: a lista de pendências pedida nesta sessão incluía "2
+commits não empurrados, `797d01c` e `bcf4bb2`" — conferido agora: **já estão
+empurrados e implantados**, `git log origin/main..HEAD` vazio, sem divergência.
+Não há push pendente no momento deste registro.
+
 ### 01/09/2026 (Livro-Vivo — badge de tempo-para-viver habilitado)
 
 - `chatDisponivel: true` adicionado à entrada `tempo-para-viver` em
