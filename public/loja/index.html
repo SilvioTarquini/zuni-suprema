@@ -171,7 +171,8 @@
   }
 
   .badge-volume,
-  .badge-audio {
+  .badge-audio,
+  .badge-chat {
     position: absolute;
     font-family: Arial, sans-serif;
   }
@@ -188,9 +189,8 @@
     letter-spacing: 0.3px;
   }
 
-  .badge-audio {
-    bottom: 8px;
-    right: 8px;
+  .badge-audio,
+  .badge-chat {
     width: 26px;
     height: 26px;
     border-radius: 50%;
@@ -200,6 +200,19 @@
     align-items: center;
     justify-content: center;
     font-size: 0.85rem;
+  }
+
+  .badge-audio {
+    bottom: 8px;
+    right: 8px;
+  }
+
+  /* Canto oposto ao de .badge-audio: os dois só coexistem hoje no Vol. I
+     dos Bastidores (único chatDisponivel que também é audiobookDisponivel),
+     e não podem se sobrepor. */
+  .badge-chat {
+    top: 8px;
+    right: 8px;
   }
 
   .info {
@@ -303,7 +316,8 @@
     margin: 0 0 14px;
   }
 
-  .info .selo-audiobook {
+  .info .selo-audiobook,
+  .info .selo-chat {
     display: inline-block;
     align-self: flex-start;
     margin: 0 0 10px;
@@ -422,7 +436,7 @@
 
   /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
      O corpo (.info) reaproveita as mesmas classes/estilos do card antigo
-     (resumo, descricao-expandida.ativa, rodape-card, preco, selo-audiobook,
+     (resumo, descricao-expandida.ativa, rodape-card, preco, selo-audiobook, selo-chat,
      etiqueta-digital, a.comprar) — nenhuma regra nova precisa duplicar essa lógica. */
   .painel-overlay {
     position: fixed;
@@ -541,6 +555,7 @@
       </div>
       <div class="rodape-card">
         <p class="preco" id="painel-preco"></p>
+        <span class="selo-chat" id="painel-selo-chat" hidden>💬 Converse com o livro</span>
         <span class="selo-audiobook" id="painel-selo-audiobook" hidden></span>
         <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
         <a class="comprar" id="painel-comprar" href="#"></a>
@@ -618,6 +633,7 @@
   let painelDescricao = null;
   let painelPreco = null;
   let painelSeloAudiobook = null;
+  let painelSeloChat = null;
   let painelComprar = null;
   let cardComFocoAnterior = null;
 
@@ -630,6 +646,7 @@
     painelDescricao = document.getElementById('painel-descricao');
     painelPreco = document.getElementById('painel-preco');
     painelSeloAudiobook = document.getElementById('painel-selo-audiobook');
+    painelSeloChat = document.getElementById('painel-selo-chat');
     painelComprar = document.getElementById('painel-comprar');
 
     painelFechar.addEventListener('click', fecharPainel);
@@ -658,6 +675,8 @@
     } else {
       painelSeloAudiobook.hidden = true;
     }
+
+    painelSeloChat.hidden = !livro.chatDisponivel;
 
     painelComprar.href = urlCompra;
     painelComprar.textContent = livro.preco === 0 ? 'Ler grátis' : 'Comprar';
@@ -710,6 +729,7 @@
           <img src="${urlCapa}" alt="Capa — ${tituloExibido}" loading="lazy" onerror="console.error('[loja] capa não carregou para', '${livroId}', '→', this.src)">
           ${livro.volume ? `<span class="badge-volume">Vol. ${livro.volume}</span>` : ''}
           ${livro.audiobookDisponivel ? `<span class="badge-audio" aria-hidden="true">🎧</span>` : ''}
+          ${livro.chatDisponivel ? `<span class="badge-chat" aria-hidden="true">💬</span>` : ''}
         </div>
         <div class="info">
           <h2>${tituloExibido}</h2>
