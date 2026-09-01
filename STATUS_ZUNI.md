@@ -4,10 +4,28 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 01/09/2026 (investigação de contaminação de contexto no chat
-> do Mentor). Ver seção "01/09/2026 (investigação de contaminação de contexto no
-> chat do Mentor — não é vazamento entre clientes)" logo abaixo para detalhe
-> completo. Resumo: usuário relatou, em teste no celular, sessão nova
+> Última atualização: 01/09/2026 (pipeline do audiolivro de "Tempo para Viver" —
+> sessão encerrada com trabalho pendente para o dia seguinte). Ver seção "01/09/2026
+> (audiolivro de 'Tempo para Viver' — pipeline de produção, ajuste de ritmo,
+> redivisão em 7 partes)" logo abaixo para detalhe completo. Resumo: manuscrito
+> confirmado (`Tempo-Para-Viver.docx` em `1 - Obras Na Loja`), texto limpo de rodapés
+> que confundiam a detecção de capítulo, ritmo de narração ajustado e aprovado por
+> escuta (`speakingRate 0.95` + pausa maior), voz alternada por bloco de capítulos
+> (A/B/A). As 5 partes originais (cortadas por estimativa de palavras/minuto, que
+> errou 10-17% para menos) ficaram desequilibradas e uma estourou o teto de 50MB do
+> Supabase (confirmado no Dashboard: fixo, plano Free, não configurável) — redivididas
+> em **7 partes** usando duração real medida, sem sintetizar conteúdo novo (só cortes
+> e recombinação dos áudios já renderizados + 6 anunciações curtas). As 7 partes estão
+> prontas localmente (`audiolivros-teste\tempo-para-viver-v2-parteN.mp3`), medidas de
+> verdade (28-36MB cada), mas **ainda não ouvidas nem publicadas** — próxima sessão
+> começa por aí. Cota de setembro do Google TTS já consumida em ~728 mil caracteres
+> (a obra inteira, uma vez) — sem margem para regerar conteúdo grande este mês.
+> **Commit local pendente de push**: `d3b4f4c` (e o novo commit desta atualização de
+> status) — nenhum push pedido nesta sessão.
+>
+> Nota anterior (01/09/2026, investigação de contaminação de contexto no chat do
+> Mentor — não é vazamento entre clientes): usuário relatou, em teste no celular,
+> sessão nova
 > (`zztest-chat-mentor`) cuja primeira mensagem foi "Olá. Meu nome é Silvio. Pode
 > ajudar a melhorar meu desempenho mental?" — e o Mentor respondeu mencionando
 > insônia, peito apertado e "semanas de sono ruim", nada disso dito pelo usuário.
@@ -333,34 +351,53 @@ configurável** — visto direto em Storage → Settings do Dashboard (não é c
 bucket: `file_size_limit` do bucket `audiolivros` está `null`, o teto vem do limite
 global do projeto). Encerra a dúvida que motivou os itens abaixo.
 
-**REGISTRO — estado atual: redivisão de 5 para 7 partes, em andamento**: as 5 partes
-originais (cortadas por estimativa de palavras/minuto) ficaram desequilibradas —
-P2 49,52MB / P3 49,32MB / P4 50,66MB (**estourou o teto de 50MB**) contra P5 com só
+**REGISTRO — redivisão de 5 para 7 partes concluída (local, não publicada)**: as 5
+partes originais (cortadas por estimativa de palavras/minuto) ficaram desequilibradas
+— P2 49,52MB / P3 49,32MB / P4 50,66MB (**estourou o teto de 50MB**) contra P5 com só
 20,50MB. Recalculado com duração real + alvo de 45MB (folga) + regra de nunca misturar
 voz numa mesma parte → mínimo possível é **7 partes** (não cabe em 6 sem violar o alvo
-de 45MB ou a regra de voz única por parte), tabela aprovada:
+de 45MB ou a regra de voz única por parte). Montada e **medida de verdade** (ffprobe,
+não estimativa):
 
-| Parte | Voz | Capítulos | Duração (real calibrada) | Tamanho estimado |
+| Parte | Voz | Capítulos | Duração real | Tamanho real |
 |---|---|---|---|---|
-| 1 | A | front-matter – Cap.4 | 1h57m48s | 28,27 MB |
-| 2 | A | Cap.5 – Cap.8 | 2h2m4s | 29,30 MB |
-| 3 | A | Cap.9 – Cap.12 | 2h21m56s | 34,06 MB |
-| 4 | B | Cap.13 – Cap.17 | 2h18m4s | 33,14 MB |
-| 5 | B | Cap.18 – Cap.23 | 2h30m53s | 36,21 MB |
-| 6 | B | Cap.24 – Cap.27 | 2h7m35s | 30,62 MB |
-| 7 | A | Cap.28 – Cap.30 (+Epílogo) | 1h25m26s | 20,50 MB |
+| 1 | A | front-matter – Cap.4 | 1h57m50s | 28,28 MB |
+| 2 | A | Cap.5 – Cap.8 | 2h2m7s | 29,31 MB |
+| 3 | A | Cap.9 – Cap.12 | 2h21m58s | 34,07 MB |
+| 4 | B | Cap.13 – Cap.17 | 2h18m7s | 33,15 MB |
+| 5 | B | Cap.18 – Cap.23 | 2h30m56s | 36,23 MB |
+| 6 | B | Cap.24 – Cap.27 | 2h7m38s | 30,63 MB |
+| 7 | A | Cap.28 – Cap.30 (+Epílogo) | 1h25m25s | 20,50 MB |
 
-Montagem feita **sem sintetizar conteúdo novo** — cortando (`ffmpeg -c copy`) e
-recombinando os áudios já renderizados das 5 partes originais (mais a divisão em duas
-que a Parte 4 original já tinha sofrido por estourar 50MB sozinha). Só as 6
-anunciações ("Tempo para Viver. Parte N.") das Partes 2 a 7 precisaram ser
-sintetizadas de novo (poucos segundos cada, custo desprezível) — a Parte 1 reaproveita
-a anunciação original, que já dizia o número certo.
+Arquivos em `C:\Users\Silvio\Documents\1 - Zuni Suprema\audiolivros-teste\tempo-para-viver-v2-parteN.mp3`
+(prefixo `v2-` de propósito — os 5 arquivos antigos de 5 partes continuam na mesma
+pasta, superados mas não apagados, aguardando confirmação antes de limpar). Montagem
+feita **sem sintetizar conteúdo novo** — cortando (`ffmpeg -c copy`) e recombinando os
+áudios já renderizados das 5 partes originais (mais a divisão em duas que a Parte 4
+original já tinha sofrido por estourar 50MB sozinha, ver registro acima). Só as 6
+anunciações ("Tempo para Viver. Parte N.") das Partes 2 a 7 foram sintetizadas de novo
+(poucos segundos cada) — a Parte 1 reaproveita a anunciação original.
+
+**ACHADO — corte de anunciação antiga por estimativa errou por pouco, corrigido**: a
+Parte 7 reaproveita o conteúdo da Parte 5 antiga (Cap.28-30+Epílogo), que já tinha a
+anunciação "Parte 5" embutida no início — precisou cortar essa anunciação fora antes
+de prefixar a nova "Parte 7". Detecção de silêncio (`ffmpeg silencedetect`, vários
+limiares de -25dB a -50dB) **não encontrou nenhum candidato** nos primeiros segundos —
+a recodificação a 32kbps parece eliminar qualquer silêncio limpo detectável nesse
+nível. Corte inicial por estimativa (2,5s) media contra uma referência com taxa de
+fala errada (1.0, não 0.95) — medindo com precisão uma anunciação nova equivalente
+("Parte 5" novamente, mesma voz/taxa): **2,7165s reais**. O corte de 2,5s estava
+cortando dentro da fala, não no silêncio depois dela. Recortado em 2,9s (margem de
+segurança) e a Parte 7 foi remontada — **é a transição mais frágil das 7 e a que mais
+precisa de escuta atenta** antes de aprovar.
 
 **PENDÊNCIA — antes de considerar este audiolivro pronto para publicar**:
-- Escutar as fronteiras novas das 7 partes (início/fim de cada uma e as 6 transições)
-  — os pontos de corte são estimados por proporção de caracteres, não medidos
-  exatamente; podem cair um pouco antes/depois do silêncio real entre parágrafos.
+- **Escutar as 7 partes** — início, fim, e as 6 transições internas (a Parte 7,
+  especialmente o primeiro segundo depois da anunciação, é a mais frágil — ver achado
+  acima). Nenhuma parte foi ouvida ainda nesta sessão.
+- Decidir se apaga os 5 arquivos antigos (`tempo-para-viver-parte1.mp3` a `parte5.mp3`
+  e as variantes intermediárias `parte4-NOVO-cap21-24`/`parte5-conteudo-cap25-27-SEM-ANUNCIO`)
+  depois que as 7 novas partes forem aprovadas.
 - Upload para o Supabase Storage (bucket `audiolivros`) — **não feito ainda**.
 - Atualizar `catalogoLivros.js`: `audiobookPartes` com as 7 URLs, `audiobookDisponivel:
   true`, `precoAudiobook` (preço já decidido em sessão anterior pela faixa de duração,
