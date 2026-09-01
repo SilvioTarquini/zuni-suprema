@@ -4,8 +4,36 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 31/08/2026 (gating de acesso audiolivro × flipbook +
-> diagnóstico de venda avulsa de audiolivro e divulgação do Livro-Vivo). Ver seção
+> Última atualização: 01/09/2026 (investigação de contaminação de contexto no chat
+> do Mentor). Ver seção "01/09/2026 (investigação de contaminação de contexto no
+> chat do Mentor — não é vazamento entre clientes)" logo abaixo para detalhe
+> completo. Resumo: usuário relatou, em teste no celular, sessão nova
+> (`zztest-chat-mentor`) cuja primeira mensagem foi "Olá. Meu nome é Silvio. Pode
+> ajudar a melhorar meu desempenho mental?" — e o Mentor respondeu mencionando
+> insônia, peito apertado e "semanas de sono ruim", nada disso dito pelo usuário.
+> **Vazamento entre clientes descartado com evidência direta**: a "memória de
+> jornada" (`MEMORIA_JORNADA_ATIVA`) está desligada tanto local quanto em produção
+> (confirmado via `railway variables`); mesmo ligada, só busca pelo e-mail exato da
+> própria sessão, e a tabela `resumos_sessoes` está com 0 linhas em produção —
+> nunca gravou nada. O pacote de Sessões Extras (outro caminho de memória, sempre
+> ativo) também é scoped por e-mail exato e nem chega a rodar em sessões sem
+> e-mail — a maioria hoje, desde a Etapa 1 do checkout de 26/08. O RAG geral só
+> busca em `documentos` (base de conhecimento curada, nunca transcrição de sessão).
+> **Achado real**: localizei a sessão de fato no banco — a resposta *salva* não
+> menciona sintoma nenhum (pergunta de esclarecimento genérica). Reproduzi a mesma
+> mensagem 4 vezes em sessões novas e limpas: nenhuma fabricou sintomas. Logado o
+> `systemPromptFinal` completo de uma requisição real (pedido do usuário): o
+> `SYSTEM_PROMPT` fixo instrui o Mentor a "sinalizar a conexão corpo-mente" e
+> incorporar o RAG "como se fosse conhecimento próprio" — com "sono ruim" como
+> exemplo de frase — sobre uma busca RAG genérica (pergunta aberta, sem tema) que
+> trouxe blocos grandes sobre sono/magnésio da base de conhecimento comum. É um
+> mecanismo real de risco de alucinação por design de prompt, não um vazamento de
+> dados — mas não ficou provado que foi exatamente isso que o usuário viu no
+> celular (a resposta salva no banco diverge do relato). Ver seção para as 3
+> hipóteses remanescentes e o próximo passo proposto no prompt.
+>
+> Nota anterior (31/08/2026, gating de acesso audiolivro × flipbook +
+> diagnóstico de venda avulsa de audiolivro e divulgação do Livro-Vivo): Ver seção
 > "31/08/2026 (gating de acesso audiolivro × flipbook + diagnóstico venda avulsa e
 > divulgação do Livro-Vivo)" logo abaixo para detalhe completo. Resumo: corrigido bug
 > de controle de acesso pré-existente — `verificarAcesso` (`lib/acessoLivros.js`)
@@ -255,6 +283,152 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 01/09/2026 (Livro-Vivo — proteção de material canônico no prompt, regra de acesso registrada, pendências de vocabulário e granularidade)
+
+Continuação da mesma sessão de 01/09 (ver bloco abaixo sobre a investigação do chat do
+Mentor). Commit `97e7945`.
+
+**REGISTRO — regra de acesso livro × audiolivro é decisão de produto, não bug residual**
+
+- Quem compra o LIVRO tem direito a ler, ouvir, baixar e perguntar (Livro-Vivo). Quem
+  compra só o AUDIOLIVRO tem direito a ouvir na página e baixar — sem leitura e sem
+  Livro-Vivo. Isso é decisão comercial deliberada, não descuido: o array
+  `['livro', 'audiolivro']` em `/audiolivros/:livroId` e o `['livro']` em `/livros/` e
+  em `/api/livro-chat` (`src/routes/livros.js`, `src/routes/livroChat.js`) implementam
+  essa regra. **Não "corrigir" no futuro** sem decisão explícita de produto.
+
+**REGISTRO — vocabulário: Mentor ZUNI ≠ Livro-Vivo**
+
+- "Mentor ZUNI" = sessão paga avulsa (chat geral, `/api/chat`, RAG por `tema`).
+  "Livro-Vivo" = chat embutido na obra comprada (`/api/livro-chat`, RAG por
+  `livro_id`). São produtos distintos, com bases, limites diários e prompts distintos
+  (`src/server.js` × `src/routes/livroChat.js`). Decisões sobre um não se aplicam
+  automaticamente ao outro. Não usar "chat do Mentor" para se referir ao Livro-Vivo.
+
+**REGISTRO — material canônico: divergência deliberada entre Mentor e Livro-Vivo**
+
+- No Mentor, material como sinais de AVC/SAMU, alertas clínicos e avisos de conflito
+  de interesses foi EXCLUÍDO da base (RAG geral, tabela `documentos` filtrada por
+  `tema`). No Livro-Vivo, esse tipo de material PERMANECE indexado quando faz parte do
+  manuscrito da obra comprada — excluí-lo faria o chat negar conteúdo que está
+  literalmente no livro que o leitor pagou para ler. A proteção no Livro-Vivo é por
+  prompt, não por exclusão de base: `montarSystemPrompt` (`src/routes/livroChat.js`,
+  commit `97e7945`) instrui o modelo a localizar (capítulo + rótulo de seção) em vez
+  de resumir/parafrasear esse tipo de trecho, com precedência sobre a instrução de
+  concisão.
+
+**CORREÇÃO DE REGISTRO — tempo-para-viver não tem esse material hoje**
+
+- A base do Livro-Vivo de "Tempo para Viver" (114 chunks) **não** contém o material
+  canônico de AVC/SAMU, alerta de memória e conflito de interesses — verificado por
+  consulta direta ao Supabase em 01/09/2026 (0 ocorrências de "SAMU", "192", "AVC" e
+  "conflito de interesse(s)" em qualquer chunk). A suposição contrária, levantada no
+  início desta frente da sessão, estava errada. A regra de prompt entra como proteção
+  preventiva para as obras que ainda vão ser indexadas, não como correção de um risco
+  ativo nesta obra.
+
+**PENDÊNCIA NOVA — sem caminho de upgrade audiolivro → livro**
+
+- Não existe caminho de upgrade para quem comprou só o audiolivro e depois quiser o
+  livro. Sem prioridade definida.
+
+**PENDÊNCIA NOVA — granularidade inconsistente dos rótulos de chunk**
+
+- A granularidade dos rótulos de chunk varia dentro da mesma obra ("Tempo para
+  Viver", verificado nesta sessão): uns trazem capítulo, título e seção (`Capítulo 5
+  — Movimento é Liberdade — Na vida real … O medo de cair merece respeito, não
+  vergonha`), outros são fragmentos soltos (`OS SEIS HORIZONTES`, `1. AUTONOMIA`). A
+  regra de localização de material canônico (acima) depende do rótulo ter
+  capítulo/seção identificável; se o chunk relevante for um fragmento solto, o modelo
+  não tem como indicar onde fica na obra. Revisar na indexação das próximas obras
+  (peça 3 da proposta de pipeline automatizado, sessão de 31/08/2026).
+
+### 01/09/2026 (investigação de contaminação de contexto no chat do Mentor — não é vazamento entre clientes)
+
+Segunda investigação sobre este sintoma — a primeira (29/08/2026, ver seção mais
+abaixo) tinha fechado um caso parecido (sessão de teste `zztest` semeada à mão,
+nunca vazia). Relato do usuário: em teste no celular, sessão nova
+(`zztest-chat-mentor`), primeira mensagem "Olá. Meu nome é Silvio. Pode ajudar a
+melhorar meu desempenho mental?" — o Mentor respondeu mencionando insônia, peito
+apertado e "semanas de sono ruim", nada disso dito pelo usuário na sessão.
+
+**ENCERRADO — as duas hipóteses de vazamento entre clientes, descartadas com evidência direta**
+
+- **Memória de jornada** (`MEMORIA_JORNADA_ATIVA`, `src/lib/memoriaSessoes.js`) —
+  confirmado via `railway status` + `railway variables` (projeto `zuni-suprema`
+  conectado) que a variável **não está setada em produção**, e também não está no
+  `.env` local. Com a flag desligada, `injetarContextoJornada` devolve o prompt
+  inalterado sem consultar o banco. Mesmo que estivesse ligada, a busca é
+  `.eq('email', email)` — só traria resumos do MESMO e-mail, nunca de outro
+  cliente. E a tabela `resumos_sessoes` está com **0 linhas em produção**
+  (confirmado via `list_tables`) — o recurso nunca gravou nada, porque
+  `salvarResumoSessao` também checa a mesma flag antes de gravar.
+- **Pacote de Sessões Extras** (`buscarPacoteAtivo`/`buscarResumosDoPacko`,
+  `src/lib/creditosSessao.js`) — outro caminho de memória, esse **sempre ativo**
+  (não depende de flag), mas também filtra estritamente por e-mail exato
+  (`.eq('email', ...)` nos dois passos) e só roda se `session.email` existir. A
+  sessão do incidente — e a maioria das sessões do Mentor hoje, desde a Etapa 1 do
+  checkout de 26/08 — não coleta e-mail no início: `session.email` é `null`, então
+  nem esse caminho nem a memória de jornada chegam a executar.
+- **RAG geral** (`searchKnowledge`) busca só na tabela `documentos`, que contém
+  exclusivamente conteúdo curado da base de conhecimento (arquivos processados de
+  `.txt`/`.pdf`/`.docx`) — nunca transcrição de conversa de sessão nenhuma. Não há
+  caminho, nem acidental, para o RAG devolver algo que outro cliente disse.
+
+**INVESTIGADO — achado real, mas não 100% concluído**
+
+- Localizei a sessão de fato no banco (`session_id 6a0edb97-e854-4383-a55c-d327bcf0def2`,
+  `product_type: chat-mentor`, criada 28/08/2026, `email: null`, `message_count: 1`,
+  mensagem do usuário idêntica à relatada). **A resposta gravada no banco não
+  menciona insônia nem peito apertado** — é uma pergunta de esclarecimento
+  genérica e apropriada ("Desempenho mental é um tema amplo... o que você está
+  sentindo...").
+- Reproduzi a mesma mensagem **4 vezes** em sessões novas e limpas (`paid:true`,
+  `email:null`, `history:[]`, inseridas e removidas via SQL direto em produção,
+  testadas contra servidor local): **nenhuma das 4 respostas fabricou sintomas** —
+  todas pediram esclarecimento, no mesmo estilo da resposta gravada.
+- **Logado o `systemPromptFinal` completo de uma requisição real** (pedido
+  explícito do usuário) — achado relevante: o `SYSTEM_PROMPT` fixo
+  (`server.js`, bloco "SAÚDE INTEGRATIVA — NUTRIÇÃO, MICROBIOTA E SUPLEMENTAÇÃO")
+  instrui explicitamente o Mentor a **"sinalizar a conexão corpo-mente"** e
+  **"incorporar o conteúdo do RAG como se fosse conhecimento próprio do Mentor"**,
+  sem citar a fonte — com `"Sono ruim → magnésio, melatonina, eixo
+  intestino-cérebro"` como exemplo de correlação a usar "com naturalidade". A
+  busca RAG genérica (sem tema de questionário — pergunta muito aberta) trouxe 5
+  blocos grandes e genéricos sobre saúde cerebral/sono/magnésio, de arquivos da
+  base de conhecimento comuns a todas as sessões — não de qualquer sessão de
+  cliente.
+- **Conclusão**: o mecanismo que PODE produzir esse tipo de resposta é real e
+  demonstrado — a combinação de busca RAG genérica (pergunta aberta, sem tema) +
+  instrução do prompt para "soar como conhecimento próprio" cria pressão real para
+  o modelo tratar conteúdo genérico de sono/saúde como se fosse leitura do próprio
+  usuário. Isso é um problema de **alucinação/design de prompt**, não de
+  vazamento de dados — é estruturalmente impossível hoje o RAG ou a memória
+  trazerem informação de OUTRA pessoa, porque as duas memórias de sessão estão
+  desligadas ou vazias, e o RAG só acessa conteúdo de base de conhecimento
+  estática.
+- **Não resolvido com certeza**: por que a resposta no celular (com sintomas
+  fabricados) diverge da resposta salva no banco para a mesma sessão. Três
+  hipóteses, nenhuma confirmada: (1) o modelo é não-determinístico — pode ter
+  fabricado na tentativa real e não nas 4 reproduções (a instrução do prompt cria
+  a condição, não garante o resultado); (2) o usuário está lembrando/relatando uma
+  troca diferente da que ficou gravada; (3) condição de corrida — duplo envio no
+  celular gerando duas chamadas quase simultâneas ao `/api/chat`, com a segunda
+  resposta sobrescrevendo a primeira no banco antes da consulta.
+
+**PRÓXIMO**
+
+- Revisar a instrução "sinalizar a conexão corpo-mente" no `SYSTEM_PROMPT`
+  (`server.js`, bloco "SAÚDE INTEGRATIVA") — mesmo sem confirmar que foi a causa
+  exata deste incidente, é uma instrução que convida o modelo a apresentar
+  conteúdo genérico do RAG como leitura pessoal do cliente, risco de fabricação
+  especialmente em mensagens muito abertas/com pouca informação real. Considerar
+  exigir que a conexão corpo-mente só seja sinalizada quando o USUÁRIO tiver
+  relatado um sintoma real na conversa, nunca a partir só do conteúdo recuperado.
+- Se o sintoma se repetir, capturar a mensagem e a resposta imediatamente (print
+  de tela + horário) para cruzar com os logs do Railway antes que a rotina de
+  retenção ou um novo turno sobrescreva o estado da sessão.
 
 ### 31/08/2026 (gating de acesso audiolivro × flipbook + diagnóstico venda avulsa e divulgação do Livro-Vivo)
 
