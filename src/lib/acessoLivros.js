@@ -75,13 +75,17 @@ async function criarAcesso({ livroId, email, paymentId }) {
 
 /**
  * Verifica se um token é válido para um determinado livro:
- * existe, está dentro do prazo. Retorna o registro se válido, ou null.
+ * existe, está dentro do prazo, e o tipo_produto do token está entre os
+ * permitidos para a rota que chamou (livro e audiolivro são produtos
+ * distintos — ver comentário em routes/livros.js sobre exigirAcesso).
+ * Retorna o registro se válido, ou null.
  *
  * @param {string} token
  * @param {string} livroId
+ * @param {string[]} [tiposPermitidos=['livro']] - tipo_produto aceitos ('livro', 'audiolivro')
  * @returns {Promise<Object|null>}
  */
-async function verificarAcesso(token, livroId) {
+async function verificarAcesso(token, livroId, tiposPermitidos = ['livro']) {
   if (!token) return null;
   const supabaseClient = assertSupabase();
 
@@ -96,6 +100,8 @@ async function verificarAcesso(token, livroId) {
 
   const expirado = new Date(data.data_expiracao).getTime() < Date.now();
   if (expirado) return null;
+
+  if (!tiposPermitidos.includes(data.tipo_produto)) return null;
 
   // Marca o primeiro acesso (não bloqueia reuso dentro do prazo,
   // apenas registra para fins de auditoria/estatística)

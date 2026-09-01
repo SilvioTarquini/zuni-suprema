@@ -35,32 +35,41 @@ const LIVRO_ID_VALIDO = /^[a-zA-Z0-9_-]+$/;
 // Vitrine: pública, sem necessidade de token
 router.use('/loja', express.static(path.join(PUBLIC_DIR, 'loja')));
 
-// Middleware: exige token válido (?token=xxxx) para qualquer rota /livros/:livroId/*
-async function exigirAcesso(req, res, next) {
-  const { livroId } = req.params;
-  const token = req.query.token;
+// Middleware: exige token válido (?token=xxxx) para a rota que o usa.
+// livro e audiolivro são produtos distintos — quem comprou só o áudio não
+// deve abrir o flipbook. tiposPermitidos define, por rota, quais
+// tipo_produto de acessos_livros satisfazem o acesso (ver verificarAcesso
+// em lib/acessoLivros.js). Quem comprou o combo tem duas linhas em
+// acessos_livros (uma 'livro', uma 'audiolivro'), cada uma abrindo sua
+// própria rota; a rota de audiolivro aceita também o token 'livro' porque
+// esse é o token único de quem comprou o combo.
+function exigirAcesso(tiposPermitidos) {
+  return async function (req, res, next) {
+    const { livroId } = req.params;
+    const token = req.query.token;
 
-  if (!LIVRO_ID_VALIDO.test(livroId)) {
-    return res.status(400).send('Identificador de livro inválido.');
-  }
-
-  try {
-    const acesso = await verificarAcesso(token, livroId);
-
-    if (!acesso) {
-      return res.status(403).sendFile(PAGINA_ACESSO_EXPIRADO);
+    if (!LIVRO_ID_VALIDO.test(livroId)) {
+      return res.status(400).send('Identificador de livro inválido.');
     }
 
-    req.acessoLivro = acesso;
-    next();
-  } catch (err) {
-    console.error('Erro em exigirAcesso:', err.message);
-    return res.status(500).send('Erro ao verificar o acesso. Tente novamente em instantes.');
-  }
+    try {
+      const acesso = await verificarAcesso(token, livroId, tiposPermitidos);
+
+      if (!acesso) {
+        return res.status(403).sendFile(PAGINA_ACESSO_EXPIRADO);
+      }
+
+      req.acessoLivro = acesso;
+      next();
+    } catch (err) {
+      console.error('Erro em exigirAcesso:', err.message);
+      return res.status(500).send('Erro ao verificar o acesso. Tente novamente em instantes.');
+    }
+  };
 }
 
 // Leitura na tela (HTML do livro, com ler/baixar/imprimir embutidos)
-router.get('/livros/:livroId', exigirAcesso, async (req, res) => {
+router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {
   const { livroId } = req.params;
 
   try {
@@ -155,7 +164,7 @@ router.get('/livros/:livroId', exigirAcesso, async (req, res) => {
 // de audiobookUrl (string única). Os dois campos são mutuamente exclusivos
 // em catalogoLivros.js. Mesmo modelo de confiança nos dois casos: depois da
 // checagem de token, o(s) link(s) entregues são URLs públicas do Supabase.
-router.get('/audiolivros/:livroId', exigirAcesso, async (req, res) => {
+router.get('/audiolivros/:livroId', exigirAcesso(['livro', 'audiolivro']), async (req, res) => {
   const { livroId } = req.params;
 
   try {

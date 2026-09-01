@@ -143,7 +143,9 @@ router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
       return res.status(400).json({ error: `Pergunta inválida (obrigatória, até ${PERGUNTA_MAX_CHARS} caracteres).` });
     }
 
-    const acesso = await verificarAcesso(token, livro_id);
+    // Conversar exige o token do livro — quem comprou só o audiolivro não
+    // tem acesso ao texto completo da obra para conversar sobre ele.
+    const acesso = await verificarAcesso(token, livro_id, ['livro']);
     if (!acesso) {
       return res.status(401).json({ error: 'Token inválido ou sem acesso a esta obra.' });
     }
