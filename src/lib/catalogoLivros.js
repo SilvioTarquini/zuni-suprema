@@ -420,7 +420,7 @@ const CATALOGO = {
       'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-ve/alem-do-que-voce-ve-parte2.mp3'
     ],
     audiobookDisponivel: true,
-    precoAudiobook: 34.90
+    precoAudiobook: 29.90
   },
   'alem-do-que-voce-sente': {
     titulo: 'Além do Que Você Sente',
@@ -438,7 +438,7 @@ const CATALOGO = {
       'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/alem-do-que-voce-sente/alem-do-que-voce-sente-parte3.mp3'
     ],
     audiobookDisponivel: true,
-    precoAudiobook: 34.90
+    precoAudiobook: 29.90
   },
   'o-caminho-da-consciencia': {
     titulo: 'O Caminho da Consciência',
