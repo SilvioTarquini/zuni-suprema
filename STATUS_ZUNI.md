@@ -284,6 +284,16 @@ arquivos nunca devem divergir sobre o mesmo item.
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
 
+### 01/09/2026 (Livro-Vivo — badge de tempo-para-viver habilitado)
+
+- `chatDisponivel: true` adicionado à entrada `tempo-para-viver` em
+  `src/lib/catalogoLivros.js` — reverte a decisão de 31/08/2026 de deixar o campo
+  ausente até decisão final ("Decidir se 'Tempo para Viver' fica com chat habilitado
+  publicamente — segue não habilitado por instrução explícita do usuário nesta
+  sessão"). Motivo da reversão: a obra tem 114 chunks indexados e o widget
+  funcionando desde o piloto de 31/08 — só faltava o campo do catálogo para o badge
+  "Livro-Vivo" aparecer na loja.
+
 ### 01/09/2026 (Livro-Vivo — escopo de resposta, limite diário e custo por pergunta, dimensionando a extensão às 38 obras)
 
 Continuação da mesma sessão de 01/09 (ver blocos abaixo sobre o Livro-Vivo e sobre a

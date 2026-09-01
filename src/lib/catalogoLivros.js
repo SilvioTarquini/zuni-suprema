@@ -484,7 +484,8 @@ const CATALOGO = {
     descricao: 'A maturidade costuma ser tratada como um período de perdas a administrar. Esta obra parte de outra premissa: há decisões a tomar, capacidades a manter e um tempo de vida que ainda comporta escolha, movimento e propósito.\n\nO livro se organiza em seis horizontes — Autonomia, Continuidade, Capacidade, Conexão, Curiosidade e Significado — que atravessam trinta capítulos sobre corpo, mente, relações, dinheiro, tecnologia, propósito e o modo como cada um desses campos sustenta ou limita a liberdade de decidir.\n\nCada capítulo se sustenta sozinho: pode ser lido na ordem ou consultado conforme a necessidade do momento. O tom é direto e sem idealização — não promete juventude prolongada nem fórmulas de bem-estar. Onde o assunto exige acompanhamento profissional, o texto diz isso com clareza, em vez de substituí-lo.\n\nUma obra do selo ZUNI Horizontes, escrita para ser usada — e revisitada — ao longo dos anos.',
     indicadoPara: 'Para quem entrou na maturidade e quer continuar decidindo a própria vida — autonomia, capacidade, dinheiro, propósito — sem idealização.',
     audiobookDisponivel: false,
-    precoAudiobook: 39.90
+    precoAudiobook: 39.90,
+    chatDisponivel: true
   },
 };
 
