@@ -22,34 +22,36 @@
       text-align: center;
     }
     h1 {
-      font-size: 28px;
+      font-size: 33px;
       color: #ffffff;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
       font-weight: normal;
+      line-height: 1.25;
     }
     .subtitle {
-      font-size: 14px;
+      font-size: 17px;
       color: #888;
-      margin-bottom: 40px;
+      margin-bottom: 44px;
       font-style: italic;
+      line-height: 1.4;
     }
     .card {
       background: #141414;
       border: 1px solid #2a2a2a;
       border-radius: 12px;
-      padding: 40px 32px;
+      padding: 44px 36px;
     }
     .price-block {
       margin-bottom: 32px;
     }
     .price {
-      font-size: 42px;
+      font-size: 47px;
       color: #c9a84c;
       font-weight: bold;
     }
-    .price span { font-size: 20px; }
+    .price span { font-size: 22px; }
     .price-desc {
-      font-size: 13px;
+      font-size: 15px;
       color: #666;
       margin-top: 4px;
     }
@@ -59,18 +61,19 @@
       text-align: left;
     }
     .features li {
-      padding: 8px 0;
+      padding: 10px 0;
       border-bottom: 1px solid #1e1e1e;
-      font-size: 14px;
+      font-size: 17px;
       color: #bbb;
       display: flex;
       align-items: center;
       gap: 10px;
+      line-height: 1.4;
     }
     .features li::before {
       content: '✦';
       color: #c9a84c;
-      font-size: 10px;
+      font-size: 12px;
     }
     button {
       width: 100%;
@@ -78,41 +81,42 @@
       color: #0a0a0a;
       border: none;
       border-radius: 8px;
-      padding: 18px;
-      font-size: 19px;
+      padding: 20px;
+      font-size: 21px;
       font-weight: bold;
       cursor: pointer;
       letter-spacing: 1px;
+      line-height: 1.3;
       transition: opacity 0.2s;
     }
     button:hover { opacity: 0.9; }
     button:disabled { opacity: 0.5; cursor: not-allowed; }
     .error {
       color: #e74c3c;
-      font-size: 13px;
+      font-size: 15px;
       margin-top: 8px;
       display: none;
     }
     .footer {
-      margin-top: 24px;
-      font-size: 12px;
+      margin-top: 26px;
+      font-size: 14px;
       color: #444;
     }
     .method-note {
-      font-size: 12px;
+      font-size: 14px;
       color: #888;
       text-align: center;
       line-height: 1.5;
       margin-top: 12px;
     }
     .security-note {
-      font-size: 13px;
+      font-size: 15px;
       color: #8a7a52;
       text-align: center;
       margin: 12px 0;
     }
     .ajuda-whatsapp {
-      font-size: 15px;
+      font-size: 18px;
       text-align: center;
       margin-top: 14px;
     }
@@ -122,6 +126,19 @@
     }
     .ajuda-whatsapp a:hover {
       color: #c9a84c;
+    }
+    @media (max-width: 400px) {
+      body { padding: 14px; }
+      h1 { font-size: 28px; }
+      .subtitle { font-size: 16px; margin-bottom: 32px; }
+      .card { padding: 34px 22px; }
+      .price { font-size: 40px; }
+      .price span { font-size: 19px; }
+      .features li { font-size: 16px; }
+      button { font-size: 18px; padding: 18px 14px; letter-spacing: 0.5px; }
+      .method-note, .footer { font-size: 13px; }
+      .security-note { font-size: 14px; }
+      .ajuda-whatsapp { font-size: 16px; }
     }
   </style>
 </head>
