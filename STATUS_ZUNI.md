@@ -4,7 +4,25 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 01/09/2026 (pipeline do audiolivro de "Tempo para Viver" —
+> Última atualização: 02/09/2026 (checkout do Mentor — copy enxuta + fontes maiores
+> para legibilidade). Ver seção "02/09/2026 (checkout do Mentor — copy enxuta +
+> fontes maiores para legibilidade)" em "Decisões estratégicas" para detalhe
+> completo. Resumo: em `public/checkout.html`, três rodadas com push e deploy no
+> Railway confirmados em produção. (1) `455eb82` — removido o parágrafo "seus
+> segredos ficam guardados"; rodapé passou a só "ZUNI Suprema © 2025" (sem repetir
+> Mercado Pago, que já consta no selo acima); cabeçalho unificado num único título
+> "Mentor ZUNI Suprema" com novo subtítulo "Converse com privacidade e segurança.
+> Orientação personalizada."; regras CSS órfãs `.logo` e `.privacy-note` removidas.
+> (2) `863747e` — botão de CTA perdeu o preço duplicado, agora "Acesso ao Mentor
+> Exclusivo" (JS de erro e de cupom ajustados para não reintroduzir o preço).
+> (3) `6bd69c3` — todas as fontes da página aumentadas ~10-20% (título, subtítulo,
+> preço, itens, botão, textos auxiliares, rodapé) com padding/`line-height`
+> proporcionais e uma media query nova `max-width:400px` para não apertar no mobile;
+> hierarquia visual mantida. Verificação visual ao vivo NÃO feita (extensão do
+> Chrome não conectada nesta sessão); CSS e textos novos conferidos por `curl` em
+> zunisuprema.com.br/checkout.html e layout mobile conferido por cálculo de largura.
+>
+> Nota anterior (01/09/2026, pipeline do audiolivro de "Tempo para Viver" —
 > sessão encerrada com trabalho pendente para o dia seguinte). Ver seção "01/09/2026
 > (audiolivro de 'Tempo para Viver' — pipeline de produção, ajuste de ritmo,
 > redivisão em 7 partes)" logo abaixo para detalhe completo. Resumo: manuscrito
@@ -301,6 +319,59 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 02/09/2026 (checkout do Mentor — copy enxuta + fontes maiores para legibilidade)
+
+Sessão via Claude Code, só `public/checkout.html`. Três commits, todos com push e
+deploy automático no Railway confirmado em produção.
+
+**Rodada 1 — enxugar copy (`455eb82`)**
+- Removido o parágrafo `.privacy-note` ("Aqui, seus segredos ficam guardados. Sem
+  rostos, sem julgamentos — só clareza para a sua mente.").
+- Rodapé: de "Pagamento seguro via Mercado Pago · ZUNI Suprema © 2025" para só
+  "ZUNI Suprema © 2025" — a menção ao Mercado Pago já aparece acima no selo
+  "Pagamento 100% seguro via Mercado Pago".
+- Cabeçalho: as duas linhas (`.logo` "ZUNI Suprema" + `h1` "Chat Mentor ZUNI")
+  viraram um único `h1` "Mentor ZUNI Suprema". Novo subtítulo: "Converse com
+  privacidade e segurança. Orientação personalizada." (antes: "Converse com clareza,
+  privacidade e orientação personalizada.").
+- Regras CSS órfãs `.logo` e `.privacy-note` removidas do `<style>`.
+
+**Rodada 2 — preço fora do botão de CTA (`863747e`)**
+- Texto do botão: de "Acessar o Chat Mentor — R$ 29,90" para "Acesso ao Mentor
+  Exclusivo" — o preço já aparece no `price-block` acima.
+- O reset de erro no JS passou a usar o mesmo texto (antes reintroduzia o preço), e
+  o fluxo de cupom deixou de reescrever o texto do botão com o preço com desconto
+  (o `price-block` já é atualizado).
+
+**Rodada 3 — fontes maiores para público idoso (`6bd69c3`)**
+- Aumentos: `h1` 28→33px, `.subtitle` 14→17px, `.price` 42→47px (`span` 20→22px),
+  `.price-desc` 13→15px, `.features li` 14→17px (`::before` 10→12px), `button`
+  19→21px, `.error` 13→15px, `.method-note` 12→14px, `.security-note` 13→15px,
+  `.ajuda-whatsapp` 15→18px, `.footer` 12→14px (~+10-20%, mantendo a hierarquia
+  visual existente — preço > título > subtítulo/itens > auxiliares).
+- Espaçamento proporcional: `.card` padding `40px 32px`→`44px 36px`; `button` padding
+  `18px`→`20px`; `.features li` padding `8px 0`→`10px 0`; margens de `h1`, `.subtitle`
+  e `.footer` levemente aumentadas; `line-height` adicionado a `h1` (1.25),
+  `.subtitle` (1.4), `.features li` (1.4) e `button` (1.3).
+- **Nova media query `@media (max-width: 400px)`** (a página não tinha nenhuma):
+  recua fontes/padding no mobile (`body` padding 14px, `h1` 28px, `.card` `34px 22px`,
+  `.price` 40px, `button` 18px, auxiliares 13-16px) — ainda maiores que o original,
+  sem apertar.
+
+**Verificação**
+- CSS validado (chaves balanceadas, todas as regras aplicadas). Textos e CSS novos
+  confirmados em produção via `curl` em `https://www.zunisuprema.com.br/checkout.html`.
+- **Não houve verificação visual ao vivo** — a extensão do Chrome (claude-in-chrome)
+  não estava conectada nesta sessão. Layout mobile conferido por cálculo de largura:
+  em ≤360px o texto do botão "Acesso ao Mentor Exclusivo" quebra em 2 linhas
+  (aceitável, com `line-height` 1.3; não é regressão — o texto antigo era mais
+  longo). Nenhum elemento com largura fixa; sem overflow horizontal.
+
+**Mantido sem alteração** (por instrução): preço, lista de benefícios, botão de CTA
+(além do texto), aviso de redirecionamento ao Mercado Pago, selo de segurança, link
+de suporte via WhatsApp, blocos de estado `card-pending`/`card-timeout`, e toda a
+lógica JS de checkout/cupom/polling.
 
 ### 01/09/2026 (audiolivro de "Tempo para Viver" — pipeline de produção, ajuste de ritmo, redivisão em 7 partes)
 
