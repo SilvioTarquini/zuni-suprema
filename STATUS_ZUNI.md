@@ -18,9 +18,9 @@
 > (3) `6bd69c3` — todas as fontes da página aumentadas ~10-20% (título, subtítulo,
 > preço, itens, botão, textos auxiliares, rodapé) com padding/`line-height`
 > proporcionais e uma media query nova `max-width:400px` para não apertar no mobile;
-> hierarquia visual mantida. Verificação visual ao vivo NÃO feita (extensão do
-> Chrome não conectada nesta sessão); CSS e textos novos conferidos por `curl` em
-> zunisuprema.com.br/checkout.html e layout mobile conferido por cálculo de largura.
+> hierarquia visual mantida. CSS e textos novos conferidos por `curl` em
+> zunisuprema.com.br/checkout.html e layout mobile por cálculo de largura; **o
+> usuário conferiu a página visualmente em 02/09/2026 e aprovou ("estão perfeitas")**.
 >
 > Nota anterior (01/09/2026, pipeline do audiolivro de "Tempo para Viver" —
 > sessão encerrada com trabalho pendente para o dia seguinte). Ver seção "01/09/2026
@@ -362,11 +362,13 @@ deploy automático no Railway confirmado em produção.
 **Verificação**
 - CSS validado (chaves balanceadas, todas as regras aplicadas). Textos e CSS novos
   confirmados em produção via `curl` em `https://www.zunisuprema.com.br/checkout.html`.
-- **Não houve verificação visual ao vivo** — a extensão do Chrome (claude-in-chrome)
-  não estava conectada nesta sessão. Layout mobile conferido por cálculo de largura:
-  em ≤360px o texto do botão "Acesso ao Mentor Exclusivo" quebra em 2 linhas
-  (aceitável, com `line-height` 1.3; não é regressão — o texto antigo era mais
-  longo). Nenhum elemento com largura fixa; sem overflow horizontal.
+- Não houve verificação visual ao vivo pelo assistente — a extensão do Chrome
+  (claude-in-chrome) não estava conectada nesta sessão. Layout mobile conferido por
+  cálculo de largura: em ≤360px o texto do botão "Acesso ao Mentor Exclusivo" quebra
+  em 2 linhas (aceitável, com `line-height` 1.3; não é regressão — o texto antigo era
+  mais longo). Nenhum elemento com largura fixa; sem overflow horizontal.
+- **02/09/2026 — o usuário conferiu a página visualmente e aprovou** ("estão
+  perfeitas"). Frente encerrada.
 
 **Mantido sem alteração** (por instrução): preço, lista de benefícios, botão de CTA
 (além do texto), aviso de redirecionamento ao Mercado Pago, selo de segurança, link
