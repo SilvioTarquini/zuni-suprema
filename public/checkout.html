@@ -139,7 +139,7 @@
         <li>Sessão completa de perguntas e respostas com o Mentor</li>
         <li>Dossiê em PDF, se você quiser</li>
       </ul>
-      <button id="btn" onclick="acessarChat()">Acessar o Chat Mentor — R$ 29,90</button>
+      <button id="btn" onclick="acessarChat()">Acesso ao Mentor Exclusivo</button>
       <p class="method-note">Você será direcionado ao ambiente seguro do Mercado Pago. PIX, cartão ou saldo.</p>
       <p class="ajuda-whatsapp">
         <a href="https://wa.me/5515996088895?text=Ol%C3%A1%2C%20estou%20com%20d%C3%BAvida%2Fproblema%20no%20pagamento%20da%20sess%C3%A3o%20com%20o%20Mentor." target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
@@ -195,9 +195,6 @@
           const desc = document.getElementById('price-desc');
           desc.textContent = `Desconto de ${data.percentual}% aplicado`;
           desc.style.display = 'block';
-
-          document.getElementById('btn').textContent =
-            `Acessar o Chat Mentor — R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
         }
       } catch (e) {
         console.error('Erro ao carregar cupom:', e);
@@ -236,7 +233,7 @@
         window.location.href = data.init_point;
       } catch (e) {
         btn.disabled = false;
-        btn.textContent = 'Acessar o Chat Mentor — R$ 29,90';
+        btn.textContent = 'Acesso ao Mentor Exclusivo';
         error.textContent = e.message || 'Erro ao processar. Tente novamente.';
         error.style.display = 'block';
       }
