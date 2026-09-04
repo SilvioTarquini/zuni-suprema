@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat Mentor ZUNI — ZUNI Suprema</title>
+  <title>ZUNI Direciona — ZUNI Suprema</title>
+  <!-- Pinterest: tag de rastreamento -->
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -21,19 +22,83 @@
       width: 100%;
       text-align: center;
     }
-    h1 {
-      font-size: 33px;
-      color: #ffffff;
-      margin-bottom: 10px;
-      font-weight: normal;
-      line-height: 1.25;
+    .marca-nome {
+      font-size: 15px;
+      color: #c9a84c;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
     }
-    .subtitle {
-      font-size: 17px;
+    .marca-subtitulo {
+      font-size: 15px;
       color: #888;
-      margin-bottom: 44px;
       font-style: italic;
+      margin-bottom: 28px;
       line-height: 1.4;
+    }
+    h1 {
+      font-size: 30px;
+      color: #ffffff;
+      margin-bottom: 14px;
+      font-weight: normal;
+      line-height: 1.3;
+    }
+    .tema-abertura {
+      font-size: 17px;
+      color: #bbb;
+      margin-bottom: 32px;
+      line-height: 1.55;
+    }
+    .como-funciona {
+      background: #141414;
+      border: 1px solid #2a2a2a;
+      border-radius: 12px;
+      padding: 28px 26px;
+      margin-bottom: 24px;
+      text-align: left;
+    }
+    .como-funciona-titulo {
+      font-size: 18px;
+      color: #c9a84c;
+      font-weight: normal;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .como-funciona ol {
+      list-style: none;
+      counter-reset: passo;
+    }
+    .como-funciona li {
+      counter-increment: passo;
+      font-size: 16px;
+      color: #ccc;
+      line-height: 1.5;
+      padding: 8px 0 8px 34px;
+      position: relative;
+    }
+    .como-funciona li::before {
+      content: counter(passo);
+      position: absolute;
+      left: 0;
+      top: 8px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(201, 168, 76, 0.15);
+      color: #c9a84c;
+      font-size: 13px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Georgia', serif;
+    }
+    .credibilidade {
+      font-size: 15px;
+      color: #8a7a52;
+      font-style: italic;
+      line-height: 1.5;
+      margin-bottom: 32px;
     }
     .card {
       background: #141414;
@@ -54,26 +119,6 @@
       font-size: 15px;
       color: #666;
       margin-top: 4px;
-    }
-    .features {
-      list-style: none;
-      margin-bottom: 32px;
-      text-align: left;
-    }
-    .features li {
-      padding: 10px 0;
-      border-bottom: 1px solid #1e1e1e;
-      font-size: 17px;
-      color: #bbb;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      line-height: 1.4;
-    }
-    .features li::before {
-      content: '✦';
-      color: #c9a84c;
-      font-size: 12px;
     }
     button {
       width: 100%;
@@ -102,6 +147,12 @@
       font-size: 14px;
       color: #444;
     }
+    .aviso-legal {
+      font-size: 13px;
+      color: #555;
+      line-height: 1.5;
+      margin-bottom: 8px;
+    }
     .method-note {
       font-size: 14px;
       color: #888;
@@ -129,12 +180,12 @@
     }
     @media (max-width: 400px) {
       body { padding: 14px; }
-      h1 { font-size: 28px; }
-      .subtitle { font-size: 16px; margin-bottom: 32px; }
+      h1 { font-size: 26px; }
+      .tema-abertura { font-size: 16px; margin-bottom: 24px; }
+      .como-funciona { padding: 22px 18px; }
       .card { padding: 34px 22px; }
       .price { font-size: 40px; }
       .price span { font-size: 19px; }
-      .features li { font-size: 16px; }
       button { font-size: 18px; padding: 18px 14px; letter-spacing: 0.5px; }
       .method-note, .footer { font-size: 13px; }
       .security-note { font-size: 14px; }
@@ -144,19 +195,30 @@
 </head>
 <body>
   <div class="container">
-    <h1>Mentor ZUNI Suprema</h1>
-    <p class="subtitle">Converse com privacidade e segurança. Orientação personalizada.</p>
+    <div class="marca-nome">ZUNI Direciona</div>
+    <p class="marca-subtitulo">Orientação personalizada para questões da vida real</p>
+
+    <h1 id="tema-titulo"></h1>
+    <p class="tema-abertura" id="tema-abertura"></p>
+
+    <div class="como-funciona">
+      <p class="como-funciona-titulo">Como funciona</p>
+      <ol>
+        <li>Você apresenta a situação, com suas palavras</li>
+        <li>Pode responder um questionário breve, se quiser dar mais contexto</li>
+        <li>Conversa e aprofunda os pontos que importam</li>
+        <li>Recebe ao final uma Síntese ZUNI Direciona, com o que foi explorado</li>
+      </ol>
+    </div>
+
+    <p class="credibilidade">Conhecimento aplicado à sua situação — orientação apoiada em base própria de conhecimento e conteúdos especializados.</p>
+
     <div class="card">
       <div class="price-block">
         <div class="price"><span>R$</span> 29,90</div>
         <div class="price-desc" id="price-desc" style="display:none;"></div>
       </div>
-      <ul class="features">
-        <li>Orientação personalizada desde a primeira pergunta</li>
-        <li>Sessão completa de perguntas e respostas com o Mentor</li>
-        <li>Dossiê em PDF, se você quiser</li>
-      </ul>
-      <button id="btn" onclick="acessarChat()">Acesso ao Mentor Exclusivo</button>
+      <button id="btn" onclick="acessarChat()">Começar minha orientação</button>
       <p class="method-note">Você será direcionado ao ambiente seguro do Mercado Pago. PIX, cartão ou saldo.</p>
       <p class="ajuda-whatsapp">
         <a href="https://wa.me/5515996088895?text=Ol%C3%A1%2C%20estou%20com%20d%C3%BAvida%2Fproblema%20no%20pagamento%20da%20sess%C3%A3o%20com%20o%20Mentor." target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
@@ -171,12 +233,46 @@
     <div id="card-timeout-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
       <p style="color:#e74c3c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pagamento ainda não confirmado</p>
       <p style="font-size:13px; color:#888; margin-bottom:20px;">Seu pagamento pode ainda estar em processamento, ou não foi aprovado. Se você já pagou, aguarde alguns minutos e recarregue esta página. Caso o problema persista, fale com nosso suporte.</p>
-      <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20no%20Chat%20Mentor%20ZUNI%20Suprema%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
+      <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20no%20ZUNI%20Direciona%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
     </div>
-    <div class="footer">ZUNI Suprema © 2025</div>
+    <div class="footer">
+      <p class="aviso-legal">O ZUNI Direciona não substitui acompanhamento médico ou psicológico.</p>
+      <p>ZUNI Suprema © 2025</p>
+    </div>
   </div>
   <script>
+    const TEMAS = {
+      adolescentes: {
+        titulo: "Quando a conversa com seu filho vira briga",
+        abertura: "Às vezes existe amor dos dois lados — e dificuldade de compreensão também. Uma sessão para entender o que está por trás do silêncio, antes de decidir como agir."
+      },
+      clareza: {
+        titulo: "Dúvidas difíceis raramente cabem em uma pergunta de uma linha",
+        abertura: "Quando tudo parece misturado, organizar a situação costuma ser o primeiro passo. Uma sessão para separar o que importa do que só está fazendo barulho."
+      },
+      estresse: {
+        titulo: "Quando o cansaço deixou de ser só do fim do dia",
+        abertura: "Sobrecarga raramente vem de uma causa só. Uma sessão para enxergar o que está pesando de verdade e por onde começar a aliviar."
+      },
+      padrao: {
+        titulo: "Nem toda questão precisa de uma resposta rápida. Algumas precisam ser compreendidas.",
+        abertura: "Uma sessão de orientação personalizada para organizar a situação, explorar possibilidades e encontrar caminhos mais claros."
+      }
+    };
+
+    function aplicarTemaDaURL() {
+      const params = new URLSearchParams(window.location.search);
+      const chaveTema = params.get('tema');
+      const tema = (chaveTema && TEMAS[chaveTema]) ? TEMAS[chaveTema] : TEMAS.padrao;
+
+      document.getElementById('tema-titulo').textContent = tema.titulo;
+      document.getElementById('tema-abertura').textContent = tema.abertura;
+    }
+    aplicarTemaDaURL();
+
     const SESSION_STORAGE_KEY = 'zuniSessionId';
+    const TEXTO_BOTAO_PADRAO = 'Começar minha orientação';
+    let precoAtual = 29.90;
 
     function getStoredSessionId() {
       try { return localStorage.getItem(SESSION_STORAGE_KEY) || ''; } catch (e) { return ''; }
@@ -205,6 +301,7 @@
           cupomAplicado = cupomDaUrl;
           const desconto = 29.90 * (data.percentual / 100);
           const precoFinal = 29.90 - desconto;
+          precoAtual = precoFinal;
 
           document.querySelector('.price').innerHTML =
             `<span>R$</span> ${precoFinal.toFixed(2).replace('.', ',')}`;
@@ -250,7 +347,7 @@
         window.location.href = data.init_point;
       } catch (e) {
         btn.disabled = false;
-        btn.textContent = 'Acesso ao Mentor Exclusivo';
+        btn.textContent = TEXTO_BOTAO_PADRAO;
         error.textContent = e.message || 'Erro ao processar. Tente novamente.';
         error.style.display = 'block';
       }
@@ -278,6 +375,7 @@
           const res = await fetch(`/api/checkout/session-status/${sessionId}`);
           const data = await res.json();
           if (data.pago) {
+            // Pinterest: evento de conversão
             window.location.href = `/questionario-selecao.html?sessionId=${sessionId}`;
           }
         } catch (e) {}
@@ -297,6 +395,7 @@
           const data = await res.json();
           if (data.pago) {
             clearInterval(pollingInterval);
+            // Pinterest: evento de conversão
             window.location.href = `/questionario-selecao.html?sessionId=${sessionId}`;
             return;
           }

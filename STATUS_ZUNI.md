@@ -4,7 +4,25 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 02/09/2026 (checkout do Mentor — copy enxuta + fontes maiores
+> Última atualização: 04/09/2026 (checkout renomeado para ZUNI Direciona +
+> Síntese ZUNI Direciona substitui Dossiê para essa sessão + marcadores do
+> Pinterest). Ver seção "04/09/2026 (ZUNI Direciona — reforma do checkout,
+> renomeação da entrega com branch por productType, marcadores do Pinterest)"
+> em "Decisões estratégicas" para detalhe completo. Resumo: `public/checkout.html`
+> reescrito (tabela `TEMAS` por `?tema=`, estrutura nova, produto rebatizado ZUNI
+> Direciona); em `src/server.js` e `public/chat.html`, a entrega passa a se chamar
+> "Síntese ZUNI Direciona" **só** para `productType === 'chat-mentor'`, com branch
+> em 6 pontos (prompt do chat ao vivo, geração do documento, mensagem de limite de
+> trocas, e-mail, nome do arquivo, capa do PDF) — Mapa Integrado e Mapa Astral
+> continuam dizendo "Dossiê", testado lado a lado. `public/index.html` recebeu o
+> comentário de meta tag de verificação do Pinterest e as 15 páginas públicas
+> receberam o comentário da tag de rastreamento — **sem tags reais ainda**,
+> aguardando os valores do usuário. **Pendência de prioridade alta registrada**
+> (não implementada): `chat.html` não retoma sessão após reload — ver "## 3.
+> Pendências antigas, ainda em aberto", primeiro item. **Sem push** desta sessão —
+> ver detalhe completo na seção de decisões.
+>
+> Nota anterior (02/09/2026, checkout do Mentor — copy enxuta + fontes maiores
 > para legibilidade). Ver seção "02/09/2026 (checkout do Mentor — copy enxuta +
 > fontes maiores para legibilidade)" em "Decisões estratégicas" para detalhe
 > completo. Resumo: em `public/checkout.html`, três rodadas com push e deploy no
@@ -319,6 +337,123 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 04/09/2026 (ZUNI Direciona — reforma do checkout, renomeação da entrega com branch por productType, marcadores do Pinterest)
+
+Sessão via Claude Code. Tarefa com 5 partes: reforma de `public/checkout.html`
+(produto renomeado para ZUNI Direciona), renomear "Dossiê"/"relatório" para
+"Síntese ZUNI Direciona", instalar marcadores do Pinterest, testar. **Nenhum
+commit/push feito ainda até o pedido explícito de fechamento desta sessão** — ver
+"Commit desta sessão" ao final.
+
+**Parte 1-2 — `public/checkout.html` reescrito**
+- Objeto `TEMAS` (adolescentes/clareza/estresse/padrão) lido via
+  `URLSearchParams`, robusto a UTMs extras na URL — testado nos 6 cenários
+  pedidos (ver "Testes" abaixo).
+- Estrutura nova: marca "ZUNI Direciona" + subtítulo, título/abertura por tema,
+  bloco fixo "Como funciona" (4 passos), linha de credibilidade, preço R$29,90
+  inalterado, botão "Começar minha orientação", aviso MP + link WhatsApp
+  mantidos, rodapé com nota de que não substitui acompanhamento médico/psicológico.
+- Vocabulário "chat"/"Mentor"/"Dossiê" removido da página (título da aba, texto do
+  botão, mensagens de erro) — **exceto** o texto pré-preenchido do link de WhatsApp
+  protegido por instrução explícita ("Problema no pagamento?..."), que ficou
+  intocado por decisão do usuário.
+- Fluxo de pagamento (MercadoPago, preço, polling de retorno) **não alterado**.
+
+**Parte 3 — "Dossiê"/"relatório" → "Síntese ZUNI Direciona", só para `chat-mentor`**
+
+Achado central da sessão: os textos do documento entregue (`REPORT_PROMPT`, o
+prompt do chat ao vivo `SYSTEM_PROMPT`+`ACERVO_ZUNI_BLOCK`, a mensagem de limite
+de 15 trocas, o e-mail de entrega via `sendEmail()`, a capa vetor do PDF, o nome
+do arquivo baixado) são **compartilhados** entre `chat-mentor` (ZUNI Direciona),
+`mapa-astral` (default de sessões antigas/órfãs, `checkout-mapa-astral.html`, não
+linkado em lugar nenhum do site hoje) e, parcialmente, `mapa-integrado`
+(desativado na loja, mas o chat ao vivo dele passa pelo mesmo `/api/chat`). Uma
+troca de texto direta teria vazado "Síntese ZUNI Direciona" para o Mapa Integrado
+— **decisão do usuário: nunca fazer troca global, sempre branch por
+`session.productType === 'chat-mentor'`, e na dúvida não tocar**.
+
+Implementado com esse critério em `src/server.js`:
+1. Prompt do chat ao vivo — texto-base revertido para "Dossiê"; para
+   `chat-mentor`, um bloco de override é anexado a `systemPromptFinal`
+   instruindo o modelo a chamar a entrega de "Síntese ZUNI Direciona".
+2. `generateReportText` — mesmo padrão: `REPORT_PROMPT` revertido, override
+   anexado só para `chat-mentor` (mapa-integrado continua com
+   `MAPA_INTEGRADO_PROMPT`, nunca tocado).
+3. Mensagem de encerramento por limite de 15 trocas — branch direto por
+   `productType`.
+4. `sendEmail()` — ganhou parâmetro `productType`, corpo do e-mail brancheado
+   (assunto continua "Chat Mentor ZUNI", por decisão de manter "Mentor" fora do
+   escopo pedido).
+5. Nome do arquivo baixado (`/api/relatorio/download/:sessionId`) — branch por
+   `productType` (`sintese-zuni-direciona-*.pdf` vs `dossie-chat-mentor-zuni-*.pdf`).
+6. Capa vetor do PDF (`desenharCapaVetorMentor`) — recebe `productType`, título
+   branch (subtítulo "Chat Mentor ZUNI" mantido nos dois casos, fora de escopo).
+7. Keyword de detecção de encerramento (`sinaisDeEncerramento`) — aditivo, as
+   duas formas ("dossiê em pdf" e "síntese zuni direciona") convivem no array.
+
+Em `public/chat.html`, o modal de entrega (mesmo problema — é UI única para
+todos os `productType`) ganhou plumbing própria: `/api/chat` agora devolve
+`productType` nas duas formas de resposta (normal e de encerramento por limite);
+o front-end guarda em `productTypeAtual` (default `null` → sempre resolve para
+"Dossiê" se ausente/desconhecido, nunca o inverso) e usa um objeto
+`TEXTOS_ENTREGA` para branchear título do modal, texto explicativo, os dois
+textos do botão de baixar, status "Preparando...", e nome do arquivo do
+`a.download`. **Achado à parte, corrigido na mesma sessão**: o botão do header
+("📄 Baixar relatório") não tinha nenhuma guarda e podia ser clicado antes da
+1ª mensagem, quando `productTypeAtual` ainda é `null` — mostraria "Dossiê" para
+uma sessão `chat-mentor` legítima. Corrigido deixando o botão `disabled` (com
+`title`/`aria-label` explicando) até a 1ª resposta de `/api/chat` chegar, ponto
+em que já é reabilitado (cobre também a resposta de encerramento, que também
+carrega `productType` agora).
+
+**Achado não corrigido, virou pendência de prioridade alta** (ver "## 3.
+Pendências antigas, ainda em aberto"): `chat.html` não tem nenhum mecanismo de
+retomada de sessão — reload da página zera UI (histórico, contador,
+`productType`) mesmo com sessão avançada no banco. O botão desabilitado até a
+1ª mensagem é sintoma menor do mesmo buraco.
+
+**Escopo deliberadamente fora desta sessão** (por decisão do usuário): não
+tocar em `checkout-mapa-integrado.html` nem `public/loja/index.html` (textos do
+Mapa Integrado); manter "Mentor ZUNI"/"chat" no PDF e e-mail, fora do
+checkout.html.
+
+**Parte 4 — Pinterest: só marcadores, sem tags reais**
+
+Por não ter os valores (Tag ID, código de verificação de domínio) ainda,
+aplicado só como comentários, sem nenhum script real:
+- `<!-- Pinterest: meta tag de reivindicação -->` — só em `public/index.html`
+  (a home), antes do `<style>`.
+- `<!-- Pinterest: tag de rastreamento -->` — nas 15 páginas públicas de
+  `public/` (confirmado por grep).
+- `// Pinterest: evento de conversão` — nos dois pontos de retorno de pagamento
+  aprovado em `public/checkout.html` (checagem silenciosa e polling).
+Nenhum `pintrk(...)` real existe no código ainda. **Pendência**: quando o
+usuário tiver os valores, substituir os comentários pelas tags reais e o
+comentário de evento pela chamada `pintrk('track', 'checkout', ...)`.
+
+**Parte 5 — testes**
+
+- Os 6 cenários de `?tema=` (adolescentes/clareza/estresse/sem parâmetro/
+  inexistente/com UTMs completos) testados extraindo a lógica real de
+  `TEMAS`/`aplicarTemaDaURL()` do arquivo (extensão do Chrome não estava
+  conectada nesta sessão, sem navegador real disponível) — os 6 resolveram
+  corretamente.
+- **Achado, não é regressão desta sessão**: `POST /api/checkout/preference`
+  falha localmente com `PA_UNAUTHORIZED_RESULT_FROM_POLICIES` (política do
+  Mercado Pago) — confirmado por `git diff --stat` que essa rota não foi tocada
+  nesta sessão; é limitação preexistente do ambiente local (provavelmente
+  domínio/credencial), não do código novo. Como `tema` nunca é enviado ao
+  backend, o comportamento de pagamento é idêntico nos 6 casos — não foi
+  possível confirmar pagamento ponta a ponta neste ambiente. **Pendente**:
+  validar em produção após deploy, ou investigar a credencial separadamente.
+- Comentários do Pinterest confirmados no HTML servido localmente (`curl`);
+  nada em produção ainda, pois não houve push.
+- `node --check` validado em `src/server.js` e nos `<script>` de
+  `checkout.html` e `chat.html` a cada rodada de mudança.
+
+**Commit desta sessão**: 17 arquivos alterados, sem push. Ver
+`git log`/`git diff` para o commit exato feito ao final desta sessão.
 
 ### 02/09/2026 (checkout do Mentor — copy enxuta + fontes maiores para legibilidade)
 
@@ -2926,6 +3061,25 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
 - **Status Final**: ✅ 100% OPERACIONAL — ambos temas funcionando com busca híbrida, respostas do Mentor específicas e relevantes confirmadas.
 
 ## 3. Pendências antigas, ainda em aberto
+
+- **[04/09/2026] `chat.html` não retoma sessão — PRIORIDADE ALTA**: recarregar a
+  página (F5, ou reabrir a aba com o mesmo `sessionId` na URL) zera o estado da UI
+  (histórico de mensagens, contador de trocas, `productType`) mesmo com a sessão
+  intacta no banco — por exemplo, na mensagem 8 de 15. Não existe nenhuma chamada
+  de carregamento que restaure estado a partir do `sessionId`: levantamento
+  completo de `fetch(`/`DOMContentLoaded`/`load` em `public/chat.html` (feito
+  durante a sessão de rename do checkout do Mentor → ZUNI Direciona) confirmou que
+  só o redirect de `testQuestionario` roda automaticamente; `contador` sempre
+  inicializa em `0`. Numa sessão paga de até 15 trocas, com tráfego majoritariamente
+  mobile, isso é perda visível da conversa por um F5 acidental. **Sintoma menor do
+  mesmo problema**: o botão "Baixar relatório" do header nasce `disabled` (mudança
+  de 04/09/2026, para não expor o nome errado da entrega — "Dossiê" vs "Síntese
+  ZUNI Direciona" — antes da 1ª resposta) e só reabilita quando chega uma resposta
+  nova de `/api/chat`; numa sessão retomada por reload, o botão fica desabilitado
+  até o usuário mandar mensagem de novo, mesmo a sessão já estando avançada. Não
+  implementado ainda — corrigir exige endpoint novo para restaurar
+  histórico/contador/`productType` a partir do `sessionId` no carregamento da
+  página.
 
 - **[14/08/2026] Otimização de capas da loja — ✅ RESOLVIDA**:
   - **Implementação**: 9 capas (Feminino + Masculino) comprimidas em JPG otimizado (500px, 60-122 KB cada)

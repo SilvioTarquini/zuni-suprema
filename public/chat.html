@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Pinterest: tag de rastreamento -->
   <title>Mentor ZUNI Suprema</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500&display=swap');
@@ -244,6 +245,10 @@
       text-shadow: 0 1px 3px rgba(0,0,0,0.5);
     }
     .counter span { color: #FFD966; font-weight: 700; }
+
+    /* Botão de relatório fica desabilitado até a 1ª resposta de /api/chat
+       (é quando productType da sessão passa a ser conhecido no navegador) */
+    #btn-pdf:disabled { opacity: 0.5; cursor: not-allowed; }
 
     /* ÁREA DE MENSAGENS */
     #messages {
@@ -551,7 +556,7 @@
       </div>
       <div class="header-right">
         <div class="counter">Mensagens: <span id="cnt">0</span></div>
-        <button id="btn-pdf" onclick="abrirModalRelatorio()" style="font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:9px 18px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;box-shadow:0 2px 8px rgba(212,175,55,0.35);">📄 Baixar relatório</button>
+        <button id="btn-pdf" onclick="abrirModalRelatorio()" disabled title="Disponível após o início da conversa" aria-label="Baixar relatório — disponível após o início da conversa" style="font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:9px 18px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;box-shadow:0 2px 8px rgba(212,175,55,0.35);">📄 Baixar relatório</button>
       </div>
     </header>
 
@@ -607,11 +612,11 @@
     <div style="background:#f8f5f0;border-radius:16px;padding:32px 24px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.3);position:relative;margin-top:16px;margin-bottom:16px;height:fit-content;">
       <button onclick="fecharModalRelatorio()" aria-label="Fechar" style="position:absolute;top:12px;right:12px;width:44px;height:44px;min-width:44px;border-radius:50%;border:none;background:rgba(0,0,0,0.08);color:#2c2c2c;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
 
-      <h2 style="font-family:'Playfair Display',serif;color:#B8963E;font-size:22px;letter-spacing:0.5px;margin-bottom:16px;padding-right:44px;">Seu Dossiê da Sessão</h2>
+      <h2 id="titulo-modal-relatorio" style="font-family:'Playfair Display',serif;color:#B8963E;font-size:22px;letter-spacing:0.5px;margin-bottom:16px;padding-right:44px;">Seu Dossiê da Sessão</h2>
 
       <p id="aviso-encerramento-modal" style="display:none;font-family:'Inter',sans-serif;font-size:17px;font-weight:700;color:#3a3a3a;margin-bottom:12px;">Sua sessão terminou.</p>
 
-      <p style="font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;color:#3a3a3a;margin-bottom:24px;">O Dossiê é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.</p>
+      <p id="texto-explicativo-relatorio" style="font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;color:#3a3a3a;margin-bottom:24px;">O Dossiê é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.</p>
 
       <button id="btn-baixar-dossie" onclick="baixarDossie()" style="width:100%;background:#D4AF37;color:#0a0a0a;border:none;border-radius:8px;padding:16px;font-weight:700;font-size:17px;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.3px;margin-bottom:12px;">📄 Baixar Dossiê em PDF</button>
 
@@ -637,6 +642,34 @@
     const fromQuestionnaire = params.get('fromQuestionnaire') === 'true';
     const testQuestionario = params.get('testQuestionario') === 'true';
     let contador = 0;
+
+    // Nome da entrega (PDF) exibido no modal — depende do productType da sessão,
+    // que só é conhecido depois da primeira resposta de /api/chat. Enquanto isso
+    // (ou se a resposta não trouxer o campo), o default é 'padrao' (Dossiê) —
+    // nunca o inverso, para uma sessão de outro produto nunca ver "Síntese ZUNI
+    // Direciona" por engano.
+    let productTypeAtual = null;
+    const TEXTOS_ENTREGA = {
+      'chat-mentor': {
+        tituloModal: 'Sua Síntese ZUNI Direciona',
+        textoExplicativo: 'A Síntese ZUNI Direciona é um documento em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.',
+        botaoBaixar: '📄 Baixar Síntese ZUNI Direciona em PDF',
+        botaoBaixarCarregando: '⏳ Preparando sua Síntese...',
+        statusPreparando: 'Preparando sua Síntese ZUNI Direciona — pode levar até 1 minuto. Não feche esta janela.',
+        nomeArquivo: 'sintese-zuni-direciona'
+      },
+      padrao: {
+        tituloModal: 'Seu Dossiê da Sessão',
+        textoExplicativo: 'O Dossiê é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.',
+        botaoBaixar: '📄 Baixar Dossiê em PDF',
+        botaoBaixarCarregando: '⏳ Preparando seu Dossiê...',
+        statusPreparando: 'Preparando seu Dossiê — pode levar até 1 minuto. Não feche esta janela.',
+        nomeArquivo: 'dossie-chat-mentor-zuni'
+      }
+    };
+    function textosEntregaAtual() {
+      return TEXTOS_ENTREGA[productTypeAtual] || TEXTOS_ENTREGA.padrao;
+    }
 
     // Redireciona para questionário se ?testQuestionario=true
     // TODO: Piloto fixo em timidez_comunicacao. Quando outros temas entrarem em produção,
@@ -705,6 +738,13 @@ addMsg('user', msg);
         const data = await res.json();
         typing.remove();
         if (data.texto) {
+          if (data.productType) {
+            productTypeAtual = data.productType;
+            const btnPdf = document.getElementById('btn-pdf');
+            btnPdf.disabled = false;
+            btnPdf.title = '';
+            btnPdf.setAttribute('aria-label', 'Baixar relatório');
+          }
           addMsg('assistant', data.texto);
           contador = data.contador || contador + 1;
           document.getElementById('cnt').textContent = contador;
@@ -726,6 +766,10 @@ addMsg('user', msg);
     // Único overlay do Dossiê — aberto tanto pelo botão do header quanto
     // automaticamente no fim da sessão, sem duplicar a UI de baixar/e-mail.
     function abrirModalRelatorio(mostrarAvisoEncerramento = false) {
+      const t = textosEntregaAtual();
+      document.getElementById('titulo-modal-relatorio').textContent = t.tituloModal;
+      document.getElementById('texto-explicativo-relatorio').textContent = t.textoExplicativo;
+      document.getElementById('btn-baixar-dossie').textContent = t.botaoBaixar;
       document.getElementById('aviso-encerramento-modal').style.display = mostrarAvisoEncerramento ? 'block' : 'none';
       document.getElementById('modal-relatorio').style.display = 'flex';
     }
@@ -741,7 +785,7 @@ addMsg('user', msg);
       if (statusEl) {
         statusEl.style.display = 'inline';
         statusEl.style.color = '#3a2e1c';
-        statusEl.textContent = 'Preparando seu Dossiê — pode levar até 1 minuto. Não feche esta janela.';
+        statusEl.textContent = textosEntregaAtual().statusPreparando;
       }
 
       try {
@@ -758,7 +802,7 @@ addMsg('user', msg);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `dossie-chat-mentor-zuni-${sessionId.slice(0, 8)}.pdf`;
+        a.download = `${textosEntregaAtual().nomeArquivo}-${sessionId.slice(0, 8)}.pdf`;
         document.body.appendChild(a);
         a.click();
         a.remove();
@@ -780,11 +824,12 @@ addMsg('user', msg);
     }
 
     function baixarDossie() {
+      const t = textosEntregaAtual();
       baixarPdfComFeedback({
         btn: document.getElementById('btn-baixar-dossie'),
         statusEl: document.getElementById('status-baixar-dossie'),
-        textoNormal: '📄 Baixar Dossiê em PDF',
-        textoCarregando: '⏳ Preparando seu Dossiê...'
+        textoNormal: t.botaoBaixar,
+        textoCarregando: t.botaoBaixarCarregando
       });
     }
 

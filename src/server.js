@@ -837,6 +837,11 @@ async function generateReportText(session) {
     let systemPrompt = REPORT_PROMPT;
     if (session.productType === 'mapa-integrado') {
       systemPrompt = MAPA_INTEGRADO_PROMPT;
+    } else if (session.productType === 'chat-mentor') {
+      // Override de nomenclatura só para ZUNI Direciona: REPORT_PROMPT é
+      // compartilhado com mapa-astral (sessões antigas/órfãs) e continua
+      // dizendo "Dossiê" — não alterar o texto-base, só a exceção aqui.
+      systemPrompt += `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNOMENCLATURA DESTE DOCUMENTO (ZUNI Direciona)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nEste documento chama-se "Síntese ZUNI Direciona" — nunca "Dossiê" ou "relatório genérico". Use exatamente esse nome em todas as menções a si mesmo, incluindo no parágrafo final da Seção 6 ("Este Dossiê é o começo..." deve virar "Esta Síntese ZUNI Direciona é o começo...", ajustando a concordância de gênero em toda a frase).`;
     }
 
     // Ajustar conteúdo baseado no tipo de produto
@@ -1118,7 +1123,7 @@ function usaCapaAstro(productType, temMapaNatal) {
 
 // Capa em vetor do Dossiê do Chat Mentor — sem imagem, fundo creme, só texto.
 // Mantém o PDF leve (a capa PNG de astrologia sozinha pesa ~2,7 MB).
-function desenharCapaVetorMentor(doc, userName) {
+function desenharCapaVetorMentor(doc, userName, productType) {
   const w = doc.page.width;
   const h = doc.page.height;
   const cx = w / 2;
@@ -1137,9 +1142,12 @@ function desenharCapaVetorMentor(doc, userName) {
   doc.moveTo(cx - filete / 2, h * 0.30 + 24).lineTo(cx + filete / 2, h * 0.30 + 24)
      .lineWidth(1).strokeColor('#B8963E').stroke();
 
-  // Título
+  // Título — "Síntese ZUNI Direciona" só para sessões chat-mentor (ZUNI
+  // Direciona); demais productTypes que caem nesta capa vetor (mapa-astral
+  // sem mapaNatal, productType nulo/antigo) mantêm o nome original "Dossiê".
+  const tituloCapa = productType === 'chat-mentor' ? 'Síntese ZUNI\nDireciona' : 'Dossiê da\nSessão';
   doc.fillColor('#2c2c2c').font('Helvetica-Bold').fontSize(32)
-     .text('Dossiê da\nSessão', 0, h * 0.42, { align: 'center', width: w, lineGap: 4 });
+     .text(tituloCapa, 0, h * 0.42, { align: 'center', width: w, lineGap: 4 });
 
   // Subtítulo — o produto
   doc.fillColor('#555555').font('Helvetica').fontSize(15)
@@ -1188,7 +1196,7 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
       }
     } else {
       // chat-mentor (e qualquer productType não reconhecido / sessão antiga sem mapa natal)
-      desenharCapaVetorMentor(doc, userName);
+      desenharCapaVetorMentor(doc, userName, productType);
       doc.addPage();
     }
 
@@ -1255,7 +1263,7 @@ function apagarPdfTemp(pdfPath) {
   }
 }
 
-async function sendEmail(email, name, pdfPath, cupom) {
+async function sendEmail(email, name, pdfPath, cupom, productType) {
   try {
     const sgMail = require('@sendgrid/mail');
     const fs = require('fs');
@@ -1269,6 +1277,11 @@ async function sendEmail(email, name, pdfPath, cupom) {
     const saudacao = name ? `Olá, ${name}!` : 'Olá!';
     const assunto = name ? `${name}, seu Chat Mentor ZUNI está pronto` : 'Seu Chat Mentor ZUNI está pronto';
     const nomeArquivo = (name || 'chat-mentor-zuni').toLowerCase().replace(/\s+/g, '-');
+    // Nome da entrega no corpo do e-mail: "Síntese ZUNI Direciona" só para
+    // chat-mentor (ZUNI Direciona); demais productTypes mantêm "Dossiê".
+    const textoEntregaEmail = productType === 'chat-mentor'
+      ? 'a sua **Síntese ZUNI Direciona em PDF** — um documento personalizado com os insights da sua jornada'
+      : 'o seu **Dossiê em PDF** — um relatório personalizado com os insights da sua jornada';
 
     const blocoCupom = cupom ? `
           <div style="margin:24px 0; padding:18px 20px; border:1px solid #d9c68f; border-radius:8px; background:#faf7ef;">
@@ -1299,7 +1312,7 @@ async function sendEmail(email, name, pdfPath, cupom) {
           ${saudacao}
           Sua sessão com o Mentor ZUNI Suprema foi concluída.
 
-          Em anexo você encontra o seu **Dossiê em PDF** — um relatório personalizado com os insights da sua jornada.
+          Em anexo você encontra ${textoEntregaEmail}.
 
           ${blocoCupom}
           ${blocobrinde}
@@ -1370,7 +1383,7 @@ async function gerarEEnviarRelatorio(sessionId) {
     console.error(`[CUPOM] Falha ao gerar cupom de sessão para ${sessionId}:`, err.message);
   }
 
-  await sendEmail(session.email, session.name, pdfPath, cupom);
+  await sendEmail(session.email, session.name, pdfPath, cupom, session.productType);
   apagarPdfTemp(pdfPath);
 
   try {
@@ -2227,14 +2240,19 @@ app.post('/api/chat', async (req, res) => {
     const LIMITE_INTERACOES = 15;
 
     if (session.counter > LIMITE_INTERACOES) {
-      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida. Seu Dossiê em PDF está pronto — baixe agora ou receba por e-mail, como preferir. Se quiser continuar essa jornada com acompanhamento mais profundo, nossa equipe de suporte natural integrativo está sempre à disposição pelo WhatsApp, no canto da tela. Cuide-se.`;
+      // Nome da entrega no texto de encerramento: "Síntese ZUNI Direciona" só
+      // para chat-mentor (ZUNI Direciona); demais productTypes mantêm "Dossiê".
+      const nomeEntrega = session.productType === 'chat-mentor'
+        ? 'Sua Síntese ZUNI Direciona está pronta'
+        : 'Seu Dossiê em PDF está pronto';
+      const mensagemEncerramento = `Chegamos ao fim desta sessão. O que foi revelado aqui já forma uma base sólida. ${nomeEntrega} — baixe agora ou receba por e-mail, como preferir. Se quiser continuar essa jornada com acompanhamento mais profundo, nossa equipe de suporte natural integrativo está sempre à disposição pelo WhatsApp, no canto da tela. Cuide-se.`;
 
       if (!session.relatorioGerado) {
         session.relatorioGerado = true;
         await upsertSession(session);
       }
 
-      return res.json({ texto: mensagemEncerramento, contador: session.counter, sessaoEncerrada: true });
+      return res.json({ texto: mensagemEncerramento, contador: session.counter, sessaoEncerrada: true, productType: session.productType });
     }
     // ────────────────────────────────────────────────────────
     // Busca RAG: usa tema da sessão se disponível (busca híbrida), senão genérica
@@ -2253,6 +2271,15 @@ app.post('/api/chat', async (req, res) => {
 
     // ── INJEÇÃO DE CONTEXTOS (Mapa Astral, Numerologia, Pacote, Jornada) ──
     let systemPromptFinal = SYSTEM_PROMPT_CHAT_AO_VIVO;
+
+    // Override de nomenclatura só para ZUNI Direciona (chat-mentor): o texto-base
+    // (SYSTEM_PROMPT + ACERVO_ZUNI_BLOCK) é compartilhado com mapa-astral e
+    // mapa-integrado e continua dizendo "Dossiê" — não alterar ali. Aqui só
+    // instruímos a exceção, sem tocar no texto-base.
+    if (session.productType === 'chat-mentor') {
+      systemPromptFinal += `\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nNOMENCLATURA DESTA SESSÃO (ZUNI Direciona)\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\nO documento final entregue ao fim desta sessão chama-se "Síntese ZUNI Direciona" — nunca "Dossiê". Sempre que for mencioná-lo (inclusive no encerramento e em qualquer recomendação de leitura do acervo), use exatamente esse nome.`;
+    }
+
     let pacoteAtivo = null;
 
     // Injetar contexto de Mapa Astral se dados de nascimento disponíveis
@@ -2324,6 +2351,7 @@ app.post('/api/chat', async (req, res) => {
       'esta sessão está chegando ao seu momento',
       'vou preparar o seu mapa',
       'dossiê em pdf',
+      'síntese zuni direciona',
       'cuide-se',
       'até logo'
     ];
@@ -2341,7 +2369,7 @@ app.post('/api/chat', async (req, res) => {
     // é só um sinal interno fragil (match de substring) para marcar relatorioGerado.
     // Só o limite rígido de 15 trocas, acima, encerra a sessão de fato.
 
-    return res.json({ texto: responseText, contador: session.counter });
+    return res.json({ texto: responseText, contador: session.counter, productType: session.productType });
   } catch (error) {
     console.error('Erro em /api/chat:', error);
     return res.status(500).json({ error: 'Erro ao processar a mensagem de chat.' });
@@ -2367,7 +2395,7 @@ app.post('/api/relatorio', async (req, res) => {
 
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
-    await sendEmail(session.email, session.name, pdfPath);
+    await sendEmail(session.email, session.name, pdfPath, null, session.productType);
     apagarPdfTemp(pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
@@ -2393,8 +2421,14 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
 
+    // Nome do arquivo baixado: "sintese-zuni-direciona" só para chat-mentor
+    // (ZUNI Direciona); demais productTypes mantêm o nome original.
+    const nomeArquivoDownload = session.productType === 'chat-mentor'
+      ? `sintese-zuni-direciona-${sessionId.slice(0, 8)}.pdf`
+      : `dossie-chat-mentor-zuni-${sessionId.slice(0, 8)}.pdf`;
+
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="dossie-chat-mentor-zuni-${sessionId.slice(0, 8)}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivoDownload}"`);
     // unlink só no callback — depois de o stream terminar (sucesso ou erro)
     res.sendFile(pdfPath, (err) => {
       if (err && !res.headersSent) {
@@ -2478,7 +2512,7 @@ app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
 
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
-    await sendEmail(session.email, session.name, pdfPath);
+    await sendEmail(session.email, session.name, pdfPath, null, session.productType);
     apagarPdfTemp(pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
