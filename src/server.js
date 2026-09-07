@@ -2129,7 +2129,7 @@ app.post('/api/checkout/preference', async (req, res) => {
         items: [
           {
             id: 'chat-mentor-zuni',
-            title: 'Chat Mentor ZUNI',
+            title: 'ZUNI Direciona — Sessão de orientação',
             quantity: 1,
             unit_price: unitPrice,
             currency_id: 'BRL'
