@@ -4,7 +4,31 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 04/09/2026 (checkout renomeado para ZUNI Direciona +
+> Última atualização: 07/09/2026 (push + deploy do commit `984801b` no Railway +
+> verificação em produção). Ver seção "07/09/2026 (ZUNI Direciona — push, deploy e
+> verificação em produção)" em "Decisões estratégicas" para detalhe completo.
+> Resumo: `984801b` empurrado para `origin/main` (deploy Railway
+> `82a5b6e6-6d6d-4286-9b3a-70e965be5953`, SUCCESS, container novo de pé sem erro no
+> boot). Em produção: os 6 cenários de `?tema=` do checkout resolvem corretamente
+> (título/abertura por tema; fallback `padrao` tanto em "sem parâmetro" quanto em
+> "?tema=inexistente"; UTMs da campanha não quebram a extração) — verificado pela
+> lógica client-side servida, não em navegador real (extensão não conectada).
+> "Síntese ZUNI Direciona" aparece no checkout onde deve; **sem** resíduo de
+> "Mentor"/"Dossiê" no texto visível do checkout (só no texto pré-preenchido do
+> link de WhatsApp, como já registrado em 04/09). **Achado, não corrigido,
+> aguardando decisão**: `public/chat.html` ainda traz "Mentor ZUNI Suprema" no
+> `<title>` e no `<h1>`, "o Mentor" no aviso de espera e no rótulo de autor das
+> bolhas, e os defaults estáticos "Seu Dossiê da Sessão" / "O Dossiê é um
+> relatório..." no modal de download (estes últimos são trocados por JS para
+> "Síntese ZUNI Direciona" quando o modal abre numa sessão `chat-mentor`). O commit
+> `984801b` só limpou vocabulário em `checkout.html` — `chat.html` não estava no
+> escopo, então não é regressão. RLS: 15/15 tabelas do schema `public` com
+> `rowsecurity = true`, 0 policies (padrão fixo do projeto); advisor de segurança
+> sem lint novo. Rollback disponível: `git revert 984801b && git push`, ou redeploy
+> do deploy anterior `697e2807-b6ff-4898-acbc-8edc0e179b2a` (commit `ad81104`,
+> 02/09/2026 20:16) pelo dashboard do Railway.
+>
+> Nota anterior (04/09/2026, checkout renomeado para ZUNI Direciona +
 > Síntese ZUNI Direciona substitui Dossiê para essa sessão + marcadores do
 > Pinterest). Ver seção "04/09/2026 (ZUNI Direciona — reforma do checkout,
 > renomeação da entrega com branch por productType, marcadores do Pinterest)"
@@ -337,6 +361,94 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 07/09/2026 (ZUNI Direciona — push, deploy e verificação em produção)
+
+Sessão via Claude Code. O commit `984801b` da sessão de 04/09 estava local, 1 à
+frente de `origin/main`. Tarefa: push, acompanhar o deploy no Railway e verificar
+em produção (saída real — `curl`, view-source, log do Railway, query de RLS), sem
+alterar código.
+
+**Push + deploy**
+- `git push origin main`: `ad81104..984801b  main -> main`.
+- Railway: deploy `82a5b6e6-6d6d-4286-9b3a-70e965be5953`, status SUCCESS, iniciado
+  2026-09-07 17:58:50 -03. `railway status` → `● Online`. Log do container novo:
+  `Servidor ZUNI Suprema escutando na porta 8080`, sem erro no boot.
+
+**1 — `checkout.html` por tema (produção)**
+- O HTML servido é **idêntico byte a byte** nos 6 casos (`HTTP 200`, 14362 bytes,
+  mesmo sha1). O texto do tema é montado 100% client-side por JS a partir de
+  `?tema=`; não há branch server-side. `/checkout` (rota) e `/checkout.html`
+  (estático) servem o mesmo arquivo.
+- Reproduzida a lógica servida (`const TEMAS` + seletor extraídos verbatim do
+  view-source de produção) fora do navegador — extensão de browser não conectada,
+  sem navegador real disponível. Resultado dos 6 casos:
+  - `?tema=adolescentes` → h1 "Quando a conversa com seu filho vira briga"
+  - `?tema=clareza` → h1 "Dúvidas difíceis raramente cabem em uma pergunta de uma linha"
+  - `?tema=estresse` → h1 "Quando o cansaço deixou de ser só do fim do dia"
+  - sem parâmetro → **fallback `padrao`** ("Nem toda questão precisa de uma resposta rápida...")
+  - `?tema=inexistente` → **fallback `padrao`**
+  - URL completa com UTMs (`utm_source=pinterest`, etc.) → resolve `clareza`, UTMs não atrapalham
+- Os 3 temas batem e o fallback responde nos dois casos previstos. Ressalva:
+  verificação da lógica, não de renderização em tela.
+
+**2 — "Síntese ZUNI Direciona" e resíduos de "Mentor"/"Dossiê"**
+- `checkout.html` em produção: "Síntese ZUNI Direciona" aparece 1× (item da lista
+  "Como funciona") + marca "ZUNI Direciona" no topo. `grep -niE "mentor|dossi|chat"`
+  no HTML servido só retorna a linha 224 — o texto pré-preenchido do link de
+  WhatsApp (`...pagamento da sessão com o Mentor.`), que não aparece na página e
+  ficou intocado por decisão do usuário em 04/09. Texto visível: limpo.
+- `chat.html` em produção — **resíduos presentes, nada corrigido nesta sessão**:
+  - `<title>Mentor ZUNI Suprema</title>` (linha 7) e `<h1>Mentor ZUNI Suprema</h1>`
+    (linha 555) — nunca trocados.
+  - Aviso "após enviar sua mensagem, o Mentor leva alguns segundos para responder"
+    (linha 569) e rótulo de autor "Mentor ZUNI" nas bolhas do assistente
+    (linha 698) — nunca trocados. ("Mentor" aqui é o nome da persona da IA,
+    consistente com o CLAUDE.md.)
+  - Modal de download: markup estático `<h2>Seu Dossiê da Sessão</h2>` +
+    "O Dossiê é um relatório em PDF..." (linhas 615/619/621). **São trocados por
+    JS** (`abrirModalRelatorio()` → `TEXTOS_ENTREGA['chat-mentor']`) para
+    "Sua Síntese ZUNI Direciona" quando o modal abre numa sessão `chat-mentor` com
+    `productType` já recebido do `/api/chat`. O texto "Dossiê" só aparece na janela
+    antes do swap, ou permanentemente se `productType` nunca chegar (mitigado: o
+    botão do header nasce `disabled` até a 1ª resposta).
+  - O commit `984801b` descreve a limpeza de vocabulário como escopo **exclusivo de
+    `checkout.html`**; em `chat.html` só mexeu em `productType` + botão disabled +
+    naming dinâmico do modal. Não é regressão do deploy. Se a intenção for zerar
+    "Mentor"/"Dossiê" também na sessão do ZUNI Direciona, é trabalho novo —
+    **aguardando decisão do usuário antes de tocar**.
+
+**3 — Verificação de RLS (rotina permanente de deploy)**
+- Query contra `pg_class`/`pg_policies` no schema `public` (projeto Supabase
+  `yirxjunmjfnajotcnywc`): **15/15 tabelas com `relrowsecurity = true`,
+  `relforcerowsecurity = false`, 0 policies cada** — o padrão fixo do projeto
+  (service key faz bypass; anon/authenticated não enxergam nada). Nenhuma tabela
+  sem RLS. Tabelas: acessos_experimente, acessos_livros, capturasexperimente,
+  codigos_experimente, creditos_sessao, cupons_desconto, documentos,
+  interpretacoes_numerologia, pedidos_livros_pendentes,
+  pedidos_sessoes_extras_pendentes, resgates_brinde_astro_numero,
+  respostas_questionario, resumos_sessoes, sessions, uso_chat_livro.
+- `get_advisors(security)`: só `rls_enabled_no_policy` nível INFO (design
+  pretendido) nas 15 tabelas. `WARN` de `function_search_path_mutable` (3 RPCs:
+  `buscar_documentos`, `match_documents_livro`, `buscar_documentos_hibrido`) e
+  `extension_in_public` (`vector`) são pré-existentes, sem relação com este deploy.
+
+**4 — Rollback**
+- Deploy anterior (alvo): `697e2807-b6ff-4898-acbc-8edc0e179b2a`, 2026-09-02
+  20:16:11 -03, commit `ad81104` ("status: checkout do Mentor conferido
+  visualmente e aprovado pelo usuario"). Mapeamento confirmado (commit 20:16:05,
+  deploy 20:16:11).
+- O `railway` CLI instalado aqui (v5.25.1) **não** tem redeploy de um ID
+  específico — `deployment redeploy` só refaz o mais recente. Opções, em ordem:
+  1. `git revert 984801b --no-edit && git push origin main` (Railway redeploya no
+     push; mais rastreável).
+  2. Dashboard Railway (`railway open`) → serviço `zuni-suprema` → Deployments →
+     `697e2807…` → Redeploy / Rollback to this deployment.
+  3. `railway down -y` apenas **remove** o deploy atual — não é rollback
+     direcionado, evitar.
+
+**Não houve alteração de código nesta sessão.** Único arquivo alterado:
+`STATUS_ZUNI.md` (este registro).
 
 ### 04/09/2026 (ZUNI Direciona — reforma do checkout, renomeação da entrega com branch por productType, marcadores do Pinterest)
 
@@ -3080,6 +3192,19 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
   implementado ainda — corrigir exige endpoint novo para restaurar
   histórico/contador/`productType` a partir do `sessionId` no carregamento da
   página.
+
+- **[07/09/2026] Resíduo de "Mentor"/"Dossiê" em `chat.html` — AGUARDANDO
+  DECISÃO**: confirmado na verificação de produção do deploy de `984801b` que a
+  interface de chat da sessão do ZUNI Direciona ainda exibe "Mentor ZUNI Suprema"
+  no `<title>` e no `<h1>`, "o Mentor" no aviso de espera (linha 569) e no rótulo
+  de autor das bolhas (linha 698), e os defaults estáticos "Seu Dossiê da Sessão" /
+  "O Dossiê é um relatório..." no modal de download (linhas 615/619/621). Os
+  defaults do modal são trocados por JS para "Síntese ZUNI Direciona" quando o
+  modal abre numa sessão `chat-mentor` com `productType` já recebido — os demais
+  nunca mudam. O commit `984801b` limpou vocabulário só em `checkout.html`;
+  `chat.html` não estava no escopo, não é regressão. **Decisão pendente do
+  usuário**: se a sessão do ZUNI Direciona deve ficar sem "Mentor"/"Dossiê" em
+  lugar nenhum (trabalho novo), ou se "Mentor" como nome da persona da IA fica.
 
 - **[14/08/2026] Otimização de capas da loja — ✅ RESOLVIDA**:
   - **Implementação**: 9 capas (Feminino + Masculino) comprimidas em JPG otimizado (500px, 60-122 KB cada)
