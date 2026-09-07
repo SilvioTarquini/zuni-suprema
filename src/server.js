@@ -35,6 +35,14 @@ const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
   : null;
 
+// Capa do PDF da Síntese ZUNI Direciona.
+//   true  -> página de capa é a imagem public/capa-sintese-zuni-direciona.jpg (full-bleed)
+//   false -> capa em vetor desenhada por desenharCapaVetorMentor() (comportamento anterior)
+// Só afeta os PDFs que usam a capa vetor (chat-mentor / productType nulo/antigo).
+// Mapa Astral e Mapa Integrado (capa PNG de astrologia) não são afetados.
+// Canalização da capa em imagem pronta e testada; ligar quando a arte final entrar.
+const CAPA_SINTESE_EM_IMAGEM = false;
+
 function assertSupabase() {
   if (!supabase) {
     throw new Error('SUPABASE_URL e SUPABASE_KEY devem estar configurados para usar o Supabase.');
@@ -1149,9 +1157,15 @@ function desenharCapaVetorMentor(doc, userName, productType) {
   doc.fillColor('#2c2c2c').font('Helvetica-Bold').fontSize(32)
      .text(tituloCapa, 0, h * 0.42, { align: 'center', width: w, lineGap: 4 });
 
-  // Subtítulo — o produto
+  // Subtítulo — ramifica por productType, na mesma linha do título acima.
+  // chat-mentor (ZUNI Direciona) e sessões sem productType (nulo/antigo) levam a
+  // linha de posicionamento da marca; demais productTypes que caem nesta capa
+  // vetor mantêm o texto original.
+  const subtituloCapa = (productType === 'chat-mentor' || !productType)
+    ? 'Orientação personalizada para questões da vida real'
+    : 'Chat Mentor ZUNI';
   doc.fillColor('#555555').font('Helvetica').fontSize(15)
-     .text('Chat Mentor ZUNI', 0, h * 0.42 + 92, { align: 'center', width: w, characterSpacing: 1 });
+     .text(subtituloCapa, 0, h * 0.42 + 92, { align: 'center', width: w, characterSpacing: 1 });
 
   // Destinatário — só quando há nome na sessão
   if (userName) {
@@ -1179,7 +1193,12 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
     const os = require('os');
 
     const outputPath = path.join(os.tmpdir(), `relatorio-${sessionId}.pdf`);
-    const doc = new PDFDocument({ margin: 50 });
+
+    // Documento em A4 — produto brasileiro, padrão de papel do país (antes era
+    // 'letter'). Vale para todas as páginas: capa, índice e corpo. A capa em
+    // imagem (quando ligada) é um JPG A4 exato, então casa sem faixa nem corte.
+    const capaSinteseComoImagem = CAPA_SINTESE_EM_IMAGEM && !usaCapaAstro(productType, temMapaNatal);
+    const doc = new PDFDocument({ margin: 50, size: 'A4' });
     const stream = fs.createWriteStream(outputPath);
 
     doc.pipe(stream);
@@ -1194,10 +1213,31 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
         doc.image(capaPath, 0, 0, { fit: [doc.page.width, doc.page.height], align: 'center', valign: 'center' });
         doc.addPage();
       }
+    } else if (capaSinteseComoImagem) {
+      // Capa em imagem: JPG A4 (1051x1487) cobrindo a página A4 inteira. x=0/y=0
+      // são coordenadas absolutas de página no PDFKit — ignora a margem de 50.
+      const capaSintesePath = path.join(__dirname, '../public/capa-sintese-zuni-direciona.jpg');
+      if (fs.existsSync(capaSintesePath)) {
+        doc.image(capaSintesePath, 0, 0, { width: doc.page.width, height: doc.page.height });
+        doc.addPage();
+      } else {
+        desenharCapaVetorMentor(doc, userName, productType);
+        doc.addPage();
+      }
     } else {
       // chat-mentor (e qualquer productType não reconhecido / sessão antiga sem mapa natal)
       desenharCapaVetorMentor(doc, userName, productType);
       doc.addPage();
+    }
+
+    // A capa em imagem não leva texto por cima (nome do produto e dizeres da
+    // marca já vêm impressos nela). O destinatário, que a capa vetor mostra na
+    // própria capa, aparece aqui, no topo da página de índice.
+    if (capaSinteseComoImagem && userName) {
+      doc.fontSize(12).font('Helvetica').fillColor('#555555')
+         .text(`Preparado para ${userName}`, { align: 'center' });
+      doc.moveDown(1);
+      doc.fillColor('black');
     }
 
     // Página de índice
