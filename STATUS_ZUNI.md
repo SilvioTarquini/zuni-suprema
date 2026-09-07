@@ -4,8 +4,15 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 07/09/2026 (push + deploy do commit `984801b` no Railway +
-> verificação em produção). Ver seção "07/09/2026 (ZUNI Direciona — push, deploy e
+> Última atualização: 07/09/2026 — duas frentes no mesmo dia. (2) Paleta clara do
+> `checkout.html` (custom properties em `:root`), texto do tema padrão renderizado
+> direto no HTML (sem depender de JS), link do WhatsApp → "Sessão ZUNI", e
+> `chat.html` com `<title>`/`<h1>` → "ZUNI Direciona" + modal de download invertido
+> (default "Síntese ZUNI Direciona"; "Dossiê" só para `mapa-integrado`). Persona
+> "Mentor ZUNI" mantida por decisão. Sem push — ver bloco "07/09/2026 (ZUNI
+> Direciona — paleta clara do checkout, render sem JS, nomenclatura do modal do
+> chat)". (1) Antes disso, push + deploy do commit `984801b` no Railway +
+> verificação em produção. Ver seção "07/09/2026 (ZUNI Direciona — push, deploy e
 > verificação em produção)" em "Decisões estratégicas" para detalhe completo.
 > Resumo: `984801b` empurrado para `origin/main` (deploy Railway
 > `82a5b6e6-6d6d-4286-9b3a-70e965be5953`, SUCCESS, container novo de pé sem erro no
@@ -361,6 +368,81 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 07/09/2026 (ZUNI Direciona — paleta clara do checkout, render sem JS, nomenclatura do modal do chat)
+
+Sessão via Claude Code, logo após o deploy de `984801b`. Quatro frentes, sem push
+(aguardando aprovação). Frente A foi commit isolado (`e1169ed`, só o registro da
+sessão de deploy no `STATUS_ZUNI.md`). Frentes B/C/D são um segundo commit de
+código.
+
+**B — `public/checkout.html`: paleta clara (só cor)**
+- Centralizadas 9 custom properties em `:root` (`--fundo` `#F5F2EC`, `--card`
+  `#FFFFFF`, `--borda` `#E5DFD3`, `--texto` `#1F1D1A`, `--texto-suave` `#57514A`,
+  `--dourado-texto` `#9A7B2E`, `--dourado-brilho` `#C9A84C`, `--dourado-escuro`
+  `#B08D3F`, `--texto-botao` `#1A1508`). Antes as cores eram literais espalhadas
+  pelo `<style>`.
+- Trocas: `body` → fundo `--fundo` / texto `--texto`; marca "ZUNI DIRECIONA",
+  "Como funciona", numerais, preço, linha "Conhecimento aplicado", link do
+  WhatsApp → `--dourado-texto`; subtítulo, `.tema-abertura`, itens da lista,
+  `.price-desc`, os dois avisos do Mercado Pago (`.method-note` e
+  `.security-note`), rodapé e `.aviso-legal` → `--texto-suave`; `.card` e
+  `.como-funciona` → fundo `--card`, borda `--borda`, `box-shadow 0 1px 3px
+  rgba(31,29,26,.06)`; círculos dos numerais → fundo `#F0E9D8`, borda `1px solid
+  #DCC98E` (box-sizing border-box, sem shift de layout), número `--dourado-texto`;
+  botão → **gradiente literal inalterado** (`#c9a84c → #e8c96a`), só o texto para
+  `--texto-botao`; `<meta name="theme-color">` **criado** (não existia) com
+  `#F5F2EC`.
+- Contêineres inline `#card-pending-container` / `#card-timeout-container`
+  (estados de retorno do pagamento) também recolorados p/ `--card` / `--borda` +
+  box-shadow; `#e74c3c` do timeout e o verde do botão do WhatsApp preservados.
+- **Decisões de julgamento** (não estavam no spec, registrar): `.tema-abertura` e
+  `.price-desc` → `--texto-suave`; `h1` (título do tema) → `--texto`; hover do
+  link do WhatsApp → `--texto` (escurece; `--dourado-brilho` daria ~2:1 sobre
+  creme, ilegível no hover). `--dourado-brilho` / `--dourado-escuro` ficaram
+  **definidas mas usadas só no gradiente literal do botão** (`--dourado-brilho`
+  == start atual); `--dourado-escuro` reservada — o spec dizia "gradiente
+  inalterado" e também "(fim do gradiente do botão)", conflito resolvido a favor
+  de "inalterado". Nada de estrutura/copy/layout/fontes mudou.
+
+**C — `public/checkout.html`: conteúdo**
+- Render sem JS: `#tema-titulo` e `#tema-abertura` agora trazem o texto do tema
+  `padrao` **direto no HTML servido**. `aplicarTemaDaURL()` só escreve no DOM
+  quando há `?tema=` válido; no fallback dá `return` sem tocar no DOM.
+  `TEMAS.padrao` mantido no objeto só como referência (comentado: se mudar um,
+  mudar o outro). Confirmado por `curl` local: `<h1>` vem preenchido em
+  `?tema=inexistente` e sem parâmetro.
+- Link do WhatsApp (linha ~224): texto pré-preenchido "pagamento da sessão com o
+  Mentor" → "pagamento da Sessão ZUNI" (`...Sess%C3%A3o%20ZUNI.`).
+
+**D — `public/chat.html`: nomenclatura (persona intocada)**
+- `<title>` (linha 7) e `<h1>` (linha 555): "Mentor ZUNI Suprema" → "ZUNI
+  Direciona".
+- Modal de download **invertido**. Markup estático (linhas 615/619/621): "Sua
+  Síntese ZUNI Direciona" / "A Síntese é um relatório em PDF..." / "📄 Baixar
+  Síntese em PDF". No JS, `TEXTOS_ENTREGA`: a chave `chat-mentor` virou `padrao`
+  (Síntese) e entrou uma chave `mapa-integrado` (Dossiê). `textosEntregaAtual()`
+  (`TEXTOS_ENTREGA[productTypeAtual] || .padrao`) inalterada — só acessada por
+  ela, nenhum lookup direto por string. Resultado: `chat-mentor`, `mapa-astral`,
+  `productType` nulo → Síntese; só `mapa-integrado` → Dossiê. Comentário do bloco
+  atualizado.
+- **Mantidos por decisão** (não são resíduo): rótulo "Mentor ZUNI" nas bolhas
+  (linha 698) e aviso "o Mentor leva alguns segundos" (linha 569).
+
+**Verificação (frente E)**
+- `new Function()` nos `<script>` de ambos os arquivos: OK.
+- Servidor local `PORT=8091`; `curl` confirmou `<h1>`/abertura preenchidos no HTML
+  servido (5 variações), `<meta theme-color>` e as 9 `:root` vars presentes, link
+  do WhatsApp com "Sessão ZUNI".
+- Playwright + Chrome do sistema (extensão do Claude não conecta): screenshots
+  full-page dos 4 temas (`adolescentes`, `clareza`, `estresse`, sem parâmetro) —
+  JS sobrescreve o tema quando há `?tema=`; sem parâmetro mostra o padrão
+  server-rendered. Paleta clara conferida visualmente pelo usuário.
+- `grep` em `chat.html`: "Dossiê" não aparece mais como default estático — só em
+  comentários de código, IDs/nomes de função (`btn-baixar-dossie`,
+  `baixarDossie`, etc.) e no bloco `mapa-integrado` do JS (intencional).
+
+**Sem push.** Commits: `e1169ed` (frente A) + o commit de código de B/C/D.
 
 ### 07/09/2026 (ZUNI Direciona — push, deploy e verificação em produção)
 
@@ -3193,18 +3275,16 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
   histórico/contador/`productType` a partir do `sessionId` no carregamento da
   página.
 
-- **[07/09/2026] Resíduo de "Mentor"/"Dossiê" em `chat.html` — AGUARDANDO
-  DECISÃO**: confirmado na verificação de produção do deploy de `984801b` que a
-  interface de chat da sessão do ZUNI Direciona ainda exibe "Mentor ZUNI Suprema"
-  no `<title>` e no `<h1>`, "o Mentor" no aviso de espera (linha 569) e no rótulo
-  de autor das bolhas (linha 698), e os defaults estáticos "Seu Dossiê da Sessão" /
-  "O Dossiê é um relatório..." no modal de download (linhas 615/619/621). Os
-  defaults do modal são trocados por JS para "Síntese ZUNI Direciona" quando o
-  modal abre numa sessão `chat-mentor` com `productType` já recebido — os demais
-  nunca mudam. O commit `984801b` limpou vocabulário só em `checkout.html`;
-  `chat.html` não estava no escopo, não é regressão. **Decisão pendente do
-  usuário**: se a sessão do ZUNI Direciona deve ficar sem "Mentor"/"Dossiê" em
-  lugar nenhum (trabalho novo), ou se "Mentor" como nome da persona da IA fica.
+- **[07/09/2026] Resíduo de "Mentor"/"Dossiê" em `chat.html` — ✅ RESOLVIDA
+  (07/09/2026, sessão seguinte)**: decisão do usuário e implementação na mesma
+  data — ver bloco "07/09/2026 (ZUNI Direciona — paleta clara do checkout, render
+  sem JS, nomenclatura do modal do chat)" em Decisões estratégicas. `<title>` e
+  `<h1>` de `chat.html` → "ZUNI Direciona". Modal de download invertido: markup
+  estático + fallback do JS agora são "Síntese ZUNI Direciona"; o JS só troca para
+  "Dossiê" quando `productType === 'mapa-integrado'`. **Mantidos por decisão de
+  nomenclatura** (não são resíduo): o rótulo de autor "Mentor ZUNI" nas bolhas
+  (linha 698) e o aviso "o Mentor leva alguns segundos" (linha 569) — "Mentor ZUNI"
+  é o nome da interface conversacional.
 
 - **[14/08/2026] Otimização de capas da loja — ✅ RESOLVIDA**:
   - **Implementação**: 9 capas (Feminino + Masculino) comprimidas em JPG otimizado (500px, 60-122 KB cada)

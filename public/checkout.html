@@ -3,13 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#F5F2EC">
   <title>ZUNI Direciona — ZUNI Suprema</title>
   <!-- Pinterest: tag de rastreamento -->
   <style>
+    :root {
+      --fundo: #F5F2EC;
+      --card: #FFFFFF;
+      --borda: #E5DFD3;
+      --texto: #1F1D1A;
+      --texto-suave: #57514A;
+      --dourado-texto: #9A7B2E;
+      --dourado-brilho: #C9A84C;
+      --dourado-escuro: #B08D3F;
+      --texto-botao: #1A1508;
+    }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      background: #0a0a0a;
-      color: #f0f0f0;
+      background: var(--fundo);
+      color: var(--texto);
       font-family: 'Georgia', serif;
       min-height: 100vh;
       display: flex;
@@ -24,34 +36,35 @@
     }
     .marca-nome {
       font-size: 15px;
-      color: #c9a84c;
+      color: var(--dourado-texto);
       letter-spacing: 2px;
       text-transform: uppercase;
       margin-bottom: 6px;
     }
     .marca-subtitulo {
       font-size: 15px;
-      color: #888;
+      color: var(--texto-suave);
       font-style: italic;
       margin-bottom: 28px;
       line-height: 1.4;
     }
     h1 {
       font-size: 30px;
-      color: #ffffff;
+      color: var(--texto);
       margin-bottom: 14px;
       font-weight: normal;
       line-height: 1.3;
     }
     .tema-abertura {
       font-size: 17px;
-      color: #bbb;
+      color: var(--texto-suave);
       margin-bottom: 32px;
       line-height: 1.55;
     }
     .como-funciona {
-      background: #141414;
-      border: 1px solid #2a2a2a;
+      background: var(--card);
+      border: 1px solid var(--borda);
+      box-shadow: 0 1px 3px rgba(31, 29, 26, 0.06);
       border-radius: 12px;
       padding: 28px 26px;
       margin-bottom: 24px;
@@ -59,7 +72,7 @@
     }
     .como-funciona-titulo {
       font-size: 18px;
-      color: #c9a84c;
+      color: var(--dourado-texto);
       font-weight: normal;
       margin-bottom: 16px;
       text-align: center;
@@ -71,7 +84,7 @@
     .como-funciona li {
       counter-increment: passo;
       font-size: 16px;
-      color: #ccc;
+      color: var(--texto-suave);
       line-height: 1.5;
       padding: 8px 0 8px 34px;
       position: relative;
@@ -84,8 +97,9 @@
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: rgba(201, 168, 76, 0.15);
-      color: #c9a84c;
+      background: #F0E9D8;
+      border: 1px solid #DCC98E;
+      color: var(--dourado-texto);
       font-size: 13px;
       font-weight: bold;
       display: flex;
@@ -95,14 +109,15 @@
     }
     .credibilidade {
       font-size: 15px;
-      color: #8a7a52;
+      color: var(--dourado-texto);
       font-style: italic;
       line-height: 1.5;
       margin-bottom: 32px;
     }
     .card {
-      background: #141414;
-      border: 1px solid #2a2a2a;
+      background: var(--card);
+      border: 1px solid var(--borda);
+      box-shadow: 0 1px 3px rgba(31, 29, 26, 0.06);
       border-radius: 12px;
       padding: 44px 36px;
     }
@@ -111,19 +126,19 @@
     }
     .price {
       font-size: 47px;
-      color: #c9a84c;
+      color: var(--dourado-texto);
       font-weight: bold;
     }
     .price span { font-size: 22px; }
     .price-desc {
       font-size: 15px;
-      color: #666;
+      color: var(--texto-suave);
       margin-top: 4px;
     }
     button {
       width: 100%;
       background: linear-gradient(135deg, #c9a84c, #e8c96a);
-      color: #0a0a0a;
+      color: var(--texto-botao);
       border: none;
       border-radius: 8px;
       padding: 20px;
@@ -145,24 +160,24 @@
     .footer {
       margin-top: 26px;
       font-size: 14px;
-      color: #444;
+      color: var(--texto-suave);
     }
     .aviso-legal {
       font-size: 13px;
-      color: #555;
+      color: var(--texto-suave);
       line-height: 1.5;
       margin-bottom: 8px;
     }
     .method-note {
       font-size: 14px;
-      color: #888;
+      color: var(--texto-suave);
       text-align: center;
       line-height: 1.5;
       margin-top: 12px;
     }
     .security-note {
       font-size: 15px;
-      color: #8a7a52;
+      color: var(--texto-suave);
       text-align: center;
       margin: 12px 0;
     }
@@ -172,11 +187,11 @@
       margin-top: 14px;
     }
     .ajuda-whatsapp a {
-      color: #888;
+      color: var(--dourado-texto);
       text-decoration: underline;
     }
     .ajuda-whatsapp a:hover {
-      color: #c9a84c;
+      color: var(--texto);
     }
     @media (max-width: 400px) {
       body { padding: 14px; }
@@ -198,8 +213,8 @@
     <div class="marca-nome">ZUNI Direciona</div>
     <p class="marca-subtitulo">Orientação personalizada para questões da vida real</p>
 
-    <h1 id="tema-titulo"></h1>
-    <p class="tema-abertura" id="tema-abertura"></p>
+    <h1 id="tema-titulo">Nem toda questão precisa de uma resposta rápida. Algumas precisam ser compreendidas.</h1>
+    <p class="tema-abertura" id="tema-abertura">Uma sessão de orientação personalizada para organizar a situação, explorar possibilidades e encontrar caminhos mais claros.</p>
 
     <div class="como-funciona">
       <p class="como-funciona-titulo">Como funciona</p>
@@ -221,18 +236,18 @@
       <button id="btn" onclick="acessarChat()">Começar minha orientação</button>
       <p class="method-note">Você será direcionado ao ambiente seguro do Mercado Pago. PIX, cartão ou saldo.</p>
       <p class="ajuda-whatsapp">
-        <a href="https://wa.me/5515996088895?text=Ol%C3%A1%2C%20estou%20com%20d%C3%BAvida%2Fproblema%20no%20pagamento%20da%20sess%C3%A3o%20com%20o%20Mentor." target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
+        <a href="https://wa.me/5515996088895?text=Ol%C3%A1%2C%20estou%20com%20d%C3%BAvida%2Fproblema%20no%20pagamento%20da%20Sess%C3%A3o%20ZUNI." target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
       </p>
       <p class="security-note">🔒 Pagamento 100% seguro via Mercado Pago</p>
       <p class="error" id="error">Erro ao processar. Tente novamente.</p>
     </div>
-    <div id="card-pending-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
-      <p style="color:#c9a84c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Confirmando seu pagamento</p>
-      <p style="font-size:13px; color:#888;">Aguarde enquanto validamos seu pagamento com o Mercado Pago. Isso pode levar alguns segundos.</p>
+    <div id="card-pending-container" style="display:none; background:var(--card); border:1px solid var(--borda); box-shadow:0 1px 3px rgba(31,29,26,.06); border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+      <p style="color:var(--dourado-texto); font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Confirmando seu pagamento</p>
+      <p style="font-size:13px; color:var(--texto-suave);">Aguarde enquanto validamos seu pagamento com o Mercado Pago. Isso pode levar alguns segundos.</p>
     </div>
-    <div id="card-timeout-container" style="display:none; background:#141414; border:1px solid #2a2a2a; border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
+    <div id="card-timeout-container" style="display:none; background:var(--card); border:1px solid var(--borda); box-shadow:0 1px 3px rgba(31,29,26,.06); border-radius:12px; padding:32px; text-align:center; margin-top:20px;">
       <p style="color:#e74c3c; font-size:14px; letter-spacing:2px; text-transform:uppercase; margin-bottom:16px;">Pagamento ainda não confirmado</p>
-      <p style="font-size:13px; color:#888; margin-bottom:20px;">Seu pagamento pode ainda estar em processamento, ou não foi aprovado. Se você já pagou, aguarde alguns minutos e recarregue esta página. Caso o problema persista, fale com nosso suporte.</p>
+      <p style="font-size:13px; color:var(--texto-suave); margin-bottom:20px;">Seu pagamento pode ainda estar em processamento, ou não foi aprovado. Se você já pagou, aguarde alguns minutos e recarregue esta página. Caso o problema persista, fale com nosso suporte.</p>
       <a href="https://wa.me/5515996088895?text=Ol%C3%A1!%20Fiz%20um%20pagamento%20no%20ZUNI%20Direciona%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener noreferrer" style="display:inline-block; background:linear-gradient(135deg,#25D366,#128C7E); color:#fff; padding:14px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:bold;">Falar com o suporte no WhatsApp</a>
     </div>
     <div class="footer">
@@ -255,6 +270,9 @@
         abertura: "Sobrecarga raramente vem de uma causa só. Uma sessão para enxergar o que está pesando de verdade e por onde começar a aliviar."
       },
       padrao: {
+        // Texto do fallback vive direto no HTML servido (#tema-titulo / #tema-abertura),
+        // para a página ter conteúdo mesmo sem JS. Mantido aqui só como referência —
+        // se mudar um, mudar o outro.
         titulo: "Nem toda questão precisa de uma resposta rápida. Algumas precisam ser compreendidas.",
         abertura: "Uma sessão de orientação personalizada para organizar a situação, explorar possibilidades e encontrar caminhos mais claros."
       }
@@ -263,7 +281,10 @@
     function aplicarTemaDaURL() {
       const params = new URLSearchParams(window.location.search);
       const chaveTema = params.get('tema');
-      const tema = (chaveTema && TEMAS[chaveTema]) ? TEMAS[chaveTema] : TEMAS.padrao;
+      const tema = (chaveTema && TEMAS[chaveTema]) ? TEMAS[chaveTema] : null;
+
+      // Sem ?tema= válido: o HTML já traz o texto padrão, não tocar no DOM.
+      if (!tema) return;
 
       document.getElementById('tema-titulo').textContent = tema.titulo;
       document.getElementById('tema-abertura').textContent = tema.abertura;

@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <!-- Pinterest: tag de rastreamento -->
-  <title>Mentor ZUNI Suprema</title>
+  <title>ZUNI Direciona</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@300;400;500&display=swap');
 
@@ -552,7 +552,7 @@
   <div class="chat-container">
     <header>
       <div class="header-left">
-        <h1>Mentor ZUNI Suprema</h1>
+        <h1>ZUNI Direciona</h1>
       </div>
       <div class="header-right">
         <div class="counter">Mensagens: <span id="cnt">0</span></div>
@@ -612,13 +612,13 @@
     <div style="background:#f8f5f0;border-radius:16px;padding:32px 24px;max-width:480px;width:100%;box-shadow:0 12px 40px rgba(0,0,0,0.3);position:relative;margin-top:16px;margin-bottom:16px;height:fit-content;">
       <button onclick="fecharModalRelatorio()" aria-label="Fechar" style="position:absolute;top:12px;right:12px;width:44px;height:44px;min-width:44px;border-radius:50%;border:none;background:rgba(0,0,0,0.08);color:#2c2c2c;font-size:22px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
 
-      <h2 id="titulo-modal-relatorio" style="font-family:'Playfair Display',serif;color:#B8963E;font-size:22px;letter-spacing:0.5px;margin-bottom:16px;padding-right:44px;">Seu Dossiê da Sessão</h2>
+      <h2 id="titulo-modal-relatorio" style="font-family:'Playfair Display',serif;color:#B8963E;font-size:22px;letter-spacing:0.5px;margin-bottom:16px;padding-right:44px;">Sua Síntese ZUNI Direciona</h2>
 
       <p id="aviso-encerramento-modal" style="display:none;font-family:'Inter',sans-serif;font-size:17px;font-weight:700;color:#3a3a3a;margin-bottom:12px;">Sua sessão terminou.</p>
 
-      <p id="texto-explicativo-relatorio" style="font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;color:#3a3a3a;margin-bottom:24px;">O Dossiê é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.</p>
+      <p id="texto-explicativo-relatorio" style="font-family:'Inter',sans-serif;font-size:17px;line-height:1.6;color:#3a3a3a;margin-bottom:24px;">A Síntese é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.</p>
 
-      <button id="btn-baixar-dossie" onclick="baixarDossie()" style="width:100%;background:#D4AF37;color:#0a0a0a;border:none;border-radius:8px;padding:16px;font-weight:700;font-size:17px;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.3px;margin-bottom:12px;">📄 Baixar Dossiê em PDF</button>
+      <button id="btn-baixar-dossie" onclick="baixarDossie()" style="width:100%;background:#D4AF37;color:#0a0a0a;border:none;border-radius:8px;padding:16px;font-weight:700;font-size:17px;cursor:pointer;font-family:'Georgia',serif;letter-spacing:0.3px;margin-bottom:12px;">📄 Baixar Síntese em PDF</button>
 
       <button id="btn-preferir-email" onclick="mostrarFormularioEmailDossie()" style="width:100%;background:transparent;color:#8a6d1f;border:2px solid #D4AF37;border-radius:8px;padding:14px;font-weight:600;font-size:16px;cursor:pointer;font-family:'Georgia',serif;">✉️ Prefiro receber por e-mail</button>
 
@@ -644,27 +644,27 @@
     let contador = 0;
 
     // Nome da entrega (PDF) exibido no modal — depende do productType da sessão,
-    // que só é conhecido depois da primeira resposta de /api/chat. Enquanto isso
-    // (ou se a resposta não trouxer o campo), o default é 'padrao' (Dossiê) —
-    // nunca o inverso, para uma sessão de outro produto nunca ver "Síntese ZUNI
-    // Direciona" por engano.
+    // que só é conhecido depois da primeira resposta de /api/chat. O default é
+    // 'padrao' (Síntese ZUNI Direciona), que cobre o produto de entrada
+    // (chat-mentor) e o caso do productType não chegar. Só 'mapa-integrado' troca
+    // para "Dossiê" — o markup estático do modal também já vem como Síntese.
     let productTypeAtual = null;
     const TEXTOS_ENTREGA = {
-      'chat-mentor': {
-        tituloModal: 'Sua Síntese ZUNI Direciona',
-        textoExplicativo: 'A Síntese ZUNI Direciona é um documento em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.',
-        botaoBaixar: '📄 Baixar Síntese ZUNI Direciona em PDF',
-        botaoBaixarCarregando: '⏳ Preparando sua Síntese...',
-        statusPreparando: 'Preparando sua Síntese ZUNI Direciona — pode levar até 1 minuto. Não feche esta janela.',
-        nomeArquivo: 'sintese-zuni-direciona'
-      },
-      padrao: {
+      'mapa-integrado': {
         tituloModal: 'Seu Dossiê da Sessão',
         textoExplicativo: 'O Dossiê é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.',
         botaoBaixar: '📄 Baixar Dossiê em PDF',
         botaoBaixarCarregando: '⏳ Preparando seu Dossiê...',
         statusPreparando: 'Preparando seu Dossiê — pode levar até 1 minuto. Não feche esta janela.',
         nomeArquivo: 'dossie-chat-mentor-zuni'
+      },
+      padrao: {
+        tituloModal: 'Sua Síntese ZUNI Direciona',
+        textoExplicativo: 'A Síntese é um relatório em PDF com os principais pontos e direcionamentos da sua conversa com o Mentor. Baixe agora ou receba por e-mail — como preferir.',
+        botaoBaixar: '📄 Baixar Síntese em PDF',
+        botaoBaixarCarregando: '⏳ Preparando sua Síntese...',
+        statusPreparando: 'Preparando sua Síntese ZUNI Direciona — pode levar até 1 minuto. Não feche esta janela.',
+        nomeArquivo: 'sintese-zuni-direciona'
       }
     };
     function textosEntregaAtual() {
