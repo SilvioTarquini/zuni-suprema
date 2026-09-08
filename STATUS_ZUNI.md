@@ -4,7 +4,26 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 07/09/2026 (sessão longa, Claude Code). Checkout com paleta
+> Última atualização: 07/09/2026 (fechamento da sessão longa, Claude Code). Além do
+> registrado na nota abaixo: `85e4f62` no ar — 4º tema `relacionamentos` no objeto
+> `TEMAS` do checkout. **Webhook do MercadoPago RESOLVIDO** (cadastrado no painel em
+> produção; `MERCADOPAGO_TOKEN` do Railway confirmado produtivo `APP_USR-`, app
+> 8354850570921182; assinatura secreta gerada e guardada pelo usuário, ainda não
+> usada). **Achado de alta prioridade**: o `?tema=` do anúncio não chega ao produto
+> — é só client-side, os 3 redirects pós-pagamento vão a `/questionario-selecao.html`
+> genérico; a promessa do anúncio se perde no ponto de maior atrito. **Achado**:
+> cobertura RAG rasa nos temas dos anúncios (`estresse` e `clareza` sem tema
+> indexado, caem no pool NULL; só 7 questionários com `ragIndexado`). **Decisão**:
+> grupo de relacionamentos segurado — campanha roda só `adolescentes`, `estresse`,
+> `clareza`. **Campanha Pinterest**: 18 pins aprovados (4 adolescentes / 3 estresse
+> / 5 relacionamentos segurados / 6 clareza). Bloqueadores que permanecem: compra
+> real ponta a ponta (08/09, com reload no meio), retomada de sessão em `chat.html`,
+> domínio + tag no Pinterest, `x-signature` no webhook, `notification_url` na
+> preferência. Detalhe completo no bloco "07/09/2026 (fechamento — tema
+> `relacionamentos`, achados do funil, campanha Pinterest, grupo de relacionamentos
+> segurado)" em "Decisões estratégicas".
+>
+> Nota anterior (07/09/2026, meio da sessão). Checkout com paleta
 > clara + ajuste de contraste para leitor mais velho; PDF da Síntese passou a A4;
 > capa vetor do PDF com subtítulo por `productType`; pipeline de capa em imagem
 > pronto mas inerte (`CAPA_SINTESE_EM_IMAGEM = false`); `title` do item no
@@ -343,7 +362,8 @@
 > Nota anterior (20/08/2026): Auditoria completa do pipeline RAG (indexação, busca
 > híbrida, fluxo do Mapa Integrado). Causa-raiz do Mapa Integrado diagnosticada: a rota
 > nunca consultou RAG. Decisão tomada: astrologia/numerologia serão reformuladas do zero
-> em tabela própria (`documentos_astro`). Ver seção "HANDOFF PARA PRÓXIMA SESSÃO
+> em tabela própria (`documentos_astro`) — **tabela que nunca chegou a ser criada; ver
+> correção em "Decisões da sessão (20/08/2026)"**. Ver seção "HANDOFF PARA PRÓXIMA SESSÃO
 > (20/08/2026) — Auditoria RAG" logo abaixo. Fechamento de audiolivros (19/08/2026 noite)
 > permanece registrado na seção seguinte. Também em 20/08/2026: abertura da frente
 > "ZUNI Horizontes — obra Tempo para Viver" (plano editorial fechado, sumário de 32
@@ -384,6 +404,90 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 07/09/2026 (fechamento — tema `relacionamentos`, achados do funil, campanha Pinterest, grupo de relacionamentos segurado)
+
+Fechamento da sessão longa de 07/09 (Claude Code), depois do bloco abaixo. Working
+tree limpo e `main == origin/main` ao encerrar.
+
+**Deploy adicional (no ar)**
+- `85e4f62` → deploy `6406e930-15e9-46c5-a1e9-ce1f33ae6ed4` (SUCCESS, RLS 15/15).
+  Quarta chave `relacionamentos` no objeto `TEMAS` de `public/checkout.html`, antes
+  de `padrao`, mesma estrutura — título "Quando a relação vira uma discussão só".
+  Os 3 temas antigos, o HTML do tema padrão e `aplicarTemaDaURL()` intocados; os 5
+  casos (`adolescentes`/`clareza`/`estresse`/`relacionamentos`/sem parâmetro)
+  conferidos em local e em produção — HTML servido byte-idêntico, o tema é montado
+  client-side. *(O outro deploy do dia, `f93d7a7` — `title` do item no MercadoPago
+  → "ZUNI Direciona — Sessão de orientação" — está detalhado no bloco abaixo.)*
+
+**Webhook do MercadoPago — detalhe do que foi feito no painel**
+Além do já registrado (URL `https://www.zunisuprema.com.br/api/pagamento/webhook`,
+modo produção; simulação = `400 "Payment not found"`, esperada para o `data.id`
+fictício `123456`): os eventos assinados são **Order (Mercado Pago) + Pagamentos
+(legacy)**; a **assinatura secreta foi gerada e guardada pelo usuário** — ainda não
+usada pelo código (ver pendência de `x-signature`). `MERCADOPAGO_TOKEN` no Railway
+confirmado como **produtivo** (`APP_USR-…`), da aplicação **8354850570921182**.
+
+**ACHADO DE ALTA PRIORIDADE — o tema do anúncio não chega ao produto**
+O `?tema=` do checkout é usado **só client-side** (`aplicarTemaDaURL()` troca `<h1>`
+e o parágrafo de abertura de `checkout.html`). Não é lido por `acessarChat()`, não
+vai para `POST /api/checkout/preference`, e não entra no redirect pós-pagamento —
+os **três** pontos de redirect em `checkout.html` (cupom 100%, retorno com poll,
+retorno com `status=retorno`) vão para `/questionario-selecao.html?sessionId=<id>`
+e nada mais. Depois de pagar, o comprador cai numa **tela de seleção genérica** com
+8 categorias e ~40 questionários (`fetch('/api/questionario/catalogo')` — o catálogo
+inteiro, não o `rag-only`). A promessa do anúncio se perde no ponto de maior atrito
+do funil. `session.temaQuestionario` só é gravado em
+`POST /api/questionario/salvar-respostas`, a partir do questionário que o usuário
+escolheu — nunca do `?tema=` do anúncio. **Resolver antes de escalar tráfego pago.**
+
+**ACHADO — cobertura RAG rasa nos temas dos anúncios**
+Tabela **`documentos`** (única). **`documentos_astro` nunca foi construída** — era
+plano na sessão de 20/08/2026 e não saiu do papel; onde o arquivo a menciona como
+se existisse, é plano não executado. Coluna `tema` (text). Para os anúncios:
+`sentimentos_adolescencia` 16 chunks, `educar_filhos` 14. **`estresse` e `clareza`
+não têm tema indexado** — caem no pool `tema IS NULL` (644 chunks, geral). Só **7**
+questionários têm `ragIndexado: true` no catálogo (`timidez_comunicacao`,
+`administracao_empresarial_inteligente`, `namoro_conquista_romance`,
+`educar_filhos`, `depressao`, `obesidade`, `sentimentos_adolescencia`). Índice
+completo por tema (query ao vivo 07/09): NULL 644, obesidade 410,
+elegancia_charme_feminino 174, vida_madura_bem_estar 118, depressao 79,
+compreensao_da_vida_base_mentor 60, elegancia_presenca_masculina 58,
+namoro_conquista_romance 52, administracao_empresarial_inteligente 40,
+cabala_astrologia_numerologia_integrativa 25, sentimentos_adolescencia 16,
+educar_filhos 14, consequencias_causa_efeito 12, timidez_comunicacao 2.
+
+**DECISÃO — grupo de relacionamentos segurado na campanha**
+Não existe questionário com `tema: 'relacionamentos'`. A **categoria**
+`relacionamentos` tem 7 questionários (`ciumes`, `distanciamento`,
+`separacao_divorcio`, `reconciliacao`, `incompatibilidade`, `recomeco_amoroso`,
+`namoro_conquista_romance`) e **só `namoro_conquista_romance` está indexado** (52
+chunks) — com recorte de conquista/paquera, diferente do conflito recorrente numa
+relação existente que a copy do `?tema=relacionamentos` promete. **A campanha vai
+rodar só com `adolescentes`, `estresse` e `clareza`.** A chave `relacionamentos`
+fica no objeto `TEMAS` (já no ar), mas sem tráfego pago apontado para ela por ora.
+
+**CAMPANHA PINTEREST — material pronto**
+**18 pins aprovados**, com título e descrição escritos: 4 `adolescentes`,
+3 `estresse`, 5 `relacionamentos` (segurados, não entram agora), 6 `clareza`.
+Pins descartados por: nome antigo no rodapé; vocabulário de apoio emocional
+("apoio emocional imediato", "acolhimento", "alívio para ansiedade"); erros
+tipográficos do gerador (€ no lugar de C, aspas na marca, texto duplicado, frases
+sem verbo). **Assinatura oficial a padronizar em todos os pins**: "Orientação
+personalizada para questões da vida real".
+
+**BLOQUEADORES QUE PERMANECEM (ordem do usuário)**
+1. **Compra real de ponta a ponta por terceiro, pelo celular** — agendada para
+   08/09. Inclui **recarregar a página no meio da conversa** (teste da retomada de
+   sessão em `chat.html`).
+2. **Retomada de sessão em `chat.html` após reload** — não resolvido (ver primeiro
+   item da seção "3. Pendências antigas").
+3. **Reivindicação do domínio no Pinterest + instalação da tag** — os comentários
+   de marcador já estão no HTML desde `984801b`; faltam os valores reais e a
+   verificação de domínio.
+4. **Validação de `x-signature` no webhook** — assinatura secreta já existe no
+   painel, ainda não usada pelo código.
+5. **`notification_url` ainda não enviado na criação da preferência.**
 
 ### 07/09/2026 (contraste do checkout, PDF em A4, capa vetor/imagem, title MP, webhook do MercadoPago configurado)
 
@@ -2410,6 +2514,9 @@ no repositório — existia só no Postgres, e seria destruído por qualquer exe
    quebra o Mentor. Isola o `DELETE` por tema, elimina o pool geral de 40%, permite
    dimensionar o índice pro volume novo. Precisa nascer com RLS habilitado sem policies,
    igual à atual.
+   **[Correção 07/09/2026]**: `documentos_astro` **nunca foi criada**. O RAG hoje é só
+   a tabela `documentos` (coluna `tema`). Este item permanece como decisão registrada,
+   não como estado do banco.
 3. Granularidade definida: um bloco = uma unidade interpretativa fechada, 300–1.200
    palavras, autossuficiente (nomeando o objeto por extenso no corpo, já que o título
    não é vetorizado). Modelo híbrido: matriz escrita à mão para Sol/Lua/Ascendente em
@@ -3382,6 +3489,25 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
   página. **Nota (07/09/2026)**: a compra real de ponta a ponta agendada para
   08/09 vai exercitar exatamente isso — o teste inclui recarregar a página no meio
   da conversa. Se a retomada continuar quebrada, priorizar a correção logo após.
+
+- **[07/09/2026] O `?tema=` do checkout não chega ao produto — ALTA PRIORIDADE
+  (antes de escalar tráfego pago)**: `?tema=` só troca manchete/abertura de
+  `checkout.html` client-side (`aplicarTemaDaURL()`). Não vai para
+  `POST /api/checkout/preference` nem para o redirect pós-pagamento — os 3 redirects
+  vão para `/questionario-selecao.html?sessionId=<id>`, tela genérica com 8
+  categorias e ~40 questionários. O comprador que clicou num anúncio de "estresse"
+  não é levado ao questionário de estresse; escolhe do zero no ponto de maior
+  atrito do funil. Corrigir: propagar o tema do checkout (via sessão ou querystring)
+  até `questionario-selecao.html` / `/questionario/<tema>`, mapeando as 4 chaves do
+  `TEMAS` do checkout para questionários reais do catálogo (`estresse` já existe;
+  `clareza`, `adolescentes`, `relacionamentos` precisam de escolha de destino).
+
+- **[07/09/2026] Pinterest — reivindicação de domínio + tag de rastreamento**: os
+  comentários de marcador (`<!-- Pinterest: … -->`) já estão nas 15 páginas públicas
+  e no `index.html` desde `984801b`, **sem valores reais**. Falta: verificar o
+  domínio `zunisuprema.com.br` no Pinterest, colar o ID da meta tag de verificação
+  em `public/index.html`, e a tag de rastreamento + eventos de conversão nas
+  páginas. Bloqueia a medição da campanha Pinterest.
 
 - **[07/09/2026] Webhook do MercadoPago não valida `x-signature` — PENDÊNCIA DE
   SEGURANÇA**: `app.post('/api/pagamento/webhook')` (`src/server.js:2168`) aceita
