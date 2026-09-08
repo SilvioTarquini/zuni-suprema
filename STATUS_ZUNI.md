@@ -4,7 +4,23 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 07/09/2026 — duas frentes no mesmo dia. (2) Paleta clara do
+> Última atualização: 07/09/2026 (sessão longa, Claude Code). Checkout com paleta
+> clara + ajuste de contraste para leitor mais velho; PDF da Síntese passou a A4;
+> capa vetor do PDF com subtítulo por `productType`; pipeline de capa em imagem
+> pronto mas inerte (`CAPA_SINTESE_EM_IMAGEM = false`); `title` do item no
+> MercadoPago deixou de dizer "Chat Mentor ZUNI" → "ZUNI Direciona — Sessão de
+> orientação". 6 commits (`984801b` → `f93d7a7`), 5 deploys Railway SUCCESS, RLS
+> 15/15 ok após cada. **Webhook do MercadoPago configurado no painel hoje** (modo
+> produção, URL `https://www.zunisuprema.com.br/api/pagamento/webhook`, eventos
+> Order + Pagamentos legacy, assinatura secreta gerada) — simulação confirmou que a
+> notificação chega ao servidor. Pendências abertas: handler do webhook não valida
+> `x-signature`; `notification_url` ainda não vai na criação da preferência;
+> **bloqueador**: compra real de ponta a ponta por terceiro amanhã (08/09), com
+> teste de recarga da página no meio da conversa. Detalhe no bloco "07/09/2026
+> (contraste do checkout, PDF em A4, capa vetor/imagem, title MP, webhook do
+> MercadoPago configurado)" em "Decisões estratégicas".
+>
+> Nota anterior (07/09/2026, começo da sessão). Duas frentes no mesmo dia. (2) Paleta clara do
 > `checkout.html` (custom properties em `:root`), texto do tema padrão renderizado
 > direto no HTML (sem depender de JS), link do WhatsApp → "Sessão ZUNI", e
 > `chat.html` com `<title>`/`<h1>` → "ZUNI Direciona" + modal de download invertido
@@ -368,6 +384,96 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 07/09/2026 (contraste do checkout, PDF em A4, capa vetor/imagem, title MP, webhook do MercadoPago configurado)
+
+Continuação da sessão do mesmo dia (Claude Code). Cinco commits além do `984801b`,
+todos com push e deploy no Railway confirmado **SUCCESS**; RLS (15/15 tabelas
+`public` com `rowsecurity=true`, 0 policies) verificado após cada deploy. Working
+tree limpo, `main == origin/main` em `f93d7a7` ao fechar.
+
+**Commits e deploys desta parte**
+- `e1169ed` + `ddded4e` + `e50b376` → deploy `42ecb2a6-0c8e-478a-96fb-61b581ddfe7c`.
+  `ddded4e`: paleta clara do `checkout.html` (9 custom properties em `:root`);
+  texto do tema `padrao` renderizado direto no HTML servido — `aplicarTemaDaURL()`
+  só toca o DOM quando há `?tema=` válido, no fallback dá `return`; link do WhatsApp
+  "…pagamento da sessão com o Mentor" → "…pagamento da Sessão ZUNI"; `chat.html`
+  `<title>`/`<h1>` → "ZUNI Direciona" e modal de download invertido (markup estático
+  + fallback do JS = "Síntese ZUNI Direciona"; troca para "Dossiê" só quando
+  `productType === 'mapa-integrado'`). "Mentor ZUNI" nas bolhas e "o Mentor leva
+  alguns segundos" mantidos por decisão. `e50b376`:
+  `public/capa-sintese-zuni-direciona.jpg` versionada (ainda não usada). `e1169ed`:
+  registro da sessão de deploy anterior.
+- `1f4ea18` → deploy `4a84cf77-2e09-4b70-a758-8d465b868e82`. Ajuste de contraste da
+  paleta clara para público mais velho: `--fundo #F5F2EC→#EDE7DA`, `--card
+  #FFFFFF→#FAF7F0`, `--borda #E5DFD3→#CBBFA4`, `--texto #1F1D1A→#16140F`,
+  `--texto-suave #57514A→#3E382F`, `--dourado-texto #9A7B2E→#7A5F18`; `meta
+  theme-color` idem; círculos dos numerais `#F0E9D8→#E8DEC4` / borda
+  `#DCC98E→#C9B075`; `.credibilidade` de dourado → `var(--texto-suave)` (contraste
+  4.9:1 → 9.4:1 sobre o fundo), itálico mantido; `box-shadow` dos cards `0 1px 3px
+  rgba(31,29,26,.06)` → `0 2px 8px rgba(31,29,26,.10)` em `.card`, `.como-funciona`
+  e os 2 contêineres inline. `--dourado-brilho`/`--dourado-escuro`/`--texto-botao` e
+  o gradiente do botão: intocados.
+- `349b134` → deploy `18a9a4e6-8895-4ee7-9624-fd5377275cca`. `src/server.js`, PDF:
+  (frente A) `desenharCapaVetorMentor()` — subtítulo ramifica por `productType`
+  igual ao título: `chat-mentor` e `productType` nulo/antigo → "Orientação
+  personalizada para questões da vida real"; demais que caem na capa vetor mantêm
+  "Chat Mentor ZUNI". (frente B) caminho alternativo de capa como **imagem**
+  (`public/capa-sintese-zuni-direciona.jpg`), atrás de `const CAPA_SINTESE_EM_IMAGEM`
+  no topo do arquivo — **fica em `false`**: canalização pronta e testada, inerte.
+  Quando ligada: a capa não recebe texto por cima e o destinatário ("Preparado
+  para …") vai para o topo da página de índice; há fallback para a capa vetor se o
+  JPG sumir. (item 3) `generatePdf()` passa a criar o documento em `size: 'A4'`
+  **sempre** (era `'letter'`), independente da flag — produto brasileiro, papel A4;
+  vale para capa, índice e corpo. Testado com uma Síntese real gerada pelo
+  `REPORT_PROMPT` (claude-sonnet-4-6, sem sessão de banco — a retenção zerou todos
+  os `history`; input sintético-realista, não entra no PDF): capa vetor, índice e
+  corpo bem posicionados em A4, sem quebra estranha nem texto cortado (3 primeiras
+  páginas conferidas). **Ressalva registrada** (não bloqueia): larguras hardcoded no
+  render — `width: 500` no texto, `.lineTo(545)` nos filetes, `width: 495` no
+  rodapé — foram calibradas para letter (área útil 512pt); em A4 (495pt) o corpo
+  termina ~45pt da borda em vez dos 50pt nominais e a coluna fica ~5pt mais larga
+  que os filetes. Não corta nada; dá para acertar essas 3 constantes num follow-up.
+- `f93d7a7` → deploy `1f4f944f-b725-428e-a2c4-c3e1a2028d0a` (ativo ao fechar).
+  `title` do item em `POST /api/checkout/preference`: `'Chat Mentor ZUNI'` →
+  `'ZUNI Direciona — Sessão de orientação'` (é o que aparece na tela de pagamento do
+  MP). `id: 'chat-mentor-zuni'` (chave interna) inalterado. As outras 4 chamadas
+  `preference.create` **não** foram tocadas — títulos atuais: `/livro/preference`
+  usa `livro.titulo` (dinâmico do catálogo); `/sessoes-extras/preference` usa
+  "Sessões Extras — N sessões com continuidade de jornada"; `/mapa-astral/preference`
+  "Leitura de Mapa Astral"; `/mapa-integrado/preference` "Mapa Integrado — Mapa
+  Astral com Análise Astrológica". Nenhuma delas tem nome antigo/interno vazando;
+  padronização de marca nos de mapa fica para decisão caso a caso.
+
+**Webhook do MercadoPago — RESOLVIDO (config de painel, não código)**
+Diagnóstico da sessão: `POST /api/checkout/preference` nunca enviou
+`notification_url` (confirmado — a string não existe em nenhuma das 5 chamadas
+`preference.create` do `src/server.js`), então a entrega do webhook dependia 100%
+da configuração no painel do MercadoPago — que **não existia**. Cadastrado hoje no
+painel, **modo produção**: URL `https://www.zunisuprema.com.br/api/pagamento/webhook`,
+eventos **Order + Pagamentos (legacy)**, assinatura secreta gerada. Simulação do
+painel confirmou que a notificação chega ao servidor: `POST /api/pagamento/webhook`
+→ **HTTP 400**, log `Erro em /api/pagamento/webhook: … Erro ao consultar pagamento
+no Mercado Pago (status 404): Payment not found` — **comportamento esperado** para o
+ID fictício da simulação. O handler não confia no corpo do POST: extrai só
+`data.id` e faz GET autenticado a `api.mercadopago.com/v1/payments/<id>` (ou
+`/orders/<id>`) com o `MERCADOPAGO_TOKEN`; 404 → lança → `catch` externo → 400. Numa
+compra real o ID existe, a consulta tem sucesso, `marcarPagoSeAprovado()` confere
+`status === 'approved'` e sai `[WEBHOOK] Pagamento confirmado — pagamento <id>` +
+HTTP 200 + `sessions.paid` → `true`.
+
+**Mapa do handler do webhook (para as pendências abaixo)**
+`app.post('/api/pagamento/webhook')` em `src/server.js:2168`. Trata `event.type`
+`'order'` e `'payment'`; qualquer outro tipo cai direto em
+`res.json({received:true})` (200). `marcarPagoSeAprovado()` (`src/server.js:1482`) é
+idempotente (`if (session && !session.paid)`) e casa por `external_reference ==
+sessionId`. Middleware global antes das rotas: só `app.use(cors())` +
+`app.use(express.json())` — sem auth, sem verificação de origem.
+
+**Observação da compra de teste de hoje**: sessão `a43bb3ef-e6b8-4c0c-bace-acea56b6d419`
+(`chat-mentor`) criada 20:35 na criação de preferência; ficou em `paid=false`,
+`trocas=0`, sem retorno nem polling — o comprador do teste parou na tela do MP e não
+concluiu. O `title` novo só valeu a partir do deploy das 20:43.
 
 ### 07/09/2026 (ZUNI Direciona — paleta clara do checkout, render sem JS, nomenclatura do modal do chat)
 
@@ -3273,7 +3379,51 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
   até o usuário mandar mensagem de novo, mesmo a sessão já estando avançada. Não
   implementado ainda — corrigir exige endpoint novo para restaurar
   histórico/contador/`productType` a partir do `sessionId` no carregamento da
-  página.
+  página. **Nota (07/09/2026)**: a compra real de ponta a ponta agendada para
+  08/09 vai exercitar exatamente isso — o teste inclui recarregar a página no meio
+  da conversa. Se a retomada continuar quebrada, priorizar a correção logo após.
+
+- **[07/09/2026] Webhook do MercadoPago não valida `x-signature` — PENDÊNCIA DE
+  SEGURANÇA**: `app.post('/api/pagamento/webhook')` (`src/server.js:2168`) aceita
+  qualquer POST — não lê nem verifica o header `x-signature`/`x-request-id` (esquema
+  HMAC recomendado pelo MP), não há segredo em URL/body, middleware global é só
+  `cors()` + `express.json()`. **A assinatura secreta já foi gerada no painel do MP
+  hoje** (ao cadastrar o webhook em produção), mas ainda não é usada pelo código.
+  Risco limitado — o status de pagamento vem de uma consulta server-to-server à API
+  do MP (`marcarPagoSeAprovado`), não do corpo forjado, e é idempotente; o pior caso
+  é enumeração de IDs / replay de um pagamento genuinamente aprovado cujo
+  `external_reference` bata com uma sessão pendente. Ainda assim é lacuna frente à
+  prática recomendada. Corrigir exige nova env (o secret do painel) + validação
+  HMAC do `x-signature` no início do handler.
+
+- **[07/09/2026] `notification_url` não é enviado na criação da preferência —
+  PENDÊNCIA**: nenhuma das 5 chamadas `preference.create` do `src/server.js` passa
+  `notification_url`. Hoje (08/09 em diante) a entrega do webhook depende só da
+  config do painel do MP — que foi cadastrada em 07/09. Adicionar
+  `notification_url: 'https://www.zunisuprema.com.br/api/pagamento/webhook'` ao
+  `body` da preferência em `POST /api/checkout/preference` dá redundância (notifica
+  por preferência além da config global) e garante o destino certo mesmo se a config
+  do painel for alterada/perdida. Não conflita com nada. `back_urls` já existe nessa
+  preferência, montado a partir de `process.env.FRONTEND_URL`.
+
+- **[08/09/2026] Compra real de ponta a ponta por terceiro — BLOQUEADOR**: agendada
+  para 08/09. Outra pessoa faz uma compra real pelo celular, em produção, do
+  checkout até receber a Síntese. Inclui **recarregar a página no meio da conversa**
+  (teste da retomada de sessão em `chat.html` — ver primeiro item desta seção).
+  Antes: confirmar no painel do MP que o webhook está ativo em produção. Durante:
+  acompanhar `railway logs --http` (o app é quase mudo no caminho feliz — só
+  `[WEBHOOK] Pagamento confirmado`, `[QUESTIONÁRIO] …`, `[RAG_*] …`, `Email enviado
+  para …` aparecem no log de aplicação) e a linha da sessão em `sessions`
+  (`paid` false→true no webhook; `trocas` +2 por troca; `relatorio_gerado` true no
+  fim). Até isso passar, o funil ZUNI Direciona não está validado ponta a ponta.
+
+- **[07/09/2026] Capa da Síntese em imagem — arte a regenerar antes de ligar a
+  flag**: `CAPA_SINTESE_EM_IMAGEM` está em `false`; a canalização
+  (`generatePdf` → `doc.image(capa-sintese-zuni-direciona.jpg, full-bleed A4)`) está
+  pronta e testada. A arte atual (`public/capa-sintese-zuni-direciona.jpg`) será
+  **regenerada** antes de ligar: grafia "ZUNI" em versal, incluir a linha "A Ciência
+  da Excelência Humana", mockup 3D em vez de capa chapada, 127 DPI. Quando a nova
+  arte entrar, trocar o JPG e a flag para `true` num commit só.
 
 - **[07/09/2026] Resíduo de "Mentor"/"Dossiê" em `chat.html` — ✅ RESOLVIDA
   (07/09/2026, sessão seguinte)**: decisão do usuário e implementação na mesma
