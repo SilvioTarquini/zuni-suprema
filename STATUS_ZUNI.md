@@ -4,7 +4,24 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 07/09/2026 (fechamento da sessão longa, Claude Code). Além do
+> Última atualização: 08/09/2026 (Claude Code). Sessão dedicada a **`zuni-intelligence`**,
+> uma **plataforma independente** de RAG multi-domínio — projeto e repositório
+> PRÓPRIOS, em `../zuni-intelligence` (fora deste repo). Fluxo: auditoria técnica do
+> ZUNI Suprema → scaffold modular (Fase 1) → adequação canônica de
+> schema/autoridade/dedup/safety/exposição (Fase 2) → **ingestão real do pacote
+> canônico ASTRO_NUM** (Fase 3). Fase 3: 373 chunks de `INDEX_PACKAGE_E01_E17.jsonl`,
+> **373 válidos / 0 inválidos** contra o schema oficial (`SCHEMA_CANONICO_RAG_ASTRO_NUM_ZUNI`
+> v1.0), ingeridos em staging **local/memória** com provedores falsos — **sem banco
+> remoto, sem embeddings reais, sem deploy, sem DNS**. Suíte de 32 testes canônicos:
+> **30/32 pass**; garantias determinísticas (E0 nunca vaza para resposta, filtros
+> tradition/method sem leakage, dedup inflation 0, ordem de autoridade 100%) **32/32**.
+> Commit oficial da Fase 3: `cd30d6c` no branch `master` local. **Sem remote
+> configurado — push pendente** da URL do repositório próprio (a pedido, PAREI antes
+> do push). ZUNI Suprema (este repo) **não foi alterado** em nenhuma das 3 fases.
+> Detalhe no bloco "08/09/2026 (zuni-intelligence — nova plataforma RAG multi-domínio)"
+> em "Decisões estratégicas".
+>
+> Nota anterior (07/09/2026, fechamento da sessão longa, Claude Code). Além do
 > registrado na nota abaixo: `85e4f62` no ar — 4º tema `relacionamentos` no objeto
 > `TEMAS` do checkout. **Webhook do MercadoPago RESOLVIDO** (cadastrado no painel em
 > produção; `MERCADOPAGO_TOKEN` do Railway confirmado produtivo `APP_USR-`, app
@@ -404,6 +421,83 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 08/09/2026 (zuni-intelligence — nova plataforma RAG multi-domínio: scaffold + adequação canônica + ingestão real do pacote ASTRO_NUM)
+
+Sessão longa (Claude Code) sobre uma **frente nova e separada**: `zuni-intelligence`,
+plataforma que futuramente operará em `intelligence.zunisuprema.com.br`. **Projeto e
+repositório próprios** em `C:\Users\Silvio\Documents\1 - Zuni Suprema\zuni-intelligence`
+(`git init` próprio; commits `ecfc0ea` → `cd30d6c`). **O repo do ZUNI Suprema não foi
+tocado em nenhum momento** — verificado working tree limpo e HEAD `6635618` inalterado
+ao fim de cada fase.
+
+**Invariante de independência (registrada no repo novo, `ARCHITECTURE.md`):** runtime,
+banco, chaves de API, deploy e prompts são dedicados. O único elo permitido com o ZUNI
+Suprema é **cópia versionada de corpus-fonte** — nunca leitura do banco antigo em
+runtime. Nada de compartilhar o Supabase/Railway/chaves do ZUNI Suprema.
+
+**Fase 1 — Auditoria técnica + scaffold.** Auditoria só-leitura do ZUNI Suprema
+(estrutura, RAG atual, acoplamentos) e recomendações REUTILIZAR/ADAPTAR/RECONSTRUIR.
+Scaffold Node 22 + TypeScript (ESM, roda com `tsx`, sem build), módulos: `core`,
+`knowledge` (+ `astro_num`), `retrieval`, `routing`, `safety`, `profiles`, `dossiers`,
+`evaluation`; pipeline `routing → autorização → safety(entrada) → retrieval → LLM →
+safety(saída)`. Provedores falsos determinísticos + store em memória para rodar 100%
+offline.
+
+**Fase 2 — Adequação canônica.** Migrations versionadas (não aplicadas): `003`
+(`knowledge_chunks` canônico — `chunk_id`, `authority_rank/scope`, `dedup_group`,
+`retrieval_priority`, `safety_level`, `exposure_level`, `tradition_id`/`method_id`/
+`technique_id`, `provenance`, `embedding_eligible`; HNSW; `E0_INTERNAL_ONLY` nunca em
+resposta), `004` (perfis: `kind` personal/executive/enterprise, `tenant_id`/`org_id`,
+entitlements `{domainId, purpose}`; **default deny** — `anonymousProfile()` sem acesso).
+Retrieval canônico: filtro por domínio → tradition/method/technique → bloqueio de
+exposição (E0 → `governanceChunks`) → autoridade → dedup por `dedup_group` → prioridade
+→ rerank (autoridade > prioridade > similaridade) → contexto. IDs de domínio como API
+pública interna: `ASTRO_NUM`, `HEALTH_INTEGRATIVE`, `PERFORMANCE_NEUROCOGNITION`,
+`PSYCHOLOGY_EMOTIONAL`, `EXECUTIVE_INTELLIGENCE`, `ENTERPRISE_INTELLIGENCE`.
+`checkInput` também no fluxo de dossiê; `astro_num` hardcoded removido de
+`pipeline.ts`/`app.ts` (→ `config.defaultDomainId`). Commit `d778ef0`. tsc limpo,
+41/41 testes.
+
+**Fase 3 — Ingestão real do ASTRO_NUM.** 4 artefatos-fonte de
+`C:\Users\Silvio\Documents\1 - Zuni Suprema\RAG_ASTRO_NUM_IMPORT\` conferidos por
+SHA256, **originais intactos**, copiados para o projeto novo (hashes das cópias ==
+fonte). `INDEX_PACKAGE_E01_E17.jsonl` (2,7 MB, gitignored) tratado como fonte canônica
+dos **373 chunks**: sem rechunk, sem reescrita, sem resumo — `text` verbatim (inclui
+mojibake de UTF-8 duplo-codificado da fonte; o `MANIFEST_..._NORMALIZED.csv` tem o
+texto limpo, mas a fonte canônica é o JSONL). `canonicalPackage.ts` reescrito para o
+**schema real** (zod `.strict()` + as 3 regras condicionais `allOf`); migration `005`
+guarda o registro-fonte inteiro em `canonical_record jsonb` + colunas `artifact_id`,
+`chunk_type`, `provenance_class`, `*_label`, `clinical_authority`, `*_use`.
+
+Resultado (staging **local/memória**, provedores falsos, **sem banco remoto / sem
+embeddings reais / sem deploy**):
+- **373 registros, 373 válidos, 0 inválidos**; 373 chunks ingeridos; 0 com
+  `embedding_eligible=NO`; 34 `YES_INTERNAL_INDEX` (todos E0_INTERNAL_ONLY).
+- Distribuição: exposure E0=34 / E1=62 / E2=135 / E3=142; safety CLEAR=256 / REVIEW=81
+  / REVIEW_CONTROL=19 / BLOCK_CONTROL=17; tradition DEFAULT_NONE=302 / ROSICRUCIAN=38 /
+  TRADITIONAL=33; 320 dedup_groups (10 multi-membro).
+- **Suíte de 32 testes** (`TEST_SUITE_RAG_ASTRO_NUM_ZUNI.json`, adaptada ao harness sem
+  mudar a intenção): **30/32 pass**. Determinístico **32/32**: E0 leakage 0, tradition
+  leakage 0, method leakage 0, dedup inflation 0, ordem de autoridade 100%,
+  safety-control alcançável por regra 100%. Métricas dependentes de embedding/LLM
+  reais (reportadas, não usadas como gate): authority hit 84%, primary hit 41%,
+  must_include hit 28%. As 2 reprovações (T001, T023) são falsos positivos de
+  substring de `must_not_include` sobre texto de salvaguarda curado + limitação do
+  embedding falso — não são defeito de arquitetura.
+- Commit oficial da Fase 3 (aceito pelo usuário): **`cd30d6c`**, branch `master`.
+
+**Estado de versionamento (pendente):** repo novo **sem remote configurado**. A pedido,
+PAREI antes de qualquer commit-extra/push e reportei. Nada de commit vazio nem
+`--amend`. Push aguarda a URL do repositório próprio do `zuni-intelligence` (a
+confirmar que não é o repo do ZUNI Suprema) e definição da branch de destino
+(`master` local vs. `main`).
+
+**Explicitamente adiado (exige nova autorização):** conectar banco remoto (aplicar
+migrations 001–005), gerar embeddings reais (`text-embedding-3-small`) e reindexar,
+deploy em serviço próprio, DNS de `intelligence.zunisuprema.com.br`, decisão de produto
+sobre elevar controle E0 via caminho de governança quando um filtro de método restringe
+o pool (5 `safety override failures` na suíte têm essa causa).
 
 ### 07/09/2026 (fechamento — tema `relacionamentos`, achados do funil, campanha Pinterest, grupo de relacionamentos segurado)
 
