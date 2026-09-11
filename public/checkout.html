@@ -5,8 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="theme-color" content="#EDE7DA">
   <title>ZUNI Direciona — ZUNI Suprema</title>
-  <!-- Pinterest: tag de rastreamento -->
   <meta name="p:domain_verify" content="4c814e9712ee31e3e4a75b18b63d6ed8"/>
+  <!-- Pinterest Tag -->
+  <script>
+  !function(e){if(!window.pintrk){window.pintrk = function () {
+  window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var
+    n=window.pintrk;n.queue=[],n.version="3.0";var
+    t=document.createElement("script");t.async=!0,t.src=e;var
+    r=document.getElementsByTagName("script")[0];
+    r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+  pintrk('load', '2612519382245');
+  pintrk('page');
+  </script>
+  <noscript>
+  <img height="1" width="1" style="display:none;" alt=""
+  src="https://ct.pinterest.com/v3/?event=init&tid=2612519382245&noscript=1" />
+  </noscript>
+  <!-- end Pinterest Tag -->
   <style>
     :root {
       --fundo: #EDE7DA;
@@ -379,6 +394,22 @@
       }
     }
 
+    let conversaoPinterestDisparada = false;
+
+    function dispararConversaoPinterest() {
+      if (conversaoPinterestDisparada) return;
+      conversaoPinterestDisparada = true;
+      try {
+        if (typeof pintrk === 'function') {
+          pintrk('track', 'checkout', {
+            value: 29.90,
+            order_quantity: 1,
+            currency: 'BRL'
+          });
+        }
+      } catch (e) {}
+    }
+
     async function verificarRetornoPagamento() {
       const params = new URLSearchParams(window.location.search);
       const erro = params.get('erro');
@@ -421,7 +452,7 @@
           const data = await res.json();
           if (data.pago) {
             clearInterval(pollingInterval);
-            // Pinterest: evento de conversão
+            dispararConversaoPinterest();
             window.location.href = `/questionario-selecao.html?sessionId=${sessionId}`;
             return;
           }
