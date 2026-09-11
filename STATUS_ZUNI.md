@@ -4,7 +4,25 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 08/09/2026 (Claude Code). Sessão dedicada a **`zuni-intelligence`**,
+> Última atualização: 11/09/2026 (Claude Code). Pinterest: domínio
+> `zunisuprema.com.br` reivindicado (`p:domain_verify` em `index.html` e
+> `checkout.html`, commit `d9cbefa`); tag do pixel `2612519382245` instalada em
+> `checkout.html` com evento de conversão (`pintrk('track', 'checkout', …)`)
+> disparado no momento em que o polling de retorno do Mercado Pago confirma
+> `pago: true`, sem parâmetros de e-mail (decisão de privacidade) — commit
+> `6be300a`. **Pendência nova, não urgente**: o `value` do evento é fixo em
+> `29.90`; com cupom aplicado, o valor reportado ao Pinterest fica inflado. Trocar
+> por `precoAtual` não resolve — a URL de retorno do MP
+> (`src/server.js:2140-2141`) não carrega `?cupom=`, a página recarrega e
+> `precoAtual` volta ao default `29.90` no momento exato do disparo. Correção real
+> exige persistir o preço final (`unitPrice`, `src/server.js:2091-2099`) em
+> `sessions` na criação da preferência e expor esse valor em
+> `GET /api/checkout/session-status/:sessionId` (hoje devolve só `{ pago }`). Sem
+> urgência — nenhuma campanha ativa usa cupom. Detalhe no bloco "11/09/2026
+> (Pinterest — verificação de domínio + tag de conversão)" em "Decisões
+> estratégicas".
+>
+> Nota anterior (08/09/2026, Claude Code). Sessão dedicada a **`zuni-intelligence`**,
 > uma **plataforma independente** de RAG multi-domínio — projeto e repositório
 > PRÓPRIOS, em `../zuni-intelligence` (fora deste repo). Fluxo: auditoria técnica do
 > ZUNI Suprema → scaffold modular (Fase 1) → adequação canônica de
@@ -421,6 +439,41 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 11/09/2026 (Pinterest — verificação de domínio + tag de conversão)
+
+Duas tarefas em sequência, ambas restritas a `public/index.html` e
+`public/checkout.html`.
+
+**1. Meta tag de verificação de domínio** — `<meta name="p:domain_verify"
+content="4c814e9712ee31e3e4a75b18b63d6ed8"/>` inserida no `<head>` de `index.html`
+(raiz do domínio — confirmado que `app.get('/')` em `src/server.js:642` serve esse
+arquivo, não `checkout.html`; a pendência antiga sobre `www` abrir o checkout não se
+reproduziu) e de `checkout.html`, nos comentários-marcador já existentes desde
+`984801b`. Commit `d9cbefa`, deploy Railway SUCCESS, confirmado por `curl` em
+produção nas duas páginas. RLS 15/15 ok.
+
+**2. Tag do pixel + evento de conversão** — pixel Pinterest `2612519382245`
+instalado **só em `checkout.html`** (não em `index.html` nem `chat.html`, por
+decisão): tag base no `<head>`, **sem os parâmetros de e-mail** do snippet oficial
+(`{em: ...}` no `pintrk('load')`, `&pd[em]=...` no `<noscript>`) — decisão de
+privacidade, não enviar dado do comprador à plataforma de anúncios. Confirmado por
+grep que nenhum dos dois aparece no arquivo. Evento `pintrk('track', 'checkout', {
+value: 29.90, order_quantity: 1, currency: 'BRL' })` disparado uma única vez por
+sessão (flag em memória `conversaoPinterestDisparada`), no ponto exato em que o
+polling de `/api/checkout/session-status/:id` confirma `pago: true` (dentro do
+`setInterval` do retorno do Mercado Pago, `checkout.html`), com guarda `typeof
+pintrk === 'function'` + `try/catch` para não quebrar o redirect se o pixel estiver
+bloqueado. Commit `6be300a`, deploy Railway SUCCESS, confirmado por `curl` em
+produção. RLS 15/15 ok. **Verificação ao vivo no navegador (console + Network) não
+foi feita** — extensão Claude in Chrome não conectada nesta sessão; usuário
+orientado a checar manualmente (`window.pintrk` no console, requisição a
+`ct.pinterest.com` na aba Network) ou pedir para repetir quando a extensão estiver
+conectada.
+
+**Pendência aberta, não urgente**: `value: 29.90` é fixo no evento de conversão;
+com cupom aplicado o valor reportado infla. Ver pendência correspondente em "3.
+Pendências antigas, ainda em aberto".
 
 ### 08/09/2026 (zuni-intelligence — nova plataforma RAG multi-domínio: scaffold + adequação canônica + ingestão real do pacote ASTRO_NUM)
 
@@ -3596,12 +3649,25 @@ Validação de cada `.docx`: todos abrem com título/subtítulo da obra, muitos 
   `TEMAS` do checkout para questionários reais do catálogo (`estresse` já existe;
   `clareza`, `adolescentes`, `relacionamentos` precisam de escolha de destino).
 
-- **[07/09/2026] Pinterest — reivindicação de domínio + tag de rastreamento**: os
-  comentários de marcador (`<!-- Pinterest: … -->`) já estão nas 15 páginas públicas
-  e no `index.html` desde `984801b`, **sem valores reais**. Falta: verificar o
-  domínio `zunisuprema.com.br` no Pinterest, colar o ID da meta tag de verificação
-  em `public/index.html`, e a tag de rastreamento + eventos de conversão nas
-  páginas. Bloqueia a medição da campanha Pinterest.
+- **[07/09/2026] Pinterest — reivindicação de domínio + tag de rastreamento — ✅
+  RESOLVIDA (11/09/2026)**: domínio verificado (`p:domain_verify` em `index.html` e
+  `checkout.html`, commit `d9cbefa`) e pixel `2612519382245` com evento de
+  conversão instalado em `checkout.html` (commit `6be300a`) — ver bloco "11/09/2026
+  (Pinterest — verificação de domínio + tag de conversão)" em Decisões
+  estratégicas. **Escopo, por decisão**: o pixel/evento só está em
+  `checkout.html`, onde a conversão acontece; as outras 14 páginas públicas seguem
+  só com o comentário-marcador, sem tag real.
+
+- **[11/09/2026] Valor da conversão do Pinterest com cupom — PENDÊNCIA (não
+  urgente)**: o evento `pintrk('track', 'checkout')` reporta `value` fixo `29.90`.
+  Com cupom aplicado, o valor real pago é menor e o retorno reportado ao Pinterest
+  fica inflado. Trocar por `precoAtual` **não resolve**: a URL de retorno do MP
+  (`src/server.js:2140-2141`) não carrega `?cupom=`, a página recarrega e
+  `precoAtual` volta ao default `29.90` no momento do disparo. Correção real exige
+  persistir o preço final (`unitPrice`, `src/server.js:2091-2099`) em `sessions`
+  no momento da criação da preferência, e expor esse valor em
+  `GET /api/checkout/session-status/:sessionId` (hoje devolve só `{ pago }`). Sem
+  urgência — nenhuma campanha ativa usa cupom.
 
 - **[07/09/2026] Webhook do MercadoPago não valida `x-signature` — PENDÊNCIA DE
   SEGURANÇA**: `app.post('/api/pagamento/webhook')` (`src/server.js:2168`) aceita
