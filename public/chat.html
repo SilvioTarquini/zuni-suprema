@@ -98,6 +98,34 @@
       min-width: max-content;
     }
 
+    /* Ajuda / Livros ZUNI — peso visual menor que "Baixar relatório", que é o
+       que a pessoa comprou. Sem badge, sem contagem, sem ênfase. */
+    .link-header-secundario {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      color: #8a6d1f;
+      text-decoration: none;
+      opacity: 0.85;
+      white-space: nowrap;
+    }
+    .link-header-secundario:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    /* Larguras estreitas (ex.: 400px): cabeçalho já empilha 4 itens em coluna
+       (regra de 640px abaixo) — aqui só o texto de Ajuda/Loja vira ícone puro,
+       pra não estourar a largura de cada linha. */
+    @media (max-width: 430px) {
+      .link-header-texto {
+        display: none;
+      }
+      .link-header-secundario {
+        font-size: 18px;
+      }
+    }
+
     @media (max-width: 768px) {
       #painel-instrucoes {
         margin: 100px auto 16px !important;
@@ -556,6 +584,12 @@
       </div>
       <div class="header-right">
         <div class="counter">Mensagens: <span id="cnt">0</span></div>
+        <a id="link-ajuda" href="#" target="_blank" rel="noopener" class="link-header-secundario" title="Precisa de ajuda? Fale com a equipe no WhatsApp" aria-label="Ajuda — falar com a equipe no WhatsApp">
+          <span aria-hidden="true">🆘</span><span class="link-header-texto"> Ajuda</span>
+        </a>
+        <a id="link-loja" href="/loja/" target="_blank" rel="noopener" class="link-header-secundario" title="Livros ZUNI" aria-label="Livros ZUNI">
+          <span aria-hidden="true">📚</span><span class="link-header-texto"> Livros ZUNI</span>
+        </a>
         <button id="btn-pdf" onclick="abrirModalRelatorio()" disabled title="Disponível após o início da conversa" aria-label="Baixar relatório — disponível após o início da conversa" style="font-family:'Inter',sans-serif;font-size:14px;font-weight:600;color:#fff;background:var(--dourado);border:none;border-radius:20px;padding:9px 18px;cursor:pointer;letter-spacing:0.5px;transition:background 0.2s;box-shadow:0 2px 8px rgba(212,175,55,0.35);">📄 Baixar relatório</button>
       </div>
     </header>
@@ -642,6 +676,19 @@
     const fromQuestionnaire = params.get('fromQuestionnaire') === 'true';
     const testQuestionario = params.get('testQuestionario') === 'true';
     let contador = 0;
+
+    // Link de suporte no WhatsApp com a mesma referência (8 primeiros chars do
+    // sessionId) usada no modal de encaminhamento — é o que a equipe procura em
+    // respostas_questionario.sessao_id. Usado no ícone "Ajuda" do cabeçalho
+    // (sempre visível) e na confirmação do modal (só depois de gerar Resposta B).
+    function linkWhatsappSuporte() {
+      const referencia = sessionId.slice(0, 8);
+      const texto = encodeURIComponent(`Olá! Vim do ZUNI Direciona e gostaria de falar com a equipe. Referência: ${referencia}`);
+      return `https://wa.me/5515996088895?text=${texto}`;
+    }
+
+    const linkAjudaHeader = document.getElementById('link-ajuda');
+    if (linkAjudaHeader) linkAjudaHeader.href = linkWhatsappSuporte();
 
     // Token de autorização por sessão (escopo 'chat'), guardado no localStorage
     // por quem redirecionou para cá (checkout, session-status, questionário).
@@ -946,10 +993,7 @@ addMsg('user', msg);
         // Exibir confirmação no chat com botão para o cliente abrir o WhatsApp
         // diretamente — não prometemos mais que a equipe vai entrar em contato,
         // porque nada no backend garante isso (ver diagnóstico de 14/09/2026).
-        const referencia = sessionId.slice(0, 8);
-        const textoWhatsapp = encodeURIComponent(`Olá! Vim do ZUNI Direciona e gostaria de falar com a equipe. Referência: ${referencia}`);
-        const linkWhatsapp = `https://wa.me/5515996088895?text=${textoWhatsapp}`;
-        addMsg('assistant', `✓ Pronto. Organizei um resumo da sua situação para a equipe.<br><br>Toque no botão abaixo para abrir a conversa no WhatsApp — o atendimento continua por lá, a partir do que você já trouxe aqui.<br><br><a href="${linkWhatsapp}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Abrir conversa no WhatsApp</a><br><br>Se preferir seguir comigo por enquanto, estou aqui.`);
+        addMsg('assistant', `✓ Pronto. Organizei um resumo da sua situação para a equipe.<br><br>Toque no botão abaixo para abrir a conversa no WhatsApp — o atendimento continua por lá, a partir do que você já trouxe aqui.<br><br><a href="${linkWhatsappSuporte()}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Abrir conversa no WhatsApp</a><br><br>Se preferir seguir comigo por enquanto, estou aqui.`);
       } catch (err) {
         console.error('[ENCAMINHAMENTO] Erro:', err.message);
         addMsg('assistant', `Desculpe, houve um problema ao processar sua solicitação: ${err.message}<br>Por favor, tente novamente ou entre em contato conosco via WhatsApp.`);
