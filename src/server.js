@@ -720,6 +720,45 @@ function exigirTokenSessao(req, sessionId, escopo) {
   return validarTokenSessao(sessionId, escopo, token);
 }
 
+// Janela de convivência da FASE A: por RELÓGIO DE PAREDE (Date.now()), não
+// por session.created_at. O desvio de fuso encontrado em 14/09/2026 não é
+// bug do PostgREST — é o new Date() do JS: a coluna é `timestamp without
+// time zone`, o PostgREST serializa sem sufixo de fuso, e o JS parseia isso
+// como hora LOCAL. Em TZ=UTC (onde o container do Railway roda) o desvio é
+// zero; em TZ=America/Sao_Paulo (esta máquina) dá +3h. Um corte calibrado
+// aqui local ficaria errado em produção.
+// Mais grave: created_at não é confiável nem como base de tempo em si — 4
+// de 139 sessões têm created_at POSTERIOR ao updated_at (até +6h), sinal de
+// que algum caminho de escrita grava o campo já deslocado. Por isso esta
+// função não usa created_at em nenhuma hipótese.
+// AUTH_CORTE_TS é um epoch em ms (wall clock, ex.: 12h após o deploy),
+// setado via variável de ambiente — dá pra estender sem novo deploy se o
+// contador de auth_legado ainda estiver crescendo. Sem a variável setada,
+// o comportamento é falha fechada (rejeita, como na fase C).
+function autorizarComJanelaLegado(req, session, sessionId, rota) {
+  const token = req.headers['x-zuni-sessao'];
+  if (token) {
+    return validarTokenSessao(sessionId, 'chat', token);
+  }
+
+  const corteTs = Number(process.env.AUTH_CORTE_TS);
+  if (!Number.isFinite(corteTs) || Date.now() >= corteTs) return false;
+
+  console.warn(`[AUTH_LEGADO] ${rota}`);
+
+  if (supabase) {
+    supabase.rpc('registrar_contador', { p_evento: 'auth_legado', p_chave: rota })
+      .then(({ error: erroContador }) => {
+        if (erroContador) console.error('[AUTH_LEGADO] Erro ao registrar contador:', erroContador.message);
+      })
+      .catch(err => {
+        console.error('[AUTH_LEGADO] Erro ao registrar contador:', err.message || err);
+      });
+  }
+
+  return true;
+}
+
 async function generateClaudeResponse(messages, systemPrompt) {
   try {
     const Anthropic = require('@anthropic-ai/sdk');
@@ -2319,7 +2358,7 @@ app.post('/api/chat', async (req, res) => {
       return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
     }
 
-    if (!exigirTokenSessao(req, sessionId, 'chat')) {
+    if (!autorizarComJanelaLegado(req, session, sessionId, '/api/chat')) {
       return res.status(401).json({ error: 'Token de sessão ausente, inválido ou expirado.' });
     }
 
@@ -2676,7 +2715,7 @@ app.post('/api/questionario/salvar-respostas', async (req, res) => {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
     }
 
-    if (!exigirTokenSessao(req, sessionId, 'chat')) {
+    if (!autorizarComJanelaLegado(req, session, sessionId, '/api/questionario/salvar-respostas')) {
       return res.status(401).json({ error: 'Token de sessão ausente, inválido ou expirado.' });
     }
 
