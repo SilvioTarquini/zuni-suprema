@@ -793,18 +793,18 @@ async function searchKnowledge(query, limite = 5, tema = null) {
     let rpcResult;
 
     if (tema) {
-      // ── Busca Híbrida: Prioriza tema, complementa com conteúdo geral
-      // Distribuição padrão: 60% para tema-específico, 40% para geral
-      const limiteTema = Math.ceil(limite * 0.6);
-      const limiteGeral = limite - limiteTema;
+      // ── Busca Ranqueada: aceita tema único ou grupo (public.grupos_tema),
+      // que a função expande sozinha. Prioriza o(s) tema(s), complementa com conteúdo geral.
+      console.log(`[RAG_HIBRIDO] Query: "${query}" | Tema: "${tema}" | Total: ${limite}`);
 
-      console.log(`[RAG_HIBRIDO] Query: "${query}" | Tema: "${tema}" | Limite tema: ${limiteTema}, Limite geral: ${limiteGeral}`);
-
-      rpcResult = await supabase.rpc('buscar_documentos_hibrido', {
+      rpcResult = await supabase.rpc('buscar_documentos_ranqueado', {
         query_embedding: embedding,
-        limite_tema: limiteTema,
-        limite_geral: limiteGeral,
-        p_tema: tema
+        piso_tema: 1,
+        total: limite,
+        p_tema: tema,
+        teto_por_arquivo: 2,
+        piso_por_tema: 1,
+        teto_por_fonte: 0
       });
     } else {
       // ── Busca Padrão (retrocompatível com comportamento antigo)
@@ -821,6 +821,16 @@ async function searchKnowledge(query, limite = 5, tema = null) {
     if (error) {
       console.error('Erro RAG Supabase:', error);
       return [];
+    }
+
+    if (tema) {
+      const blocosOrigemTema = data.filter(row => row.origem === 'tema').length;
+      const temasDistintos = new Set(data.map(row => row.tema_doc)).size;
+      console.log(`[RAG_HIBRIDO] Retorno: ${data.length} blocos | origem=tema: ${blocosOrigemTema} | temas distintos: ${temasDistintos}`);
+
+      if (blocosOrigemTema === 0) {
+        console.warn(`[RAG_TEMA_VAZIO] tema "${tema}" nao existe em documentos.tema nem em grupos_tema — sessao rodando sem ancoragem tematica`);
+      }
     }
 
     return data.map(row => row.corpo);
