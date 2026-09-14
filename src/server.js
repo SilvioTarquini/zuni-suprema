@@ -759,6 +759,23 @@ function autorizarComJanelaLegado(req, session, sessionId, rota) {
   return true;
 }
 
+// Visibilidade do fim da janela legada: log do Railway some com a retenção,
+// contador fica. p_chave recebe só o nome da rota — nunca sessionId, e-mail
+// ou token. Não bloqueia nem pode derrubar a resposta 401 já decidida.
+function registrarAuthNegado(rota) {
+  console.warn(`[AUTH_NEGADO] ${rota}`);
+
+  if (supabase) {
+    supabase.rpc('registrar_contador', { p_evento: 'auth_negado', p_chave: rota })
+      .then(({ error: erroContador }) => {
+        if (erroContador) console.error('[AUTH_NEGADO] Erro ao registrar contador:', erroContador.message);
+      })
+      .catch(err => {
+        console.error('[AUTH_NEGADO] Erro ao registrar contador:', err.message || err);
+      });
+  }
+}
+
 async function generateClaudeResponse(messages, systemPrompt) {
   try {
     const Anthropic = require('@anthropic-ai/sdk');
@@ -2359,6 +2376,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     if (!autorizarComJanelaLegado(req, session, sessionId, '/api/chat')) {
+      registrarAuthNegado('/api/chat');
       return res.status(401).json({ error: 'Token de sessão ausente, inválido ou expirado.' });
     }
 
@@ -2716,6 +2734,7 @@ app.post('/api/questionario/salvar-respostas', async (req, res) => {
     }
 
     if (!autorizarComJanelaLegado(req, session, sessionId, '/api/questionario/salvar-respostas')) {
+      registrarAuthNegado('/api/questionario/salvar-respostas');
       return res.status(401).json({ error: 'Token de sessão ausente, inválido ou expirado.' });
     }
 
