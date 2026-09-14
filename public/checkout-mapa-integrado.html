@@ -422,6 +422,13 @@
     let sessionId = null;
     let verificarIntervalo = null;
 
+    // Token de autorização por sessão (escopo 'chat') — nunca vai em URL, só
+    // localStorage (mesma origem, lido pelo chat.html).
+    function storeZuniToken(sessionId, token) {
+      if (!sessionId || !token) return;
+      try { localStorage.setItem('zuniToken_' + sessionId, token); } catch (e) {}
+    }
+
     // Verificar status ao carregar (se voltar da pagina de retorno)
     window.addEventListener('load', async () => {
       const params = new URLSearchParams(window.location.search);
@@ -546,6 +553,7 @@
       // Se cupom 100% desconto, ir direto para sucesso
       if (data.cupom100) {
         console.log('[CHECKOUT] Cupom 100% desconto: indo direto para sucesso');
+        storeZuniToken(sessionId, data.token);
         exibirMapaNatalFinal(sessionId);
         mostrarSecao('success-section');
         return;
@@ -580,6 +588,7 @@
 
         if (data.pago) {
           // Recuperar dados da sessão para exibir mapa
+          storeZuniToken(id, data.token);
           exibirMapaNatalFinal(id);
           clearInterval(verificarIntervalo);
           mostrarSecao('success-section');

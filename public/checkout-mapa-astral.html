@@ -265,6 +265,13 @@
     let pixTentativas = 0;
     const MAX_TENTATIVAS_PIX = 36;
 
+    // Token de autorização por sessão (escopo 'chat') — nunca vai em URL, só
+    // localStorage (mesma origem, lido pelo chat.html).
+    function storeZuniToken(sessionId, token) {
+      if (!sessionId || !token) return;
+      try { localStorage.setItem('zuniToken_' + sessionId, token); } catch (e) {}
+    }
+
     // ── PARAMETRIZAÇÃO DE TIPO DE PRODUTO ──
     const params = new URLSearchParams(window.location.search);
     const tipoCheckout = params.get('type') || 'mapa-astral';
@@ -380,6 +387,7 @@
           const data = await res.json();
           if (data.pago) {
             clearInterval(pollingInterval);
+            storeZuniToken(sessionIdRetorno, data.token);
             window.location.href = `/chat.html?sessionId=${sessionIdRetorno}`;
             return;
           }
@@ -449,6 +457,7 @@
         const data = await res.json();
         if (data.pago) {
           clearInterval(pollingInterval);
+          storeZuniToken(sessionIdCheckout, data.token);
           window.location.href = `/chat.html?sessionId=${sessionIdCheckout}`;
           return;
         }

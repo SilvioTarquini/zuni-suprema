@@ -26,6 +26,7 @@ const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturas
 const { calcularAstrologiaB } = require('./lib/astrologia-b');
 const { verificarLimite, registrarUso, auditarConsumo, gerarVisitorHash } = require('./lib/rateLimitExperimente');
 const { limparSessoesExpiradas } = require('./lib/limpezaSessoes');
+const { gerarTokenSessao, validarTokenSessao, VALIDADE_CHAT_MS, VALIDADE_DOWNLOAD_MS } = require('./lib/sessionToken');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -708,6 +709,15 @@ function buildSuccessUrl(sessionId) {
 function buildCancelUrl() {
   const baseUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
   return `${baseUrl}/checkout`;
+}
+
+// Autorização por sessionId (ver src/lib/sessionToken.js). Header, nunca
+// query string nem body — usado em toda rota que recebe sessionId via
+// req.body (POST). A rota de download usa validarTokenSessao diretamente
+// com o token vindo de req.query.t (GET, sem header).
+function exigirTokenSessao(req, sessionId, escopo) {
+  const token = req.headers['x-zuni-sessao'];
+  return validarTokenSessao(sessionId, escopo, token);
 }
 
 async function generateClaudeResponse(messages, systemPrompt) {
@@ -2078,7 +2088,8 @@ app.post('/api/sessoes-extras/iniciar-sessao', async (req, res) => {
     // Retornar sessionId e pacoteId (se ainda não respondeu questionário)
     return res.json({
       sessionId,
-      pacoteId: pacote.questionario_respondido ? null : pacote.pacote_id
+      pacoteId: pacote.questionario_respondido ? null : pacote.pacote_id,
+      token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
     });
   } catch (error) {
     console.error('Erro em /api/sessoes-extras/iniciar-sessao:', error);
@@ -2136,7 +2147,8 @@ app.post('/api/checkout/preference', async (req, res) => {
       return res.json({
         sessionId,
         init_point: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno&cupom100=true`,
-        cupom100: true
+        cupom100: true,
+        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
       });
     }
 
@@ -2177,7 +2189,8 @@ app.get('/api/checkout/session-status/:sessionId', async (req, res) => {
     const { sessionId } = req.params;
     const session = await getSession(sessionId);
     if (!session) return res.status(404).json({ pago: false });
-    return res.json({ pago: Boolean(session.paid) });
+    if (!session.paid) return res.json({ pago: false });
+    return res.json({ pago: true, token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS) });
   } catch (error) {
     console.error('Erro em /api/checkout/session-status:', error);
     return res.status(500).json({ pago: false });
@@ -2248,6 +2261,18 @@ app.post('/api/sessao/iniciar', async (req, res) => {
       return res.status(401).json({ error: 'Chave de acesso inválida ou ausente.' });
     }
 
+    // Rota legada sem caminho conhecido para virar paga — contador de uso
+    // real para decidir remoção futura. Não bloqueia a resposta.
+    if (supabase) {
+      supabase.rpc('registrar_contador', { p_evento: 'rota_legada', p_chave: 'sessao_iniciar' })
+        .then(({ error: erroContador }) => {
+          if (erroContador) console.error('[ROTA_LEGADA] Erro ao registrar contador:', erroContador.message);
+        })
+        .catch(err => {
+          console.error('[ROTA_LEGADA] Erro ao registrar contador:', err.message || err);
+        });
+    }
+
     const { name, email } = req.body;
 
     if (!name || !email) {
@@ -2292,6 +2317,10 @@ app.post('/api/chat', async (req, res) => {
 
     if (!session.paid) {
       return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
+    }
+
+    if (!exigirTokenSessao(req, sessionId, 'chat')) {
+      return res.status(401).json({ error: 'Token de sessão ausente, inválido ou expirado.' });
     }
 
     session.counter += 1;
@@ -2340,6 +2369,7 @@ app.post('/api/chat', async (req, res) => {
     }
 
     let pacoteAtivo = null;
+    let tokenRenovado = null;
 
     // Injetar contexto de Mapa Astral se dados de nascimento disponíveis
     if (session.birthDate || session.birthTime || session.birthLocation) {
@@ -2377,6 +2407,11 @@ app.post('/api/chat', async (req, res) => {
           await consumirCredito(pacoteAtivo.pacote_id, sessionId);
           session.pacote_id = pacoteAtivo.pacote_id;
           session.paid = true; // Sessão está paga (via pacote)
+          // Cliente já passou pelo exigirTokenSessao no topo do handler para
+          // chegar até aqui, mas emitimos de novo (renovado) porque esta é a
+          // resposta que informa a sessão como paga via crédito — mesma regra
+          // de "todo response que informa paid:true carrega token".
+          tokenRenovado = gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS);
 
           // Injetar contexto do pacote (memória de jornada DENTRO do pacote)
           const resumosDoPacote = await buscarResumosDoPacko(pacoteAtivo.pacote_id, 5);
@@ -2428,7 +2463,12 @@ app.post('/api/chat', async (req, res) => {
     // é só um sinal interno fragil (match de substring) para marcar relatorioGerado.
     // Só o limite rígido de 15 trocas, acima, encerra a sessão de fato.
 
-    return res.json({ texto: responseText, contador: session.counter, productType: session.productType });
+    return res.json({
+      texto: responseText,
+      contador: session.counter,
+      productType: session.productType,
+      ...(tokenRenovado ? { token: tokenRenovado } : {})
+    });
   } catch (error) {
     console.error('Erro em /api/chat:', error);
     return res.status(500).json({ error: 'Erro ao processar a mensagem de chat.' });
@@ -2635,6 +2675,11 @@ app.post('/api/questionario/salvar-respostas', async (req, res) => {
     if (!session) {
       return res.status(404).json({ error: 'Sessão não encontrada.' });
     }
+
+    if (!exigirTokenSessao(req, sessionId, 'chat')) {
+      return res.status(401).json({ error: 'Token de sessão ausente, inválido ou expirado.' });
+    }
+
     const { email } = session;
 
     const supabaseClient = assertSupabase();
@@ -2885,7 +2930,8 @@ app.get('/api/checkout/mapa-astral/status/:pedidoId', async (req, res) => {
     const { pedidoId } = req.params;
     const order = await consultarPedidoMercadoPago(pedidoId);
     const pago = await marcarPagoSeAprovado(order);
-    return res.json({ pago });
+    if (!pago) return res.json({ pago: false });
+    return res.json({ pago: true, token: gerarTokenSessao(order.external_reference, 'chat', VALIDADE_CHAT_MS) });
   } catch (error) {
     console.error('Erro em /api/checkout/mapa-astral/status:', error);
     return res.status(500).json({ pago: false });
@@ -2966,7 +3012,8 @@ app.get('/api/checkout/mapa-astral/session-status/:sessionId', async (req, res) 
     const { sessionId } = req.params;
     const session = await getSession(sessionId);
     if (!session) return res.status(404).json({ pago: false });
-    return res.json({ pago: Boolean(session.paid) });
+    if (!session.paid) return res.json({ pago: false });
+    return res.json({ pago: true, token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS) });
   } catch (error) {
     console.error('Erro em /api/checkout/mapa-astral/session-status:', error);
     return res.status(500).json({ pago: false });
@@ -3007,7 +3054,11 @@ app.post('/api/checkout/mapa-astral/test', async (req, res) => {
     await upsertSession(session);
 
     console.log(`[TEST] Sessão de teste criada: ${sessionId} (produto: ${productType})`);
-    return res.json({ sessionId, chatUrl: `/chat.html?sessionId=${sessionId}` });
+    return res.json({
+      sessionId,
+      chatUrl: `/chat.html?sessionId=${sessionId}`,
+      token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
+    });
   } catch (error) {
     console.error('Erro em /api/checkout/mapa-astral/test:', error);
     return res.status(500).json({ error: 'Erro ao criar sessão de teste.' });
@@ -3108,7 +3159,8 @@ app.post('/api/checkout/mapa-integrado', async (req, res) => {
         qrCodeText: 'CUPOM 100% DESCONTO - PAGAMENTO AUTOMÁTICO',
         qrCodeImage: '',
         mapaNatal: mapaNatal.mapaNatal,
-        cupom100: true
+        cupom100: true,
+        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
       });
     }
 
@@ -3185,7 +3237,8 @@ app.get('/api/checkout/mapa-integrado/status/:pedidoId', async (req, res) => {
     const { pedidoId } = req.params;
     const order = await consultarPedidoMercadoPago(pedidoId);
     const pago = await marcarPagoSeAprovado(order);
-    return res.json({ pago });
+    if (!pago) return res.json({ pago: false });
+    return res.json({ pago: true, token: gerarTokenSessao(order.external_reference, 'chat', VALIDADE_CHAT_MS) });
   } catch (error) {
     console.error('Erro em /api/checkout/mapa-integrado/status:', error);
     return res.status(500).json({ pago: false });
@@ -3272,7 +3325,8 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
       return res.json({
         sessionId,
         init_point: `${process.env.FRONTEND_URL}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno&cupom100=true`,
-        cupom100: true
+        cupom100: true,
+        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
       });
     }
 
@@ -3321,7 +3375,8 @@ app.get('/api/checkout/mapa-integrado/session-status/:sessionId', async (req, re
     const { sessionId } = req.params;
     const session = await getSession(sessionId);
     if (!session) return res.status(404).json({ pago: false });
-    return res.json({ pago: Boolean(session.paid) });
+    if (!session.paid) return res.json({ pago: false });
+    return res.json({ pago: true, token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS) });
   } catch (error) {
     console.error('Erro em /api/checkout/mapa-integrado/session-status:', error);
     return res.status(500).json({ pago: false });

@@ -529,9 +529,15 @@
           requestBody.pacoteId = pacoteId;
         }
 
+        let tokenSessao = '';
+        try { tokenSessao = localStorage.getItem('zuniToken_' + sessionId) || ''; } catch (e) {}
+
         const response = await fetch('/api/questionario/salvar-respostas', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Zuni-Sessao': tokenSessao
+          },
           body: JSON.stringify(requestBody)
         });
 

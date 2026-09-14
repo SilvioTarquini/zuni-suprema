@@ -326,6 +326,13 @@
       return params.get('sessionId') || getStoredSessionId();
     }
 
+    // Token de autorização por sessão (escopo 'chat') — nunca vai em URL,
+    // só localStorage (mesma origem, lido pelas páginas seguintes do funil).
+    function storeZuniToken(sessionId, token) {
+      if (!sessionId || !token) return;
+      try { localStorage.setItem('zuniToken_' + sessionId, token); } catch (e) {}
+    }
+
     // Ler cupom da URL ao carregar a página
     const urlParams = new URLSearchParams(window.location.search);
     const cupomDaUrl = urlParams.get('cupom');
@@ -381,6 +388,7 @@
         storeSessionId(data.sessionId);
 
         if (data.cupom100) {
+          storeZuniToken(data.sessionId, data.token);
           window.location.href = `/questionario-selecao.html?sessionId=${data.sessionId}`;
           return;
         }
@@ -433,6 +441,7 @@
           const data = await res.json();
           if (data.pago) {
             // Pinterest: evento de conversão
+            storeZuniToken(sessionId, data.token);
             window.location.href = `/questionario-selecao.html?sessionId=${sessionId}`;
           }
         } catch (e) {}
@@ -452,6 +461,7 @@
           const data = await res.json();
           if (data.pago) {
             clearInterval(pollingInterval);
+            storeZuniToken(sessionId, data.token);
             dispararConversaoPinterest();
             window.location.href = `/questionario-selecao.html?sessionId=${sessionId}`;
             return;

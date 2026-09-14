@@ -213,6 +213,10 @@
         const data = await res.json();
 
         if (data.sessionId) {
+          // Token de autorização por sessão (escopo 'chat') — nunca vai em
+          // URL, só localStorage (mesma origem, lido pelas páginas seguintes).
+          try { localStorage.setItem('zuniToken_' + data.sessionId, data.token); } catch (e) {}
+
           // Ir para o questionário (apenas na 1ª sessão do pacote)
           // O endpoint retorna pacoteId se o pacote ainda não teve questionário respondido
           if (data.pacoteId) {

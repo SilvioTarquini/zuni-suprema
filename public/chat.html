@@ -643,6 +643,18 @@
     const testQuestionario = params.get('testQuestionario') === 'true';
     let contador = 0;
 
+    // Token de autorização por sessão (escopo 'chat'), guardado no localStorage
+    // por quem redirecionou para cá (checkout, session-status, questionário).
+    // Nunca trafega em URL. Renovado sempre que a resposta de /api/chat trouxer
+    // um token novo (ex.: sessão promovida a paga via crédito de pacote).
+    function getZuniToken() {
+      try { return localStorage.getItem('zuniToken_' + sessionId) || ''; } catch (e) { return ''; }
+    }
+    function storeZuniToken(token) {
+      if (!token) return;
+      try { localStorage.setItem('zuniToken_' + sessionId, token); } catch (e) {}
+    }
+
     // Nome da entrega (PDF) exibido no modal — depende do productType da sessão,
     // que só é conhecido depois da primeira resposta de /api/chat. O default é
     // 'padrao' (Síntese ZUNI Direciona), que cobre o produto de entrada
@@ -732,11 +744,20 @@ addMsg('user', msg);
       try {
         const res = await fetch('/api/chat', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Zuni-Sessao': getZuniToken()
+          },
           body: JSON.stringify({ sessionId, message: msg })
         });
         const data = await res.json();
         typing.remove();
+        if (res.status === 401) {
+          addMsg('assistant', 'Sua sessão expirou ou não pôde ser confirmada. Recarregue a página a partir do link original para continuar.');
+          document.getElementById('btn-enviar').disabled = false;
+          return;
+        }
+        if (data.token) storeZuniToken(data.token);
         if (data.texto) {
           if (data.productType) {
             productTypeAtual = data.productType;
