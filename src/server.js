@@ -830,6 +830,15 @@ async function searchKnowledge(query, limite = 5, tema = null) {
 
       if (blocosOrigemTema === 0) {
         console.warn(`[RAG_TEMA_VAZIO] tema "${tema}" nao existe em documentos.tema nem em grupos_tema — sessao rodando sem ancoragem tematica`);
+
+        // Contador — não bloqueia nem pode derrubar a resposta ao cliente.
+        supabase.rpc('registrar_tema_nao_resolvido', { p_tema: tema })
+          .then(({ error: erroRegistro }) => {
+            if (erroRegistro) console.error('[RAG_TEMA_VAZIO] Erro ao registrar contador:', erroRegistro.message);
+          })
+          .catch(err => {
+            console.error('[RAG_TEMA_VAZIO] Erro ao registrar contador:', err.message || err);
+          });
       }
     }
 
