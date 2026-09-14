@@ -4,7 +4,42 @@
 > (chat, Claude Code ou Cowork). Serve como fonte de verdade sobre o que está pronto,
 > em andamento e pendente — independente de qual instância do Claude está ajudando.
 >
-> Última atualização: 11/09/2026 (Claude Code). Pinterest: domínio
+> Última atualização: 14/09/2026 (Claude Code). Frente de autorização por sessão
+> (FASE A, HMAC): a janela de convivência corrigida para decidir por **relógio de
+> parede** (`Date.now()` vs `AUTH_CORTE_TS`), nunca por `sessions.created_at` — o
+> campo está corrompido em parte das linhas (4 de 139 com `created_at` posterior a
+> `updated_at`) e o desvio de fuso observado em desenvolvimento é do `new Date()`
+> do JS parseando `timestamp without time zone` como hora local, não do PostgREST
+> (commit `1a81d0d`). Falha fechada se `AUTH_CORTE_TS` não estiver setada — e
+> **ficou sem setar por ~6 minutos entre o push e a correção em produção**, nenhuma
+> sessão real atingida por sorte (última atividade real tinha sido 3,6h antes).
+> **Prazo ativo: `AUTH_CORTE_TS = 1789506000000` (15/09 18h00)** — depois disso
+> toda requisição sem token vira 401; acompanhar `contadores_operacionais`
+> (`auth_legado` parando de crescer, `auth_negado` em zero) antes de deixar
+> fechar. WhatsApp do questionário reformulado: a promessa "equipe entra em
+> contato" era inexequível por construção (nenhum formulário coleta telefone;
+> `MAKE_WEBHOOK_URL` nunca esteve configurada em produção; a flag
+> `resposta_b_enviado_whatsapp` nunca era escrita em lugar nenhum do código) —
+> trocada por botão direto a `wa.me/5515996088895` com referência do `sessionId`,
+> e os 4 pontos de falha silenciosa agora gravam contador (`whatsapp/sem_email`,
+> `sem_webhook_url`, `trigger_falhou`, `trigger_ok`; commits `9c40e28`, `d27ff6e`).
+> Cabeçalho do chat ganhou **Ajuda** e **Livros ZUNI** sempre visíveis, aba nova,
+> ícone-só a 400px (`cf91fae`) — o botão flutuante de WhatsApp só aparecia com
+> `fromQuestionnaire=true`, deixando quem pulou o questionário sem nenhum acesso
+> à equipe pela tela do chat. Frente RAG, em paralelo na mesma sessão: busca
+> trocada para `buscar_documentos_ranqueado` (aceita tema **ou** grupo, piso/teto
+> configuráveis por tema/arquivo/fonte), base limpa de 1.761 para 1.645 blocos
+> (116 duplicatas byte-idênticas removidas, com backup, zero perda de conteúdo),
+> grupo `adolescentes` criado. Teste de ponta a ponta em produção revelou que
+> `conflitos_familiares` — como outros 35 dos 43 temas do questionário — não
+> existe em `documentos.tema`; a sessão de teste rodou sem ancoragem temática
+> nenhuma e ainda assim foi avaliada como boa, hipótese aberta sobre o peso real
+> da ancoragem por tema (testável quando `citacoes_rag` estiver alimentada).
+> Detalhe completo no bloco "14/09/2026 (Autorização por sessão — janela de
+> convivência corrigida; WhatsApp reformulado; cabeçalho do chat; RAG — busca
+> ranqueada e limpeza da base)" em "Decisões estratégicas".
+>
+> Nota anterior (11/09/2026, Claude Code). Pinterest: domínio
 > `zunisuprema.com.br` reivindicado (`p:domain_verify` em `index.html` e
 > `checkout.html`, commit `d9cbefa`); tag do pixel `2612519382245` instalada em
 > `checkout.html` com evento de conversão (`pintrk('track', 'checkout', …)`)
@@ -439,6 +474,242 @@ arquivos nunca devem divergir sobre o mesmo item.
 
 Registro cumulativo de decisões estruturantes. Sessões futuras adicionam novos blocos
 datados no topo desta seção — nunca criam uma seção nova.
+
+### 14/09/2026 (Autorização por sessão — janela de convivência corrigida; WhatsApp reformulado; cabeçalho do chat; RAG — busca ranqueada e limpeza da base)
+
+Sessão longa, duas frentes em paralelo: autorização por sessão (FASE A, HMAC) +
+WhatsApp/cabeçalho do chat, e RAG (busca ranqueada + limpeza de base). 7 deploys.
+
+#### ⚠ Prazo ativo: 15/09 às 18h00
+
+`AUTH_CORTE_TS = 1789506000000`. Quando esse instante passar, **toda requisição
+sem token de sessão passa a receber 401**. A variável está no Railway e pode ser
+empurrada sem deploy se os contadores ainda estiverem crescendo:
+
+```
+railway variables --set AUTH_CORTE_TS=<novo epoch ms>
+```
+
+Os dois números que dizem se é seguro deixar fechar:
+
+```sql
+select evento, chave, ocorrencias, ultima_em
+from public.contadores_operacionais order by evento, chave;
+```
+
+`auth_legado` parando de crescer = todo mundo já manda token. `auth_negado` em
+zero = ninguém sendo barrado.
+
+#### 1. Em produção hoje — 7 deploys
+
+| commit | o que entrou |
+|---|---|
+| `19a3718` | `searchKnowledge` passou a usar `buscar_documentos_ranqueado` (aceita tema **ou** grupo). Log `[RAG_HIBRIDO]` ampliado + aviso `[RAG_TEMA_VAZIO]`. |
+| `1d186f9` | `[RAG_TEMA_VAZIO]` também grava em `temas_nao_resolvidos`. |
+| `1a81d0d` | Janela de convivência da autorização por **relógio de parede** (`Date.now()` vs `AUTH_CORTE_TS`), sem usar `created_at`. Falha fechada se a variável faltar. |
+| `b5ade40` | Contador `auth_negado` nos dois pontos de 401. |
+| `9c40e28` | WhatsApp: botão direto no lugar da promessa de contato. Instrumentação dos 4 pontos cegos. |
+| `cf91fae` | Cabeçalho do chat ganha **Ajuda** (WhatsApp) e **Livros ZUNI**, sempre visíveis. |
+| `d27ff6e` | Troca do emoji 🆘 por 💬 / glifo do WhatsApp a 400px. |
+
+Deploy final: `da592237`, boot limpo.
+
+Também no ar da fase A da autorização (`aaae323`, sessão anterior): emissão de
+token HMAC de escopo (`chat` 6h, `dl` 10min), `src/lib/sessionToken.js`, e 6 HTML
+atualizados para guardar e enviar o token.
+
+**Caminho de volta:** `git revert <commit> && git push origin main`. A
+`buscar_documentos_hibrido` continua intacta no banco.
+
+#### 2. Migrações no Supabase
+
+| migração | o que cria |
+|---|---|
+| `create_citacoes_rag` | Log de blocos citados. **Criada, ainda não alimentada** — falta o código. |
+| `fix_search_path_funcoes_rag` | `search_path` fixado nas 3 funções de busca. Advisor zerado. |
+| `create_buscar_documentos_ranqueado` + 3 revisões | Piso por tema, teto por arquivo, teto por fonte, expansão de grupo. |
+| `create_grupos_tema` | Grupos de temas. Hoje: `adolescentes`. |
+| `create_temas_nao_resolvidos` | Contador de temas sem ancoragem. |
+| `create_contadores_operacionais` | Contador genérico `registrar_contador(evento, chave)`. |
+| backups | `_backup_piloto_tempo_para_viver`, `_backup_documentos_removidos`. |
+
+Assinatura da busca:
+
+```
+buscar_documentos_ranqueado(
+  query_embedding vector,
+  piso_tema        integer default 1,
+  total            integer default 8,
+  p_tema           text    default null,   -- tema OU grupo
+  teto_por_arquivo integer default 2,
+  piso_por_tema    integer default 1,
+  teto_por_fonte   integer default 0
+)
+```
+
+Produção chama com `total = limite` (5). **A calibração V2 foi validada com
+`total = 8`** — o equilíbrio real em produção não é o que foi medido.
+
+#### 3. Limpeza da base
+
+De **1.761 para 1.645 blocos**, sem perder conteúdo. 116 duplicatas removidas
+com backup. Zero duplicatas byte-idênticas restantes. 26 blocos ganharam tema.
+`tema IS NULL`: **500 de 1.645 (30,4%)** — próximo alvo.
+
+Grupo criado:
+```
+adolescentes = educar_filhos (72) + compreensao_da_vida_base_mentor (60) + sentimentos_adolescencia (20)
+               152 blocos · 353.901 caracteres   (antes o pin alcançava 12.131)
+```
+
+#### 4. O teste de ponta a ponta (o mais importante do dia)
+
+Funil completo em navegador real, cupom `TEST100`, sessão `208b3baa…`, tema
+`conflitos_familiares`:
+
+✅ token gravado no `localStorage` com formato e expiração corretos
+✅ questionário e chat enviando `X-Zuni-Sessao`
+✅ **`localStorage.clear()` duas vezes e a conversa seguiu** — janela de
+convivência provada em produção (`auth_legado` = 6)
+✅ relatório em PDF baixado
+✅ avaliação do Silvio: conversa muito boa, respostas consistentes
+❌ botão de WhatsApp não entregou nada (ver seção 6 abaixo)
+
+**O achado que vale o dia**: `conflitos_familiares` é um dos 36 temas que **não
+existem** em `documentos.tema`. As 11 chamadas ao RAG dessa sessão rodaram **sem
+ancoragem temática nenhuma** — e a conversa foi avaliada como muito boa. Duas
+consequências: (1) foi o deploy de hoje que salvou a sessão — com a função antiga
+seriam 2 blocos em vez de 5; (2) hipótese aberta — a ancoragem temática pode
+valer bem menos que o suposto, e o ganho real estar em ter a base inteira bem
+fragmentada e acessível. Testável quando o log de citação estiver no ar.
+
+#### 5. O bug do vocabulário
+
+`catalogoQuestionarios` tem **43 temas**; apenas **7** existem em
+`documentos.tema` (os mesmos 7 com `ragIndexado: true`). Medido com
+`p_tema = 'burnout'`: função antiga → **2 blocos**; função nova → **8 blocos**.
+
+A troca já em produção é a rede de segurança. O mapeamento fino via
+`grupos_tema` são **36 decisões editoriais**, não técnicas. Fila ordenada por
+uso real:
+```sql
+select tema, ocorrencias, ultima_em from public.temas_nao_resolvidos order by ocorrencias desc;
+```
+
+**Verificar:** `ragIndexado: true` bloqueia a oferta dos outros 36 ou é só
+informativo?
+
+#### 6. WhatsApp — diagnóstico e correção
+
+Problema que "já foi consertado" várias vezes e nunca funcionou. **Motivo:
+quatro caminhos de falha, todos silenciosos, e mensagem de sucesso incondicional
+na tela.** Ninguém conseguia distinguir consertado de quebrado.
+
+Estado encontrado: `MAKE_WEBHOOK_URL` **não existe** no Railway → todo
+`triggerMake()` caía em early-return; `resposta_b_enviado_whatsapp` **nunca era
+escrito** em lugar nenhum do `src/`; disparo condicionado a `session?.email`, que
+é nulo na maioria das sessões desde 26/08; HTTP 200 mesmo quando o webhook
+falhava; **não existe campo de telefone em formulário algum do produto** — a
+promessa "entraremos em contato via WhatsApp" era inexequível por construção.
+
+Histórico: 12 questionários desde 04/08, 5 com Resposta B gerada, **0
+enviados**. Três são testes; o **id 26 (27/08)** é possivelmente cliente real,
+sem e-mail e sem telefone — inalcançável.
+
+**Correção adotada: inverter a direção.** Em vez de prometer contato, abrir a
+conversa. Botão leva a `wa.me/5515996088895` com referência do `sessionId`. A
+Resposta B continua sendo gerada e guardada para a equipe consultar pela
+referência. Instrumentação nos 4 pontos: `whatsapp/sem_webhook_url`,
+`sem_email`, `trigger_falhou`, `trigger_ok`. `triggerMake` mantido — se a
+variável for configurada um dia, os contadores mostram sozinhos.
+
+Números conferidos: 7 ocorrências de `5515996088895` em checkout, mapa astral e
+livro, todas idênticas e bem formadas.
+
+#### 7. Cabeçalho do chat
+
+Buraco encontrado: o botão flutuante de WhatsApp só aparece com
+`fromQuestionnaire=true`. **Quem pulou o questionário não tinha nenhum acesso à
+equipe pela tela do chat.**
+
+Cabeçalho agora tem **Ajuda** (WhatsApp direto, com referência) e **Livros
+ZUNI**, sempre visíveis. Abrem em aba nova. A 400px colapsam para ícone; o
+balão 💬 vira glifo do WhatsApp para não ficar ambíguo numa tela que já é um
+chat. Testado a 768px e 400px sem overflow.
+
+Botão flutuante **não foi tocado** — continua abrindo o modal, que depois do
+`9c40e28` termina no WhatsApp.
+
+`/loja/index.html` só lê `?cupom=` — **não há filtro por tema**. Por isso o
+rótulo genérico "Livros ZUNI".
+
+#### 8. Retenção — correção de anotação
+
+A política **não** é descartar a conversa ao fim da sessão. O histórico fica
+alguns dias (10–15, a confirmar no código) para a pessoa poder baixar depois. A
+promessa é não guardar dados confidenciais.
+
+Verificado: 142 sessões, 7 com histórico — todas de hoje. A mais recente já
+limpa é de 28/08. A rotina funciona.
+
+#### 9. Bug separado a registrar
+
+`sessions.created_at` está corrompido em alguns caminhos de escrita: **4 de 139
+linhas têm `created_at` posterior ao `updated_at`** (uma delas +6h). O default
+`now()` do banco grava UTC verdadeiro (desvio 0,000000s) — o desvio vem de
+escrita explícita pela aplicação. Achar os endpoints que gravam `created_at`
+explicitamente em vez de deixar o default. Afeta qualquer lógica sobre idade de
+sessão.
+
+**Nota para quem for mexer nisso:** o desvio de fuso observado em
+desenvolvimento **não é do PostgREST** — é o `new Date()` do JS parseando
+`timestamp without time zone` como hora local. Em `TZ=UTC` (Railway) o desvio é
+zero; em `TZ=America/Sao_Paulo` dá +3h. Nunca calibre constante de tempo pela
+máquina local.
+
+#### 10. Lições de processo
+
+1. **Variável de ambiente que o código novo exige entra ANTES do push.** A
+   ordem inversa abriu uma janela de 6 minutos em que toda sessão sem token
+   teria tomado 401. Ninguém foi atingido por sorte — a última atividade real
+   tinha sido 3,6h antes.
+2. **"Pedir aprovação antes do push" é parada obrigatória**, não sugestão.
+3. **Falha silenciosa é o que faz um bug voltar.** O WhatsApp "consertado"
+   várias vezes é o caso exemplar. Todo conserto agora vem com contador que
+   sobrevive à retenção do log.
+4. **Para "alguém foi afetado?", o banco responde melhor que o log de borda.**
+   `railway logs` voltou vazio; `sessions.updated_at` deu a resposta em um
+   SELECT.
+
+#### 11. Próximos passos
+
+1. **Teste de pagamento real com cartão de terceiro** — bloqueador de tráfego
+   pago, pendente desde sempre. Valida também o ramo de emissão de token via
+   `session-status`, que o cupom não cobre.
+2. **Confirmar o link de WhatsApp do checkout** ponta a ponta — clicar e ver a
+   mensagem chegar. É o socorro de quem já pagou.
+3. **FASE B** da autorização — download com token de escopo `dl`.
+4. **FASE C** — corte, quando `auth_legado` parar de crescer por 48h.
+5. **Log de citação** — alimentar `citacoes_rag`. Troca cosseno por uso real, e
+   responde a hipótese da seção 4 acima.
+6. **Mapeamento de vocabulário** — 36 linhas, em blocos de 10, aprovação linha
+   a linha.
+7. **Saneamento de chunk** — `depressao`, `namoro_conquista_romance`,
+   `consequencias_causa_efeito` têm blocos de 14–16 mil caracteres.
+8. Só então avaliar `total` 5→8.
+
+Pendências anteriores não tocadas nesta sessão (já registradas em rodadas
+passadas, seguem abertas): responsividade mobile do resto do site;
+`experimente.html` com resíduos de astrologia; questionários faltantes (falta
+um modelo do `questionarios_pos_checkout.json`); "Nível 2 — Mapa de Clareza"
+sem nome após a renomeação para Síntese ZUNI Direciona; terceira linha do bloco
+de marca divergente no `checkout.html` em produção; dev e produção
+compartilham o mesmo Supabase; rastreador do Pinterest (`_pin_unauth_ls`,
+validade de 1 ano) gravando no navegador de visitantes; `favicon.ico` 404;
+bloco de fechamento com obras do tema (depende de criar filtro por tema na
+Loja); descartar `_backup_piloto_tempo_para_viver` após ~1 semana estável;
+astrologia/numerologia paradas aqui — `zuni-intelligence` assume, AstroWay fica
+só como efemérides.
 
 ### 11/09/2026 (Pinterest — verificação de domínio + tag de conversão)
 
