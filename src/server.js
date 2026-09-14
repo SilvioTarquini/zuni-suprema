@@ -776,6 +776,22 @@ function registrarAuthNegado(rota) {
   }
 }
 
+// Instrumentação do encaminhamento de Resposta B ao WhatsApp (evento 'whatsapp').
+// Chaves: sem_webhook_url, sem_email, trigger_falhou, trigger_ok. Existe porque
+// nenhuma dessas quatro falhas deixava rastro persistente antes — só log de
+// Railway, que some com a retenção. p_chave nunca recebe sessionId/email/token.
+function registrarContadorWhatsapp(chave) {
+  if (!supabase) return;
+
+  supabase.rpc('registrar_contador', { p_evento: 'whatsapp', p_chave: chave })
+    .then(({ error: erroContador }) => {
+      if (erroContador) console.error('[WHATSAPP] Erro ao registrar contador:', erroContador.message);
+    })
+    .catch(err => {
+      console.error('[WHATSAPP] Erro ao registrar contador:', err.message || err);
+    });
+}
+
 async function generateClaudeResponse(messages, systemPrompt) {
   try {
     const Anthropic = require('@anthropic-ai/sdk');
@@ -1466,13 +1482,16 @@ www.zunisuprema.com.br
   }
 }
 
+// Retorna { ok, motivo } em vez de só um boolean para que quem chama consiga
+// diferenciar "não configurado" de "configurado mas falhou" — nenhum outro
+// dos 4 chamadores usa o valor de retorno, então esta mudança de formato é segura.
 async function triggerMake(name, email, summary) {
   try {
     const webhookUrl = process.env.MAKE_WEBHOOK_URL;
 
     if (!webhookUrl || !webhookUrl.startsWith('http')) {
       console.warn('MAKE_WEBHOOK_URL não configurado — trigger ignorado.');
-      return false;
+      return { ok: false, motivo: 'sem_webhook_url' };
     }
 
     const response = await fetch(webhookUrl, {
@@ -1488,10 +1507,10 @@ async function triggerMake(name, email, summary) {
     });
 
     console.log('Make webhook disparado — status:', response.status);
-    return response.ok;
+    return { ok: response.ok, motivo: response.ok ? 'ok' : 'erro' };
   } catch (error) {
     console.error('Erro ao disparar Make webhook:', error.message);
-    return false;
+    return { ok: false, motivo: 'erro' };
   }
 }
 async function gerarEEnviarRelatorio(sessionId) {
@@ -2872,15 +2891,38 @@ app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
 
     console.log(`[QUESTIONÁRIO] Resposta B persistida para sessão ${sessionId}`);
 
-    // Dispara webhook Make para enviar Resposta B ao WhatsApp (apenas na primeira geração)
+    // Dispara webhook Make para enviar Resposta B ao WhatsApp (apenas na primeira geração).
+    // O chat não promete mais esse contato ao cliente (ele abre o WhatsApp direto,
+    // ver public/chat.html) — isto continua rodando e instrumentado para o dia em
+    // que MAKE_WEBHOOK_URL for configurada de verdade. Não bloqueia a resposta.
     try {
       const session = await getSession(sessionId);
-      if (session?.email) {
-        await triggerMake(session.name, session.email, respostaB.slice(0, 1200));
-        console.log(`[QUESTIONÁRIO] Resposta B disparada ao WhatsApp para ${session.email}`);
+      if (!session?.email) {
+        registrarContadorWhatsapp('sem_email');
+      } else {
+        const resultadoMake = await triggerMake(session.name, session.email, respostaB.slice(0, 1200));
+
+        if (resultadoMake.motivo === 'sem_webhook_url') {
+          registrarContadorWhatsapp('sem_webhook_url');
+        } else if (resultadoMake.ok) {
+          registrarContadorWhatsapp('trigger_ok');
+          console.log(`[QUESTIONÁRIO] Resposta B disparada ao WhatsApp para ${session.email}`);
+
+          const { error: erroFlagEnvio } = await supabaseClient
+            .from('respostas_questionario')
+            .update({ resposta_b_enviado_whatsapp: true })
+            .eq('sessao_id', sessionId);
+
+          if (erroFlagEnvio) {
+            console.error('[QUESTIONÁRIO] Erro ao marcar resposta_b_enviado_whatsapp:', erroFlagEnvio.message);
+          }
+        } else {
+          registrarContadorWhatsapp('trigger_falhou');
+        }
       }
     } catch (err) {
       console.error('[QUESTIONÁRIO] Erro ao disparar Make webhook:', err.message);
+      registrarContadorWhatsapp('trigger_falhou');
       // Não bloqueia — Resposta B já foi salva em BD
     }
 

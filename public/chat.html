@@ -943,8 +943,13 @@ addMsg('user', msg);
         // Fechar modal
         fecharConfirmacao();
 
-        // Exibir confirmação no chat
-        addMsg('assistant', `✓ Sua solicitação foi encaminhada com sucesso! Um membro da nossa equipe entrará em contato via WhatsApp em breve. 💬<br><br>Enquanto isso, continue conversando comigo — estou aqui para ajudar!`);
+        // Exibir confirmação no chat com botão para o cliente abrir o WhatsApp
+        // diretamente — não prometemos mais que a equipe vai entrar em contato,
+        // porque nada no backend garante isso (ver diagnóstico de 14/09/2026).
+        const referencia = sessionId.slice(0, 8);
+        const textoWhatsapp = encodeURIComponent(`Olá! Vim do ZUNI Direciona e gostaria de falar com a equipe. Referência: ${referencia}`);
+        const linkWhatsapp = `https://wa.me/5515996088895?text=${textoWhatsapp}`;
+        addMsg('assistant', `✓ Pronto. Organizei um resumo da sua situação para a equipe.<br><br>Toque no botão abaixo para abrir a conversa no WhatsApp — o atendimento continua por lá, a partir do que você já trouxe aqui.<br><br><a href="${linkWhatsapp}" target="_blank" rel="noopener noreferrer" style="display:inline-block;background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Abrir conversa no WhatsApp</a><br><br>Se preferir seguir comigo por enquanto, estou aqui.`);
       } catch (err) {
         console.error('[ENCAMINHAMENTO] Erro:', err.message);
         addMsg('assistant', `Desculpe, houve um problema ao processar sua solicitação: ${err.message}<br>Por favor, tente novamente ou entre em contato conosco via WhatsApp.`);
