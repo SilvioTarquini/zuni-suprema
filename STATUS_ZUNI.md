@@ -233,6 +233,13 @@ editoriais fixas).
   até `questionario-selecao.html` / `/questionario/<tema>`, mapeando as 4 chaves do
   `TEMAS` do checkout para questionários reais do catálogo (`estresse` já existe;
   `clareza`, `adolescentes`, `relacionamentos` precisam de escolha de destino).
+  **Atualização (24/09/2026)**: no fluxo novo Stripe da Sessão ZUNI (ver migração
+  MercadoPago→Stripe abaixo), o transporte do `?tema=` já está corrigido — vai até
+  `POST /api/checkout/stripe-session`, sobrevive ao `return_url` do Stripe e chega
+  em `/questionario-selecao.html?sessionId=<id>&tema=<tema>`, testado de ponta a
+  ponta. **A parte que falta é só o mapeamento** tema→questionário em si (decisão de
+  produto, deliberadamente não tomada nesta fase). O fluxo MercadoPago (ainda ativo
+  nos outros 4 produtos) continua com o bug original, sem transporte de tema.
 
 - **[11/09/2026] Valor da conversão do Pinterest com cupom — PENDÊNCIA (não
   urgente)**: o evento `pintrk('track', 'checkout')` reporta `value` fixo `29.90`.
@@ -244,6 +251,25 @@ editoriais fixas).
   no momento da criação da preferência, e expor esse valor em
   `GET /api/checkout/session-status/:sessionId` (hoje devolve só `{ pago }`). Sem
   urgência — nenhuma campanha ativa usa cupom.
+  **Atualização (24/09/2026)**: resolvido para o fluxo novo Stripe da Sessão ZUNI —
+  `valor_pago` é persistido em `sessions` na criação da Checkout Session e devolvido
+  por `GET /api/checkout/session-status/:sessionId` (`{ pago, token, valor }`); o
+  pixel agora dispara com o valor real, testado com cupom de 30% (27,90→19,53,
+  conferido também no `amount_total` da Checkout Session no Stripe). O fluxo
+  MercadoPago (outros 4 produtos, intocado nesta fase) continua com o valor fixo.
+
+- **[24/09/2026] `GET /api/checkout/session-status/:sessionId` mascara erro de
+  servidor como "não pago" — PENDÊNCIA**: o handler devolve `{ pago: false }` tanto
+  quando a sessão genuinamente não está paga quanto quando qualquer coisa lança
+  dentro do `try` (ex.: `gerarTokenSessao` falhando por `SESSION_TOKEN_SECRET`
+  ausente — foi exatamente assim que esse bug apareceu, durante o teste da Fase 1
+  do Stripe: a sessão já estava `paid: true` no Supabase, mas o endpoint respondia
+  500 com corpo `{"pago":false}`, indistinguível de "cliente ainda não pagou" pro
+  front, que ficava preso no polling até estourar os 3 minutos). Não corrigido
+  ainda — decisão explícita de registrar e seguir. Corrigir exige diferenciar
+  erro real (5xx com corpo próprio) de "ainda não pago" (200 com `pago:false`) no
+  `catch` de `src/server.js` (rota introduzida em `/api/checkout/preference`,
+  compartilhada pelo fluxo Stripe novo).
 
 - **[07/09/2026] Webhook do MercadoPago não valida `x-signature` — PENDÊNCIA DE
   SEGURANÇA**: `app.post('/api/pagamento/webhook')` (`src/server.js:2168`) aceita

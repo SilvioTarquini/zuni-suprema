@@ -10,3 +10,10 @@ audiolivro-piloto.log
 
 # Screenshots de validacao local (Playwright), nao versionar
 screenshots-validacao/
+/*.png
+
+# Logs/artefatos de teste local do checkout Stripe (server_stripe_test.log,
+# stripe_listen.log, stripe_listen_err.log, stripe_listen.pid)
+server_stripe_test.log
+stripe_listen*.log
+stripe_listen.pid

@@ -6,6 +6,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
+const Stripe = require('stripe');
 require('dotenv').config();
 
 const livrosRouter = require('./routes/livros');
@@ -30,6 +31,12 @@ const { gerarTokenSessao, validarTokenSessao, VALIDADE_CHAT_MS, VALIDADE_DOWNLOA
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
+  : null;
+
+// Fase 1 da migração ZUNI Direciona (Sessão ZUNI) para Stripe. Os outros
+// quatro produtos continuam no mpClient acima — não misturar.
+const stripeClient = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
 
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
@@ -60,6 +67,8 @@ function normalizeSessionRow(row) {
     history: row.history || [],
     counter: row.message_count ?? 0,
     paid: row.paid ?? false,
+    stripeSessionId: row.stripe_session_id || null,
+    valorPago: row.valor_pago != null ? Number(row.valor_pago) : null,
     relatorioGerado: row.relatorio_gerado || false,
     temaQuestionario: row.tema_questionario || null,
     birthDate: row.birth_date || null,
@@ -104,6 +113,8 @@ async function upsertSession(session) {
     name: session.name || null,
     email: session.email,
     paid: session.paid ?? false,
+    stripe_session_id: session.stripeSessionId || null,
+    valor_pago: session.valorPago != null ? session.valorPago : null,
     message_count: session.counter ?? 0,
     history: session.history ?? [],
     relatorio_gerado: session.relatorioGerado ?? false,
@@ -637,6 +648,88 @@ FECHAMENTO E ENCAMINHAMENTO
 
 const app = express();
 app.use(cors());
+
+// Webhook Stripe — precisa do corpo BRUTO (express.raw) para a verificação
+// de assinatura, então tem que ser registrado ANTES do express.json()
+// global logo abaixo (senão o body já chega parseado/consumido).
+// Fase 1: só o fulfillment_type 'chat-mentor' (Sessão ZUNI) é tratado.
+// MercadoPago segue com seu próprio webhook (/api/pagamento/webhook),
+// intocado, para os outros quatro produtos.
+app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
+  if (!stripeClient || !process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error('[STRIPE-WEBHOOK] Stripe não configurado (STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET ausentes).');
+    return res.status(500).send('Stripe não configurado.');
+  }
+
+  let event;
+  try {
+    event = stripeClient.webhooks.constructEvent(
+      req.body,
+      req.headers['stripe-signature'],
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error('[STRIPE-WEBHOOK] Assinatura inválida:', err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Responde rápido — o processamento (Supabase, etc.) continua depois,
+  // sem bloquear o Stripe esperando.
+  res.status(200).json({ received: true });
+
+  const TIPOS_RELEVANTES = [
+    'checkout.session.completed',
+    'checkout.session.async_payment_succeeded',
+    'checkout.session.async_payment_failed'
+  ];
+  if (!TIPOS_RELEVANTES.includes(event.type)) return;
+
+  const stripeSession = event.data.object;
+  const sessionId = stripeSession.metadata?.sessionId || stripeSession.client_reference_id;
+  const fulfillmentType = stripeSession.metadata?.fulfillment_type;
+
+  if (!sessionId) {
+    console.error(`[STRIPE-WEBHOOK] Evento ${event.type} sem sessionId em metadata/client_reference_id.`);
+    return;
+  }
+
+  try {
+    if (event.type === 'checkout.session.async_payment_failed') {
+      console.log(`[STRIPE-WEBHOOK] Pagamento falhou (async) para sessão ${sessionId} (${fulfillmentType}).`);
+      return;
+    }
+
+    if (stripeSession.payment_status !== 'paid') {
+      console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId}: evento ${event.type} com payment_status=${stripeSession.payment_status} (ainda não pago).`);
+      return;
+    }
+
+    const sessaoAtual = await getSession(sessionId);
+    if (!sessaoAtual) {
+      console.error(`[STRIPE-WEBHOOK] Sessão ${sessionId} não encontrada no Supabase.`);
+      return;
+    }
+
+    // Idempotência: reentrega do mesmo evento (ou completed + async_payment_succeeded
+    // para o mesmo pagamento) não deve reprocessar o fulfillment.
+    if (sessaoAtual.paid) {
+      console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} já estava paga — ignorando reentrega (${event.type}).`);
+      return;
+    }
+
+    switch (fulfillmentType) {
+      case 'chat-mentor':
+        await upsertSession({ ...sessaoAtual, paid: true, stripeSessionId: stripeSession.id });
+        console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} (chat-mentor) marcada como paga via ${event.type}.`);
+        break;
+      default:
+        console.error(`[STRIPE-WEBHOOK] fulfillment_type desconhecido/não tratado nesta fase: "${fulfillmentType}" (sessão ${sessionId}).`);
+    }
+  } catch (err) {
+    console.error(`[STRIPE-WEBHOOK] Erro processando ${event.type} (sessão ${sessionId}):`, err);
+  }
+});
+
 app.use(express.json());
 
 // Rota raiz — landing page
@@ -2160,6 +2253,16 @@ app.get('/api/mercadopago/public-key', (req, res) => {
   return res.json({ publicKey });
 });
 
+app.get('/api/stripe/public-key', (req, res) => {
+  const publicKey = process.env.STRIPE_PUBLISHABLE_KEY;
+
+  if (!publicKey) {
+    return res.status(500).json({ error: 'Stripe não configurado.' });
+  }
+
+  return res.json({ publicKey });
+});
+
 app.post('/api/checkout/preference', async (req, res) => {
   try {
     const { cupom } = req.body;
@@ -2235,13 +2338,107 @@ app.post('/api/checkout/preference', async (req, res) => {
   }
 });
 
+// Fase 1 da migração para Stripe: só a Sessão ZUNI (ZUNI Direciona) passa
+// a usar esta rota. Os outros quatro produtos continuam em suas rotas
+// MercadoPago, intocadas (inclusive a /api/checkout/preference acima).
+app.post('/api/checkout/stripe-session', async (req, res) => {
+  try {
+    const { cupom, tema } = req.body;
+
+    if (!stripeClient) {
+      return res.status(500).json({ error: 'Stripe não configurado.' });
+    }
+
+    // Validar e calcular desconto se cupom fornecido
+    let unitPrice = 27.90;
+    if (cupom) {
+      const cupomValidado = await validarCupom(cupom);
+      if (!cupomValidado) {
+        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
+      }
+      const desconto = calcularDesconto({ preco: 27.90, categoria: undefined }, cupomValidado);
+      unitPrice = desconto.precoFinal;
+    }
+
+    const sessionId = uuidv4();
+
+    // Cupom 100%: mesmo atalho já usado pelo fluxo MercadoPago — sem
+    // gateway nenhum, sessão marcada como paga na hora. O Stripe recusaria
+    // uma Checkout Session de valor zero (mínimo de R$0,50 em BRL).
+    if (unitPrice === 0) {
+      await upsertSession({
+        sessionId,
+        productType: 'chat-mentor',
+        history: [],
+        counter: 0,
+        paid: true,
+        valorPago: 0,
+        createdAt: new Date().toISOString()
+      });
+      console.log('[CHECKOUT-STRIPE] Cupom 100% desconto: sessão marcada como paga automaticamente.');
+      return res.json({
+        sessionId,
+        cupom100: true,
+        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
+      });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL;
+    const temaParam = tema ? `&tema=${encodeURIComponent(tema)}` : '';
+
+    const stripeSession = await stripeClient.checkout.sessions.create({
+      ui_mode: 'embedded_page',
+      mode: 'payment',
+      client_reference_id: sessionId,
+      line_items: [
+        {
+          price_data: {
+            currency: 'brl',
+            unit_amount: Math.round(unitPrice * 100),
+            product_data: {
+              name: 'ZUNI Direciona — Sessão de orientação'
+            }
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        sessionId,
+        fulfillment_type: 'chat-mentor',
+        tema: tema || ''
+      },
+      return_url: `${frontendUrl}/checkout.html?session_id={CHECKOUT_SESSION_ID}&sessionId=${sessionId}&status=retorno${temaParam}`
+    });
+
+    await upsertSession({
+      sessionId,
+      productType: 'chat-mentor',
+      history: [],
+      counter: 0,
+      paid: false,
+      valorPago: unitPrice,
+      stripeSessionId: stripeSession.id,
+      createdAt: new Date().toISOString()
+    });
+
+    return res.json({ sessionId, clientSecret: stripeSession.client_secret });
+  } catch (error) {
+    console.error('Erro ao criar Checkout Session Stripe:', error);
+    return res.status(500).json({ error: 'Erro ao gerar sessão de pagamento.' });
+  }
+});
+
 app.get('/api/checkout/session-status/:sessionId', async (req, res) => {
   try {
     const { sessionId } = req.params;
     const session = await getSession(sessionId);
     if (!session) return res.status(404).json({ pago: false });
     if (!session.paid) return res.json({ pago: false });
-    return res.json({ pago: true, token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS) });
+    return res.json({
+      pago: true,
+      token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS),
+      valor: session.valorPago
+    });
   } catch (error) {
     console.error('Erro em /api/checkout/session-status:', error);
     return res.status(500).json({ pago: false });
