@@ -114,7 +114,7 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
 
       <div class="cta-section">
         <p>Pronto para aprofundar a experiência?</p>
-        <a href="${frontendUrl}/checkout" class="cta-button">💬 Chat com Mentor (R$ 29,90)</a>
+        <a href="${frontendUrl}/checkout" class="cta-button">💬 Chat com Mentor (R$ 27,90)</a>
         <a href="${frontendUrl}/loja/" class="cta-button">📚 Livros Vivos (R$ 57,90)</a>
         <a href="${frontendUrl}/checkout-mapa-integrado.html" class="cta-button">🌟 Mapa Integrado</a>
       </div>

@@ -246,7 +246,7 @@
 
     <div class="card">
       <div class="price-block">
-        <div class="price"><span>R$</span> 29,90</div>
+        <div class="price"><span>R$</span> 27,90</div>
         <div class="price-desc" id="price-desc" style="display:none;"></div>
       </div>
       <button id="btn" onclick="acessarChat()">Começar minha orientação</button>
@@ -313,7 +313,7 @@
 
     const SESSION_STORAGE_KEY = 'zuniSessionId';
     const TEXTO_BOTAO_PADRAO = 'Começar minha orientação';
-    let precoAtual = 29.90;
+    let precoAtual = 27.90;
 
     function getStoredSessionId() {
       try { return localStorage.getItem(SESSION_STORAGE_KEY) || ''; } catch (e) { return ''; }
@@ -347,8 +347,8 @@
 
         if (data.valido) {
           cupomAplicado = cupomDaUrl;
-          const desconto = 29.90 * (data.percentual / 100);
-          const precoFinal = 29.90 - desconto;
+          const desconto = precoAtual * (data.percentual / 100);
+          const precoFinal = precoAtual - desconto;
           precoAtual = precoFinal;
 
           document.querySelector('.price').innerHTML =
@@ -410,7 +410,7 @@
       try {
         if (typeof pintrk === 'function') {
           pintrk('track', 'checkout', {
-            value: 29.90,
+            value: 27.90,
             order_quantity: 1,
             currency: 'BRL'
           });

@@ -497,7 +497,7 @@ async function enviarMensagemChat() {
       document.getElementById('chatStatus').innerHTML = `
         ⭐ <strong>Última troca!</strong> Se este diálogo tocou fundo, conheça a
         <a href="https://www.zunisuprema.com.br/checkout" style="color: #d4af37; text-decoration: underline;">
-          Sessão Completa do Mentor (R$ 29,90)
+          Sessão Completa do Mentor (R$ 27,90)
         </a>
       `;
     } else if (estadoChat.contador >= 5) {

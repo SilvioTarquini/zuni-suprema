@@ -2193,13 +2193,13 @@ app.post('/api/checkout/preference', async (req, res) => {
     }
 
     // Validar e calcular desconto se cupom fornecido
-    let unitPrice = 29.90;
+    let unitPrice = 27.90;
     if (cupom) {
       const cupomValidado = await validarCupom(cupom);
       if (!cupomValidado) {
         return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
       }
-      const desconto = calcularDesconto({ preco: 29.90, categoria: undefined }, cupomValidado);
+      const desconto = calcularDesconto({ preco: 27.90, categoria: undefined }, cupomValidado);
       unitPrice = desconto.precoFinal;
     }
 
@@ -3651,7 +3651,7 @@ app.post('/api/experimente-chat', async (req, res) => {
 
     // Se é a última troca (antes do limite), adicionar CTA de upgrade
     if (limite.ultimaTroca) {
-      promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em www.zunisuprema.com.br/checkout (R$ 29,90 via PIX)."`;
+      promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em www.zunisuprema.com.br/checkout (R$ 27,90 via PIX)."`;
     }
 
     // ── LOG: Prompt final completo ──
