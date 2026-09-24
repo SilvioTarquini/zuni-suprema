@@ -1,5 +1,7 @@
 # STATUS ZUNI SUPREMA
 
+**Última atualização**: 24/09/2026.
+
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
 > sessão. Atualizado ao final de cada sessão de trabalho (chat, Claude Code ou
@@ -105,6 +107,73 @@ qualquer lógica sobre idade de sessão.
 PostgREST** — é o `new Date()` do JS parseando `timestamp without time zone` como
 hora local. Em `TZ=UTC` (Railway) o desvio é zero; em `TZ=America/Sao_Paulo` dá +3h.
 Nunca calibre constante de tempo pela máquina local.
+
+---
+
+## Frente ativa — Migração MercadoPago → Stripe (aberta em 24/09/2026)
+
+Migração completa do MercadoPago para o Stripe, produto por produto — sem período de
+paralelismo entre os dois no mesmo produto. Decisão de arquitetura: Stripe Checkout
+embedded (`ui_mode: embedded_page`), pagamento avulso (`mode: payment`, sem
+assinatura/recorrência), cartão + Pix quando disponível (Pix é por convite — conta
+precisa de 60+ dias processando, confirmado pelo suporte Stripe em 24/09/2026, ainda
+não habilitado). Planejamento feito com `stripe_implementation_planner` (plugin
+oficial `stripe@claude-plugins-official`, MCP `https://mcp.stripe.com`, conta
+`acct_1UJJvjJjHOfmKpTy` / "Área restrita de Zuni Suprema").
+
+### Fase 1 — Sessão ZUNI (ZUNI Direciona): concluída localmente, **NÃO deployada**
+
+Commit `a35bfc3` (branch `main`, local — **1 commit à frente de `origin/main`, sem
+push**). Testado de ponta a ponta em modo de teste via Stripe CLI (`stripe listen`),
+cartão `4242 4242 4242 4242`, com e sem cupom (30%: R$27,90→R$19,53, conferido também
+no `amount_total` da Checkout Session pela API do Stripe).
+
+- `POST /api/checkout/stripe-session` (novo) substitui `POST /api/checkout/preference`
+  **só** para este produto — a rota antiga MercadoPago continua no código, intocada,
+  para os outros 4 produtos.
+- `POST /api/webhooks/stripe` (novo), assinatura verificada, idempotente por
+  `stripe_session_id`, ramificado por `metadata.fulfillment_type` (só `'chat-mentor'`
+  tratado nesta fase).
+- `sessions` ganhou `stripe_session_id` e `valor_pago` (migração
+  `005_sessions_stripe_fields.sql`, já aplicada no Supabase — RLS conferido, sem
+  mudança de política).
+- `checkout.html`: Stripe Checkout embedded montado dentro do card (sem redirect),
+  paleta/copy/cupom/WhatsApp/tema preservados.
+- `scripts/testar-checkout-stripe.js` (Playwright, versionado) — reaproveitável na
+  Fase 2 (loja) como regressão.
+
+**Push e deploy retidos deliberadamente — MOTIVO**: `public/checkout.html` já chama
+`/api/checkout/stripe-session` em vez do fluxo MercadoPago. Se esse código subir para
+produção antes de o Railway ter `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` e
+`STRIPE_WEBHOOK_SECRET` **de produção**, o checkout do site quebra por completo — nem
+o caminho antigo do MercadoPago responde mais, porque o front deixou de chamá-lo.
+
+**Ordem obrigatória até produção** (nenhum passo pode ser pulado ou invertido):
+1. Ativar a conta de produção da Stripe (verificação de dados e conta bancária) —
+   gera as chaves `sk_live_`/`pk_live_`.
+2. Cadastrar o webhook de produção no painel da Stripe apontando para
+   `https://www.zunisuprema.com.br/api/webhooks/stripe` — gera um `whsec_` próprio,
+   diferente do usado no teste local.
+3. Criar as três variáveis (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`,
+   `STRIPE_WEBHOOK_SECRET`) no Railway com os valores de produção.
+4. Só então push e deploy.
+5. Compra real do próprio usuário, com estorno pelo painel da Stripe.
+
+**MercadoPago não deve ser removido ainda**: as chaves do MercadoPago permanecem no
+Railway e no `.env`, e a conta do MercadoPago não deve ser fechada, até que (a) a
+conta Stripe de produção esteja ativa, (b) a Fase 2 (loja) esteja no ar, e (c) uma
+venda real tenha passado pelo Stripe. Hoje o MercadoPago ainda é o único meio de
+receber pagamento em produção — nenhum outro produto pode ficar sem meio de
+pagamento funcionando.
+
+### Pendências desta frente
+
+- Ver em "Pendências antigas, ainda em aberto": `GET /api/checkout/session-status`
+  mascarando erro 500 como "não pago" — achado durante o teste desta fase.
+- Fase 2 (loja/livros) e Fase 3 (Sessões Extras, Mapa Astral, Mapa Integrado) ainda
+  não iniciadas — MercadoPago segue ativo nesses 4 produtos.
+- Decomissionar o MercadoPago por completo (`mpClient`, `Preference`, rotas e webhook
+  antigos) só depois que todos os produtos estiverem migrados.
 
 ---
 
