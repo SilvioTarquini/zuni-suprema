@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 27/09/2026.
+**Última atualização**: 27/09/2026 (sessão Fase 2 — Livros).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -148,7 +148,10 @@ produção antes de o Railway ter `STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY` 
 `STRIPE_WEBHOOK_SECRET` **de produção**, o checkout do site quebra por completo — nem
 o caminho antigo do MercadoPago responde mais, porque o front deixou de chamá-lo.
 
-**Ordem obrigatória até produção** (nenhum passo pode ser pulado ou invertido):
+**Ordem obrigatória até produção** (nenhum passo pode ser pulado ou invertido —
+válida também para Livros/Fase 2 abaixo, que depende das mesmas 3 variáveis;
+conferido em produção no Railway em 27/09/2026: as três estão **ausentes** hoje,
+`MERCADOPAGO_TOKEN` de produção presente e live):
 1. Ativar a conta de produção da Stripe (verificação de dados e conta bancária) —
    gera as chaves `sk_live_`/`pk_live_`.
 2. Cadastrar o webhook de produção no painel da Stripe apontando para
@@ -157,7 +160,18 @@ o caminho antigo do MercadoPago responde mais, porque o front deixou de chamá-l
 3. Criar as três variáveis (`STRIPE_SECRET_KEY`, `STRIPE_PUBLISHABLE_KEY`,
    `STRIPE_WEBHOOK_SECRET`) no Railway com os valores de produção.
 4. Só então push e deploy.
-5. Compra real do próprio usuário, com estorno pelo painel da Stripe.
+5. Compra real do próprio usuário — nos dois produtos (Sessão ZUNI e um Livro),
+   com estorno pelo painel da Stripe.
+
+**Aviso (27/09/2026)**: os 5 commits desta frente (Fase 1 + Fase 2/Livros) estão
+todos no mesmo `main`, sem fronteira de deploy entre eles — um push hoje sobe os
+dois de uma vez. Sem as 3 variáveis acima em produção, `stripeClient` fica `null`
+e **o checkout do ZUNI Direciona fica 100% fora do ar** (o `checkout.html` só
+chama a rota Stripe, sem fallback MercadoPago/Pix — nenhum cliente consegue
+comprar, de nenhuma forma). Livros é mais tolerante: o botão Cartão falha (500
+"Stripe não configurado"), mas o **Pix continua funcionando** via MercadoPago
+(rota intocada). Sessões Extras, Mapa Astral e Mapa Integrado não são afetados
+(fora desta frente).
 
 **MercadoPago não deve ser removido ainda**: as chaves do MercadoPago permanecem no
 Railway e no `.env`, e a conta do MercadoPago não deve ser fechada, até que (a) a
@@ -188,6 +202,59 @@ convite (mínimo 60 dias processando pagamentos na conta — ver acima). Migraç
 Livros: cartão vai para Stripe, **Pix continua via MercadoPago em paralelo** (rota
 `POST /api/checkout/livro` intocada) até o Stripe habilitar Pix nesta conta. Única
 exceção deliberada à regra de "sem paralelismo por produto" desta frente.
+
+### Livros (cartão via Stripe) — concluído localmente, testado, **NÃO deployado** (27/09/2026)
+
+Commits `ff51be2`, `0d7f698`, `251d2dd` (branch `main`, local — sem push, mesmo
+motivo do checklist acima). Testado em modo de teste (Stripe CLI `stripe listen` +
+Playwright, cartão `4242 4242 4242 4242`), evidência conferida direto no banco:
+
+- Compra simples (sem cupom, sem audiolivro): `checkout_pedidos_pendentes`
+  processado, `acessos_livros` com 1 linha, e-mail disparado (ver pendência
+  SendGrid abaixo).
+- Compra com audiolivro incluído: `resultado.tokenAudiolivro` preenchido, 2 linhas
+  em `acessos_livros` (`tipo_produto` `livro` e `audiolivro`).
+- Reenvio do mesmo evento do webhook (livro simples e com audiolivro): idempotente
+  — log `já processado — ignorando reentrega`, nenhuma linha duplicada.
+- Cupom `TEST100`: acesso liberado direto (mesma função de fulfillment do
+  webhook), sem passar pelo Stripe (`stripe_session_id: null`).
+- Regressão do chat-mentor (Fase 1): fluxo completo continua idêntico após a
+  refatoração do webhook (extração da lógica de fulfillment por
+  `fulfillment_type` antes de tocar em `sessions`).
+- Botão Pix de `checkout-livro.html`: código confirmado intocado por `git diff`
+  (a chamada funcional ao MercadoPago não foi testada — bloqueio 403
+  `PolicyAgent` do sandbox MP, não relacionado ao código; decisão do usuário foi
+  não investigar).
+
+**Achado de produção durante os testes — SendGrid com créditos esgotados**: erro
+`Maximum credits exceeded` reproduzido em 27/09/2026 ao testar o envio do e-mail
+de acesso. A `SENDGRID_API_KEY` local é **a mesma** usada em produção no Railway
+(hash conferido). **Afeta todos os e-mails transacionais do projeto, não só
+Livros** — a chave só tem permissão de envio (não dá para checar a cota via API,
+`/v3/user/credits` devolve 403). Ação do usuário: verificar o painel do SendGrid.
+Corrigido no código (commit `251d2dd`): `enviarEmailAcessoLivro` trata o próprio
+erro do SendGrid e devolvia `false` sem log próprio — tanto o fulfillment Stripe
+quanto o Pix/MercadoPago agora logam `[LIVRO_EMAIL_FALHOU]` quando isso acontece
+(o acesso já é concedido antes do e-mail, então a falha de e-mail nunca bloqueia
+o acesso — só fica sem alerta antes desse fix).
+
+**Pendências de decisão do usuário**:
+1. Cupom + audiolivro — desconto só sobre o livro ou sobre o total (livro +
+   audiolivro)? Ver detalhe acima ("Bug cupom + audiolivro"). Quando decidido,
+   corrigir nas duas rotas (Stripe e Pix/MercadoPago) com a mesma fórmula.
+2. Destino do cupom `TEST100` antes de produção — hoje é `percentual: 100`,
+   `teto_reais: null`, válido até 2026-12-31, **sem limite real de usos**
+   (`usado_em` não bloqueia reuso, só audita). Decidir se expira/desativa antes
+   do primeiro deploy em produção, para não ficar utilizável por qualquer
+   cliente real.
+3. Onde Sessões Extras será vendido — nenhuma página em `public/` aciona
+   `POST /api/checkout/sessoes-extras/preference` hoje (achado no levantamento
+   de 27/09/2026); é pré-requisito antes de migrar esse produto para Stripe
+   (próximo da fila desta frente).
+
+**Limpeza pendente**: dados de teste (e-mails `@example.com`) ficaram em
+`acessos_livros` e `checkout_pedidos_pendentes` — limpeza combinada para depois,
+não feita ainda.
 
 - Ver em "Pendências antigas, ainda em aberto": `GET /api/checkout/session-status`
   mascarando erro 500 como "não pago" — achado durante o teste da Fase 1.
