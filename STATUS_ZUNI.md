@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 27/09/2026 (sessão Fase 2 — Livros).
+**Última atualização**: 27/09/2026 (sessão Fase 2 — Livros, decisões pendentes resolvidas).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -180,7 +180,7 @@ venda real tenha passado pelo Stripe. Hoje o MercadoPago ainda é o único meio 
 receber pagamento em produção — nenhum outro produto pode ficar sem meio de
 pagamento funcionando.
 
-### Fase 2 (aberta em 27/09/2026) — escopo revisado: só Livros e Sessões Extras
+### Fase 2 (aberta em 27/09/2026) — escopo restrito a Livros
 
 **Mudança de escopo**: Mapa Astral e Mapa Integrado saem desta frente. Ficam de fora
 até o novo serviço Astro-Num (RAG exclusivo de astrologia/numerologia, ainda em
@@ -189,10 +189,24 @@ atual por completo (não é migração de gateway isolada). **Não mexer no cód
 dois produtos até lá** — checkout MercadoPago atual continua como está, sem link
 público.
 
-Fase 2 agora cobre, em ordem, um de cada vez com aprovação entre eles: **Livros** →
-**Sessões Extras**. Arquitetura genérica (para produto novo ser só uma entrada em
-tabela de preços + um `case` no webhook): tabela de preços/config no servidor (preço
-nunca aceito do front), rota de criação de Checkout Session parametrizada por
+**Fase 2 restrita a Livros (decisão de 27/09/2026)**: Sessões Extras sai da fila —
+**produto descontinuado**, não só adiado. Motivo: nenhuma página em `public/`
+aciona `POST /api/checkout/sessoes-extras/preference` hoje — o "onde vender" nunca
+foi resolvido (banner da 8ª troca planejado, nunca implementado), então não havia
+de fato produto ativo para migrar. Código (`src/lib/pedidosSessoesExtras.js`,
+`src/lib/creditosSessao.js`, rotas `/api/checkout/sessoes-extras/*` e
+`/api/sessoes-extras/*`, tabelas `pedidos_sessoes_extras_pendentes` e
+`creditos_sessao`, e-mail `enviarEmailConfirmacaoSessoesExtras`) **não foi apagado**
+— fica no repo sem uso, para o caso de o produto ser retomado no futuro com um
+canal de venda definido. Verificação de textos voltados ao cliente (27/09/2026):
+nada em `public/` oferece o produto ativamente — só a página de confirmação
+(`sessoes-extras-confirmacao.html`) e o e-mail de confirmação existem, ambos
+órfãos (sem link de entrada); `SYSTEM_PROMPT` do ZUNI Direciona e `public/chat.js`
+não mencionam o produto.
+
+Arquitetura genérica desta fase (para produto novo ser só uma entrada em tabela de
+preços + um `case` no webhook): tabela de preços/config no servidor (preço nunca
+aceito do front), rota de criação de Checkout Session parametrizada por
 `fulfillment_type`, tabela genérica de pedido pendente (substitui as tabelas
 ad-hoc por produto), webhook único `/api/webhooks/stripe` com um `case` novo por
 produto.
@@ -238,19 +252,30 @@ quanto o Pix/MercadoPago agora logam `[LIVRO_EMAIL_FALHOU]` quando isso acontece
 (o acesso já é concedido antes do e-mail, então a falha de e-mail nunca bloqueia
 o acesso — só fica sem alerta antes desse fix).
 
-**Pendências de decisão do usuário**:
-1. Cupom + audiolivro — desconto só sobre o livro ou sobre o total (livro +
-   audiolivro)? Ver detalhe acima ("Bug cupom + audiolivro"). Quando decidido,
-   corrigir nas duas rotas (Stripe e Pix/MercadoPago) com a mesma fórmula.
-2. Destino do cupom `TEST100` antes de produção — hoje é `percentual: 100`,
-   `teto_reais: null`, válido até 2026-12-31, **sem limite real de usos**
-   (`usado_em` não bloqueia reuso, só audita). Decidir se expira/desativa antes
-   do primeiro deploy em produção, para não ficar utilizável por qualquer
-   cliente real.
-3. Onde Sessões Extras será vendido — nenhuma página em `public/` aciona
-   `POST /api/checkout/sessoes-extras/preference` hoje (achado no levantamento
-   de 27/09/2026); é pré-requisito antes de migrar esse produto para Stripe
-   (próximo da fila desta frente).
+**As 3 pendências de decisão foram resolvidas em 27/09/2026:**
+
+1. **Cupom + audiolivro — RESOLVIDO**: desconto incide sobre o TOTAL (livro +
+   audiolivro), respeitando `teto_reais` quando existir. Unificado numa única
+   função (`calcularPrecoFinalLivro`, `src/server.js`), usada pelas 3 rotas
+   (Stripe e as duas MercadoPago) — nunca mais podem divergir entre si. Testado
+   com evidência: cupom parcial `ZUNI30` (30%, teto R$15) + audiolivro
+   (57,90+34,90=92,80) → `precoFinal=77,80` idêntico nas rotas Stripe
+   (`valor_pago` no Supabase) e MercadoPago (log da rota, já que a chamada real à
+   API do MP segue bloqueada pelo mesmo 403 `PolicyAgent` do sandbox, não
+   investigado por decisão do usuário); cupom 100% + audiolivro → total zero,
+   atalho sem Stripe, 2 linhas em `acessos_livros` (`livro` + `audiolivro`).
+2. **Destino do `TEST100` — RESOLVIDO**: substituído por um novo cupom de teste
+   (código aleatório de 16 caracteres, `percentual: 100`, `teto_reais: null`,
+   `expira_em: 2026-12-31`), testado e funcionando no fluxo de livro antes da
+   troca. `TEST100` foi encerrado (`expira_em` setado para o momento da troca,
+   27/09/2026 — confirmado que deixou de ser aceito). O código do novo cupom **não
+   está neste arquivo nem em nenhum commit** — foi informado só na conversa,
+   conforme pedido. `test-cupom.js`/`test-cupom2.js` (scripts pré-existentes, não
+   desta frente) atualizados para aceitar o código por argumento em vez de
+   `TEST100` fixo. Nota: `public/checkout-mapa-integrado.html` ainda tem
+   `placeholder="Ex: TEST100"` no campo de cupom — cosmético, página fora de
+   escopo (Mapa Astral/Mapa Integrado), não alterado.
+3. **Sessões Extras — RESOLVIDO**: descontinuado, ver acima.
 
 **Limpeza pendente**: dados de teste (e-mails `@example.com`) ficaram em
 `acessos_livros` e `checkout_pedidos_pendentes` — limpeza combinada para depois,
@@ -263,17 +288,6 @@ não feita ainda.
 - Decomissionar o MercadoPago por completo (`mpClient`, `Preference`, rotas e webhook
   antigos) só depois que todos os produtos estiverem migrados **e** o Stripe tiver
   Pix habilitado (senão perde-se o meio de pagamento Pix por completo).
-- **Bug cupom + audiolivro — decisão pendente do usuário (aberta em 27/09/2026)**:
-  quando cupom e audiolivro são usados juntos, `calcularDesconto(livro, cupom)`
-  calcula o desconto só sobre `livro.preco` (preço-base) e o resultado *substitui*
-  o preço já somado com `precoAudiobook` — hoje, aplicar cupom com audiolivro
-  incluído derruba silenciosamente a cobrança do audiolivro. Presente tanto na
-  rota nova (`POST /api/checkout/livro/stripe-session`) quanto na antiga
-  (`POST /api/checkout/livro/preference` e `POST /api/checkout/livro`, MercadoPago)
-  — replicado por fidelidade na migração, não corrigido. Decisão em aberto: cupom
-  desconta só o livro ou o total (livro + audiolivro)? **Quando decidido, a
-  correção deve valer para as duas rotas (Stripe e Pix/MercadoPago), com a mesma
-  fórmula** — não corrigir só uma.
 
 ### Pendências do futuro serviço Astro-Num (Mapa Astral / Mapa Integrado — fora da Fase 2)
 
@@ -366,8 +380,9 @@ editoriais fixas).
 ## 2. Em produção, funcionando
 
 - **Funil de cupom** (Mentor→loja e loja→checkout), validado ponta a ponta.
-- **Sessões Extras** (pacote de 3 sessões, R$74,90), com memória de jornada isolada da
-  sessão avulsa. Pendente apenas: 1 teste de pagamento real de terceiro.
+- ~~Sessões Extras~~ — **descontinuado em 27/09/2026**, ver "Frente ativa — Migração
+  MercadoPago → Stripe" abaixo. Não estava de fato em produção: nenhuma página em
+  `public/` aciona o checkout, código permanece no repo sem uso.
 - **4 volumes de "Os Bastidores da Mente"** — indexados em RAG (252 chunks), à venda na
   loja, com chat/Mentor integrado. Leitura em voz alta gratuita (Web Speech API).
   - Vol. I "A Origem de Todo Bem e de Todo Mal" — 20 chunks (3.8%)

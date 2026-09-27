@@ -59,6 +59,35 @@ function assertSupabase() {
   return supabase;
 }
 
+// Calcula o preço final do checkout de um livro (livro + audiolivro
+// opcional + cupom) — única fonte da fórmula, usada pelas 3 rotas de
+// checkout (Stripe e as duas do MercadoPago), para nunca divergirem entre
+// si. Decisão de 27/09/2026: o desconto do cupom incide sobre o TOTAL
+// (livro + audiolivro), respeitando teto_reais quando existir — antes
+// disso, calcularDesconto(livro, cupom) usava só livro.preco (preço-base)
+// e o resultado substituía o preço já somado com o audiolivro, derrubando
+// silenciosamente a cobrança do audiolivro sempre que os dois eram usados
+// juntos.
+async function calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom }) {
+  let precoBase = livro.precoPromocional || livro.preco;
+  if (audiolivroIncluido && livro.audiobookDisponivel) {
+    precoBase += livro.precoAudiobook;
+  }
+  precoBase = Math.round(precoBase * 100) / 100;
+
+  if (!cupom) {
+    return { precoFinal: precoBase, cupomValidado: null, cupomInvalido: false };
+  }
+
+  const cupomValidado = await validarCupom(cupom);
+  if (!cupomValidado) {
+    return { precoFinal: precoBase, cupomValidado: null, cupomInvalido: true };
+  }
+
+  const { precoFinal } = calcularDesconto({ preco: precoBase, categoria: livro.categoria }, cupomValidado);
+  return { precoFinal, cupomValidado, cupomInvalido: false };
+}
+
 function normalizeSessionRow(row) {
   if (!row) return null;
   return {
@@ -2076,16 +2105,7 @@ app.post('/api/checkout/livro/preference', async (req, res) => {
       return res.status(500).json({ error: 'Mercado Pago não configurado.' });
     }
 
-    let precoFinal = livro.precoPromocional || livro.preco;
-    if (audiolivroIncluido && livro.audiobookDisponivel) {
-      precoFinal += livro.precoAudiobook;
-    }
-    if (cupom) {
-      const cupomValidado = await validarCupom(cupom);
-      if (cupomValidado) {
-        precoFinal = calcularDesconto(livro, cupomValidado).precoFinal;
-      }
-    }
+    const { precoFinal } = await calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom });
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
@@ -2140,16 +2160,7 @@ app.post('/api/checkout/livro', async (req, res) => {
       return res.status(404).json({ error: 'Livro não encontrado.' });
     }
 
-    let precoFinal = livro.precoPromocional || livro.preco;
-    if (audiolivroIncluido && livro.audiobookDisponivel) {
-      precoFinal += livro.precoAudiobook;
-    }
-    if (cupom) {
-      const cupomValidado = await validarCupom(cupom);
-      if (cupomValidado) {
-        precoFinal = calcularDesconto(livro, cupomValidado).precoFinal;
-      }
-    }
+    const { precoFinal } = await calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom });
 
     const [firstName, ...restName] = name.trim().split(/\s+/);
     const lastName = restName.join(' ') || firstName;
@@ -2255,20 +2266,12 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
     }
 
     // Preço sempre resolvido no servidor (catálogo + audiolivro + cupom) —
-    // nunca aceito pronto do front. Nota: quando há cupom, o cálculo usa
-    // livro.preco (catálogo) e não soma de volta o preço do audiolivro —
-    // mesmo comportamento da rota MercadoPago equivalente
-    // (/api/checkout/livro/preference), replicado aqui sem alteração.
-    let precoFinal = livro.precoPromocional || livro.preco;
-    if (audiolivroIncluido && livro.audiobookDisponivel) {
-      precoFinal += livro.precoAudiobook;
-    }
-    if (cupom) {
-      const cupomValidado = await validarCupom(cupom);
-      if (!cupomValidado) {
-        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
-      }
-      precoFinal = calcularDesconto(livro, cupomValidado).precoFinal;
+    // nunca aceito pronto do front. calcularPrecoFinalLivro aplica o cupom
+    // sobre o TOTAL (livro + audiolivro), respeitando teto_reais — mesma
+    // função usada pelas rotas MercadoPago equivalentes, para nunca divergir.
+    const { precoFinal, cupomInvalido } = await calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom });
+    if (cupomInvalido) {
+      return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
     }
 
     const payload = { livroId, email, audiolivroIncluido: Boolean(audiolivroIncluido) };

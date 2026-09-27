@@ -4,10 +4,15 @@ require('dotenv').config();
 const { validarCupomSemMarcar, calcularDesconto } = require('./src/lib/cupons');
 const { buscarLivro } = require('./src/lib/catalogoLivros');
 
+// TEST100 (usado antes como cupom de teste padrão) foi encerrado em
+// 27/09/2026 (expira_em setado para o passado) — passe um código válido
+// por argumento: node test-cupom2.js CODIGO
+const codigo = process.argv[2] || 'TEST100';
+
 async function testar() {
   console.log('[TEST] === Teste 1: Sem livroId ===');
   try {
-    const cupom = await validarCupomSemMarcar('TEST100');
+    const cupom = await validarCupomSemMarcar(codigo);
     console.log('[TEST] Cupom:', cupom);
     if (cupom) {
       console.log('[TEST] Resultado:', { valido: true, tipo: cupom.tipo, percentual: cupom.percentual, teto_reais: cupom.teto_reais });
@@ -18,7 +23,7 @@ async function testar() {
 
   console.log('\n[TEST] === Teste 2: Com livroId (simulando chamada com livro) ===');
   try {
-    const cupom = await validarCupomSemMarcar('TEST100');
+    const cupom = await validarCupomSemMarcar(codigo);
     console.log('[TEST] Cupom validado:', cupom);
 
     if (cupom) {
