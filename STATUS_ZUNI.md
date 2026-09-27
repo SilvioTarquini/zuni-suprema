@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 27/09/2026 (sessão Fase 2 — Livros, decisões pendentes resolvidas).
+**Última atualização**: 27/09/2026 (frente Resend aberta — migração de e-mail).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -315,6 +315,52 @@ reconstruído com checkout próprio — não corrigir no código atual do Mercad
   provavelmente nunca é verdadeira em produção. Investigar se a geração do
   relatório já acontece por outro caminho (sob demanda, igual ao Mapa Astral) antes
   de assumir que esse webhook é a via real de entrega.
+
+**Frente Stripe — sem mudança nesta sessão**: os 7 commits locais (Fase 1 + Fase 2)
+seguem aguardando a ativação da conta Stripe em produção (ver checklist acima).
+
+---
+
+## Frente ativa — Migração SendGrid → Resend (aberta em 27/09/2026)
+
+**Urgente e independente do Stripe**: o trial do SendGrid expirou em 13/08/2026 —
+desde então **nenhum e-mail do site é enviado** (acesso a livros, síntese/dossiê do
+ZUNI Direciona, brinde astro+numerologia, resultado da degustação "Experimente
+ZUNI", confirmação de Sessões Extras). Decisão: substituir por Resend (SDK oficial,
+plano gratuito), não SMTP — devolve `id` do envio estruturado e erro explícito, o
+que SMTP não daria de forma limpa.
+
+**Implementado e commitado, branch `fix/email-resend`** (1 commit, `e04a128`, a
+partir de `origin/main` — **sem push**): módulo único `src/lib/email.js`
+(`enviarEmail({to, subject, html, attachments, tipo})`, nunca lança, sempre devolve
+`{ sucesso, id, erro }`, falha loga `[EMAIL_FALHOU] tipo=<slug> destinatario=<email>
+erro=<mensagem>`, nunca token). As 5 funções de e-mail do domínio (`sendEmail`,
+`enviarEmailAcessoLivro`, `enviarEmailConfirmacaoSessoesExtras` em `src/server.js`;
+`enviarResultadoNumerologia` em `src/lib/capturasExperimente.js`;
+`enviarBrindeEmail` em `src/lib/brinde.js`) foram refatoradas para usar esse módulo
+— mesmo nome/assinatura, sem quebrar quem já as chama. Remetente unificado em
+`RESEND_FROM_EMAIL` (removidos os dois fallbacks hardcoded divergentes que
+existiam). `@sendgrid/mail` e `nodemailer` (nunca usado em nenhum lugar do código)
+removidos do `package.json`.
+
+**DNS já publicado**: domínio `zunisuprema.com.br` cadastrado no Resend, registros
+DKIM (2 CNAME) e DMARC adicionados no Registro.br em 27/09/2026 — **aguardando
+verificação**.
+
+**Próximos passos, nesta ordem exata**:
+1. Confirmar domínio verificado no painel do Resend.
+2. Usuário cria a API Key no Resend e coloca `RESEND_API_KEY`, `RESEND_FROM_EMAIL`
+   e `RESEND_REPLY_TO` no `.env` local (reply-to definido: `zunisuprema@gmail.com`,
+   a caixa que já recebia respostas antes, via o remetente antigo do SendGrid).
+3. Teste real: envio de sucesso com `id` retornado pela API do Resend + teste de
+   falha com o log `[EMAIL_FALHOU]` — evidência literal dos dois.
+4. Usuário cria as mesmas 3 variáveis no Railway (produção).
+5. Push de `fix/email-resend` para `main` (`git push origin fix/email-resend:main`)
+   — só a mudança de e-mail vai para produção, isolada do Stripe.
+6. Rebase do `main` local (7 commits do Stripe) sobre a nova produção
+   (`git rebase origin/main`) — **conflito esperado em `src/server.js`**, porque os
+   commits do Stripe também tocaram `sendEmail`/`enviarEmailAcessoLivro` (logs
+   `[LIVRO_EMAIL_FALHOU]`); resolver manualmente, linha a linha, antes de seguir.
 
 ---
 
