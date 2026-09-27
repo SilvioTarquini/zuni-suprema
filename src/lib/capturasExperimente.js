@@ -1,16 +1,12 @@
-const sgMail = require('@sendgrid/mail');
 const { createClient } = require('@supabase/supabase-js');
+const { enviarEmail } = require('./email');
 
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
   : null;
 
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-}
-
 /**
- * Envia e-mail via SendGrid com resultado da numerologia
+ * Envia e-mail via Resend com resultado da numerologia
  * E-mail contém: Caminho de Vida, Essência, Interpretação, links para produtos
  */
 /**
@@ -33,11 +29,7 @@ function markdownParaHTML(texto) {
 }
 
 async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.warn('SENDGRID_API_KEY não configurada; e-mail não será enviado');
-    return { sucesso: false, mensagem: 'SendGrid não configurado' };
-  }
-
+  const tipo = 'resultado-numerologia';
   try {
     const { caminhoDeVida, essencia, interpretacao } = resultado;
 
@@ -129,20 +121,21 @@ async function enviarResultadoNumerologia(email, nomeCompleto, resultado) {
 </html>
     `;
 
-    const msg = {
+    const resultadoEnvio = await enviarEmail({
       to: email,
-      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@zunisuprema.com.br',
       subject: '✨ Seu Perfil Numerológico — ZUNI Suprema',
-      html: htmlContent
-    };
+      html: htmlContent,
+      tipo
+    });
 
-    await sgMail.send(msg);
+    if (!resultadoEnvio.sucesso) {
+      return { sucesso: false, mensagem: 'Erro ao enviar e-mail', erro: resultadoEnvio.erro };
+    }
 
-    console.log(`E-mail enviado para ${email}`);
-    return { sucesso: true, mensagem: 'E-mail enviado com sucesso' };
+    return { sucesso: true, mensagem: 'E-mail enviado com sucesso', id: resultadoEnvio.id };
   } catch (err) {
-    console.error('Erro ao enviar e-mail:', err);
-    return { sucesso: false, mensagem: 'Erro ao enviar e-mail' };
+    console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${err.message}`);
+    return { sucesso: false, mensagem: 'Erro ao enviar e-mail', erro: err.message };
   }
 }
 

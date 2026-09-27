@@ -1405,14 +1405,13 @@ function apagarPdfTemp(pdfPath) {
 }
 
 async function sendEmail(email, name, pdfPath, cupom, productType) {
+  const tipo = 'sintese-relatorio';
   try {
-    const sgMail = require('@sendgrid/mail');
     const fs = require('fs');
     const { gerarTokenHMAC } = require('./lib/brinde');
+    const { enviarEmail } = require('./lib/email');
 
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    const pdfAttachment = fs.readFileSync(pdfPath).toString('base64');
+    const pdfBuffer = fs.readFileSync(pdfPath);
 
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
     const saudacao = name ? `Olá, ${name}!` : 'Olá!';
@@ -1444,11 +1443,7 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
           </div>
     `;
 
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL,
-      subject: assunto,
-      html: `
+    const html = `
 
           ${saudacao}
           Sua sessão com o Mentor ZUNI Suprema foi concluída.
@@ -1462,23 +1457,18 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
 www.zunisuprema.com.br
 
 
-      `,
-      attachments: [
-        {
-          content: pdfAttachment,
-          filename: `${nomeArquivo}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment'
-        }
-      ]
-    };
+      `;
 
-    await sgMail.send(msg);
-    console.log(`Email enviado para ${email}`);
-    return true;
+    return await enviarEmail({
+      to: email,
+      subject: assunto,
+      html,
+      attachments: [{ filename: `${nomeArquivo}.pdf`, content: pdfBuffer }],
+      tipo
+    });
   } catch (error) {
-    console.error('Erro ao enviar email:', error?.response?.body || error.message);
-    return false;
+    console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${error.message}`);
+    return { sucesso: false, erro: error.message };
   }
 }
 
@@ -1608,10 +1598,10 @@ async function marcarPagoSeAprovado(order) {
 // referência para então chamar criarAcesso().
 
 async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudiolivro) {
+  const tipo = 'acesso-livro';
   try {
-    const sgMail = require('@sendgrid/mail');
     const { gerarTokenHMAC } = require('./lib/brinde');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const { enviarEmail } = require('./lib/email');
 
     const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
     const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
@@ -1625,11 +1615,7 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
       linkAudiolivro = `https://www.zunisuprema.com.br/audiolivros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(tokenAudiolivro)}`;
     }
 
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL,
-      subject: 'Seu acesso ao livro ZUNI Suprema está liberado',
-      html: `
+    const html = `
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
           <p>Olá!</p>
           <p>Seu pagamento foi confirmado e o acesso ao seu livro já está liberado.</p>
@@ -1646,33 +1632,26 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
 
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>
-      `
-    };
+      `;
 
-    await sgMail.send(msg);
-    console.log(`E-mail de acesso ao livro enviado para ${email}`);
-    return true;
+    return await enviarEmail({ to: email, subject: 'Seu acesso ao livro ZUNI Suprema está liberado', html, tipo });
   } catch (error) {
-    console.error('Erro ao enviar e-mail de acesso ao livro:', error?.response?.body || error.message);
-    return false;
+    console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${error.message}`);
+    return { sucesso: false, erro: error.message };
   }
 }
 
 async function enviarEmailConfirmacaoSessoesExtras(email, nomeCliente, pacoteId) {
+  const tipo = 'confirmacao-sessoes-extras';
   try {
-    const sgMail = require('@sendgrid/mail');
     const { gerarTokenHMAC } = require('./lib/brinde');
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const { enviarEmail } = require('./lib/email');
 
     const tokenBrinde = gerarTokenHMAC(email);
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
     const linkBrinde = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(tokenBrinde)}`;
 
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL,
-      subject: '✨ Seu pacote de 3 Sessões Extras foi liberado',
-      html: `
+    const html = `
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
           <p>Olá ${nomeCliente}!</p>
           <p>Seu pagamento foi confirmado. Você agora tem <strong>3 sessões extras</strong> disponíveis, válidas por 30 dias.</p>
@@ -1686,15 +1665,12 @@ async function enviarEmailConfirmacaoSessoesExtras(email, nomeCliente, pacoteId)
 
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>
-      `
-    };
+      `;
 
-    await sgMail.send(msg);
-    console.log(`E-mail de confirmação de Sessões Extras enviado para ${email}`);
-    return true;
+    return await enviarEmail({ to: email, subject: '✨ Seu pacote de 3 Sessões Extras foi liberado', html, tipo });
   } catch (error) {
-    console.error('Erro ao enviar e-mail de Sessões Extras:', error?.response?.body || error.message);
-    return false;
+    console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${error.message}`);
+    return { sucesso: false, erro: error.message };
   }
 }
 
@@ -3534,7 +3510,7 @@ app.post('/api/experimente-calcular-numerologia', async (req, res) => {
 
 /**
  * POST /api/experimente-capturar-lead
- * Captura e-mail, envia resultado via SendGrid, registra no banco
+ * Captura e-mail, envia resultado via Resend, registra no banco
  */
 app.post('/api/experimente-capturar-lead', async (req, res) => {
   try {

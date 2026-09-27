@@ -6,7 +6,7 @@
  * - Calcula mapa astrológico (AstroWay)
  * - Interpreta via Claude + RAG (astrologia + numerologia)
  * - Gera PDF
- * - Envia por SendGrid
+ * - Envia por Resend
  * - Registra resgate
  */
 
@@ -231,7 +231,7 @@ async function registrarResgate(email, nomeDados, dataNascimento, horaNascimento
 }
 
 /**
- * Envia e-mail com PDF do brinde via SendGrid
+ * Envia e-mail com PDF do brinde via Resend
  *
  * CRÍTICO: Gera token HMAC NO SERVIDOR AQUI (nunca expor via endpoint público)
  * O token é incluído diretamente na URL do link do e-mail
@@ -239,18 +239,13 @@ async function registrarResgate(email, nomeDados, dataNascimento, horaNascimento
  * Retorna: { sucesso: boolean, erro?: string }
  */
 async function enviarBrindeEmail(email, nomeDados, pdfPath) {
+  const tipo = 'brinde-integrativo';
   try {
-    const sgMail = require('@sendgrid/mail');
     const fs = require('fs');
-
-    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
-
-    if (!process.env.SENDGRID_API_KEY) {
-      throw new Error('SENDGRID_API_KEY não configurada');
-    }
+    const { enviarEmail } = require('./email');
 
     // Ler PDF do disco
-    const pdfAttachment = fs.readFileSync(pdfPath).toString('base64');
+    const pdfBuffer = fs.readFileSync(pdfPath);
 
     // URL base do frontend
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
@@ -269,11 +264,7 @@ async function enviarBrindeEmail(email, nomeDados, pdfPath) {
     // Montar URL do brinde com token
     const brindeLink = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(token)}`;
 
-    const msg = {
-      to: email,
-      from: process.env.SENDGRID_FROM_EMAIL || 'noreply@zunisuprema.com.br',
-      subject: '✨ Seu Estudo Integrativo — Presente da ZUNI Suprema',
-      html: `
+    const html = `
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -334,25 +325,24 @@ async function enviarBrindeEmail(email, nomeDados, pdfPath) {
   </div>
 </body>
 </html>
-      `,
-      attachments: [
-        {
-          content: pdfAttachment,
-          filename: `estudo-integrativo-${nomeDados.toLowerCase().replace(/\s+/g, '-')}.pdf`,
-          type: 'application/pdf',
-          disposition: 'attachment'
-        }
-      ]
-    };
+      `;
 
-    await sgMail.send(msg);
+    const resultado = await enviarEmail({
+      to: email,
+      subject: '✨ Seu Estudo Integrativo — Presente da ZUNI Suprema',
+      html,
+      attachments: [{ filename: `estudo-integrativo-${nomeDados.toLowerCase().replace(/\s+/g, '-')}.pdf`, content: pdfBuffer }],
+      tipo
+    });
 
-    console.log(`[BRINDE] E-mail enviado para ${email} com link seguro (HMAC incluído na URL)`);
+    if (resultado.sucesso) {
+      console.log(`[BRINDE] E-mail enviado para ${email} com link seguro (HMAC incluído na URL)`);
+    }
 
-    return { sucesso: true };
+    return resultado;
 
   } catch (error) {
-    console.error('[BRINDE] Erro ao enviar e-mail:', error?.response?.body || error.message);
+    console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${error.message}`);
     return { sucesso: false, erro: error.message };
   }
 }

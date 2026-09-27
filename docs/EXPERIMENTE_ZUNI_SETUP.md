@@ -15,7 +15,7 @@
    - CRUD para administração de códigos
 
 3. **Lib de Captura de Leads** (`src/lib/capturasExperimente.js`)
-   - Disparo de e-mails via SendGrid
+   - Disparo de e-mails via Resend
    - Registro de capturas no banco de dados
 
 4. **Landing HTML** (`public/experimente.html`)
@@ -31,7 +31,7 @@
 6. **3 Endpoints REST**
    - `POST /api/experimente-validar-codigo` — valida código-convite
    - `POST /api/experimente-calcular-numerologia` — calcula Caminho de Vida + Essência
-   - `POST /api/experimente-capturar-lead` — captura e-mail e dispara SendGrid
+   - `POST /api/experimente-capturar-lead` — captura e-mail e dispara Resend
    - `GET /experimente` — serve a landing
 
 7. **Tabelas Supabase**
@@ -52,7 +52,7 @@
 # Instalar dependências (se necessário)
 npm install
 
-# Verificar .env tem SENDGRID_API_KEY (opcional para testes locais)
+# Verificar .env tem RESEND_API_KEY (opcional para testes locais)
 ```
 
 ### 2. Iniciar servidor
@@ -83,13 +83,13 @@ http://localhost:8080/experimente
 3. Clique "Calcular Meu Perfil"
 4. Esperado: Exibe Caminho de Vida + Essência + Interpretação
 
-#### Teste C: Capturar lead (com SendGrid)
+#### Teste C: Capturar lead (com Resend)
 1. (Após cálculo) Preencha seu e-mail (ex: teste@example.com)
 2. Marque checkbox de consentimento
 3. Clique "Enviar Meu Resultado"
 4. Esperado: 
    - ✓ E-mail enviado com sucesso!
-   - E-mail recebido em sua caixa (se SENDGRID_API_KEY configurada)
+   - E-mail recebido em sua caixa (se RESEND_API_KEY configurada)
 
 #### Teste D: Bloco de oferta
 - Após envio bem-sucedido, bloco amarelo ("Gostou? Aprofunde...") aparece
@@ -102,7 +102,7 @@ http://localhost:8080/experimente
 - [ ] Landing carrega em http://localhost:8080/experimente
 - [ ] Código `EXPERIMENTE` valida corretamente
 - [ ] Numerologia calcula Caminho de Vida e Essência
-- [ ] E-mail é enviado (se SENDGRID_API_KEY ativo)
+- [ ] E-mail é enviado (se RESEND_API_KEY ativo)
 - [ ] Captura registra no Supabase (`capturasExperimente`)
 - [ ] Métrica de acessos atualiza (`codigos_experimente.total_acessos`)
 - [ ] Design é responsivo (testar em mobile)
@@ -169,8 +169,8 @@ Railway fará redeploy automaticamente.
 ## Troubleshooting
 
 **E-mail não enviado?**
-- Verificar `SENDGRID_API_KEY` em `.env`
-- Verificar `SENDGRID_FROM_EMAIL` (padrão: noreply@zunisuprema.com.br)
+- Verificar `RESEND_API_KEY` em `.env`
+- Verificar `RESEND_FROM_EMAIL` (padrão: noreply@zunisuprema.com.br)
 - Ver logs do console do servidor
 
 **Código não valida?**
@@ -191,7 +191,7 @@ Railway fará redeploy automaticamente.
 - `DEPLOY.md` — instruções de deploy
 - `src/lib/numerologia.js` — lógica de cálculo
 - `src/lib/codigosExperimente.js` — validação de códigos
-- `src/lib/capturasExperimente.js` — SendGrid + banco
+- `src/lib/capturasExperimente.js` — Resend + banco
 
 ---
 

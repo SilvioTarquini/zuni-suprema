@@ -9,7 +9,7 @@ Backend Node/Express de uma plataforma de autoconhecimento: mapas astrológicos,
 - **IA**: Anthropic SDK e Google Generative AI (Gemini) para os chats dos livros e cálculos interpretativos.
 - **Voz**: Web Speech API do navegador (`speechSynthesis`), client-side — leitura de e-books e do "Experimente Zuni". A integração server-side com ElevenLabs foi removida (26/08/2026); o áudio do chat do Mentor não existe mais via backend.
 - **Pagamentos**: MercadoPago (checkout de livros, mapa astral, sessões extras).
-- **E-mail**: SendGrid.
+- **E-mail**: Resend (`src/lib/email.js`, ponto único de envio — migrado do SendGrid em 27/09/2026, trial expirado em 13/08/2026).
 - **Deploy**: Railway (projeto `zuni-suprema`).
 
 ## Estrutura
@@ -29,7 +29,7 @@ npm start          # node src/server.js, porta padrão 3000 (via .env PORT)
 npm run dev         # nodemon
 ```
 
-Variáveis de ambiente em `.env` (ver `.env.example` para a lista completa — chaves de Anthropic, Gemini, Supabase, MercadoPago, SendGrid, webhook do Make).
+Variáveis de ambiente em `.env` (ver `.env.example` para a lista completa — chaves de Anthropic, Gemini, Supabase, MercadoPago, Resend, webhook do Make).
 
 Para rodar múltiplas instâncias de teste em paralelo, o padrão usado neste projeto é `PORT=8091 node src/server.js` etc. Para matar processos node presos no Windows: `taskkill //F //IM node.exe //T`.
 
