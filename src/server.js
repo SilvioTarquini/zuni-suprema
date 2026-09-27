@@ -739,10 +739,12 @@ async function fulfillLivro(pedido, paymentId) {
     throw err;
   }
 
-  try {
-    await enviarEmailAcessoLivro(email, livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
-  } catch (err) {
-    console.error(`[LIVRO_EMAIL_FALHOU] pedidoId=${pedido.id} email=${email}: ${err.message}`);
+  // enviarEmailAcessoLivro trata os próprios erros internamente (SendGrid)
+  // e devolve false em vez de lançar — por isso o resultado é checado
+  // explicitamente aqui, não um try/catch (que nunca capturaria nada).
+  const emailEnviado = await enviarEmailAcessoLivro(email, livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
+  if (!emailEnviado) {
+    console.error(`[LIVRO_EMAIL_FALHOU] pedidoId=${pedido.id} email=${email}`);
     // Não relança — o acesso já foi concedido e gravado, só o e-mail falhou.
   }
 

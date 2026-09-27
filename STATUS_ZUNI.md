@@ -196,6 +196,17 @@ exceção deliberada à regra de "sem paralelismo por produto" desta frente.
 - Decomissionar o MercadoPago por completo (`mpClient`, `Preference`, rotas e webhook
   antigos) só depois que todos os produtos estiverem migrados **e** o Stripe tiver
   Pix habilitado (senão perde-se o meio de pagamento Pix por completo).
+- **Bug cupom + audiolivro — decisão pendente do usuário (aberta em 27/09/2026)**:
+  quando cupom e audiolivro são usados juntos, `calcularDesconto(livro, cupom)`
+  calcula o desconto só sobre `livro.preco` (preço-base) e o resultado *substitui*
+  o preço já somado com `precoAudiobook` — hoje, aplicar cupom com audiolivro
+  incluído derruba silenciosamente a cobrança do audiolivro. Presente tanto na
+  rota nova (`POST /api/checkout/livro/stripe-session`) quanto na antiga
+  (`POST /api/checkout/livro/preference` e `POST /api/checkout/livro`, MercadoPago)
+  — replicado por fidelidade na migração, não corrigido. Decisão em aberto: cupom
+  desconta só o livro ou o total (livro + audiolivro)? **Quando decidido, a
+  correção deve valer para as duas rotas (Stripe e Pix/MercadoPago), com a mesma
+  fórmula** — não corrigir só uma.
 
 ### Pendências do futuro serviço Astro-Num (Mapa Astral / Mapa Integrado — fora da Fase 2)
 
@@ -217,6 +228,12 @@ reconstruído com checkout próprio — não corrigir no código atual do Mercad
 - **Pix**: Mapa Astral usa Pix direto via MercadoPago hoje (`POST /api/checkout/mapa-astral`),
   mesma exceção temporária que os Livros vão ter — resolve junto quando o Stripe
   habilitar Pix.
+- **Webhook do Mapa Integrado provavelmente morto**: `gerarRelatorioMapaIntegradoSeAplicavel`
+  (`src/server.js`) só age se `referencia.startsWith('mi')`, mas o `sessionId` do
+  Mapa Integrado é gerado com `uuidv4()` puro, sem prefixo `mi` — a condição
+  provavelmente nunca é verdadeira em produção. Investigar se a geração do
+  relatório já acontece por outro caminho (sob demanda, igual ao Mapa Astral) antes
+  de assumir que esse webhook é a via real de entrega.
 
 ---
 
