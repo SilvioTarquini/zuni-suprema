@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Pinterest: tag de rastreamento -->
 <title>Comprar livro — ZUNI Suprema</title>
+<script src="https://js.stripe.com/v3/"></script>
 <style>
   :root {
     --fundo: #0f0f0f;
@@ -250,6 +251,7 @@
     </div>
 
     <button class="acao" id="btn-continuar" onclick="continuar()">Comprar agora</button>
+    <div id="stripe-checkout-container" style="display:none; margin-top:20px;"></div>
     <p class="ajuda-whatsapp">
       <a id="link-whatsapp" href="https://wa.me/5515996088895" target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
     </p>
@@ -268,7 +270,7 @@
     <p style="text-align:center; color:var(--texto-suave); font-size:0.85rem;">Confirmando seu pagamento…</p>
   </div>
 
-  <p class="rodape">Pagamento seguro via Mercado Pago</p>
+  <p class="rodape">Pagamento seguro — Cartão via Stripe, PIX via Mercado Pago</p>
 </div>
 
 <script>
@@ -406,6 +408,28 @@
     document.getElementById('btn-cartao-metodo').classList.toggle('selecionado', metodo === 'CARTAO');
   }
 
+  let stripePublicKeyPromise = null;
+  function getStripePublicKey() {
+    if (!stripePublicKeyPromise) {
+      stripePublicKeyPromise = fetch('/api/stripe/public-key')
+        .then(res => res.json())
+        .then(data => data.publicKey);
+    }
+    return stripePublicKeyPromise;
+  }
+
+  async function montarEmbeddedCheckout(clientSecret) {
+    const publicKey = await getStripePublicKey();
+    const stripe = Stripe(publicKey);
+    const checkout = await stripe.createEmbeddedCheckoutPage({
+      fetchClientSecret: async () => clientSecret
+    });
+
+    document.getElementById('btn-continuar').style.display = 'none';
+    document.getElementById('stripe-checkout-container').style.display = 'block';
+    checkout.mount('#stripe-checkout-container');
+  }
+
   async function continuar() {
     const name = document.getElementById('name').value.trim();
     const email = document.getElementById('email').value.trim();
@@ -420,14 +444,23 @@
 
     try {
       if (metodoPagamento === 'CARTAO') {
-        const res = await fetch('/api/checkout/livro/preference', {
+        const res = await fetch('/api/checkout/livro/stripe-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ livroId, name, email, cupom: cupomAplicado, audiolivroIncluido })
         });
         const data = await res.json();
-        if (!res.ok || !data.init_point) throw new Error(data.error || 'Erro ao gerar link de pagamento.');
-        window.location.href = data.init_point;
+
+        if (!res.ok || (!data.clientSecret && !data.cupom100)) {
+          throw new Error(data.error || 'Erro ao gerar sessão de pagamento.');
+        }
+
+        if (data.cupom100) {
+          window.location.href = `/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(data.token)}`;
+          return;
+        }
+
+        await montarEmbeddedCheckout(data.clientSecret);
       } else {
         const res = await fetch('/api/checkout/livro', {
           method: 'POST',
@@ -476,11 +509,12 @@
 
   async function verificarRetornoCartao() {
     const status = params.get('status');
-    const email = params.get('email');
+    const pedidoIdRetorno = params.get('pedidoId');
+    const emailRetorno = params.get('email');
     const erro = params.get('erro');
 
     if (erro) return mostrarErro('Pagamento não concluído. Tente novamente.');
-    if (status !== 'retorno' || !email || !livroId) return;
+    if (status !== 'retorno' || !pedidoIdRetorno || !livroId) return;
 
     document.getElementById('card-formulario').style.display = 'none';
     document.getElementById('bloco-aguardando').style.display = 'block';
@@ -490,7 +524,7 @@
     pollingInterval = setInterval(async () => {
       tentativas++;
       try {
-        const res = await fetch(`/api/checkout/livro/session-status?livroId=${encodeURIComponent(livroId)}&email=${encodeURIComponent(email)}`);
+        const res = await fetch(`/api/checkout/livro/stripe-status/${encodeURIComponent(pedidoIdRetorno)}`);
         const data = await res.json();
         if (data.pago && data.token) {
           clearInterval(pollingInterval);
@@ -499,7 +533,10 @@
       } catch {}
       if (tentativas >= MAX_TENTATIVAS) {
         clearInterval(pollingInterval);
-        mostrarErro('Não conseguimos confirmar seu pagamento ainda. Se você já pagou, aguarde alguns minutos e recarregue esta página.');
+        const avisoEmail = emailRetorno
+          ? ` Assim que a confirmação chegar, o acesso também será enviado por e-mail para ${emailRetorno}.`
+          : ' Assim que a confirmação chegar, o acesso também será enviado por e-mail.';
+        mostrarErro('Não conseguimos confirmar seu pagamento ainda. Se você já pagou, aguarde alguns minutos e recarregue esta página.' + avisoEmail);
         document.getElementById('bloco-aguardando').style.display = 'none';
         document.getElementById('card-formulario').style.display = 'block';
       }

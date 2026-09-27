@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 24/09/2026.
+**Última atualização**: 27/09/2026.
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -166,14 +166,57 @@ venda real tenha passado pelo Stripe. Hoje o MercadoPago ainda é o único meio 
 receber pagamento em produção — nenhum outro produto pode ficar sem meio de
 pagamento funcionando.
 
-### Pendências desta frente
+### Fase 2 (aberta em 27/09/2026) — escopo revisado: só Livros e Sessões Extras
+
+**Mudança de escopo**: Mapa Astral e Mapa Integrado saem desta frente. Ficam de fora
+até o novo serviço Astro-Num (RAG exclusivo de astrologia/numerologia, ainda em
+curadoria) estar pronto — vão ganhar checkout próprio nessa ocasião, substituindo o
+atual por completo (não é migração de gateway isolada). **Não mexer no código desses
+dois produtos até lá** — checkout MercadoPago atual continua como está, sem link
+público.
+
+Fase 2 agora cobre, em ordem, um de cada vez com aprovação entre eles: **Livros** →
+**Sessões Extras**. Arquitetura genérica (para produto novo ser só uma entrada em
+tabela de preços + um `case` no webhook): tabela de preços/config no servidor (preço
+nunca aceito do front), rota de criação de Checkout Session parametrizada por
+`fulfillment_type`, tabela genérica de pedido pendente (substitui as tabelas
+ad-hoc por produto), webhook único `/api/webhooks/stripe` com um `case` novo por
+produto.
+
+**Pix nos Livros — exceção temporária documentada**: Pix no Stripe Brasil é só por
+convite (mínimo 60 dias processando pagamentos na conta — ver acima). Migração dos
+Livros: cartão vai para Stripe, **Pix continua via MercadoPago em paralelo** (rota
+`POST /api/checkout/livro` intocada) até o Stripe habilitar Pix nesta conta. Única
+exceção deliberada à regra de "sem paralelismo por produto" desta frente.
 
 - Ver em "Pendências antigas, ainda em aberto": `GET /api/checkout/session-status`
-  mascarando erro 500 como "não pago" — achado durante o teste desta fase.
-- Fase 2 (loja/livros) e Fase 3 (Sessões Extras, Mapa Astral, Mapa Integrado) ainda
-  não iniciadas — MercadoPago segue ativo nesses 4 produtos.
+  mascarando erro 500 como "não pago" — achado durante o teste da Fase 1.
+- **Solicitar acesso ao Pix no suporte do Stripe** — pendência aberta em 27/09/2026,
+  pré-requisito para fechar a exceção acima e para o Pix de Livros/futuro Astro-Num.
 - Decomissionar o MercadoPago por completo (`mpClient`, `Preference`, rotas e webhook
-  antigos) só depois que todos os produtos estiverem migrados.
+  antigos) só depois que todos os produtos estiverem migrados **e** o Stripe tiver
+  Pix habilitado (senão perde-se o meio de pagamento Pix por completo).
+
+### Pendências do futuro serviço Astro-Num (Mapa Astral / Mapa Integrado — fora da Fase 2)
+
+Achados durante o levantamento de 27/09/2026, a resolver quando esse serviço for
+reconstruído com checkout próprio — não corrigir no código atual do MercadoPago:
+
+- **Bug de preço no Mapa Astral**: `POST /api/checkout/mapa-astral` e
+  `POST /api/checkout/mapa-astral/preference` (`src/server.js`) sempre cobram
+  R$29,90, mesmo quando o front (`checkout-mapa-astral.html?type=numerologia-astral`)
+  exibe R$49,90 para a variante "Mapa Astral + Numerologia". Correção prevista:
+  preço resolvido no servidor por variante/`productType`, nunca fixo.
+- **Mapa Integrado consome créditos AstroWay antes da confirmação de pagamento**:
+  `calcularMapaNatal(...)` roda de forma síncrona dentro de
+  `POST /api/checkout/mapa-integrado` e `.../preference`, antes de qualquer
+  cobrança — se o cliente desistir, o crédito pago já foi gasto. Correção prevista:
+  gravar os dados de nascimento num pedido pendente antes do pagamento e só rodar
+  o cálculo depois da confirmação via webhook, com falha pós-pagamento visível em
+  log (caso raro de o cálculo falhar depois que o cliente já pagou).
+- **Pix**: Mapa Astral usa Pix direto via MercadoPago hoje (`POST /api/checkout/mapa-astral`),
+  mesma exceção temporária que os Livros vão ter — resolve junto quando o Stripe
+  habilitar Pix.
 
 ---
 

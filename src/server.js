@@ -16,6 +16,7 @@ const { criarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO } = require('./lib/ace
 const crypto = require('crypto');
 const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
+const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSessionId, marcarPedidoPendenteProcessado } = require('./lib/pedidosCheckoutStripe');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
@@ -649,12 +650,139 @@ FECHAMENTO E ENCAMINHAMENTO
 const app = express();
 app.use(cors());
 
+// Fulfillment do chat-mentor (Sessão ZUNI / Fase 1) — comportamento
+// idêntico ao original, só extraído para função própria porque o switch
+// por fulfillment_type agora precisa decidir ANTES de tocar em `sessions`
+// (livro e produtos futuros não têm linha em `sessions`).
+async function processarFulfillmentChatMentor(stripeSession, eventType) {
+  const sessionId = stripeSession.metadata?.sessionId || stripeSession.client_reference_id;
+  if (!sessionId) {
+    console.error(`[STRIPE-WEBHOOK] Evento ${eventType} (chat-mentor) sem sessionId em metadata/client_reference_id.`);
+    return;
+  }
+
+  const sessaoAtual = await getSession(sessionId);
+  if (!sessaoAtual) {
+    console.error(`[STRIPE-WEBHOOK] Sessão ${sessionId} não encontrada no Supabase.`);
+    return;
+  }
+
+  // Idempotência: reentrega do mesmo evento (ou completed + async_payment_succeeded
+  // para o mesmo pagamento) não deve reprocessar o fulfillment.
+  if (sessaoAtual.paid) {
+    console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} já estava paga — ignorando reentrega (${eventType}).`);
+    return;
+  }
+
+  await upsertSession({ ...sessaoAtual, paid: true, stripeSessionId: stripeSession.id });
+  console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} (chat-mentor) marcada como paga via ${eventType}.`);
+}
+
+// Fulfillment do produto 'livro' (Fase 2) — a MESMA função é chamada pelo
+// atalho de cupom 100% (sem Stripe) e por processarFulfillmentLivro abaixo,
+// para não duplicar a lógica de concessão de acesso.
+// Ordem importa: só marca o pedido como processado DEPOIS que o acesso já
+// foi criado com sucesso — uma falha aqui não deve deixar o pedido marcado
+// como resolvido sem o cliente ter recebido o produto (ver
+// marcarPedidoPendenteProcessado). Falha só no envio de e-mail não deve
+// bloquear o acesso, que já foi concedido.
+async function fulfillLivro(pedido, paymentId) {
+  const { livroId, email, audiolivroIncluido } = pedido.payload;
+
+  let acesso;
+  let acessoAudiolivro = null;
+  try {
+    acesso = await criarAcesso({ livroId, email, paymentId });
+
+    if (audiolivroIncluido) {
+      const supabaseClient = assertSupabase();
+      const paymentIdAudiolivro = `${paymentId}-audiolivro`;
+
+      const { data: existente } = await supabaseClient
+        .from('acessos_livros')
+        .select('*')
+        .eq('livro_id', livroId)
+        .eq('payment_id', paymentIdAudiolivro)
+        .maybeSingle();
+
+      if (existente) {
+        acessoAudiolivro = { token: existente.token, expiraEm: new Date(existente.data_expiracao) };
+      } else {
+        const tokenAudiolivro = crypto.randomBytes(24).toString('hex');
+        const expiraEm = new Date(Date.now() + DIAS_DE_ACESSO * 24 * 60 * 60 * 1000);
+
+        await supabaseClient.from('acessos_livros').insert({
+          livro_id: livroId,
+          email,
+          token: tokenAudiolivro,
+          payment_id: paymentIdAudiolivro,
+          data_pagamento: new Date().toISOString(),
+          data_expiracao: expiraEm.toISOString(),
+          tipo_produto: 'audiolivro'
+        });
+
+        acessoAudiolivro = { token: tokenAudiolivro, expiraEm };
+      }
+    }
+  } catch (err) {
+    console.error(`[LIVRO_FALHA_POS_PAGAMENTO] pedidoId=${pedido.id} livroId=${livroId} paymentId=${paymentId}: ${err.message}`);
+    throw err;
+  }
+
+  try {
+    await marcarPedidoPendenteProcessado(pedido.id, {
+      token: acesso.token,
+      tokenAudiolivro: acessoAudiolivro?.token || null
+    });
+  } catch (err) {
+    console.error(`[LIVRO_FALHA_POS_PAGAMENTO] Erro ao gravar resultado do pedido ${pedido.id}: ${err.message}`);
+    throw err;
+  }
+
+  try {
+    await enviarEmailAcessoLivro(email, livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
+  } catch (err) {
+    console.error(`[LIVRO_EMAIL_FALHOU] pedidoId=${pedido.id} email=${email}: ${err.message}`);
+    // Não relança — o acesso já foi concedido e gravado, só o e-mail falhou.
+  }
+
+  return { token: acesso.token, tokenAudiolivro: acessoAudiolivro?.token || null };
+}
+
+async function processarFulfillmentLivro(stripeSession, eventType) {
+  const pedidoId = stripeSession.metadata?.pedidoId || stripeSession.client_reference_id;
+  if (!pedidoId) {
+    console.error(`[STRIPE-WEBHOOK] Evento ${eventType} (livro) sem pedidoId em metadata/client_reference_id.`);
+    return;
+  }
+
+  const pedido = await buscarPedidoPendenteStripe(pedidoId);
+  if (!pedido) {
+    console.error(`[STRIPE-WEBHOOK] Pedido ${pedidoId} (livro) não encontrado em checkout_pedidos_pendentes.`);
+    return;
+  }
+
+  // Idempotência: reentrega do mesmo evento não deve reprocessar o fulfillment.
+  if (pedido.processadoEm) {
+    console.log(`[STRIPE-WEBHOOK] Pedido ${pedidoId} (livro) já processado — ignorando reentrega (${eventType}).`);
+    return;
+  }
+
+  await fulfillLivro(pedido, stripeSession.id);
+  console.log(`[STRIPE-WEBHOOK] Pedido ${pedidoId} (livro) processado via ${eventType}.`);
+}
+
 // Webhook Stripe — precisa do corpo BRUTO (express.raw) para a verificação
 // de assinatura, então tem que ser registrado ANTES do express.json()
 // global logo abaixo (senão o body já chega parseado/consumido).
-// Fase 1: só o fulfillment_type 'chat-mentor' (Sessão ZUNI) é tratado.
 // MercadoPago segue com seu próprio webhook (/api/pagamento/webhook),
-// intocado, para os outros quatro produtos.
+// intocado, para os produtos ainda não migrados.
+//
+// A resposta só é enviada depois do fulfillment terminar (não é
+// fire-and-forget): uma falha real no processamento vira 500, o que faz o
+// Stripe reentregar o evento — necessário para o produto 'livro', cujo
+// fulfillment (criarAcesso) não pode ser considerado "ok" antes de de fato
+// ter sido concluído.
 app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), async (req, res) => {
   if (!stripeClient || !process.env.STRIPE_WEBHOOK_SECRET) {
     console.error('[STRIPE-WEBHOOK] Stripe não configurado (STRIPE_SECRET_KEY / STRIPE_WEBHOOK_SECRET ausentes).');
@@ -673,60 +801,43 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Responde rápido — o processamento (Supabase, etc.) continua depois,
-  // sem bloquear o Stripe esperando.
-  res.status(200).json({ received: true });
-
   const TIPOS_RELEVANTES = [
     'checkout.session.completed',
     'checkout.session.async_payment_succeeded',
     'checkout.session.async_payment_failed'
   ];
-  if (!TIPOS_RELEVANTES.includes(event.type)) return;
+  if (!TIPOS_RELEVANTES.includes(event.type)) {
+    return res.status(200).json({ received: true });
+  }
 
   const stripeSession = event.data.object;
-  const sessionId = stripeSession.metadata?.sessionId || stripeSession.client_reference_id;
   const fulfillmentType = stripeSession.metadata?.fulfillment_type;
 
-  if (!sessionId) {
-    console.error(`[STRIPE-WEBHOOK] Evento ${event.type} sem sessionId em metadata/client_reference_id.`);
-    return;
+  if (event.type === 'checkout.session.async_payment_failed') {
+    console.log(`[STRIPE-WEBHOOK] Pagamento falhou (async) (${fulfillmentType}).`);
+    return res.status(200).json({ received: true });
+  }
+
+  if (stripeSession.payment_status !== 'paid') {
+    console.log(`[STRIPE-WEBHOOK] Evento ${event.type} (${fulfillmentType}) com payment_status=${stripeSession.payment_status} (ainda não pago).`);
+    return res.status(200).json({ received: true });
   }
 
   try {
-    if (event.type === 'checkout.session.async_payment_failed') {
-      console.log(`[STRIPE-WEBHOOK] Pagamento falhou (async) para sessão ${sessionId} (${fulfillmentType}).`);
-      return;
-    }
-
-    if (stripeSession.payment_status !== 'paid') {
-      console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId}: evento ${event.type} com payment_status=${stripeSession.payment_status} (ainda não pago).`);
-      return;
-    }
-
-    const sessaoAtual = await getSession(sessionId);
-    if (!sessaoAtual) {
-      console.error(`[STRIPE-WEBHOOK] Sessão ${sessionId} não encontrada no Supabase.`);
-      return;
-    }
-
-    // Idempotência: reentrega do mesmo evento (ou completed + async_payment_succeeded
-    // para o mesmo pagamento) não deve reprocessar o fulfillment.
-    if (sessaoAtual.paid) {
-      console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} já estava paga — ignorando reentrega (${event.type}).`);
-      return;
-    }
-
     switch (fulfillmentType) {
       case 'chat-mentor':
-        await upsertSession({ ...sessaoAtual, paid: true, stripeSessionId: stripeSession.id });
-        console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} (chat-mentor) marcada como paga via ${event.type}.`);
+        await processarFulfillmentChatMentor(stripeSession, event.type);
+        break;
+      case 'livro':
+        await processarFulfillmentLivro(stripeSession, event.type);
         break;
       default:
-        console.error(`[STRIPE-WEBHOOK] fulfillment_type desconhecido/não tratado nesta fase: "${fulfillmentType}" (sessão ${sessionId}).`);
+        console.error(`[STRIPE_TIPO_DESCONHECIDO] fulfillment_type "${fulfillmentType}" não tratado (evento ${event.type}).`);
     }
+    return res.status(200).json({ received: true });
   } catch (err) {
-    console.error(`[STRIPE-WEBHOOK] Erro processando ${event.type} (sessão ${sessionId}):`, err);
+    console.error(`[STRIPE-WEBHOOK] Erro processando ${event.type} (${fulfillmentType}):`, err.message);
+    return res.status(500).json({ error: 'Erro ao processar webhook.' });
   }
 });
 
@@ -2110,6 +2221,119 @@ app.get('/api/checkout/livro/session-status', async (req, res) => {
     return res.json({ pago: Boolean(acesso), token: acesso?.token || null });
   } catch (error) {
     console.error('Erro em /api/checkout/livro/session-status:', error);
+    return res.status(500).json({ pago: false });
+  }
+});
+
+// Fase 2 da migração para Stripe: só o botão Cartão de checkout-livro.html
+// passa a usar esta rota. O botão Pix continua em /api/checkout/livro
+// (MercadoPago), intocado — Pix no Stripe Brasil é só por convite (ver
+// STATUS_ZUNI.md), exceção temporária documentada.
+app.post('/api/checkout/livro/stripe-session', async (req, res) => {
+  try {
+    const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
+
+    if (!livroId || !name || !email) {
+      return res.status(400).json({ error: 'Livro, nome e email são obrigatórios.' });
+    }
+
+    const livro = buscarLivro(livroId);
+    if (!livro) {
+      return res.status(404).json({ error: 'Livro não encontrado.' });
+    }
+
+    if (!stripeClient) {
+      return res.status(500).json({ error: 'Stripe não configurado.' });
+    }
+
+    // Preço sempre resolvido no servidor (catálogo + audiolivro + cupom) —
+    // nunca aceito pronto do front. Nota: quando há cupom, o cálculo usa
+    // livro.preco (catálogo) e não soma de volta o preço do audiolivro —
+    // mesmo comportamento da rota MercadoPago equivalente
+    // (/api/checkout/livro/preference), replicado aqui sem alteração.
+    let precoFinal = livro.precoPromocional || livro.preco;
+    if (audiolivroIncluido && livro.audiobookDisponivel) {
+      precoFinal += livro.precoAudiobook;
+    }
+    if (cupom) {
+      const cupomValidado = await validarCupom(cupom);
+      if (!cupomValidado) {
+        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
+      }
+      precoFinal = calcularDesconto(livro, cupomValidado).precoFinal;
+    }
+
+    const payload = { livroId, email, audiolivroIncluido: Boolean(audiolivroIncluido) };
+    const pedidoId = await criarPedidoPendenteStripe({
+      fulfillmentType: 'livro',
+      payload,
+      valorPago: precoFinal
+    });
+
+    // Cupom 100%: mesmo atalho já usado pelo chat-mentor — sem gateway
+    // nenhum (Stripe recusa Checkout Session de valor zero, mínimo de
+    // R$0,50 em BRL). Chama a MESMA função de fulfillment usada pelo
+    // webhook (fulfillLivro) — nada de lógica duplicada.
+    if (precoFinal === 0) {
+      const pedido = await buscarPedidoPendenteStripe(pedidoId);
+      const resultado = await fulfillLivro(pedido, `cupom100-${pedidoId}`);
+      console.log(`[CHECKOUT-LIVRO-STRIPE] Cupom 100% desconto: acesso concedido diretamente (pedido ${pedidoId}).`);
+      return res.json({
+        pedidoId,
+        cupom100: true,
+        token: resultado.token,
+        tokenAudiolivro: resultado.tokenAudiolivro
+      });
+    }
+
+    const frontendUrl = process.env.FRONTEND_URL;
+
+    const stripeSession = await stripeClient.checkout.sessions.create({
+      ui_mode: 'embedded_page',
+      mode: 'payment',
+      client_reference_id: pedidoId,
+      line_items: [
+        {
+          price_data: {
+            currency: 'brl',
+            unit_amount: Math.round(precoFinal * 100),
+            product_data: {
+              name: livro.titulo
+            }
+          },
+          quantity: 1
+        }
+      ],
+      metadata: {
+        pedidoId,
+        fulfillment_type: 'livro'
+      },
+      return_url: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&pedidoId=${pedidoId}&email=${encodeURIComponent(email)}&status=retorno`
+    });
+
+    await vincularStripeSessionId(pedidoId, stripeSession.id);
+
+    return res.json({ pedidoId, clientSecret: stripeSession.client_secret });
+  } catch (error) {
+    console.error('Erro ao criar Checkout Session Stripe (livro):', error);
+    return res.status(500).json({ error: 'Erro ao gerar sessão de pagamento.' });
+  }
+});
+
+app.get('/api/checkout/livro/stripe-status/:pedidoId', async (req, res) => {
+  try {
+    const { pedidoId } = req.params;
+    const pedido = await buscarPedidoPendenteStripe(pedidoId);
+    if (!pedido || !pedido.processadoEm) {
+      return res.json({ pago: false });
+    }
+    return res.json({
+      pago: true,
+      token: pedido.resultado?.token || null,
+      tokenAudiolivro: pedido.resultado?.tokenAudiolivro || null
+    });
+  } catch (error) {
+    console.error('Erro em /api/checkout/livro/stripe-status:', error);
     return res.status(500).json({ pago: false });
   }
 });
