@@ -1912,7 +1912,13 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
     acessoAudiolivro = { token: tokenAudiolivro, expiraEm };
   }
 
-  await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
+  // enviarEmailAcessoLivro trata os próprios erros internamente (SendGrid) e
+  // devolve false em vez de lançar — checagem explícita do retorno, mesmo
+  // padrão aplicado ao fulfillment Stripe (fulfillLivro) em src/server.js.
+  const emailEnviado = await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
+  if (!emailEnviado) {
+    console.error(`[LIVRO_EMAIL_FALHOU] referencia=${referencia} email=${pedido.email}`);
+  }
   return acesso;
 }
 

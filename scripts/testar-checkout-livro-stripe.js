@@ -15,6 +15,7 @@ if (!livroId) {
 }
 const emailArg = process.argv.find(a => a.startsWith('--email='));
 const email = emailArg ? emailArg.split('=')[1] : 'teste.zuni.livros@example.com';
+const comAudiolivro = process.argv.includes('--audiolivro');
 
 (async () => {
   const browser = await chromium.launch({ headless: true });
@@ -31,6 +32,11 @@ const email = emailArg ? emailArg.split('=')[1] : 'teste.zuni.livros@example.com
   await page.fill('#name', 'Teste Zuni Livros');
   await page.fill('#email', email);
   console.log(`[TESTE-LIVRO] Formulário preenchido (email=${email}).`);
+
+  if (comAudiolivro) {
+    await page.check('#audiolivro-checkbox');
+    console.log('[TESTE-LIVRO] Audiolivro marcado.');
+  }
 
   await page.click('#btn-cartao-metodo');
   await page.click('#btn-continuar');
