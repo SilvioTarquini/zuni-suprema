@@ -245,10 +245,9 @@
       <div class="opcao-audiolivro-preco" id="preco-audiolivro">+ R$ 14,90</div>
     </div>
 
-    <div class="metodos">
-      <button type="button" id="btn-pix" onclick="selecionarMetodo('PIX')">PIX</button>
-      <button type="button" id="btn-cartao-metodo" onclick="selecionarMetodo('CARTAO')">Cartão / Outros</button>
-    </div>
+    <!-- PIX (Mercado Pago) fora da tela por decisão de 29/09/2026: livros lançam só
+         com cartão via Stripe. Rotas do backend e bloco-pix abaixo seguem intactos;
+         para religar, recolocar aqui o botão PIX e o seletor de método (selecionarMetodo). -->
 
     <button class="acao" id="btn-continuar" onclick="continuar()">Comprar agora</button>
     <div id="stripe-checkout-container" style="display:none; margin-top:20px;"></div>
@@ -270,13 +269,13 @@
     <p style="text-align:center; color:var(--texto-suave); font-size:0.85rem;">Confirmando seu pagamento…</p>
   </div>
 
-  <p class="rodape">Pagamento seguro — Cartão via Stripe, PIX via Mercado Pago</p>
+  <p class="rodape">Pagamento seguro — Cartão via Stripe</p>
 </div>
 
 <script>
   const params = new URLSearchParams(window.location.search);
   const livroId = params.get('livro');
-  let metodoPagamento = null;
+  let metodoPagamento = 'CARTAO'; // único método na tela (PIX desligado em 29/09/2026)
   let pollingInterval = null;
   let livroAtual = null;
   let cupomAplicado = null;
@@ -402,12 +401,6 @@
     aplicarCupom(codigo);
   }
 
-  function selecionarMetodo(metodo) {
-    metodoPagamento = metodo;
-    document.getElementById('btn-pix').classList.toggle('selecionado', metodo === 'PIX');
-    document.getElementById('btn-cartao-metodo').classList.toggle('selecionado', metodo === 'CARTAO');
-  }
-
   let stripePublicKeyPromise = null;
   function getStripePublicKey() {
     if (!stripePublicKeyPromise) {
@@ -436,7 +429,6 @@
     const btn = document.getElementById('btn-continuar');
 
     if (!name || !email) return mostrarErro('Preencha nome e email para continuar.');
-    if (!metodoPagamento) return mostrarErro('Escolha PIX ou Cartão para continuar.');
 
     document.getElementById('erro').style.display = 'none';
     btn.disabled = true;
