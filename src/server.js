@@ -768,7 +768,7 @@ async function fulfillLivro(pedido, paymentId) {
     throw err;
   }
 
-  // enviarEmailAcessoLivro trata os próprios erros internamente (SendGrid)
+  // enviarEmailAcessoLivro trata os próprios erros internamente (Resend)
   // e devolve false em vez de lançar — por isso o resultado é checado
   // explicitamente aqui, não um try/catch (que nunca capturaria nada).
   const emailEnviado = await enviarEmailAcessoLivro(email, livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
@@ -1941,7 +1941,7 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
     acessoAudiolivro = { token: tokenAudiolivro, expiraEm };
   }
 
-  // enviarEmailAcessoLivro trata os próprios erros internamente (SendGrid) e
+  // enviarEmailAcessoLivro trata os próprios erros internamente (Resend) e
   // devolve false em vez de lançar — checagem explícita do retorno, mesmo
   // padrão aplicado ao fulfillment Stripe (fulfillLivro) em src/server.js.
   const emailEnviado = await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
