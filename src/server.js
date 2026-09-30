@@ -1654,8 +1654,8 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
     // Nome da entrega no corpo do e-mail: "Síntese ZUNI Direciona" só para
     // chat-mentor (ZUNI Direciona); demais productTypes mantêm "Dossiê".
     const textoEntregaEmail = productType === 'chat-mentor'
-      ? 'a sua **Síntese ZUNI Direciona em PDF** — um documento personalizado com os insights da sua jornada'
-      : 'o seu **Dossiê em PDF** — um relatório personalizado com os insights da sua jornada';
+      ? 'a sua <strong>Síntese ZUNI Direciona em PDF</strong> — um documento personalizado com os insights da sua jornada'
+      : 'o seu <strong>Dossiê em PDF</strong> — um relatório personalizado com os insights da sua jornada';
 
     const blocoCupom = cupom ? `
           <div style="margin:24px 0; padding:18px 20px; border:1px solid #d9c68f; border-radius:8px; background:#faf7ef;">
@@ -1669,7 +1669,7 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
     const html = `
 
           ${saudacao}
-          Sua sessão com o Mentor ZUNI Suprema foi concluída.
+          Sua sessão de orientação do ZUNI Direciona foi concluída.
 
           Em anexo você encontra ${textoEntregaEmail}.
 
