@@ -38,7 +38,7 @@ const comAudiolivro = process.argv.includes('--audiolivro');
     console.log('[TESTE-LIVRO] Audiolivro marcado.');
   }
 
-  await page.click('#btn-cartao-metodo');
+  // Cartão é o método padrão da tela (botão PIX removido em 29/09/2026); não há seletor a clicar.
   await page.click('#btn-continuar');
 
   console.log('[TESTE-LIVRO] Aguardando iframe do Stripe Embedded Checkout montar...');
