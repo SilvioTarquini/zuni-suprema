@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 30/09/2026 (checklist pré-push do Stripe; cupom de teste rotacionado; logs de cupom mascarados).
+**Última atualização**: 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; Leva 2 pendente).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -367,7 +367,91 @@ seguem aguardando a ativação da conta Stripe em produção (ver checklist acim
 
 ---
 
-## Checklist pré-push do Stripe (30/09/2026)
+## Estado ao encerrar 30/09/2026 — em produção e pendências
+
+**Em produção (Railway, `origin/main` = `main` local):**
+- **Stripe (ZUNI Direciona + Livros, só cartão)**: no ar desde o push de 30/09 (`9533eb8`,
+  16:55 UTC). Os itens do checklist abaixo foram resolvidos: chave `rk_live_` com
+  Checkout Sessions = Escrever (conferido pelo usuário no painel), endpoint de produção
+  assina exatamente os 3 eventos e o `whsec_` do Railway é o dele, conta com Pagamentos
+  e Payouts ativos e sem tarefas pendentes. **Compra real feita pelo usuário nos dois
+  produtos**: livro "A Presença em Ação" (R$ 37,90) e sessão do ZUNI Direciona
+  (R$ 27,90, chat completo, Síntese em PDF, e-mails recebidos). Conferido nos logs e no
+  banco: webhook processou os dois (livro 17:04 UTC, sessão 17:07 UTC), e-mails pelo
+  Resend com id (`acesso-livro` `01a0f346-5e48-746b-9ec5-60acb8297e5f`,
+  `sintese-relatorio` `01a0f371-1ac2-74bc-a48e-a5f04c20cb52`), `relatorio_gerado = true`.
+- **Leva 1 do chat — push `737a410` em 30/09/2026, 18:25 UTC** (deploy no ar 18:27 UTC,
+  log de inicialização sem erro; `/checkout.html` e `/chat.html` 200 em produção):
+  - renderizador de markdown **seguro** (`public/js/markdown-seguro.js`): escapa tudo
+    antes de formatar e só gera `p, br, strong, em, ul, ol, li, hr`; o chat usa
+    `addMsg` (IA pelo renderizador, cliente por `textContent`) e `addMsgHtml` (só
+    modelos internos confiáveis, valores dinâmicos por `escaparHtml`); a Resposta A do
+    questionário passa pelo mesmo caminho. Fechou a brecha do `innerHTML` cru.
+    Testado com 17 payloads maliciosos (unitário) e no navegador (nada executou).
+  - CSS da borda do balão da IA corrigido (`chat.html`, valor inválido `#btn-microfonergba`).
+  - botão dourado "📚 Loja" no cabeçalho do chat (estilo dos botões da loja, 44px).
+  - `checkout.html`: "Cartão ou Pix." → "Pagamento com cartão." (+ comentários de código).
+- **E-mail da Síntese**: assunto "{nome}, sua Síntese ZUNI Direciona está pronta" e anexo
+  `sintese-zuni-direciona.pdf`; negrito em HTML; nomenclatura ZUNI Direciona.
+- **`LIVRO_ACESSO_DIAS=30` criado no Railway pelo usuário** (conferido em 30/09: valor
+  `30`). O código lê a variável certo (`acessoLivros.js:25`) e o e-mail de acesso mostra a
+  data calculada a partir dela. Vale só para acessos **novos**; acessos já criados
+  (inclusive a compra real do usuário) seguem com 7 dias.
+
+**Leva 2 — PENDENTE (aprovada, ainda não implementada):**
+1. **Aviso de clique no WhatsApp**: novo `POST /api/whatsapp-clique` (token da sessão como
+   o `/api/chat`; `origem` = `ajuda` | `flutuante` | `pos-encaminhamento`); log com marcador
+   `[WHATSAPP_CLIQUE]` (referência de 8 caracteres + origem + data/hora de Brasília, sem
+   nome/e-mail/token); e-mail pelo Resend (`enviarEmail`, tipo `whatsapp-clique`) para
+   zunisuprema@gmail.com com referência, origem, data/hora, tema e tipo do produto; no
+   máximo 1 e-mail por sessão a cada 10 minutos; contador `registrarContadorWhatsapp('clique')`;
+   `fetch` com `keepalive` sem bloquear a abertura do WhatsApp. O e-mail diz "clicou", não
+   "enviou a mensagem". Cobre os 3 pontos de entrada: "Ajuda" do cabeçalho, botão
+   flutuante (após o modal) e botão da mensagem de encaminhamento.
+2. **Remover o disparo para o Make** (decisão do usuário: não usa o Make). Em produção a
+   variável `MAKE_WEBHOOK_URL` nem existe e o log mostra `MAKE_WEBHOOK_URL não configurado —
+   trigger ignorado` a cada relatório. Remover `triggerMake` e o log, **sem afetar** o envio
+   da Síntese por e-mail nem o registro do WhatsApp (`registrarContadorWhatsapp`).
+3. **`LIVRO_ACESSO_DIAS` inválido ou ausente cai para 7 dias** sem quebrar a gravação do
+   acesso (hoje `abc` vira `NaN` e a gravação falha).
+4. **Data do e-mail de acesso no fuso `America/Sao_Paulo`** (hoje usa o fuso do servidor,
+   UTC, e à noite no horário de Brasília pode aparecer um dia adiantada).
+
+**Aguardando aprovação de texto do usuário (nada no prompt muda sem o OK):**
+- `welcomeMessage` (`server.js`, `/api/sessao/iniciar`, endpoint que nenhuma tela chama):
+  "bem-vindo(a) ao Mentor ZUNI Suprema" → "bem-vindo(a) ao ZUNI Direciona".
+- `REPORT_PROMPT`: linha 573 "…Dossiê da Sessão do Chat Mentor ZUNI…" → "…do ZUNI
+  Direciona…"; linha 616 "mencione que veio do Chat Mentor ZUNI" → "…veio do ZUNI
+  Direciona" (essa é a frase impressa no fim da Síntese).
+- Prompt da Resposta A (`questionarioTimidez.js:23` e `:37`): hoje pede "a mensagem de
+  abertura do Mentor ZUNI" e o modelo devolve um título ("Mensagem de Abertura — Mentor
+  ZUNI"; em 6 de 13 respostas guardadas começa com `#`, em 5 contém "Mensagem de
+  Abertura"). Proposta: "primeira fala do Mentor ZUNI… Não use título, cabeçalho nem
+  formatação Markdown (sem #, ** ou ---): comece direto na saudação, em texto corrido."
+- Regra confirmada pelo usuário: **"Mentor ZUNI" é o nome oficial da interface
+  conversacional e permanece** (rótulo das mensagens, painel "Como usar", janela da
+  Síntese, questionários). Só muda onde "Mentor" aparece como nome do PRODUTO. O subtítulo
+  "Chat Mentor ZUNI" da capa do PDF não aparece em produto ativo: não mexer.
+
+**Testes pendentes do usuário** (não dá para fazer daqui): abrir uma **sessão real do ZUNI
+Direciona usando o cupom de teste** e conferir (a) o markdown renderizado nas respostas
+(títulos, negrito, listas, filete; nada de `#`, `**`, `---` crus), (b) o botão dourado
+"📚 Loja" no cabeçalho (desktop e celular), (c) o **botão do WhatsApp da mensagem de
+encaminhamento** ("Abrir conversa no WhatsApp") — a única parte da Leva 1 que não foi
+exercitada no teste de navegador (a rota simulada devolveu erro).
+
+**Pendências que continuam abertas (não bloqueiam nada):** `MAKE_WEBHOOK_URL` (vira
+remoção, acima); rota antiga do MercadoPago segue no código sem tela; webhook do
+MercadoPago sem `x-signature`; `GET /api/checkout/session-status` mascara 500 como
+"não pago"; `chat.html` não retoma sessão após F5; `?tema=` do checkout não chega ao
+produto; limpeza dos dados de teste em `acessos_livros`/`checkout_pedidos_pendentes`
+(inclui linhas com `zunisuprema@gmail.com`); capa do PDF da Síntese segue em vetor
+(`CAPA_SINTESE_EM_IMAGEM = false`; o JPG atual é um mockup de livro, não serve em
+tela cheia, e a arte será refeita); `capa-pdf.jpg` ("Mapa Integrativo") sem uso.
+
+---
+
+## Checklist pré-push do Stripe (30/09/2026) — RESOLVIDO, ver bloco acima
 
 `main` local está 20+ commits à frente de `origin/main`; o push (`git push origin
 main`) sobe **tudo junto**: Stripe Fase 1 (ZUNI Direciona) + Fase 2 (Livros, só
