@@ -252,7 +252,7 @@
       </div>
       <button id="btn" onclick="acessarChat()">Começar minha orientação</button>
       <div id="stripe-checkout-container" style="display:none; margin-top:20px;"></div>
-      <p class="method-note">Pagamento seguro, direto nesta página. Cartão ou Pix.</p>
+      <p class="method-note">Pagamento seguro, direto nesta página. Pagamento com cartão.</p>
       <p class="ajuda-whatsapp">
         <a href="https://wa.me/5515996088895?text=Ol%C3%A1%2C%20estou%20com%20d%C3%BAvida%2Fproblema%20no%20pagamento%20da%20Sess%C3%A3o%20ZUNI." target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
       </p>
@@ -444,7 +444,7 @@
     }
 
     // Ponto único de confirmação: chamado pelos três caminhos possíveis
-    // (retorno síncrono do cartão, polling do Pix, checagem silenciosa de
+    // (retorno síncrono do cartão, polling de confirmação, checagem silenciosa de
     // quem reabre a página com sessionId salvo) — garante que o evento do
     // Pinterest sempre dispare, com o valor real, uma vez só.
     function avancarParaQuestionario(sessionId, token, valor) {
@@ -475,7 +475,7 @@
       if (status !== 'retorno') {
         // Sem sinal explícito de retorno do gateway (ex.: reabriu a aba
         // usando o sessionId salvo no localStorage) — checagem única e
-        // silenciosa. Cobre o caso de Pix confirmado depois que a pessoa
+        // silenciosa. Cobre o caso de pagamento confirmado depois que a pessoa
         // já tinha saído da página.
         try {
           const res = await fetch(`/api/checkout/session-status/${sessionId}`);
@@ -489,7 +489,7 @@
 
       // Retorno do embedded Checkout: cartão costuma confirmar de forma
       // síncrona, então checa uma vez antes de entrar no polling (que
-      // cobre o caso do Pix, cuja confirmação pode demorar).
+      // cobre o caso de a confirmação do webhook demorar).
       try {
         const res = await fetch(`/api/checkout/session-status/${sessionId}`);
         const data = await res.json();
