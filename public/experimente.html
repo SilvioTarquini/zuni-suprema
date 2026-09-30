@@ -600,20 +600,12 @@
     <div class="header">
       <div class="logo">✨ ZUNI SUPREMA</div>
       <h1>Experimente a ZUNI</h1>
-      <p>Descubra os 4 pilares do nosso ecossistema — gratuitamente</p>
+      <p>Converse com o Mentor e leia um livro vivo — gratuitamente</p>
     </div>
 
     <!-- Barra de Navegação -->
     <div class="navbar">
       <div class="navbar-content">
-        <a href="#modulo-numerologia" class="navbar-item active" onclick="scrollToModule('modulo-numerologia', event)">
-          <span class="navbar-icon">🔢</span>
-          Numerologia
-        </a>
-        <a href="#modulo-astrologia" class="navbar-item" onclick="scrollToModule('modulo-astrologia', event)">
-          <span class="navbar-icon">🌙</span>
-          Astrologia
-        </a>
         <a href="#modulo-chat" class="navbar-item" onclick="scrollToModule('modulo-chat', event)">
           <span class="navbar-icon">💬</span>
           Chat
@@ -625,151 +617,9 @@
       </div>
     </div>
 
-    <!-- Código-convite -->
-    <div class="codigo-section">
-      <h2>🔑 Seu Tíquete de Acesso</h2>
-      <p style="color: #666; margin-bottom: 15px;">
-        Você recebeu um código-convite? Insira aqui para desbloquear a experiência completa.
-      </p>
-      <div class="codigo-input-group">
-        <input type="text" id="codigoInput" placeholder="Digite seu código de acesso" />
-        <button onclick="validarCodigo()">Validar</button>
-      </div>
-      <div class="codigo-status" id="codigoStatus"></div>
-    </div>
-
-    <!-- Módulo A: Numerologia -->
-    <div class="modulo bloqueado" id="modulo-numerologia" data-modulo="numerologia">
-      <h2>🔢 Módulo A — Seu Perfil Numerológico</h2>
-      <p style="color: #666; margin-bottom: 25px;">
-        Descubra seu Caminho de Vida e a Essência numérica que define sua energia.
-      </p>
-
-      <div class="form-group">
-        <label for="nomeCompleto">Nome Completo</label>
-        <input type="text" id="nomeCompleto" placeholder="Seu nome completo" />
-      </div>
-
-      <div class="form-group">
-        <label for="dataNascimento">Data de Nascimento</label>
-        <input type="date" id="dataNascimento" />
-      </div>
-
-      <button class="btn-calcular" onclick="calcularNumerologia()">
-        Calcular Meu Perfil
-      </button>
-
-      <!-- Loading -->
-      <div class="loading" id="loadingNumerologia">
-        <div class="spinner"></div>
-        <p>Calculando sua numerologia...</p>
-      </div>
-
-      <!-- Resultado -->
-      <div class="resultado" id="resultadoNumerologia">
-        <div class="numero-box">
-          <div class="numero-label">Caminho de Vida</div>
-          <div class="numero-valor" id="caminhoDeVidaValor">-</div>
-          <div class="numero-descricao" id="caminhoDeVidaDesc">
-            Carregando...
-          </div>
-        </div>
-
-        <div class="numero-box">
-          <div class="numero-label">Número da Essência</div>
-          <div class="numero-valor" id="essenciaValor">-</div>
-          <div class="numero-descricao" id="essenciaDesc">
-            Carregando...
-          </div>
-        </div>
-
-        <div class="numero-box" style="background: #fafbfc; border-left: 4px solid #d4af37;">
-          <div class="numero-label" style="color: #d4af37;">Próximo Passo</div>
-          <div class="numero-descricao" id="ganhoTexto" style="color: #666; font-style: italic;">
-            Carregando...
-          </div>
-        </div>
-
-        <!-- Captura de E-mail -->
-        <div class="email-section" id="emailSection">
-          <h3>📧 Receba Seu Resultado por E-mail</h3>
-          <p style="color: #666; margin-bottom: 15px; font-size: 14px;">
-            Guarde este resultado e receba dicas exclusivas sobre sua numerologia.
-          </p>
-
-          <div class="form-group">
-            <label for="email">Seu E-mail</label>
-            <input type="email" id="email" placeholder="seu@email.com" />
-          </div>
-
-          <div class="checkbox-group">
-            <input type="checkbox" id="consentimento" />
-            <label for="consentimento">
-              Concordo em receber informações sobre numerologia e os produtos ZUNI.
-              <a href="https://zunisuprema.com.br/privacidade" target="_blank">Veja nossa política</a>.
-            </label>
-          </div>
-
-          <button class="btn-enviar" id="btnEnviar" onclick="enviarResultado()" disabled>
-            Enviar Meu Resultado
-          </button>
-
-          <div class="email-status" id="emailStatus"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Módulo B: Astrologia -->
-    <div class="modulo" id="modulo-astrologia" data-modulo="astrologia">
-      <h2>🌙 Módulo B — Amostra Astrológica</h2>
-      <p style="color: #666; margin-bottom: 25px;">
-        Descubra seu Signo Solar e as características que o definem.
-      </p>
-
-      <div class="form-group">
-        <label for="dataNascimentoAstro">Data de Nascimento</label>
-        <input type="date" id="dataNascimentoAstro" />
-      </div>
-
-      <button class="btn-calcular" onclick="calcularSignoSolar()">
-        Descobrir Signo
-      </button>
-
-      <!-- Loading -->
-      <div class="loading" id="loadingAstrologia">
-        <div class="spinner"></div>
-        <p>Calculando seu signo solar...</p>
-      </div>
-
-      <!-- Resultado -->
-      <div class="resultado" id="resultadoAstrologia">
-        <div class="numero-box">
-          <div class="numero-label">Seu Signo Solar</div>
-          <div class="numero-valor" id="signoValor">-</div>
-          <div class="numero-descricao" id="signoDesc">
-            Carregando...
-          </div>
-        </div>
-
-        <div class="numero-box">
-          <div class="numero-label">Período</div>
-          <div class="numero-descricao" id="periodoDesc">
-            Carregando...
-          </div>
-        </div>
-
-        <div class="numero-box" style="background: #fafbfc; border-left: 4px solid #d4af37;">
-          <div class="numero-label" style="color: #d4af37;">Próximo Passo</div>
-          <div class="numero-descricao" id="ganhoAstroTexto" style="color: #666; font-style: italic;">
-            Carregando...
-          </div>
-        </div>
-      </div>
-    </div>
-
     <!-- Módulo C: Chat de Demonstração -->
     <div class="modulo" id="modulo-chat" data-modulo="chat">
-      <h2>💬 Módulo C — Chat de Demonstração</h2>
+      <h2>💬 Chat de Demonstração</h2>
       <p style="color: #666; margin-bottom: 25px;">
         Converse com o Mentor ZUNI — até 5 trocas gratuitas. Após esgotá-las, conheça a Sessão Completa.
       </p>
@@ -896,10 +746,6 @@
 
         <!-- Sidebar com Botões de Produtos (sempre visível) -->
         <div id="chatSidebarProdutos" style="display: flex; flex-direction: column; gap: 12px; min-width: 150px;">
-          <a href="https://www.zunisuprema.com.br/checkout-mapa-integrado.html" class="produto-btn-sidebar" style="background: #d4af37; color: #1a1a3e;" onmouseover="this.style.background='#c9a02a';" onmouseout="this.style.background='#d4af37';">
-            🌟<br/>Mapa<br/>Integrado
-          </a>
-
           <a href="https://www.zunisuprema.com.br/loja" class="produto-btn-sidebar" style="background: transparent; color: #d4af37;" onmouseover="this.style.background='rgba(212, 175, 55, 0.1)';" onmouseout="this.style.background='transparent';">
             📚<br/>Livros<br/>Vivos
           </a>
@@ -1015,7 +861,7 @@
 
     <!-- Módulo D: Livro Vivo Degustação -->
     <div class="modulo" id="modulo-livro" data-modulo="livro" style="background: linear-gradient(135deg, #f0f0f0 0%, #e8e8e8 100%); padding: 60px 30px;">
-      <h2 style="color: #1a1a3e; margin-bottom: 20px; text-align: center;">📚 Módulo D — Degustação de Livro Vivo</h2>
+      <h2 style="color: #1a1a3e; margin-bottom: 20px; text-align: center;">📚 Degustação de Livro Vivo</h2>
       <p style="color: #666; font-size: 18px; margin-bottom: 30px; text-align: center;">
         Leia o primeiro capítulo de "Os Bastidores da Mente - Volume I" e converse com a obra.
       </p>
@@ -1096,19 +942,9 @@
       </div>
     </div>
 
-    <!-- Bloco de Oferta -->
-    <div class="oferta-section" id="ofertaSection">
-      <h2>✨ Gostou? Aprofunde a Experiência</h2>
-      <p>Isso é só uma prévia. Ao contratar uma sessão com o Mentor ZUNI, você recebe — de presente — um estudo mais completo de astrologia e numerologia ao final da conversa.</p>
-      <div class="cta-links">
-        <a href="https://www.zunisuprema.com.br/checkout" class="cta-link">💬 Chat com Mentor (R$ 27,90)</a>
-        <a href="https://www.zunisuprema.com.br/loja/" class="cta-link">📚 Livros Vivos (R$ 57,90)</a>
-      </div>
-    </div>
-
     <!-- Footer -->
     <div class="footer">
-      <p>© 2026 ZUNI Suprema. Explorando astrologia, numerologia e autoconhecimento.</p>
+      <p>© 2026 ZUNI Suprema. Explorando o autoconhecimento.</p>
       <p>
         <a href="https://zunisuprema.com.br/privacidade">Privacidade</a> |
         <a href="https://zunisuprema.com.br/termos">Termos</a>
