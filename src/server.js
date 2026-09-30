@@ -18,7 +18,7 @@ const { buscarLivro } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSessionId, marcarPedidoPendenteProcessado } = require('./lib/pedidosCheckoutStripe');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
-const { criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
+const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
 const { calcularMapaNatal } = require('./lib/astro');
@@ -2010,15 +2010,15 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
 
 app.get('/api/validar-cupom', async (req, res) => {
   try {
-    console.log('[VALIDAR-CUPOM] Requisição recebida:', req.query);
     const { codigo, livroId } = req.query;
+    console.log('[VALIDAR-CUPOM] Requisição recebida:', { ...req.query, codigo: mascararCodigo(codigo) });
     if (!codigo) {
       return res.status(400).json({ valido: false, error: 'Código de cupom é obrigatório.' });
     }
 
-    console.log('[VALIDAR-CUPOM] [1] Validando cupom:', codigo);
+    console.log('[VALIDAR-CUPOM] [1] Validando cupom:', mascararCodigo(codigo));
     const cupom = await validarCupomSemMarcar(codigo);
-    console.log('[VALIDAR-CUPOM] [1] Resultado da validação:', cupom);
+    console.log('[VALIDAR-CUPOM] [1] Resultado da validação:', cupom ? { ...cupom, codigo: mascararCodigo(cupom.codigo) } : cupom);
     if (!cupom) {
       return res.status(404).json({ valido: false, error: 'Cupom inválido ou expirado.' });
     }
@@ -3582,7 +3582,7 @@ app.post('/api/checkout/mapa-integrado', async (req, res) => {
       }
       const desconto = precoFinal * (cupomValido.percentual / 100);
       precoFinal = Math.max(0, precoFinal - desconto);
-      console.log(`[MAPA-INTEGRADO] Cupom ${cupom} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
+      console.log(`[MAPA-INTEGRADO] Cupom ${mascararCodigo(cupom)} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
     }
 
     // Validar formato de data e hora
@@ -3758,7 +3758,7 @@ app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
       }
       const desconto = precoFinal * (cupomValido.percentual / 100);
       precoFinal = Math.max(0, precoFinal - desconto);
-      console.log(`[MAPA-INTEGRADO-PREF] Cupom ${cupom} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
+      console.log(`[MAPA-INTEGRADO-PREF] Cupom ${mascararCodigo(cupom)} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
     }
 
     if (!mpClient) {

@@ -41,6 +41,14 @@ function gerarSufixoAleatorio(tamanho) {
 }
 
 /**
+ * Código de cupom para log: só os 3 primeiros caracteres + "***". O código
+ * inteiro é credencial de desconto e nunca deve aparecer em log.
+ */
+function mascararCodigo(codigo) {
+  return `${String(codigo || '').slice(0, 3)}***`;
+}
+
+/**
  * Gera e persiste um cupom pessoal de sessão ("MENTOR-XXXXXX"), 30% sem
  * teto, válido por 7 dias, uso múltiplo permitido dentro do prazo.
  * Deve ser chamado uma vez por sessão encerrada (ver gerarEEnviarRelatorio).
@@ -136,11 +144,11 @@ async function validarCupom(codigo) {
     .select();
 
   if (error) {
-    console.error(`[CUPOM] Erro ao marcar cupom como usado (${codigoNormalizado}):`, error.message);
+    console.error(`[CUPOM] Erro ao marcar cupom como usado (${mascararCodigo(codigoNormalizado)}):`, error.message);
   }
 
   if (data && data.length === 0) {
-    console.warn(`[CUPOM] Possível uso concorrente detectado para ${codigoNormalizado}`);
+    console.warn(`[CUPOM] Possível uso concorrente detectado para ${mascararCodigo(codigoNormalizado)}`);
   }
 
   return cupom;
@@ -190,4 +198,4 @@ function calcularDesconto(livro, cupom) {
   };
 }
 
-module.exports = { criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto, DIAS_VALIDADE_CUPOM_SESSAO };
+module.exports = { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto, DIAS_VALIDADE_CUPOM_SESSAO };
