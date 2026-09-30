@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 29/09/2026 (frente Resend concluída e em produção; Pix removido da tela dos livros).
+**Última atualização**: 30/09/2026 (serviço astro-numerológico fora do ar; testes pós-rebase feitos).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -243,13 +243,30 @@ Playwright, cartão `4242 4242 4242 4242`), evidência conferida direto no banco
   `PolicyAgent` do sandbox MP, não relacionado ao código; decisão do usuário foi
   não investigar).
 
-**Testes pós-rebase pendentes (29/09/2026)**: depois do rebase sobre o Resend o
-`server.js` mesclou sem conflito, mas o fluxo de Livros/Stripe **não foi retestado**
-(só `node --check`). Por decisão do usuário, os testes (compra simples, com
-audiolivro, reenvio do webhook, cupom 100%, regressão do ZUNI Direciona, com
-comprador `zunisuprema@gmail.com` e id de envio do Resend conferido no log) ficam
-para **depois da remoção do serviço astro-numerológico**, para testar os e-mails já
-sem o brinde.
+**Testes pós-rebase — FEITOS em 30/09/2026** (servidor local `PORT=8091` + `stripe
+listen` com a chave de teste do `.env`, cartão `4242…`, comprador
+`zunisuprema@gmail.com`, já sem o brinde), todos passaram:
+- Livro simples → e-mail `acesso-livro` id `01a0f309-089d-7118-8bd4-f1c7b4437cb1`.
+- Livro + audiolivro → 2 linhas em `acessos_livros` (`livro` + `audiolivro`), e-mail
+  id `01a0f309-7f2b-77ac-b3ac-24261b2eaea2`.
+- Reenvio do mesmo evento do webhook → 1ª entrega processada (e-mail id
+  `01a0f30a-10bd-71bd-9913-c1fbee8037be`), 2ª `já processado — ignorando reentrega`.
+- Cupom 100% (com e sem audiolivro) → acesso direto, sem Stripe; e-mails ids
+  `01a0f30a-8190-7960-8a61-728f58a965a9` e `01a0f30a-850f-79cb-b7fc-3b0a928bc88d`.
+- Regressão ZUNI Direciona: checkout → webhook marca `chat-mentor` como paga →
+  `questionario-selecao.html`; Pinterest com `value` 27,90.
+- E-mails da Síntese (com cupom + PDF), acesso a livro (com audiolivro) e Sessões
+  Extras enviados pelo Resend (ids `01a0f30c-a92d-719e-8ab4-a11ea6ac970e`,
+  `01a0f30c-aa9e-722d-a886-5d80e7a258aa`, `01a0f30c-ab77-78ef-934e-b67e2e7de898`),
+  HTML conferido: sem brinde nem menção a astrologia/numerologia.
+- Zero `[EMAIL_FALHOU]` no log. **Não testado**: o relatório do ZUNI Direciona de
+  ponta a ponta (chat real até o fim + Claude + Make) — a rota de teste dispara o
+  webhook real do Make, então só o envio do e-mail foi exercitado.
+Os scripts `testar-checkout-livro-stripe.js` (não clica mais no seletor de método) e
+`testar-idempotencia-webhook-livro.js` (aceita `--email=`) foram ajustados.
+**Achado**: o log `[CUPOM] Possível uso concorrente detectado para <código>` imprime o
+código do cupom em claro — o código do cupom de teste 100% apareceu na saída desta
+sessão. Rotacionar o cupom de teste e/ou parar de logar o código.
 
 **Achado de produção durante os testes — SendGrid com créditos esgotados (RESOLVIDO
 em 29/09/2026 pela migração para Resend, ver frente abaixo)**: erro
@@ -330,6 +347,45 @@ reconstruído com checkout próprio — não corrigir no código atual do Mercad
 
 **Frente Stripe — sem mudança nesta sessão**: os 7 commits locais (Fase 1 + Fase 2)
 seguem aguardando a ativação da conta Stripe em produção (ver checklist acima).
+
+---
+
+## Decisão de 30/09/2026 — serviço astro-numerológico FORA DO AR
+
+**Decisão do usuário**: todo o serviço astro-numerológico atual sai do ar e será
+**refeito do zero sobre um novo RAG, em outro formato**. No ar ficam só os serviços
+essenciais: **loja de livros e ZUNI Direciona, pagamento só por cartão via Stripe**.
+Desativado, **não excluído**: código de backend e tabelas mantidos.
+
+O que saiu (commits locais no `main`, **sem push** — sobem junto com o deploy do Stripe):
+- **Brinde "Estudo Integrativo"**: bloco "Presente para você" removido dos 3 e-mails
+  (acesso a livro, Síntese do ZUNI Direciona, Sessões Extras).
+- **Redirect 302 → `/loja/`**: `/brinde`, `/brinde.html`, `/checkout-mapa-astral.html`,
+  `/checkout-mapa-integrado.html` (middleware em `src/server.js` antes das rotas e do
+  `express.static`).
+- **410 `{"error":"Serviço em breve."}`**: `POST /api/checkout/mapa-astral[/preference|/test]`,
+  `POST /api/checkout/mapa-integrado[/preference]` e todo `/api/brinde/*`.
+- **Mantidos de propósito**: webhook do MercadoPago (pagamentos já em andamento) e os
+  GET de status dos checkouts; rotas `/api/experimente-*` de numerologia/astrologia/
+  lead (sem tela que as chame); `lib/brinde.js`, `astro.js`, `numerologia.js` etc.
+- **`experimente.html`**: removidos módulos A e B, itens da navbar, tíquete de
+  código-convite (só destravava o módulo A), botão "Mapa Integrado" da sidebar, bloco
+  de oferta e textos de rodapé; `experimente-client.js` limpo. Ficam o Módulo C (chat
+  de demonstração) e o D (degustação de livro); `#modulo-livro` segue funcionando e o
+  link da loja ("Ler grátis + conversar") abre a degustação.
+- **Loja**: card "Mapa Integrado ZUNI" e a seção "Serviços Complementares" removidos.
+- **`SYSTEM_PROMPT` do Mentor**: só a menção "ao Mapa Integrado" saiu (linha da
+  instrução sobre botões). Antes: "…aos Livros Vivos, ao Mapa Integrado ou à equipe
+  multidisciplinar…" → depois: "…aos Livros Vivos ou à equipe multidisciplinar…".
+- **Verificado** (local, 30/09): redirects 302 e 410 conforme acima; `/loja/`,
+  `/experimente.html`, `checkout-livro.html` e `checkout.html` seguem 200; sem erro de
+  JS em `experimente.html`; `#modulo-livro` visível após o clique vindo da loja.
+
+**Pendências dessa decisão**: (a) o e-mail de resultado de numerologia
+(`capturasExperimente.js`) ainda leva botão para `checkout-mapa-integrado.html` — sem
+tela que o dispare, mas o link agora cairia na loja; limpar quando o serviço novo
+for desenhado. (b) o backlog "Mapa Integrado / família de mapas" (seção 5) e as
+pendências do futuro serviço Astro-Num passam a depender do novo RAG.
 
 ---
 
