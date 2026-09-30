@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 30/09/2026 (serviço astro-numerológico fora do ar; testes pós-rebase feitos).
+**Última atualização**: 30/09/2026 (checklist pré-push do Stripe; cupom de teste rotacionado; logs de cupom mascarados).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -264,9 +264,26 @@ listen` com a chave de teste do `.env`, cartão `4242…`, comprador
   webhook real do Make, então só o envio do e-mail foi exercitado.
 Os scripts `testar-checkout-livro-stripe.js` (não clica mais no seletor de método) e
 `testar-idempotencia-webhook-livro.js` (aceita `--email=`) foram ajustados.
-**Achado**: o log `[CUPOM] Possível uso concorrente detectado para <código>` imprime o
-código do cupom em claro — o código do cupom de teste 100% apareceu na saída desta
-sessão. Rotacionar o cupom de teste e/ou parar de logar o código.
+**Achado (RESOLVIDO em 30/09/2026)**: o log `[CUPOM] Possível uso concorrente detectado
+para <código>` imprimia o código do cupom em claro (e o `/api/validar-cupom`, o
+Mapa Integrado e o erro ao marcar cupom também). Agora todos os logs de cupom usam
+`mascararCodigo()` (`lib/cupons.js`): só os 3 primeiros caracteres + `***`. Cupom de
+teste 100% **rotacionado**: novo cupom id 14 (`campanha`, 100%, sem teto, 16
+caracteres, `expira_em` 2026-12-31), validado no fluxo de livro (com e sem
+audiolivro) com o servidor já logando mascarado — 0 ocorrências do código no log;
+só então o antigo (id 13) foi encerrado (`expira_em = now()`, 30/09/2026 16:45 UTC),
+confirmado que deixou de ser aceito. O código novo foi informado só na conversa,
+**não está em arquivo nem commit**.
+
+**E-mail da Síntese (30/09/2026)**: `**…**` literais trocados por `<strong>` (Síntese
+e Dossiê) e "sua sessão com o Mentor ZUNI Suprema" → "sua sessão de orientação do ZUNI
+Direciona" (nada mais mudou). Validade do cupom de 30% no e-mail = 7 dias a partir da
+criação (`DIAS_VALIDADE_CUPOM_SESSAO`, `lib/cupons.js:31`, gravada em
+`cupons_desconto.expira_em`); o "01/10" visto no teste era o cupom fictício de 1 dia
+do script de teste. O "quadro branco" no fim do e-mail de teste era, muito
+provavelmente, a miniatura do PDF de teste em branco no Gmail. **Ainda com nome
+antigo (não alterado, sem pedido)**: assunto "seu Chat Mentor ZUNI está pronto" e
+anexo `chat-mentor-zuni.pdf`; o corpo do e-mail não usa `<p>` (as linhas se juntam).
 
 **Achado de produção durante os testes — SendGrid com créditos esgotados (RESOLVIDO
 em 29/09/2026 pela migração para Resend, ver frente abaixo)**: erro
@@ -347,6 +364,55 @@ reconstruído com checkout próprio — não corrigir no código atual do Mercad
 
 **Frente Stripe — sem mudança nesta sessão**: os 7 commits locais (Fase 1 + Fase 2)
 seguem aguardando a ativação da conta Stripe em produção (ver checklist acima).
+
+---
+
+## Checklist pré-push do Stripe (30/09/2026)
+
+`main` local está 20+ commits à frente de `origin/main`; o push (`git push origin
+main`) sobe **tudo junto**: Stripe Fase 1 (ZUNI Direciona) + Fase 2 (Livros, só
+cartão) + remoção do serviço astro-numerológico/Pix da tela + logs de cupom
+mascarados + ajustes do e-mail da Síntese. O Resend já está em produção (`e04a128`).
+
+**Pronto**
+- Código testado em modo de teste (Stripe CLI, cartão 4242) **depois** do rebase:
+  livro simples, com audiolivro, reenvio do webhook, cupom 100%, regressão do ZUNI
+  Direciona, e-mails sem brinde pelo Resend (ids no bloco "Testes pós-rebase").
+- Webhook compatível com a API `2026-08-26.dahlia`: o pacote `stripe` 22.6.2 usa
+  essa mesma versão por padrão (o cliente não fixa `apiVersion`); campos lidos:
+  `event.type`, `data.object.{id, payment_status, client_reference_id, metadata.*}`.
+- Variáveis no Railway (conferido 30/09, só nomes/prefixos): `STRIPE_PUBLISHABLE_KEY`
+  `pk_live_`, `STRIPE_SECRET_KEY` **`rk_live_`** (chave restrita), `STRIPE_WEBHOOK_SECRET`
+  `whsec_`, `RESEND_API_KEY`, `RESEND_FROM_EMAIL`, `RESEND_REPLY_TO`, `FRONTEND_URL`.
+  O `.env` local continua com as chaves de **teste**.
+- Logs de cupom mascarados; cupom de teste rotacionado; Pix e astro-numerologia fora
+  da tela; e-mail da Síntese ajustado.
+
+**Falta / a confirmar antes (ou logo depois) do push**
+1. **Permissões da chave restrita `rk_live_`**: o código só chama
+   `checkout.sessions.create` (2 pontos) e `webhooks.constructEvent` (local, sem
+   API). A chave precisa de *Checkout Sessions: Write*; sem isso o checkout dá 500
+   em produção. Não dá para ver daqui — só a compra real confirma.
+2. **Endpoint de produção no painel**: confirmar que assina os 3 eventos
+   (`checkout.session.completed`, `…async_payment_succeeded`, `…async_payment_failed`)
+   e que o `whsec_` do Railway é o **desse** endpoint (não o do `stripe listen`).
+   Informado pelo usuário, não verificado por mim.
+3. **Conta Stripe de produção** ativa e com cobranças habilitadas (as chaves live
+   sugerem que sim; não verificado).
+4. **Compra real pós-deploy**, nos dois produtos (Sessão ZUNI e 1 Livro) com estorno
+   pelo painel, conferindo no log de produção `[STRIPE-WEBHOOK] … processado` e
+   `[EMAIL] … id=`. **Nunca testado**: ZUNI Direciona de ponta a ponta (chat até o
+   fim + relatório + Make).
+5. **Sem Pix** em nenhum produto até o Stripe liberar; MercadoPago segue no código e
+   no Railway (não remover — ver seção da Fase 1).
+6. **Plano de volta**: se o checkout falhar em produção, reverter o push
+   (`git revert` dos commits) ou reimplantar o deploy anterior no Railway; as
+   variáveis não precisam mudar.
+7. Limpeza dos dados de teste em `acessos_livros`/`checkout_pedidos_pendentes`
+   (agora também linhas com `zunisuprema@gmail.com`) — combinada para depois.
+8. Pendências abertas que **não** bloqueiam o push: webhook do MercadoPago sem
+   `x-signature`; `GET /api/checkout/session-status` mascara 500; `chat.html` não
+   retoma sessão; `?tema=` do checkout não chega ao produto.
 
 ---
 
