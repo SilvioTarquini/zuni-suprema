@@ -673,7 +673,7 @@ FORMATO
 
 FECHAMENTO E ENCAMINHAMENTO
 - Você tem poucas trocas nesta degustação; faça cada uma revelar profundidade. Deixe transparecer, sem soar comercial, que há muito mais na experiência completa.
-- NUNCA escreva URLs, links, endereços ou qualquer forma de direcionamento web no texto. Quando fizer sentido convidar para aprofundar, refira-se aos BOTÕES visíveis na tela — mencione naturalmente que há acesso à Sessão Completa do Mentor, aos Livros Vivos, ao Mapa Integrado ou à equipe multidisciplinar (via WhatsApp) disponíveis nos botões ao lado/abaixo do chat. Use linguagem natural e acessível.
+- NUNCA escreva URLs, links, endereços ou qualquer forma de direcionamento web no texto. Quando fizer sentido convidar para aprofundar, refira-se aos BOTÕES visíveis na tela — mencione naturalmente que há acesso à Sessão Completa do Mentor, aos Livros Vivos ou à equipe multidisciplinar (via WhatsApp) disponíveis nos botões ao lado/abaixo do chat. Use linguagem natural e acessível.
 - Em sinais de crise aguda ou risco à vida, oriente com cuidado a procurar ajuda imediata (no Brasil, CVV 188).`;
 
 const app = express();
