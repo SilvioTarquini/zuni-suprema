@@ -1643,7 +1643,6 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
   const tipo = 'sintese-relatorio';
   try {
     const fs = require('fs');
-    const { gerarTokenHMAC } = require('./lib/brinde');
     const { enviarEmail } = require('./lib/email');
 
     const pdfBuffer = fs.readFileSync(pdfPath);
@@ -1667,17 +1666,6 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
           </div>
     ` : '';
 
-    const tokenBrinde = gerarTokenHMAC(email);
-    const linkBrinde = `${frontendUrl}/brinde?token=${encodeURIComponent(tokenBrinde)}&email=${encodeURIComponent(email)}`;
-
-    const blocobrinde = `
-          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#faf9f0;">
-            <p style="margin:0 0 8px; font-size:14px; color:#2c2c2c;"><strong>✨ Presente para você:</strong> Ao completar sua sessão, você ganhou um <strong>Estudo Integrativo</strong> exclusivo — uma análise combinada de astrologia e numerologia, única e personalizada.</p>
-            <p style="margin:0 0 14px; font-size:12px; color:#777;">Este estudo é determinístico (nunca muda), portanto é enviado apenas uma vez por cliente.</p>
-            <a href="${linkBrinde}" style="display:inline-block; padding:10px 18px; background:#d4af37; color:#1a1a3e; text-decoration:none; border-radius:6px; font-weight:bold; font-size:13px;">Acessar Meu Estudo</a>
-          </div>
-    `;
-
     const html = `
 
           ${saudacao}
@@ -1686,7 +1674,6 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
           Em anexo você encontra ${textoEntregaEmail}.
 
           ${blocoCupom}
-          ${blocobrinde}
 
           ZUNI Suprema — A ciência da excelência humana
 www.zunisuprema.com.br
@@ -1835,15 +1822,10 @@ async function marcarPagoSeAprovado(order) {
 async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudiolivro) {
   const tipo = 'acesso-livro';
   try {
-    const { gerarTokenHMAC } = require('./lib/brinde');
     const { enviarEmail } = require('./lib/email');
 
     const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
     const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
-
-    const tokenBrinde = gerarTokenHMAC(email);
-    const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
-    const linkBrinde = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(tokenBrinde)}`;
 
     let linkAudiolivro = '';
     if (tokenAudiolivro) {
@@ -1859,12 +1841,6 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
           ${linkAudiolivro ? `<p><a href="${linkAudiolivro}" style="color:#B8963E;font-weight:bold;">▶️ Ouvir audiolivro</a></p>` : ''}
           <p style="color:#b6ab93;font-size:0.85rem;">O acesso fica disponível até ${expiraFormatado}.</p>
 
-          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#2a2620;">
-            <p style="margin:0 0 8px; font-size:13px; color:#f2ead9;"><strong>✨ Presente para você:</strong> Ganhou também um <strong>Estudo Integrativo</strong> exclusivo — astrologia + numerologia personalizada!</p>
-            <p style="margin:0 0 12px; font-size:11px; color:#b6ab93;">Único e determinístico — enviado uma única vez.</p>
-            <a href="${linkBrinde}" style="display:inline-block; padding:8px 16px; background:#d4af37; color:#1a1a3e; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px;">Acessar Meu Estudo</a>
-          </div>
-
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>
       `;
@@ -1879,24 +1855,15 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
 async function enviarEmailConfirmacaoSessoesExtras(email, nomeCliente, pacoteId) {
   const tipo = 'confirmacao-sessoes-extras';
   try {
-    const { gerarTokenHMAC } = require('./lib/brinde');
     const { enviarEmail } = require('./lib/email');
 
-    const tokenBrinde = gerarTokenHMAC(email);
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
-    const linkBrinde = `${frontendUrl}/brinde?email=${encodeURIComponent(email)}&token=${encodeURIComponent(tokenBrinde)}`;
 
     const html = `
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
           <p>Olá ${nomeCliente}!</p>
           <p>Seu pagamento foi confirmado. Você agora tem <strong>3 sessões extras</strong> disponíveis, válidas por 30 dias.</p>
           <p><a href="${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=aprovado" style="color:#B8963E;font-weight:bold;">Agendar Sessão</a></p>
-
-          <div style="margin:24px 0; padding:18px 20px; border:1px solid #d4af37; border-radius:8px; background:#2a2620;">
-            <p style="margin:0 0 8px; font-size:13px; color:#f2ead9;"><strong>✨ Presente para você:</strong> Ganhou também um <strong>Estudo Integrativo</strong> exclusivo — astrologia + numerologia personalizada!</p>
-            <p style="margin:0 0 12px; font-size:11px; color:#b6ab93;">Único e determinístico — enviado uma única vez.</p>
-            <a href="${linkBrinde}" style="display:inline-block; padding:8px 16px; background:#d4af37; color:#1a1a3e; text-decoration:none; border-radius:4px; font-weight:bold; font-size:12px;">Acessar Meu Estudo</a>
-          </div>
 
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>
@@ -1964,7 +1931,7 @@ async function criarPacoteSessoesSeAplicavel(order, paymentId) {
 
   const pacote = await criarPacoteSessoes({ email: pedido.email, paymentId });
 
-  // Enviar e-mail de confirmação com brinde
+  // Enviar e-mail de confirmação
   try {
     await enviarEmailConfirmacaoSessoesExtras(pedido.email, pedido.nome, pacote.pacoteId);
   } catch (err) {
