@@ -7,7 +7,7 @@
 // formato que o Stripe manda), assinado com o STRIPE_WEBHOOK_SECRET local,
 // e o envia duas vezes ao /api/webhooks/stripe.
 //
-// Uso: node testar-idempotencia-webhook-livro.js <livroId>
+// Uso: node testar-idempotencia-webhook-livro.js <livroId> [--email=x@y.com]
 
 require('dotenv').config();
 const Stripe = require('stripe');
@@ -56,7 +56,7 @@ function postRaw(path, rawBody, headers) {
 }
 
 (async () => {
-  const email = `teste.zuni.idempotencia.${Date.now()}@example.com`;
+  const email = process.argv.find(a => a.startsWith('--email='))?.split('=')[1] || `teste.zuni.idempotencia.${Date.now()}@example.com`;
 
   console.log(`[IDEMPOTENCIA] Criando pedido pendente real (livro=${livroId}, email=${email})...`);
   const criacao = await postJson('/api/checkout/livro/stripe-session', {
