@@ -1649,8 +1649,8 @@ async function sendEmail(email, name, pdfPath, cupom, productType) {
 
     const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
     const saudacao = name ? `Olá, ${name}!` : 'Olá!';
-    const assunto = name ? `${name}, seu Chat Mentor ZUNI está pronto` : 'Seu Chat Mentor ZUNI está pronto';
-    const nomeArquivo = (name || 'chat-mentor-zuni').toLowerCase().replace(/\s+/g, '-');
+    const assunto = name ? `${name}, sua Síntese ZUNI Direciona está pronta` : 'Sua Síntese ZUNI Direciona está pronta';
+    const nomeArquivo = 'sintese-zuni-direciona';
     // Nome da entrega no corpo do e-mail: "Síntese ZUNI Direciona" só para
     // chat-mentor (ZUNI Direciona); demais productTypes mantêm "Dossiê".
     const textoEntregaEmail = productType === 'chat-mentor'
