@@ -3313,6 +3313,27 @@ app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
   }
 });
 
+// ── SERVIÇO ASTRO-NUMEROLÓGICO FORA DO AR (decisão de 30/09/2026) ──────────
+// Mapa Astral, Mapa Integrado e brinde "Estudo Integrativo" serão refeitos do
+// zero sobre um novo RAG. Código e tabelas ficam, só as portas de entrada
+// fecham. Este bloco precisa ficar ANTES das rotas abaixo e do express.static
+// (senão /brinde.html e /checkout-mapa-*.html abririam direto da pasta public).
+// Fica de fora de propósito: webhook do MercadoPago (pagamentos já em
+// andamento) e os GET de status dos checkouts (polling de quem já pagou).
+const PAGINAS_ASTRO_FORA_DO_AR = new Set([
+  '/brinde', '/brinde.html', '/checkout-mapa-astral.html', '/checkout-mapa-integrado.html'
+]);
+const ROTAS_CHECKOUT_ASTRO = /^\/api\/checkout\/mapa-(astral|integrado)(\/preference|\/test)?$/;
+app.use((req, res, next) => {
+  if (req.method === 'GET' && PAGINAS_ASTRO_FORA_DO_AR.has(req.path)) {
+    return res.redirect(302, '/loja/');
+  }
+  if (req.path.startsWith('/api/brinde/') || (req.method === 'POST' && ROTAS_CHECKOUT_ASTRO.test(req.path))) {
+    return res.status(410).json({ error: 'Serviço em breve.' });
+  }
+  next();
+});
+
 // ── MAPA ASTRAL: checkout com dados de nascimento ────────────────
 app.post('/api/checkout/mapa-astral', async (req, res) => {
   try {
