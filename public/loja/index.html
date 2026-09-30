@@ -534,10 +534,6 @@
     <!-- Cards dos livros serão renderizados aqui dinamicamente -->
   </div>
 
-  <h2 style="margin-top: 56px; margin-bottom: 28px; font-size: 1.4rem; font-weight: normal; letter-spacing: 0.5px; color: var(--dourado-suave);">Serviços Complementares</h2>
-  <div class="grade" id="grade-servicos">
-    <!-- Cards de serviços (Mapa Integrado) serão renderizados aqui -->
-  </div>
 </main>
 
 <footer>
@@ -567,52 +563,6 @@
 
 <script>
   let CATALOGO = {};
-
-  // Renderizar serviço: Mapa Integrado ZUNI
-  function renderizarServicos() {
-    const gradeServicos = document.getElementById('grade-servicos');
-
-    const servico = {
-      id: 'mapa-integrado',
-      titulo: 'Mapa Integrado ZUNI',
-      preco: 147.00,
-      resumo: 'Relatório personalizado que integra astrologia e numerologia, entregue por e-mail em 24-48h.',
-      descricao: 'Receba um mapa completo que une análise astrológica e numerológica, revelando padrões profundos sobre sua personalidade, jornada e potencial. Entregue como relatório detalhado enviado para seu e-mail em até 48 horas após a confirmação.',
-      url: '/checkout-mapa-integrado.html'
-    };
-
-    const card = document.createElement('article');
-    card.className = 'livro';
-    card.innerHTML = `
-      <div class="capa"><img src="/loja/capas/mapa-integrado.png" alt="Capa — Mapa Integrado ZUNI" loading="lazy" onerror="console.error('[loja] capa não carregou para', 'mapa-integrado', '→', this.src)"></div>
-      <div class="info">
-        <h2>${servico.titulo}</h2>
-        <p class="resumo">${servico.resumo}</p>
-        <button class="expandir" type="button" aria-expanded="false">+ Leia mais</button>
-        <div class="descricao-expandida" role="region">
-          <p>${servico.descricao}</p>
-        </div>
-        <div class="rodape-card">
-          <p class="preco">R$ ${servico.preco.toFixed(2).replace('.', ',')}</p>
-          <p class="etiqueta-digital">Relatório assíncrono · entrega por e-mail</p>
-          <button class="comprar" disabled>Disponível em breve</button>
-          <div class="aviso-disponivel">Estamos finalizando a validação. Será liberado em breve.</div>
-        </div>
-      </div>
-    `;
-
-    gradeServicos.appendChild(card);
-
-    const btnExpandir = card.querySelector('.expandir');
-    const descExpandida = card.querySelector('.descricao-expandida');
-
-    btnExpandir.addEventListener('click', function () {
-      const estaAberta = descExpandida.classList.contains('ativa');
-      descExpandida.classList.toggle('ativa');
-      btnExpandir.setAttribute('aria-expanded', !estaAberta);
-      btnExpandir.textContent = estaAberta ? '+ Leia mais' : '- Fechar';
-    });
-  }
 
   // Preço: mesma lógica de sempre (Grátis / riscado+promocional / preço simples),
   // isolada em função porque o card enxuto e o painel de detalhe usam os dois.
@@ -755,7 +705,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     iniciarPainel();
     renderizarLivros();
-    renderizarServicos();
   });
 </script>
 
