@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; Leva 2 pendente).
+**Última atualização**: 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -362,8 +362,7 @@ reconstruído com checkout próprio — não corrigir no código atual do Mercad
   relatório já acontece por outro caminho (sob demanda, igual ao Mapa Astral) antes
   de assumir que esse webhook é a via real de entrega.
 
-**Frente Stripe — sem mudança nesta sessão**: os 7 commits locais (Fase 1 + Fase 2)
-seguem aguardando a ativação da conta Stripe em produção (ver checklist acima).
+**Frente Stripe — RESOLVIDA em 30/09/2026**: Fase 1 (ZUNI Direciona) e Fase 2 (Livros, só cartão) estão em produção e foram validadas com compra real; ver "Estado ao encerrar 30/09/2026".
 
 ---
 
@@ -440,38 +439,92 @@ Direciona usando o cupom de teste** e conferir (a) o markdown renderizado nas re
 encaminhamento** ("Abrir conversa no WhatsApp") — a única parte da Leva 1 que não foi
 exercitada no teste de navegador (a rota simulada devolveu erro).
 
-**Achados da compra real (30/09/2026, noite) — em andamento:**
-1. **Leitor de livros no celular (prioridade, bloqueia os anúncios)**: causa — o leitor
-   flipbook (embutido nos bundles de `private/livros/*/index.html`) sempre mostrava as
-   duas páginas e encolhia tudo para caber (escala 0,37 a 390px ⇒ texto de ~5,8px); a
-   barra de controles (~500px) estourava a tela; A+ funcionava mas era imperceptível sob
-   essa escala. Viewport e zoom por pinça já estavam corretos. Correção: patch central
-   no servidor (`src/lib/leitorMobile.js`, usado em `routes/livros.js`), cache em memória
-   por livroId + mtime; se uma âncora não for encontrada, entrega o livro ORIGINAL e
-   loga `[LEITOR_PATCH_FALHOU]`. **Rodada 1 (no ar, deploy `c1ab5e83`)**: 25 livros do
-   leitor flipbook do apêndice. **Rodada 2 (implementada, aguardando OK de deploy)**: mais 7
-   livros com leitores diferentes — motor B (`a-inteligencia-da-vida`,
-   `a-neurobiologia-integrativa-da-depressao`, `a-visao-integrativa-da-obesidade`: página
-   única por deslocamento), motor C (`inesquecivel-charme-feminino`: escala por variável
-   CSS; A+/A− viram zoom, pois no original eram inertes mesmo no desktop), motor D
-   (`a-arquitetura-da-decisao-humana`: folhas A4 passam a ocupar a largura da tela) e os 2
-   flipbooks `arquitetura-excelencia-humana-ii` e `consequencias-edicao-essencial` (mesmo
-   motor da rodada 1, JSON do bundle na mesma linha do marcador). Os 6 "Bastidores da
-   Mente" são HTML puro já responsivo: sem alteração (sem A+/A− próprio). Código:
-   `src/lib/leitorMobile.js` (+ `leitorMobileMotorB.js`, `leitorMobileMotoresCD.js`).
-2. **Estorno não revogava o acesso** (implementado localmente, **não deployado**: `src/lib/estornoStripe.js`,
-   `scripts/testar-estorno-stripe.js`, migração `migrations/007_revogacao_acessos_estorno.sql`
-   ainda NÃO aplicada no Supabase — aplicar ANTES do deploy; depois acrescentar
-   `charge.refunded` e `charge.dispute.created` no webhook de produção): tratar `charge.refunded` (só estorno total) e `charge.dispute.created` no
-   webhook, revogar `acessos_livros` (livro + audiolivro) e `sessions` (ZUNI Direciona)
-   sem apagar registros (migração `007`: `revogado_em`, `motivo_revogacao`,
-   `estornado_em`), log `[ESTORNO_ACESSO_REVOGADO]` + e-mail. Eventos a acrescentar no
-   webhook de produção do Stripe: `charge.refunded` e `charge.dispute.created`.
-   Revogação manual das duas compras de teste de 30/09: feita pelo usuário, por fora.
+**Achados da compra real (30/09/2026, noite) — RESOLVIDOS e no ar:**
+1. **Leitor de livros no celular — NO AR (rodadas 1 e 2).** Causa: o leitor flipbook
+   (embutido nos bundles de `private/livros/*/index.html`) sempre mostrava as duas
+   páginas e encolhia tudo para caber (escala 0,37 a 390px ⇒ texto de ~5,8px); a barra de
+   controles (~500px) estourava a tela; A+ funcionava mas era imperceptível sob essa
+   escala. Viewport e zoom por pinça já estavam corretos. Correção: patch central no
+   servidor (`src/lib/leitorMobile.js`, usado em `routes/livros.js`), cache em memória por
+   livroId + mtime; se uma âncora não for encontrada, entrega o livro ORIGINAL e loga
+   `[LEITOR_PATCH_FALHOU]`. HTML sem bundle (Bastidores) segue intocado, sem log.
+   - **Rodada 1** (deploy `c1ab5e83`, commit `458dfe7`): 25 livros do leitor do apêndice
+     (motor A: página única abaixo de 820px de largura ou 500px de altura, barra em duas
+     linhas abaixo de 760px, A+/A− até 1,6, deslize).
+   - **Rodada 2** (deploy `be8c4f4c`, commit `0111fd0`): mais 7 livros — motor B
+     (`a-inteligencia-da-vida`, `a-neurobiologia-integrativa-da-depressao`,
+     `a-visao-integrativa-da-obesidade`; `leitorMobileMotorB.js`), motor C
+     (`inesquecivel-charme-feminino`: escala por variável CSS; A+/A− viram zoom, pois no
+     original eram inertes mesmo no desktop), motor D (`a-arquitetura-da-decisao-humana`:
+     folhas A4 na largura da tela; `leitorMobileMotoresCD.js`) e os 2 flipbooks
+     `arquitetura-excelencia-humana-ii` e `consequencias-edicao-essencial` (motor A, JSON do
+     bundle na mesma linha do marcador). Total: 32 livros com patch; 6 Bastidores sem.
+   - **Validação**: Chromium emulando celular (390, 430, deitado 844×390, desktop), sem
+     botão cortado nem overflow. Em produção só o apêndice foi aberto (único token de
+     teste); os demais foram testados localmente com o mesmo código. **Não testado**:
+     iPhone/Safari reais e pinch-zoom real.
+   - **Limites conhecidos**: no motor D, zoom em janelas de 820–1100px pode vazar na
+     horizontal (como já era); o celular deitado no motor D usa o layout de desktop.
+2. **Estorno não revogava o acesso — NO AR** (commit `175027a`, deploy `ab3920a4`).
+   `src/lib/estornoStripe.js`: trata `charge.refunded` (só estorno total; parcial só avisa)
+   e `charge.dispute.created`; acha o pedido por `payment_intent` →
+   `checkout.sessions.list`; revoga `acessos_livros` (livro + audiolivro) e `sessions` (ZUNI
+   Direciona: `paid=false` + `estornado_em`) sem apagar registros; log
+   `[ESTORNO_ACESSO_REVOGADO]` (também `[ESTORNO_PARCIAL]`, `[ESTORNO_SEM_PEDIDO]`,
+   `[ESTORNO_SEM_EFEITO]`) e e-mail de aviso para zunisuprema@gmail.com. Migração
+   `007_revogacao_acessos_estorno.sql` (`revogado_em`, `motivo_revogacao`,
+   `estornado_em`) **aplicada em produção**. `verificarAcesso` rejeita token revogado; uma
+   reentrega de `checkout.session.completed` após o estorno não reativa a sessão.
+   - **Webhook de produção do Stripe agora com 5 eventos**: `checkout.session.completed`,
+     `…async_payment_succeeded`, `…async_payment_failed`, `charge.refunded`,
+     `charge.dispute.created` (os 2 últimos acrescentados pelo usuário em 30/09).
+   - **Teste de ponta a ponta (Stripe CLI, modo de teste, zunisuprema@gmail.com)**:
+     livro + audiolivro estornado ⇒ 2 linhas revogadas e tokens passam a 403; ZUNI
+     Direciona estornado ⇒ `paid=false`, `/api/chat` 403; reentrega do estorno ⇒
+     `[ESTORNO_SEM_EFEITO]` sem novo e-mail; `checkout.session.completed` reentregue
+     depois ⇒ ignorado; `charge.dispute.created` via `stripe trigger` ⇒ tratado
+     (`[ESTORNO_SEM_PEDIDO]`, pois o trigger não cria Checkout Session).
+     **Não testado**: disputa real sobre pedido nosso (mesmo caminho do estorno, só muda
+     o motivo; coberto no teste com Stripe falso, `scripts/testar-estorno-stripe.js`).
+   - **Limites**: não alcança quem já baixou o livro ou tem a página aberta; disputa ganha
+     não restaura o acesso sozinha (reativação manual); uma gravação de sessão com dados
+     antigos no instante exato do estorno pode sobrescrever `paid=false` (o guard cobre só
+     sessões já lidas com `estornado_em`).
+   - **As duas compras reais de teste de 30/09 (livro "A Presença em Ação" e sessão do
+     ZUNI Direciona) foram revogadas manualmente pelo usuário**
+     (`acessos_livros.revogado_em`, `sessions.estornado_em` preenchidos).
+   - Linhas de teste do estorno ficaram no banco como revogadas (livro
+     `alem-do-que-voce-sente` + 1 sessão, comprador zunisuprema@gmail.com) — entram na
+     limpeza de dados de teste.
+
+## Pendências para amanhã (01/10/2026)
+
+1. **Reformatar "Inesquecível Charme Feminino" no modelo padrão** (o mesmo leitor do
+   apêndice / motor A). **O arquivo será substituído pelo usuário** — aguardar a entrega
+   antes de mexer. Hoje o livro roda no motor C
+   (`private/livros/inesquecivel-charme-feminino/`), com o patch de celular; ao entrar no
+   modelo padrão passa a valer o motor A e o ramo C do patch fica sem uso para esse livro.
+2. **Frente do Livro-Vivo em todas as obras e audiolivros** — a definir/planejar (escopo
+   dado pelo usuário: todas as obras e os audiolivros; seguir a regra de processo:
+   investigar → plano → aprovação → código).
+3. **Leva 2 do ZUNI Direciona** (aprovada, não implementada — detalhes no bloco "Leva 2 —
+   PENDENTE", acima): aviso de clique no WhatsApp (`POST /api/whatsapp-clique`, e-mail
+   limitado a 1 por sessão a cada 10 min); remoção do disparo para o Make
+   (`triggerMake`); fallback de 7 dias quando `LIVRO_ACESSO_DIAS` for inválido ou ausente
+   (hoje `abc` vira `NaN` e a gravação do acesso falha); data do e-mail de acesso no fuso
+   `America/Sao_Paulo`.
+4. **Textos de prompt aguardando aprovação do usuário** (nada no prompt muda sem o OK —
+   bloco "Aguardando aprovação de texto", acima): `welcomeMessage`; duas linhas do
+   `REPORT_PROMPT` (573 e 616: "Chat Mentor ZUNI" → "ZUNI Direciona"); prompt da Resposta A
+   em `questionarioTimidez.js` (sem título nem Markdown). "Mentor ZUNI" permanece como nome
+   da interface conversacional.
+5. **Testes pendentes do usuário**: sessão real do ZUNI Direciona com o cupom de teste
+   (markdown renderizado, botão dourado "📚 Loja", botão do WhatsApp da mensagem de
+   encaminhamento) e abrir alguns dos 32 livros no celular real.
 
 **Pendências futuras registradas em 30/09/2026:**
-- **Unificar os leitores de livro** num único código: hoje há ~5 variantes de flipbook
-  copiadas em ~33 bundles de vários MB; o patch de celular é um remendo central, não a
+- **Unificar os leitores de livro** num único código: hoje há 4 motores de flipbook
+  copiados em ~33 bundles de vários MB; o patch de celular é um remendo central, não a
   solução definitiva.
 - **Segurança — URL pública do MP3 do audiolivro**: `audiobookUrl`/`audiobookPartes`
   são URLs públicas do Supabase Storage; o acesso é checado na rota
