@@ -10,6 +10,7 @@ const Stripe = require('stripe');
 require('dotenv').config();
 
 const livrosRouter = require('./routes/livros');
+const { processarEstorno } = require('./lib/estornoStripe');
 const livroChatRouter = require('./routes/livroChat');
 const experimenteLivroChatRouter = require('./routes/experimenteLivroChat');
 const { criarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO } = require('./lib/acessoLivros');
@@ -97,6 +98,7 @@ function normalizeSessionRow(row) {
     history: row.history || [],
     counter: row.message_count ?? 0,
     paid: row.paid ?? false,
+    estornadoEm: row.estornado_em || null,
     stripeSessionId: row.stripe_session_id || null,
     valorPago: row.valor_pago != null ? Number(row.valor_pago) : null,
     relatorioGerado: row.relatorio_gerado || false,
@@ -142,7 +144,9 @@ async function upsertSession(session) {
     session_id: session.sessionId,
     name: session.name || null,
     email: session.email,
-    paid: session.paid ?? false,
+    // Sessão estornada/contestada nunca volta a paid=true por uma gravação
+    // com dados antigos (ver lib/estornoStripe.js).
+    paid: session.estornadoEm ? false : (session.paid ?? false),
     stripe_session_id: session.stripeSessionId || null,
     valor_pago: session.valorPago != null ? session.valorPago : null,
     message_count: session.counter ?? 0,
@@ -696,6 +700,13 @@ async function processarFulfillmentChatMentor(stripeSession, eventType) {
     return;
   }
 
+  // Pagamento estornado/contestado: uma reentrega de checkout.session.completed
+  // não pode reativar a sessão.
+  if (sessaoAtual.estornadoEm) {
+    console.log(`[STRIPE-WEBHOOK] Sessão ${sessionId} foi estornada — ignorando ${eventType}.`);
+    return;
+  }
+
   // Idempotência: reentrega do mesmo evento (ou completed + async_payment_succeeded
   // para o mesmo pagamento) não deve reprocessar o fulfillment.
   if (sessaoAtual.paid) {
@@ -830,6 +841,18 @@ app.post('/api/webhooks/stripe', express.raw({ type: 'application/json' }), asyn
   } catch (err) {
     console.error('[STRIPE-WEBHOOK] Assinatura inválida:', err.message);
     return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
+
+  // Estorno/disputa: revoga o acesso (ver lib/estornoStripe.js). Erro vira 500
+  // para o Stripe reentregar.
+  if (event.type === 'charge.refunded' || event.type === 'charge.dispute.created') {
+    try {
+      await processarEstorno(event, { stripeClient, supabase: assertSupabase(), enviarEmail: require('./lib/email').enviarEmail });
+      return res.status(200).json({ received: true });
+    } catch (err) {
+      console.error(`[STRIPE-WEBHOOK] Erro processando ${event.type}:`, err.message);
+      return res.status(500).json({ error: 'Erro ao processar estorno.' });
+    }
   }
 
   const TIPOS_RELEVANTES = [

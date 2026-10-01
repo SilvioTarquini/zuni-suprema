@@ -98,6 +98,10 @@ async function verificarAcesso(token, livroId, tiposPermitidos = ['livro']) {
 
   if (error || !data) return null;
 
+  // Acesso revogado (estorno/disputa — ver lib/estornoStripe.js): o registro
+  // fica, mas o token deixa de abrir o livro/audiolivro.
+  if (data.revogado_em) return null;
+
   const expirado = new Date(data.data_expiracao).getTime() < Date.now();
   if (expirado) return null;
 

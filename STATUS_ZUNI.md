@@ -459,8 +459,10 @@ exercitada no teste de navegador (a rota simulada devolveu erro).
    motor da rodada 1, JSON do bundle na mesma linha do marcador). Os 6 "Bastidores da
    Mente" são HTML puro já responsivo: sem alteração (sem A+/A− próprio). Código:
    `src/lib/leitorMobile.js` (+ `leitorMobileMotorB.js`, `leitorMobileMotoresCD.js`).
-2. **Estorno não revogava o acesso** (aprovado, ainda não implementado — vem depois do
-   leitor): tratar `charge.refunded` (só estorno total) e `charge.dispute.created` no
+2. **Estorno não revogava o acesso** (implementado localmente, **não deployado**: `src/lib/estornoStripe.js`,
+   `scripts/testar-estorno-stripe.js`, migração `migrations/007_revogacao_acessos_estorno.sql`
+   ainda NÃO aplicada no Supabase — aplicar ANTES do deploy; depois acrescentar
+   `charge.refunded` e `charge.dispute.created` no webhook de produção): tratar `charge.refunded` (só estorno total) e `charge.dispute.created` no
    webhook, revogar `acessos_livros` (livro + audiolivro) e `sessions` (ZUNI Direciona)
    sem apagar registros (migração `007`: `revogado_em`, `motivo_revogacao`,
    `estornado_em`), log `[ESTORNO_ACESSO_REVOGADO]` + e-mail. Eventos a acrescentar no
