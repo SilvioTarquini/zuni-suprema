@@ -448,13 +448,17 @@ exercitada no teste de navegador (a rota simulada devolveu erro).
    essa escala. Viewport e zoom por pinça já estavam corretos. Correção: patch central
    no servidor (`src/lib/leitorMobile.js`, usado em `routes/livros.js`), cache em memória
    por livroId + mtime; se uma âncora não for encontrada, entrega o livro ORIGINAL e
-   loga `[LEITOR_PATCH_FALHOU]`. Escopo desta rodada: os 25 livros com o mesmo leitor do
-   apêndice. **Rodada seguinte**: 5 livros com leitor diferente
-   (`a-inteligencia-da-vida`, `a-neurobiologia-integrativa-da-depressao`,
-   `a-visao-integrativa-da-obesidade`, `inesquecivel-charme-feminino`,
-   `a-arquitetura-da-decisao-humana`), 2 flipbooks em HTML puro
-   (`arquitetura-excelencia-humana-ii`, `consequencias-edicao-essencial`) e os 6
-   "Bastidores da Mente" (HTML puro, sem overflow a 390px, legibilidade a conferir).
+   loga `[LEITOR_PATCH_FALHOU]`. **Rodada 1 (no ar, deploy `c1ab5e83`)**: 25 livros do
+   leitor flipbook do apêndice. **Rodada 2 (implementada, aguardando OK de deploy)**: mais 7
+   livros com leitores diferentes — motor B (`a-inteligencia-da-vida`,
+   `a-neurobiologia-integrativa-da-depressao`, `a-visao-integrativa-da-obesidade`: página
+   única por deslocamento), motor C (`inesquecivel-charme-feminino`: escala por variável
+   CSS; A+/A− viram zoom, pois no original eram inertes mesmo no desktop), motor D
+   (`a-arquitetura-da-decisao-humana`: folhas A4 passam a ocupar a largura da tela) e os 2
+   flipbooks `arquitetura-excelencia-humana-ii` e `consequencias-edicao-essencial` (mesmo
+   motor da rodada 1, JSON do bundle na mesma linha do marcador). Os 6 "Bastidores da
+   Mente" são HTML puro já responsivo: sem alteração (sem A+/A− próprio). Código:
+   `src/lib/leitorMobile.js` (+ `leitorMobileMotorB.js`, `leitorMobileMotoresCD.js`).
 2. **Estorno não revogava o acesso** (aprovado, ainda não implementado — vem depois do
    leitor): tratar `charge.refunded` (só estorno total) e `charge.dispute.created` no
    webhook, revogar `acessos_livros` (livro + audiolivro) e `sessions` (ZUNI Direciona)

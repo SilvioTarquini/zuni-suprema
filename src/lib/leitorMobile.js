@@ -17,7 +17,12 @@
 //  - A+/A− com limite maior (até 1,6) — o texto muda de fato de tamanho.
 
 const fs = require('fs/promises');
+const { patchMotorB, ehMotorB } = require('./leitorMobileMotorB');
+const { patchMotorC, ehMotorC, patchMotorD, ehMotorD } = require('./leitorMobileMotoresCD');
 
+// HTML sem bundle (ex.: Os Bastidores da Mente) já é responsivo: não há o que
+// remendar e isso não é falha.
+const MOTIVO_SEM_BUNDLE = 'html sem bundle do leitor';
 const MARCADOR_TEMPLATE = '<script type="__bundler/template">';
 
 // Âncoras: todas precisam existir no template, senão o patch é abortado.
@@ -179,25 +184,38 @@ const NOVO_LAYOUT = String.raw`
 function aplicarPatchLeitor(htmlOriginal) {
   try {
     const iMarcador = htmlOriginal.lastIndexOf(MARCADOR_TEMPLATE);
-    if (iMarcador < 0) return { ok: false, motivo: 'bundle sem template do leitor' };
+    if (iMarcador < 0) return { ok: false, motivo: MOTIVO_SEM_BUNDLE };
 
-    const iLinha = htmlOriginal.indexOf('\n', iMarcador) + 1;
-    const iFim = htmlOriginal.indexOf('\n', iLinha);
-    if (iLinha <= 0 || iFim < 0) return { ok: false, motivo: 'template truncado' };
+    // O JSON do template começa logo depois do marcador (na mesma linha ou na
+    // seguinte, conforme o bundle) e termina no primeiro "</script>" literal —
+    // dentro do JSON, "</" sempre aparece escapado.
+    let iLinha = iMarcador + MARCADOR_TEMPLATE.length;
+    while (/\s/.test(htmlOriginal[iLinha])) iLinha++;
+    const iFim = htmlOriginal.indexOf('</script>', iLinha);
+    if (htmlOriginal[iLinha] !== '"' || iFim < 0) return { ok: false, motivo: 'template truncado' };
 
     let template = JSON.parse(htmlOriginal.slice(iLinha, iFim));
     if (typeof template !== 'string') return { ok: false, motivo: 'template não é string' };
 
-    if (!ANCORA_LAYOUT.test(template)) return { ok: false, motivo: 'âncora layout() não encontrada' };
-    for (const a of [ANCORA_LIMITE_FONTE, ANCORA_INIT, ANCORA_METODO_ESC, ANCORA_FIM_HELMET, ...ANCORAS_EXIGIDAS]) {
-      if (!template.includes(a)) return { ok: false, motivo: `âncora não encontrada: ${a.trim().slice(0, 40)}` };
-    }
+    if (ANCORA_LAYOUT.test(template)) {
+      for (const a of [ANCORA_LIMITE_FONTE, ANCORA_INIT, ANCORA_METODO_ESC, ANCORA_FIM_HELMET, ...ANCORAS_EXIGIDAS]) {
+        if (!template.includes(a)) return { ok: false, motivo: `âncora não encontrada: ${a.trim().slice(0, 40)}` };
+      }
 
-    template = template
-      .replace(ANCORA_LAYOUT, () => NOVO_LAYOUT)
-      .replace(ANCORA_LIMITE_FONTE, () => 'Math.min(1.6, Math.max(0.8')
-      .replace(ANCORA_INIT, () => '    this.bind();\n    this.zsInstall();\n    this.layout();')
-      .replace(ANCORA_FIM_HELMET, () => CSS_PATCH + ANCORA_FIM_HELMET);
+      template = template
+        .replace(ANCORA_LAYOUT, () => NOVO_LAYOUT)
+        .replace(ANCORA_LIMITE_FONTE, () => 'Math.min(1.6, Math.max(0.8')
+        .replace(ANCORA_INIT, () => '    this.bind();\n    this.zsInstall();\n    this.layout();')
+        .replace(ANCORA_FIM_HELMET, () => CSS_PATCH + ANCORA_FIM_HELMET);
+    } else if (ehMotorB(template)) {
+      template = patchMotorB(template);
+    } else if (ehMotorC(template)) {
+      template = patchMotorC(template);
+    } else if (ehMotorD(template)) {
+      template = patchMotorD(template);
+    } else {
+      return { ok: false, motivo: 'leitor não reconhecido (âncora layout() não encontrada)' };
+    }
 
     // '</' precisa sair escapado: o JSON vive dentro de uma <script> do HTML externo.
     const json = JSON.stringify(template).replace(/<\//g, '<\\/');
@@ -227,7 +245,7 @@ async function lerLivroComPatch(livroId, htmlPath) {
   const resultado = aplicarPatchLeitor(original);
   if (resultado.ok) {
     html = resultado.html;
-  } else {
+  } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE) {
     console.error(`[LEITOR_PATCH_FALHOU] livroId=${livroId} motivo=${resultado.motivo} — entregando o livro original.`);
   }
 
