@@ -440,6 +440,39 @@ Direciona usando o cupom de teste** e conferir (a) o markdown renderizado nas re
 encaminhamento** ("Abrir conversa no WhatsApp") — a única parte da Leva 1 que não foi
 exercitada no teste de navegador (a rota simulada devolveu erro).
 
+**Achados da compra real (30/09/2026, noite) — em andamento:**
+1. **Leitor de livros no celular (prioridade, bloqueia os anúncios)**: causa — o leitor
+   flipbook (embutido nos bundles de `private/livros/*/index.html`) sempre mostrava as
+   duas páginas e encolhia tudo para caber (escala 0,37 a 390px ⇒ texto de ~5,8px); a
+   barra de controles (~500px) estourava a tela; A+ funcionava mas era imperceptível sob
+   essa escala. Viewport e zoom por pinça já estavam corretos. Correção: patch central
+   no servidor (`src/lib/leitorMobile.js`, usado em `routes/livros.js`), cache em memória
+   por livroId + mtime; se uma âncora não for encontrada, entrega o livro ORIGINAL e
+   loga `[LEITOR_PATCH_FALHOU]`. Escopo desta rodada: os 25 livros com o mesmo leitor do
+   apêndice. **Rodada seguinte**: 5 livros com leitor diferente
+   (`a-inteligencia-da-vida`, `a-neurobiologia-integrativa-da-depressao`,
+   `a-visao-integrativa-da-obesidade`, `inesquecivel-charme-feminino`,
+   `a-arquitetura-da-decisao-humana`), 2 flipbooks em HTML puro
+   (`arquitetura-excelencia-humana-ii`, `consequencias-edicao-essencial`) e os 6
+   "Bastidores da Mente" (HTML puro, sem overflow a 390px, legibilidade a conferir).
+2. **Estorno não revogava o acesso** (aprovado, ainda não implementado — vem depois do
+   leitor): tratar `charge.refunded` (só estorno total) e `charge.dispute.created` no
+   webhook, revogar `acessos_livros` (livro + audiolivro) e `sessions` (ZUNI Direciona)
+   sem apagar registros (migração `007`: `revogado_em`, `motivo_revogacao`,
+   `estornado_em`), log `[ESTORNO_ACESSO_REVOGADO]` + e-mail. Eventos a acrescentar no
+   webhook de produção do Stripe: `charge.refunded` e `charge.dispute.created`.
+   Revogação manual das duas compras de teste de 30/09: feita pelo usuário, por fora.
+
+**Pendências futuras registradas em 30/09/2026:**
+- **Unificar os leitores de livro** num único código: hoje há ~5 variantes de flipbook
+  copiadas em ~33 bundles de vários MB; o patch de celular é um remendo central, não a
+  solução definitiva.
+- **Segurança — URL pública do MP3 do audiolivro**: `audiobookUrl`/`audiobookPartes`
+  são URLs públicas do Supabase Storage; o acesso é checado na rota
+  `/audiolivros/:livroId`, mas quem já tiver a URL continua ouvindo/baixando mesmo depois
+  de expirar o acesso ou de um estorno. Corrigir com bucket privado + URL assinada de
+  curta duração.
+
 **Pendências que continuam abertas (não bloqueiam nada):** `MAKE_WEBHOOK_URL` (vira
 remoção, acima); rota antiga do MercadoPago segue no código sem tela; webhook do
 MercadoPago sem `x-signature`; `GET /api/checkout/session-status` mascara 500 como

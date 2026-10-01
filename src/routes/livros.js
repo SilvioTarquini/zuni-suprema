@@ -25,6 +25,7 @@ const express = require('express');
 const router = express.Router();
 const { verificarAcesso } = require('../lib/acessoLivros');
 const { buscarLivro } = require('../lib/catalogoLivros');
+const { lerLivroComPatch } = require('../lib/leitorMobile');
 
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
 const CONTEUDO_LIVROS_DIR = path.join(__dirname, '..', '..', 'private', 'livros');
@@ -76,9 +77,10 @@ router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {
     // Buscar metadata do livro
     const livro = buscarLivro(livroId);
 
-    // Ler o arquivo HTML
+    // Ler o arquivo HTML, já com o patch do leitor para celular. Se o patch
+    // não puder ser aplicado, devolve o original (ver lib/leitorMobile.js).
     const htmlPath = path.join(CONTEUDO_LIVROS_DIR, livroId, 'index.html');
-    let html = await fs.readFile(htmlPath, 'utf8');
+    let html = await lerLivroComPatch(livroId, htmlPath);
 
     // Se o livro tiver textoFonteParaLeitura e ainda não tiver o script de leitura em voz alta
     if (livro && livro.textoFonteParaLeitura && !html.includes('window.livroLeituraPorVoz')) {
