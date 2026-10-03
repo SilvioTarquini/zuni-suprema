@@ -419,6 +419,7 @@
         }
 
         await montarEmbeddedCheckout(data.clientSecret);
+        registrarInicioCheckoutPinterest(data.sessionId);
       } catch (e) {
         btn.disabled = false;
         btn.textContent = TEXTO_BOTAO_PADRAO;
@@ -427,19 +428,50 @@
       }
     }
 
+    // ── Pinterest (fail-open: nunca bloqueia pagamento, confirmação, redirect ou acesso) ──
     let conversaoPinterestDisparada = false;
+    let addToCartPinterestDisparado = false;
 
-    function dispararConversaoPinterest(valor) {
-      if (conversaoPinterestDisparada) return;
-      conversaoPinterestDisparada = true;
+    // Só é chamada depois que o Embedded Checkout foi montado com sucesso.
+    // Sem PII: o sessionId é só uma chave local de deduplicação, não vai ao Pinterest.
+    function registrarInicioCheckoutPinterest(sessionId) {
       try {
+        if (addToCartPinterestDisparado) return;
+        const chave = 'pin_atc_' + sessionId;
+        try { if (sessionId && sessionStorage.getItem(chave)) return; } catch (e) {}
+        addToCartPinterestDisparado = true;
         if (typeof pintrk === 'function') {
-          pintrk('track', 'checkout', {
-            value: typeof valor === 'number' ? valor : precoAtual,
+          pintrk('track', 'addtocart', {
+            product_id: 'zuni-direciona',
             order_quantity: 1,
+            value: precoAtual,
             currency: 'BRL'
           });
         }
+        try { if (sessionId) sessionStorage.setItem(chave, '1'); } catch (e) {}
+      } catch (e) {}
+    }
+
+    function dispararConversaoPinterest(valor, sessionId) {
+      if (conversaoPinterestDisparada) return;
+      // Mesma sessão já contada (reload / volta à página): não repete.
+      const chave = sessionId ? 'pin_compra_' + sessionId : null;
+      try { if (chave && localStorage.getItem(chave)) return; } catch (e) {}
+      conversaoPinterestDisparada = true;
+      try {
+        if (typeof pintrk === 'function') {
+          const dados = {
+            value: typeof valor === 'number' ? valor : precoAtual,
+            order_quantity: 1,
+            currency: 'BRL'
+          };
+          if (sessionId) {
+            dados.product_id = 'zuni-direciona';
+            dados.order_id = sessionId;
+          }
+          pintrk('track', 'checkout', dados);
+        }
+        try { if (chave) localStorage.setItem(chave, '1'); } catch (e) {}
       } catch (e) {}
     }
 
@@ -449,7 +481,7 @@
     // Pinterest sempre dispare, com o valor real, uma vez só.
     function avancarParaQuestionario(sessionId, token, valor) {
       storeZuniToken(sessionId, token);
-      dispararConversaoPinterest(valor);
+      dispararConversaoPinterest(valor, sessionId);
       const tema = new URLSearchParams(window.location.search).get('tema');
       const destino = tema
         ? `/questionario-selecao.html?sessionId=${sessionId}&tema=${encodeURIComponent(tema)}`
