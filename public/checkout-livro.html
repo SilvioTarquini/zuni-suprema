@@ -3,7 +3,33 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<!-- Pinterest: tag de rastreamento -->
+<!-- Pinterest Tag -->
+<script>
+  // Guarda o e-mail do retorno do pagamento localmente (só em memória) e o tira
+  // da URL ANTES de carregar o tag, para que o Pinterest nunca veja ?email=.
+  (function () {
+    try {
+      var u = new URL(window.location.href);
+      var em = u.searchParams.get('email');
+      if (em !== null) {
+        window.__zuniEmailRetorno = em;
+        u.searchParams.delete('email');
+        history.replaceState(null, '', u.pathname + (u.search || '') + u.hash);
+      }
+    } catch (e) {}
+  })();
+</script>
+<script>
+  !function(e){if(!window.pintrk){window.pintrk = function () {
+  window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var
+    n=window.pintrk;n.queue=[],n.version="3.0";var
+    t=document.createElement("script");t.async=!0,t.src=e;var
+    r=document.getElementsByTagName("script")[0];
+    r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+  pintrk('load', '2612519382245');
+  pintrk('page');
+</script>
+<!-- end Pinterest Tag -->
 <title>Comprar livro — ZUNI Suprema</title>
 <script src="https://js.stripe.com/v3/"></script>
 <style>
@@ -411,6 +437,60 @@
     return stripePublicKeyPromise;
   }
 
+  // ── Pinterest (fail-open: nunca bloqueia pagamento, confirmação, redirect ou acesso) ──
+  let compraPinterestDisparada = false;
+
+  function pinTrack(evento, dados) {
+    try {
+      if (typeof pintrk === 'function') pintrk('track', evento, dados);
+    } catch (e) {}
+  }
+
+  function valorExibidoAtual() {
+    try {
+      const txt = document.getElementById('preco-livro').textContent || '';
+      const n = parseFloat(txt.replace(/[^\d,]/g, '').replace(',', '.'));
+      return Number.isFinite(n) && n > 0 ? n : null;
+    } catch (e) { return null; }
+  }
+
+  function registrarInicioCheckoutPinterest(pedidoId) {
+    try {
+      const valor = valorExibidoAtual();
+      const dados = { product_id: livroId, order_quantity: 1 };
+      if (valor !== null) {
+        dados.value = valor;
+        dados.currency = 'BRL';
+        if (pedidoId) {
+          try { sessionStorage.setItem('pin_val_' + pedidoId, String(valor)); } catch (e) {}
+        }
+      }
+      pinTrack('addtocart', dados);
+    } catch (e) {}
+  }
+
+  // Só é chamada depois que /stripe-status devolveu pago:true (webhook processado).
+  function registrarCompraPinterest(pedidoId) {
+    try {
+      if (!pedidoId || compraPinterestDisparada) return;
+      const chave = 'pin_compra_' + pedidoId;
+      try { if (localStorage.getItem(chave)) return; } catch (e) {}
+      compraPinterestDisparada = true;
+      const dados = { product_id: livroId, order_id: pedidoId, order_quantity: 1 };
+      try {
+        const v = parseFloat(sessionStorage.getItem('pin_val_' + pedidoId));
+        if (Number.isFinite(v) && v > 0) { dados.value = v; dados.currency = 'BRL'; }
+      } catch (e) {}
+      pinTrack('checkout', dados);
+      try { localStorage.setItem(chave, '1'); } catch (e) {}
+    } catch (e) {}
+  }
+
+  // Redireciona sempre; o atraso curto só dá tempo ao beacon e não espera o Pinterest.
+  function irParaLivro(url) {
+    setTimeout(function () { window.location.href = url; }, 300);
+  }
+
   async function montarEmbeddedCheckout(clientSecret) {
     const publicKey = await getStripePublicKey();
     const stripe = Stripe(publicKey);
@@ -453,6 +533,7 @@
         }
 
         await montarEmbeddedCheckout(data.clientSecret);
+        registrarInicioCheckoutPinterest(data.pedidoId);
       } else {
         const res = await fetch('/api/checkout/livro', {
           method: 'POST',
@@ -502,7 +583,7 @@
   async function verificarRetornoCartao() {
     const status = params.get('status');
     const pedidoIdRetorno = params.get('pedidoId');
-    const emailRetorno = params.get('email');
+    const emailRetorno = window.__zuniEmailRetorno || params.get('email');
     const erro = params.get('erro');
 
     if (erro) return mostrarErro('Pagamento não concluído. Tente novamente.');
@@ -520,7 +601,8 @@
         const data = await res.json();
         if (data.pago && data.token) {
           clearInterval(pollingInterval);
-          window.location.href = `/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(data.token)}`;
+          registrarCompraPinterest(pedidoIdRetorno);
+          irParaLivro(`/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(data.token)}`);
         }
       } catch {}
       if (tentativas >= MAX_TENTATIVAS) {
