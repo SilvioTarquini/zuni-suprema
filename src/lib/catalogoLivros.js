@@ -122,6 +122,9 @@ const CATALOGO = {
     descricao: 'Existe uma diferença profunda entre chamar atenção e ser, de fato, inesquecível. "Ela Tem Classe" explora essa diferença em dois volumes: o primeiro dedicado à elegância, ao estilo e ao refinamento moderno; o segundo, à presença, ao magnetismo e à sofisticação avançada. Ao longo da obra, a leitora encontra reflexões práticas sobre como a verdadeira elegância nasce do encontro entre estética e inteligência emocional — a postura que comunica serenidade, a discrição que se torna mistério, a autenticidade que dispensa qualquer papel a representar. Um convite a redescobrir que sofisticação, hoje, mora na leveza.',
     indicadoPara: 'Para a mulher que quer presença e elegância que não dependam de esforço, exibição ou aprovação.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/ela-tem-classe/ela-tem-classe.mp3',
+    // PILOTO do storage privado (Stage 3B): só esta obra. audiobookStorage tem prioridade sobre
+    // audiobookUrl (legacy, mantido como fallback/rollback: remover a linha abaixo volta ao legacy).
+    audiobookStorage: { bucket: 'zuni-audiobooks-private', path: 'audio/aae9792a-9b95-46b2-b10d-c348d8d211f6.mp3' },
     audiobookDisponivel: true,
     precoAudiobook: 19.90
   },

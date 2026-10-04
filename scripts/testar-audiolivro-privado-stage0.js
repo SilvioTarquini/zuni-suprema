@@ -188,12 +188,16 @@ function desde(m) { return eventos.slice(m); }
       assert.strictEqual(serializarLivroPublico(CATALOGO[id]).precoAudiobook, 9.9);
     });
   });
-  await teste('catálogo real: 12 audiobooks continuam legacy, nenhum com audiobookStorage', () => {
+  // Obras já migradas para o storage privado (piloto do Stage 3B). Qualquer outra com
+  // audiobookStorage no catálogo real faz este teste falhar de propósito.
+  const PILOTOS_PRIVADOS = ['ela-tem-classe'];
+  await teste('catálogo real: só os pilotos têm audiobookStorage; as demais continuam legacy', () => {
     const comAudio = idsReais.filter(id => CATALOGO[id].audiobookDisponivel === true);
     assert.strictEqual(comAudio.length, 12);
     comAudio.forEach(id => {
-      assert.ok(!('audiobookStorage' in CATALOGO[id]), id);
-      assert.strictEqual(storage.classificarAudiolivro(CATALOGO[id]).modelo, 'legacy', id);
+      const piloto = PILOTOS_PRIVADOS.includes(id);
+      assert.strictEqual('audiobookStorage' in CATALOGO[id], piloto, id);
+      assert.strictEqual(storage.classificarAudiolivro(CATALOGO[id]).modelo, piloto ? 'private' : 'legacy', id);
     });
     const listaPublica = JSON.stringify(idsReais.map(id => serializarLivroPublico(CATALOGO[id])));
     assert.ok(!listaPublica.includes('audiobookStorage') && !listaPublica.includes('"bucket"'));
