@@ -493,4 +493,26 @@ function buscarLivro(livroId) {
   return CATALOGO[livroId] || null;
 }
 
-module.exports = { CATALOGO, buscarLivro, obterVozPadraoParaDepartamento };
+// Serialização pública do catálogo (GET /api/livros e /api/livros/catalogo/:id).
+// A loja precisa saber SE a obra tem audiobook e QUANTO custa (audiobookDisponivel,
+// precoAudiobook), nunca ONDE está o arquivo: audiobookUrl/audiobookPartes só
+// são lidos internamente, pela rota autenticada /audiolivros/:livroId. Não cria
+// cópia mutável do catálogo-fonte (devolve objetos novos).
+// indicadoPara é metadado interno consumido só pelo prompt do Mentor.
+function serializarLivroPublico(livro) {
+  const { indicadoPara, audiobookUrl, audiobookPartes, ...publico } = livro;
+  return publico;
+}
+
+function serializarLivroCatalogo(livroId, livro) {
+  return {
+    livroId,
+    titulo: livro.titulo,
+    preco: livro.precoPromocional || livro.preco,
+    categoria: livro.categoria,
+    audiobookDisponivel: livro.audiobookDisponivel || false,
+    precoAudiobook: livro.precoAudiobook || null
+  };
+}
+
+module.exports = { CATALOGO, buscarLivro, obterVozPadraoParaDepartamento, serializarLivroPublico, serializarLivroCatalogo };

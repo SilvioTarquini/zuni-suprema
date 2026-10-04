@@ -15,7 +15,7 @@ const livroChatRouter = require('./routes/livroChat');
 const experimenteLivroChatRouter = require('./routes/experimenteLivroChat');
 const { criarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO } = require('./lib/acessoLivros');
 const crypto = require('crypto');
-const { buscarLivro } = require('./lib/catalogoLivros');
+const { buscarLivro, serializarLivroCatalogo } = require('./lib/catalogoLivros');
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSessionId, marcarPedidoPendenteProcessado } = require('./lib/pedidosCheckoutStripe');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
@@ -1997,19 +1997,17 @@ async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
 }
 
 app.get('/api/livros', (req, res) => {
-  const { CATALOGO } = require('./lib/catalogoLivros');
+  const { CATALOGO, serializarLivroPublico } = require('./lib/catalogoLivros');
   // teaser: true é metadado interno (ex.: degustação usada só pelo chat de
   // /experimente.html) — não é produto de loja, não deve aparecer em nenhuma listagem
   // pública. Lookup por ID (/api/livros/catalogo/:livroId) continua funcionando normalmente.
-  // indicadoPara é metadado interno consumido só pelo prompt do Mentor —
-  // nunca vai para a loja nem para nenhum cliente. Removido na serialização.
+  // indicadoPara (Mentor) e audiobookUrl/audiobookPartes (arquivos do audiolivro,
+  // entregues só por /audiolivros/:livroId com token) nunca vão para a resposta
+  // pública — removidos em serializarLivroPublico.
   const catalogoPublico = Object.fromEntries(
     Object.entries(CATALOGO)
       .filter(([, livro]) => !livro.teaser)
-      .map(([id, livro]) => {
-        const { indicadoPara, ...publico } = livro;
-        return [id, publico];
-      })
+      .map(([id, livro]) => [id, serializarLivroPublico(livro)])
   );
   return res.json(catalogoPublico);
 });
@@ -2019,16 +2017,7 @@ app.get('/api/livros/catalogo/:livroId', (req, res) => {
   if (!livro) {
     return res.status(404).json({ error: 'Livro não encontrado.' });
   }
-  return res.json({
-    livroId: req.params.livroId,
-    titulo: livro.titulo,
-    preco: livro.precoPromocional || livro.preco,
-    categoria: livro.categoria,
-    audiobookDisponivel: livro.audiobookDisponivel || false,
-    audiobookUrl: livro.audiobookUrl || null,
-    audiobookPartes: livro.audiobookPartes || null,
-    precoAudiobook: livro.precoAudiobook || null
-  });
+  return res.json(serializarLivroCatalogo(req.params.livroId, livro));
 });
 
 app.get('/api/validar-cupom', async (req, res) => {
