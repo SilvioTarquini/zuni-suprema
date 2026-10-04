@@ -25,6 +25,7 @@ const express = require('express');
 const router = express.Router();
 const { verificarAcesso } = require('../lib/acessoLivros');
 const { buscarLivro } = require('../lib/catalogoLivros');
+const audiolivroStorage = require('../lib/audiolivroStorage');
 const { lerLivroComPatch } = require('../lib/leitorMobile');
 
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
@@ -160,34 +161,14 @@ router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {
   }
 });
 
-// Acesso ao audiolivro: redireciona para URL pública do Supabase se token
-// válido. Obras grandes (acima do limite de upload de objeto único do
-// Supabase Storage) são divididas em partes — audiobookPartes (array) em vez
-// de audiobookUrl (string única). Os dois campos são mutuamente exclusivos
-// em catalogoLivros.js. Mesmo modelo de confiança nos dois casos: depois da
-// checagem de token, o(s) link(s) entregues são URLs públicas do Supabase.
-router.get('/audiolivros/:livroId', exigirAcesso(['livro', 'audiolivro']), async (req, res) => {
-  const { livroId } = req.params;
-
-  try {
-    const livro = buscarLivro(livroId);
-    if (!livro) {
-      return res.status(404).sendFile(PAGINA_ACESSO_EXPIRADO);
-    }
-
-    if (Array.isArray(livro.audiobookPartes) && livro.audiobookPartes.length > 0) {
-      const links = livro.audiobookPartes
-        .map(
-          (url, i) =>
-            `<a href="${url}" class="parte-audiolivro">Parte ${i + 1} de ${livro.audiobookPartes.length}</a>`
-        )
-        .join('\n');
-
-      return res.send(`<!doctype html>
+// Página que lista as partes de um audiolivro multipartes. Mesmo HTML para o modelo
+// legacy (links diretos) e para o privado (links ZUNI /audiolivros/:id/parte/:n).
+function paginaPartesAudiolivro(titulo, total, links) {
+  return `<!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<title>${livro.titulo} — Audiolivro</title>
+<title>${titulo} — Audiolivro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -224,12 +205,60 @@ router.get('/audiolivros/:livroId', exigirAcesso(['livro', 'audiolivro']), async
 </head>
 <body>
   <div class="card">
-    <h1>${livro.titulo}</h1>
-    <p class="aviso">Esta obra é entregue em ${livro.audiobookPartes.length} partes — baixe ou ouça cada uma na ordem.</p>
+    <h1>${titulo}</h1>
+    <p class="aviso">Esta obra é entregue em ${total} partes — baixe ou ouça cada uma na ordem.</p>
     ${links}
   </div>
 </body>
-</html>`);
+</html>`;
+}
+
+// Acesso ao audiolivro: redireciona para URL pública do Supabase se token
+// válido. Obras grandes (acima do limite de upload de objeto único do
+// Supabase Storage) são divididas em partes — audiobookPartes (array) em vez
+// de audiobookUrl (string única). Os dois campos são mutuamente exclusivos
+// em catalogoLivros.js. Mesmo modelo de confiança nos dois casos: depois da
+// checagem de token, o(s) link(s) entregues são URLs públicas do Supabase.
+router.get('/audiolivros/:livroId', exigirAcesso(['livro', 'audiolivro']), async (req, res) => {
+  const { livroId } = req.params;
+
+  try {
+    const livro = buscarLivro(livroId);
+    if (!livro) {
+      return res.status(404).sendFile(PAGINA_ACESSO_EXPIRADO);
+    }
+
+    // Modelo PRIVATE (bucket privado): a rota já validou o token em exigirAcesso;
+    // só agora a URL assinada é gerada. Nunca entrega o caminho do objeto.
+    const classe = audiolivroStorage.classificarAudiolivro(livro);
+    if (classe.modelo === 'private') {
+      res.set('Cache-Control', 'no-store');
+
+      if (classe.multipartes) {
+        // Multipartes: a página NÃO recebe URLs assinadas — só links ZUNI, que
+        // revalidam o acesso e assinam a parte no clique.
+        const token = encodeURIComponent(req.query.token);
+        const links = Array.from({ length: classe.total }, (_, i) =>
+          `<a href="/audiolivros/${encodeURIComponent(livroId)}/parte/${i + 1}?token=${token}" class="parte-audiolivro">Parte ${i + 1} de ${classe.total}</a>`
+        ).join('\n');
+        return res.send(paginaPartesAudiolivro(livro.titulo, classe.total, links));
+      }
+
+      const objeto = audiolivroStorage.resolverObjetoPrivado(livro, 1);
+      const urlAssinada = await audiolivroStorage.gerarUrlAssinada({ ...objeto, ttlSegundos: audiolivroStorage.obterTtlSegundos() });
+      return res.redirect(urlAssinada);
+    }
+
+    // Modelo LEGACY (URL pública): comportamento original, inalterado.
+    if (Array.isArray(livro.audiobookPartes) && livro.audiobookPartes.length > 0) {
+      const links = livro.audiobookPartes
+        .map(
+          (url, i) =>
+            `<a href="${url}" class="parte-audiolivro">Parte ${i + 1} de ${livro.audiobookPartes.length}</a>`
+        )
+        .join('\n');
+
+      return res.send(paginaPartesAudiolivro(livro.titulo, livro.audiobookPartes.length, links));
     }
 
     if (!livro.audiobookUrl) {
@@ -240,6 +269,35 @@ router.get('/audiolivros/:livroId', exigirAcesso(['livro', 'audiolivro']), async
     return res.redirect(livro.audiobookUrl);
   } catch (err) {
     console.error('Erro ao servir audiolivro:', err.message);
+    return res.status(500).send('Erro ao acessar o audiolivro. Tente novamente em instantes.');
+  }
+});
+
+// Uma parte de um audiolivro multipartes no modelo privado: valida o acesso (mesma
+// regra de /audiolivros/:livroId), assina SÓ essa parte e redireciona. Parte
+// inexistente, obra fora do modelo privado ou obra de parte única: 404 genérico.
+router.get('/audiolivros/:livroId/parte/:n', exigirAcesso(['livro', 'audiolivro']), async (req, res) => {
+  const { livroId, n } = req.params;
+
+  try {
+    res.set('Cache-Control', 'no-store');
+    const livro = buscarLivro(livroId);
+    const classe = audiolivroStorage.classificarAudiolivro(livro);
+    const parte = /^[0-9]+$/.test(n) ? parseInt(n, 10) : NaN;
+
+    if (classe.modelo !== 'private' || !classe.multipartes || !Number.isInteger(parte)) {
+      return res.status(404).send('Parte não encontrada.');
+    }
+
+    const objeto = audiolivroStorage.resolverObjetoPrivado(livro, parte);
+    if (!objeto) {
+      return res.status(404).send('Parte não encontrada.');
+    }
+
+    const urlAssinada = await audiolivroStorage.gerarUrlAssinada({ ...objeto, ttlSegundos: audiolivroStorage.obterTtlSegundos() });
+    return res.redirect(urlAssinada);
+  } catch (err) {
+    console.error('Erro ao servir parte do audiolivro:', err.message);
     return res.status(500).send('Erro ao acessar o audiolivro. Tente novamente em instantes.');
   }
 });
