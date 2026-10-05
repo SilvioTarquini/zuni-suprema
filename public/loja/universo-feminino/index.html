@@ -437,7 +437,9 @@
     border-top: 1px solid var(--borda);
     background: var(--carta);
   }
+  .detalhe-acao { display: grid; gap: 10px; }
   .detalhe-acao .btn { width: 100%; }
+  .detalhe-acao .btn[hidden] { display: none; }
 
   @media (min-width: 640px) {
     .pagina { padding: 0 28px; }
@@ -508,6 +510,7 @@
     <p class="nota-audio" id="det-nota-audio" hidden></p>
   </div>
   <div class="detalhe-acao">
+    <a class="btn btn-secundario" id="det-experimentar" href="#" hidden>Experimentar</a>
     <a class="btn btn-primario" id="det-comprar" href="#"></a>
   </div>
 </dialog>
@@ -581,6 +584,14 @@
     return '/checkout-livro.html?' + q.toString();
   }
 
+  // Experimente ZUNI (/experimente/<id>/): só existe para obras que o catálogo marca com amostraDisponivel.
+  function urlExperimente(id) {
+    const q = new URLSearchParams({ origem: ORIGEM });
+    const cupom = new URLSearchParams(window.location.search).get('cupom');
+    if (cupom) q.set('cupom', cupom);
+    return '/experimente/' + encodeURIComponent(id) + '/?' + q.toString();
+  }
+
   function el(tag, props, filhos) {
     const e = document.createElement(tag);
     if (props) for (const [k, v] of Object.entries(props)) {
@@ -632,6 +643,9 @@
     }
     const comprar = document.getElementById('det-comprar');
     comprar.href = urlCheckout(id);
+    const experimentar = document.getElementById('det-experimentar');
+    experimentar.hidden = l.amostraDisponivel !== true;
+    if (l.amostraDisponivel === true) experimentar.href = urlExperimente(id); else experimentar.removeAttribute('href'); // sem link residual de outra obra
     comprar.textContent = 'Adquirir livro — ' + brl(precoVigente(l));
     document.querySelector('.detalhe-corpo').scrollTop = 0;
     dlg.showModal();
@@ -649,7 +663,6 @@
 
     const abrir = () => abrirDetalhe(id, l);
     const botao = el('button', { class: 'btn btn-primario', type: 'button', text: 'Conhecer a obra', 'aria-label': 'Conhecer a obra ' + titulo });
-    // Futuro: quando o catálogo tiver amostra, o CTA "Experimentar" entra aqui, ao lado de "Conhecer a obra".
 
     const formatos = el('ul', { class: 'formatos', 'aria-label': 'Formatos disponíveis' }, chipsFormatos(l));
     const preco = el('div', { class: 'preco', text: brl(precoVigente(l)) });

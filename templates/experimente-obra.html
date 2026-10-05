@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>{{TITLE}}</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="{{DESCRIPTION}}">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{TITLE}}">
+<meta property="og:description" content="{{DESCRIPTION}}">
+<meta name="theme-color" content="#f7f2ea">
+<style>
+  :root {
+    --fundo: #f7f2ea;
+    --carta: #fffdf9;
+    --tinta: #231d1a;
+    --suave: #5e544d;
+    --borda: #e6dccd;
+    --acento: #5a2d3f;
+    --acento-escuro: #44202f;
+    --dourado: #b8963e;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body { margin: 0; background: var(--fundo); color: var(--tinta); font-family: var(--serif); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  :focus-visible { outline: 3px solid var(--acento); outline-offset: 2px; }
+
+  .pagina { max-width: 40rem; margin: 0 auto; padding: 0 16px; }
+
+  .barra { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 0; border-bottom: 1px solid var(--borda); }
+  .marca { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; text-decoration: none; font-family: var(--sans); font-size: 0.8125rem; letter-spacing: 0.14em; text-transform: uppercase; }
+  .marca .selo { width: 28px; height: 28px; border: 1px solid var(--dourado); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--serif); font-size: 0.8rem; letter-spacing: 0; color: var(--dourado); }
+  .barra .rotulo { font-family: var(--sans); font-size: 0.75rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--acento); }
+
+  /* Topo da obra: capa com protagonismo */
+  .obra-topo { padding: 22px 0 8px; text-align: center; }
+  .capa { display: block; width: min(60vw, 220px); height: auto; aspect-ratio: 2 / 3; object-fit: contain; margin: 0 auto 16px; background: #efe7da; border-radius: 4px; box-shadow: 0 3px 10px rgba(35, 29, 26, 0.22); }
+  .obra-topo h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 6vw, 2rem); font-weight: normal; line-height: 1.2; }
+  .chamada { margin: 0 auto; max-width: 30em; font-size: 1.0625rem; font-style: italic; color: var(--acento); }
+
+  /* Atalho discreto de compra no topo (a compra principal fica depois do trecho) */
+  .compra-topo { margin: 8px 0 0; }
+  .compra-topo a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 8px; font-family: var(--sans); font-size: 0.9375rem; font-weight: 600; color: var(--acento); text-decoration: underline; text-underline-offset: 3px; }
+
+  /* Trecho: coluna de leitura confortável (fonte >= 16px; ~60-70 caracteres por linha no desktop) */
+  .leitura { padding: 22px 0 8px; }
+  .leitura h2 { margin: 0 0 4px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--acento); }
+  .leitura h3 { margin: 6px 0 12px; font-size: 1.25rem; font-weight: normal; line-height: 1.3; }
+  .trecho { padding: 4px 0 0; font-size: 1.0625rem; line-height: 1.75; }
+  .trecho p { margin: 0 0 1em; }
+  .fim-trecho { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--borda); font-family: var(--sans); font-size: 0.875rem; color: var(--suave); }
+  .aviso { margin: 12px 0 0; font-family: var(--sans); font-size: 0.8125rem; color: var(--suave); }
+
+  /* Ouvir: secundário, não domina a leitura */
+  .ouvir { margin: 12px 0 18px; }
+  .ouvir[hidden] { display: none; }
+  .ouvir-controles { display: flex; flex-wrap: wrap; gap: 10px; }
+  .ouvir-status { margin: 8px 0 0; min-height: 1.4em; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); }
+
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 18px; border-radius: 8px; border: 1px solid var(--acento); font-family: var(--sans); font-size: 0.9375rem; font-weight: 600; text-decoration: none; cursor: pointer; text-align: center; background: transparent; color: var(--acento); }
+  .btn:hover { background: rgba(90, 45, 63, 0.07); }
+  .btn svg { width: 18px; height: 18px; flex: none; }
+  .btn-primario { background: var(--acento); color: #fff; }
+  .btn-primario:hover { background: var(--acento-escuro); }
+  .btn[hidden] { display: none; }
+
+  /* Continue explorando: títulos reais de capítulos fora do trecho, em chips discretos que quebram linha */
+  .explorar { margin: 26px 0 0; padding-top: 18px; border-top: 1px solid var(--borda); }
+  .explorar h2 { margin: 0 0 10px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--acento); }
+  .capitulos { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; font-family: var(--sans); }
+  .capitulos li { padding: 6px 12px; border: 1px solid var(--borda); border-radius: 999px; background: #fbf7f0; font-size: 0.9375rem; line-height: 1.3; color: var(--tinta); overflow-wrap: anywhere; }
+
+  .compra { margin: 26px 0 0; padding: 20px 0 6px; border-top: 1px solid var(--borda); }
+  .compra h2 { margin: 0 0 14px; font-size: 1.25rem; font-weight: normal; }
+  .compra-botoes { display: grid; gap: 12px; }
+  .compra .btn { width: 100%; }
+
+  footer { padding: 18px 0 40px; font-family: var(--sans); font-size: 0.8125rem; color: var(--suave); text-align: center; }
+
+  @media (min-width: 640px) {
+    .pagina { padding: 0 28px; }
+    .obra-topo { padding-top: 40px; }
+    .trecho { font-size: 1.125rem; }
+    .compra-botoes { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pagina">
+  <div class="barra">
+    <a class="marca" href="/loja/" aria-label="ZUNI Suprema — Loja"><span class="selo" aria-hidden="true">Z</span>ZUNI Suprema</a>
+    <span class="rotulo">Experimente ZUNI</span>
+  </div>
+
+  <header class="obra-topo">
+    <img class="capa" src="{{CAPA_URL}}" width="500" height="750" alt="Capa de {{TITULO}}">
+    <h1>{{TITULO}}</h1>
+    {{CHAMADA_BLOCK}}
+    <p class="compra-topo"><a href="{{CHECKOUT_URL}}">Adquirir livro — {{PRECO}}</a></p>
+  </header>
+
+  <main>
+    <section class="leitura" aria-labelledby="leia-titulo">
+      <h2 id="leia-titulo">Leia um trecho</h2>
+      {{TITULO_TRECHO_BLOCK}}
+      <div class="ouvir" id="ouvir" data-tts="{{TTS}}" hidden>
+        <div class="ouvir-controles">
+          <button class="btn" type="button" id="btn-ouvir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><span id="btn-ouvir-rotulo">Ouvir este trecho</span></button>
+          <button class="btn" type="button" id="btn-parar" hidden>Parar</button>
+        </div>
+        <p class="ouvir-status" id="ouvir-status" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="trecho" id="trecho">
+{{TRECHO_HTML}}
+      </div>
+      <p class="fim-trecho">Este é apenas um trecho da obra.</p>
+      {{AVISO_BLOCK}}
+
+    </section>
+
+    {{CONTINUE_BLOCK}}
+
+    <section class="compra" aria-labelledby="continue-leitura">
+      <h2 id="continue-leitura">Continue a leitura</h2>
+      <div class="compra-botoes">
+        <a class="btn btn-primario" href="{{CHECKOUT_URL}}">Adquirir livro — {{PRECO}}</a>
+        <a class="btn" href="{{VOLTAR_URL}}">{{VOLTAR_ROTULO}}</a>
+      </div>
+    </section>
+  </main>
+
+  <footer>Livro digital • acesso após a confirmação do pagamento</footer>
+</div>
+
+<script src="/js/experimente-tts.js"></script>
+<script>
+  // Leitura em voz com a voz do navegador: sem rede, sem custo. Cancela ao sair da página.
+  (function () {
+    var caixa = document.getElementById('ouvir');
+    var btn = document.getElementById('btn-ouvir');
+    var rotulo = document.getElementById('btn-ouvir-rotulo');
+    var parar = document.getElementById('btn-parar');
+    var status = document.getElementById('ouvir-status');
+    if (!caixa || caixa.getAttribute('data-tts') !== '1') return;
+
+    var synth = window.speechSynthesis;
+    var Utterance = window.SpeechSynthesisUtterance || window.webkitSpeechSynthesisUtterance;
+    if (!synth || !Utterance) return; // sem suporte: a seção de áudio permanece oculta
+
+    var texto = document.getElementById('trecho').innerText;
+    var leitor = window.ZuniExperimenteTTS.criarLeitor({
+      synth: synth, Utterance: Utterance, texto: texto,
+      onEstado: function (e) {
+        if (e.estado === 'falando') { rotulo.textContent = 'Pausar'; btn.setAttribute('aria-label', 'Pausar a leitura em voz'); parar.hidden = false; status.textContent = 'Reproduzindo o trecho…'; }
+        else if (e.estado === 'pausado') { rotulo.textContent = 'Continuar'; btn.setAttribute('aria-label', 'Continuar a leitura em voz'); parar.hidden = false; status.textContent = 'Leitura pausada.'; }
+        else { rotulo.textContent = 'Ouvir este trecho'; btn.removeAttribute('aria-label'); parar.hidden = true; status.textContent = ''; }
+        if (e.estado === 'falando' && !e.ptDisponivel) status.textContent = 'Reproduzindo o trecho… (este aparelho não tem voz em português; a voz pode soar diferente.)';
+      }
+    });
+
+    caixa.hidden = false;
+    btn.addEventListener('click', function () {
+      var s = leitor.estado();
+      if (s === 'parado') leitor.iniciar(); else if (s === 'falando') leitor.pausar(); else leitor.continuar();
+    });
+    parar.addEventListener('click', function () { leitor.parar(); btn.focus(); });
+    window.addEventListener('pagehide', function () { leitor.parar(); });
+    window.addEventListener('beforeunload', function () { leitor.parar(); });
+  })();
+</script>
+</body>
+</html>

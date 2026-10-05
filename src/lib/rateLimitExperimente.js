@@ -10,6 +10,7 @@
 
 const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
+const { extrairIpConfiavel } = require('./ipCliente');
 
 const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   ? createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY)
@@ -33,9 +34,8 @@ function hashearIP(ip) {
  * Extrai IP origem da requisição
  */
 function extrairIP(req) {
-  return req.headers['x-forwarded-for']?.split(',')[0].trim() ||
-         req.socket.remoteAddress ||
-         '0.0.0.0';
+  // Entrada da direita de X-Forwarded-For (a anexada pelo proxy); a da esquerda é forjável pelo cliente.
+  return extrairIpConfiavel(req);
 }
 
 /**

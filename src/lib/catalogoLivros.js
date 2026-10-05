@@ -116,6 +116,8 @@ const CATALOGO = {
   'ela-tem-classe': {
     titulo: 'Ela Tem Classe',
     preco: 34.90,
+    // Experimente ZUNI (/experimente/<id>/): só é true quando há trecho aprovado em lib/amostrasExperimente.js
+    amostraDisponivel: true,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um guia de elegância que vai além da aparência — como cultivar presença, magnetismo e sofisticação genuína no dia a dia, sem depender de excesso ou performance.',
@@ -131,6 +133,8 @@ const CATALOGO = {
   'codigo-feminino': {
     titulo: 'Código Feminino',
     preco: 44.90,
+    // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
+    amostraDisponivel: false,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um guia completo de saúde integrativa feminina — do autocuidado diário ao equilíbrio hormonal, da sexualidade em todas as fases da vida à segurança e autonomia sobre o próprio corpo.',
@@ -143,6 +147,8 @@ const CATALOGO = {
   'a-inteligencia-do-corpo-feminino': {
     titulo: 'A Inteligência do Corpo Feminino',
     preco: 39.90,
+    // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
+    amostraDisponivel: false,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um mergulho no que o corpo tenta comunicar através de inchaço, celulite e cansaço — e os caminhos reais (alimentação, intestino, movimento, descanso) para restaurar o equilíbrio metabólico.',
@@ -155,6 +161,8 @@ const CATALOGO = {
   'inesquecivel-charme-feminino': {
     titulo: 'Inesquecível',
     preco: 49.90,
+    // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
+    amostraDisponivel: false,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Como criar conexões memoráveis e saudáveis sem perder autenticidade — charme feminino construído sobre autoestima, presença e inteligência emocional, não sobre estratégia ou performance.',
@@ -167,6 +175,8 @@ const CATALOGO = {
   'a-mulher-que-permanece-inteira': {
     titulo: 'A Mulher que Permanece Inteira',
     preco: 49.90,
+    // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
+    amostraDisponivel: false,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Mais do que um livro sobre relacionamentos: uma jornada de reconstrução emocional feminina — incluindo um raro capítulo sobre como reconhecer perfis emocionais masculinos.',

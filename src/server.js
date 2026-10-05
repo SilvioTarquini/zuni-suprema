@@ -21,6 +21,8 @@ const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSes
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { calcularPrecoBaseLivro } = require('./lib/precoLivro');
 const { normalizarOrigem } = require('./lib/origemCompra');
+const { renderizarExperimenteObra } = require('./lib/experimenteObra');
+const { MENSAGEM_MAX_CHARS, SESSION_ID_MAX_CHARS, criarLimiterMentorDemo, orcamentoDemo, extrairIpConfiavel } = require('./lib/protecaoMentorDemo');
 const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
@@ -1108,7 +1110,8 @@ function limparMarkdown(texto) {
   return texto.trim();
 }
 
-async function searchKnowledge(query, limite = 5, tema = null) {
+// opcoes.silencioso: não registra a pergunta no log (usado pelo chat público de demonstração).
+async function searchKnowledge(query, limite = 5, tema = null, opcoes = {}) {
   try {
     const embeddingResponse = await fetch('https://api.openai.com/v1/embeddings', {
       method: 'POST',
@@ -1133,7 +1136,7 @@ async function searchKnowledge(query, limite = 5, tema = null) {
     if (tema) {
       // ── Busca Ranqueada: aceita tema único ou grupo (public.grupos_tema),
       // que a função expande sozinha. Prioriza o(s) tema(s), complementa com conteúdo geral.
-      console.log(`[RAG_HIBRIDO] Query: "${query}" | Tema: "${tema}" | Total: ${limite}`);
+      if (!opcoes.silencioso) console.log(`[RAG_HIBRIDO] Query: "${query}" | Tema: "${tema}" | Total: ${limite}`);
 
       rpcResult = await supabase.rpc('buscar_documentos_ranqueado', {
         query_embedding: embedding,
@@ -1146,7 +1149,7 @@ async function searchKnowledge(query, limite = 5, tema = null) {
       });
     } else {
       // ── Busca Padrão (retrocompatível com comportamento antigo)
-      console.log(`[RAG_GENERICO] Query: "${query}" | Limite: ${limite}`);
+      if (!opcoes.silencioso) console.log(`[RAG_GENERICO] Query: "${query}" | Limite: ${limite}`);
 
       rpcResult = await supabase.rpc('buscar_documentos', {
         query_embedding: embedding,
@@ -3950,7 +3953,16 @@ app.post('/api/experimente-calcular-numerologia', async (req, res) => {
  * POST /api/experimente-capturar-lead
  * Captura e-mail, envia resultado via Resend, registra no banco
  */
+// DESATIVADO (410): nenhuma página usa este endpoint desde que os módulos de numerologia/astrologia saíram de
+// /experimente.html, e ele enviava e-mail (Resend) a qualquer endereço informado, sem limite nem verificação —
+// um disparador de e-mail aberto. O código abaixo é mantido por histórico; só volta a funcionar se o
+// consumo legítimo for reintroduzido junto com proteção (limite por IP, verificação do e-mail, texto não controlado).
+const LEAD_ENDPOINT_ATIVO = false;
+
 app.post('/api/experimente-capturar-lead', async (req, res) => {
+  if (!LEAD_ENDPOINT_ATIVO) {
+    return res.status(410).json({ sucesso: false, mensagem: 'Este recurso não está mais disponível.' });
+  }
   try {
     const { nomeCompleto, dataNascimento, email, caminhoDeVida, essencia, interpretacao, codigo } = req.body;
 
@@ -4014,13 +4026,23 @@ app.post('/api/experimente-calcular-astrologia-b', async (req, res) => {
  * Rate-limited no backend, com logging de tokens consumidos
  * NÃO interfere com /api/chat (chat pago)
  */
-app.post('/api/experimente-chat', async (req, res) => {
+// Endpoint público e pago por chamada (embedding + Claude): protegido por tamanho de mensagem, limite de rajada
+// por IP, orçamento diário por IP e orçamento diário global (lib/protecaoMentorDemo.js) — nenhum depende do
+// sessionId, que o cliente escolhe. O limite de 5 trocas por sessão (abaixo) continua valendo.
+app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => {
   try {
-    const { message, sessionId } = req.body;
+    const { message, sessionId } = req.body || {};
 
-    if (!message || !sessionId) {
+    if (typeof message !== 'string' || !message.trim() || typeof sessionId !== 'string' || !sessionId || sessionId.length > SESSION_ID_MAX_CHARS) {
       return res.status(400).json({
         error: 'message e sessionId são obrigatórios.',
+        bloqueado: false
+      });
+    }
+
+    if (message.length > MENSAGEM_MAX_CHARS) {
+      return res.status(400).json({
+        error: `A mensagem pode ter até ${MENSAGEM_MAX_CHARS} caracteres.`,
         bloqueado: false
       });
     }
@@ -4037,18 +4059,21 @@ app.post('/api/experimente-chat', async (req, res) => {
       });
     }
 
+    // ── ORÇAMENTO DE CUSTO (por IP e global; independe do sessionId) ──
+    const orcamento = orcamentoDemo.consumir(extrairIpConfiavel(req));
+    if (!orcamento.permitido) {
+      return res.status(429).json({
+        bloqueado: true,
+        mensagem: `O limite gratuito de hoje foi atingido. Volte em ${orcamento.horasAteReset}h ou conheça a Sessão Completa.`
+      });
+    }
+
     // ── BUSCAR CONTEXTO DA BASE RAG (3 chunks para otimizar tokens) ──
-    // Chat de demo: sem tema, busca genérica
-    const contextoBases = await searchKnowledge(message, 3, null);
+    // Chat de demo: sem tema, busca genérica (silencioso: não registra a pergunta do visitante no log)
+    const contextoBases = await searchKnowledge(message, 3, null, { silencioso: true });
     const blocoContexto = contextoBases.length > 0
       ? `\n\nContexto da base ZUNI:\n${contextoBases.join('\n\n')}`
       : '';
-
-    // ── LOG RAG: Chunks retornados ──
-    console.log(`[RAG_DEMO] Query: "${message}"\nChunks retornados: ${contextoBases.length}`);
-    contextoBases.forEach((chunk, i) => {
-      console.log(`\n[CHUNK ${i + 1}]\n${chunk.substring(0, 200)}...\n`);
-    });
 
     // ── PREPARAR MENSAGENS PARA CLAUDE ──
     // Nota: Esta é uma sessão SEM histórico persistido (demo não salva)
@@ -4067,14 +4092,6 @@ app.post('/api/experimente-chat', async (req, res) => {
     if (limite.ultimaTroca) {
       promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em www.zunisuprema.com.br/checkout (R$ 27,90 via PIX)."`;
     }
-
-    // ── LOG: Prompt final completo ──
-    console.log('\n========== PROMPT ENVIADO AO CLAUDE ==========');
-    console.log('[SYSTEM PROMPT]');
-    console.log(promptFinal);
-    console.log('\n[USER MESSAGE COM CONTEXTO]');
-    console.log(messagesParaClaude[0].content);
-    console.log('==========================================\n');
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
@@ -4101,25 +4118,21 @@ app.post('/api/experimente-chat', async (req, res) => {
     const custoOutput = (outputTokens / 1000000) * 15;
     const custoTotal = custoInput + custoOutput;
 
+    // Log operacional mínimo: sem conteúdo do visitante, sem prompt, sem identificador de sessão.
     console.log(
-      `[CHAT_DEMO] ${visitorHash} — Troca ${limite.contador + 1}/5 | ` +
-      `Tokens: ${inputTokens} in + ${outputTokens} out | ` +
-      `Custo: $${custoTotal.toFixed(6)}`
+      `[CHAT_DEMO] troca ${limite.contador + 1}/5 | ` +
+      `tokens: ${inputTokens} in + ${outputTokens} out | custo: $${custoTotal.toFixed(6)}`
     );
 
+    // Resposta pública: só o necessário à experiência (nada de tokens, custo ou dados internos).
     return res.json({
       bloqueado: false,
       texto: responseText,
       contador: `${limite.contador + 1}/5`,
-      ultimaTroca: limite.ultimaTroca,
-      tokens: { input: inputTokens, output: outputTokens },
-      custo: {
-        moeda: 'USD',
-        valor: parseFloat(custoTotal.toFixed(6))
-      }
+      ultimaTroca: limite.ultimaTroca
     });
   } catch (error) {
-    console.error('Erro em /api/experimente-chat:', error);
+    console.error('Erro em /api/experimente-chat:', error && error.message);
     return res.status(500).json({
       bloqueado: false,
       error: 'Erro ao processar mensagem. Tente novamente.'
@@ -4133,6 +4146,23 @@ app.post('/api/experimente-chat', async (req, res) => {
  */
 app.get('/experimente', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/experimente.html'));
+});
+
+/**
+ * GET /experimente/:livroId/
+ * Experimente ZUNI por obra (template único). Fail-closed: sem amostra aprovada → 404 genérico.
+ * Convive com a página antiga /experimente (Bastidores), que não foi alterada.
+ */
+app.get('/experimente/:livroId', (req, res) => {
+  const resultado = renderizarExperimenteObra({
+    livroId: req.params.livroId,
+    origem: req.query.origem,
+    cupom: req.query.cupom
+  });
+  res.status(resultado.status);
+  res.set('Content-Type', 'text/html; charset=utf-8');
+  res.set('Cache-Control', resultado.status === 200 ? 'public, max-age=60' : 'no-store');
+  res.send(resultado.html);
 });
 
 // ========================

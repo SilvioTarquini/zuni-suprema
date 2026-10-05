@@ -76,7 +76,7 @@ function renderizarHistoricoChat() {
 
     const bubble = document.createElement('div');
     bubble.className = `chat-bubble ${msg.role}`;
-    bubble.innerHTML = msg.role === 'mentor' ? msg.texto : msg.texto;
+    bubble.textContent = msg.texto;
 
     div.appendChild(bubble);
     historico.appendChild(div);
@@ -103,7 +103,7 @@ function adicionarMensagemChat(role, texto) {
 
   const bubble = document.createElement('div');
   bubble.className = `chat-bubble ${role}`;
-  bubble.innerHTML = role === 'mentor' ? texto : texto;
+  bubble.textContent = texto;
 
   div.appendChild(bubble);
   historico.appendChild(div);
@@ -181,14 +181,6 @@ async function enviarMensagemChat() {
     estadoChat.ultimaTroca = data.ultimaTroca;
     sessionStorage.setItem(`chat_contador_${estadoChat.sessionId}`, estadoChat.contador);
     atualizarContadorChat();
-
-    // Log de consumo
-    const custoReal = data.custo?.valor || 0;
-    console.log(
-      `[CHAT_DEMO] Troca ${estadoChat.contador}/5 | ` +
-      `Tokens: ${data.tokens?.input} in + ${data.tokens?.output} out | ` +
-      `Custo real: $${custoReal.toFixed(6)}`
-    );
 
     // Se é última troca, mostrar CTA
     if (data.ultimaTroca) {
@@ -306,7 +298,11 @@ document.addEventListener('DOMContentLoaded', () => {
       msgDiv.style.borderRadius = '4px';
       msgDiv.style.backgroundColor = role === 'user' ? '#e3f2fd' : '#f5f5f5';
       msgDiv.style.borderLeft = `3px solid ${role === 'user' ? '#1a1a3e' : '#d4af37'}`;
-      msgDiv.innerHTML = `<strong style="color: ${role === 'user' ? '#1a1a3e' : '#666'};">${role === 'user' ? 'Você' : 'Livro'}:</strong> ${conteudo}`;
+      const rotulo = document.createElement('strong');
+      rotulo.style.color = role === 'user' ? '#1a1a3e' : '#666';
+      rotulo.textContent = (role === 'user' ? 'Você' : 'Livro') + ':';
+      msgDiv.appendChild(rotulo);
+      msgDiv.appendChild(document.createTextNode(' ' + conteudo));
       historicoEl.appendChild(msgDiv);
       historicoEl.scrollTop = historicoEl.scrollHeight;
     }
