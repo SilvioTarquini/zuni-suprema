@@ -50,15 +50,69 @@ function indisponivel() {
   return { status: 404, html: PAGINA_INDISPONIVEL };
 }
 
-// Títulos de capítulos que NÃO fazem parte do trecho: só os títulos (nada de descrição), em texto puro.
-function capitulosHtml(titulos) {
+// Temas/capítulos da obra que NÃO fazem parte do trecho: só os títulos, em lista editorial (nada de link, botão ou descrição).
+function temasHtml(titulos, tituloObra) {
   if (!Array.isArray(titulos)) return '';
   const itens = titulos
     .filter((t) => typeof t === 'string' && t.trim() && t.trim().length <= 80)
     .slice(0, 8)
     .map((t) => '<li>' + escapar(t.trim()) + '</li>');
   if (!itens.length) return '';
-  return '<section class="explorar" aria-labelledby="explorar-titulo"><h2 id="explorar-titulo">Continue explorando na obra</h2><ul class="capitulos">' + itens.join('') + '</ul></section>';
+  return '<section class="temas" aria-labelledby="temas-titulo"><h2 id="temas-titulo" class="secao-titulo">Você também encontrará nesta obra</h2>'
+    + '<p class="secao-texto">Entre os temas abordados em ' + escapar(tituloObra) + ':</p>'
+    + '<ul class="temas-lista">' + itens.join('') + '</ul></section>';
+}
+
+// Versão em áudio como OPÇÃO ADICIONAL à compra do livro (não existe venda avulsa). Só aparece se o catálogo
+// diz que a obra tem audiobook; o preço não é repetido aqui — o checkout é a autoridade.
+function audiobookOpcaoHtml(livro, tituloObra) {
+  if (!livro || livro.audiobookDisponivel !== true) return '';
+  return '<div class="opcao"><h3>Audiobook (opção adicional)</h3>'
+    + '<p>Existe uma versão em áudio de ' + escapar(tituloObra) + '. Se desejar, você poderá acrescentá-la durante a compra do livro.</p></div>';
+}
+
+// Amostra OFICIAL do audiobook (trecho curto aprovado, arquivo estático próprio). FAIL-CLOSED: só renderiza se o
+// catálogo diz que a obra tem audiobook, o registro editorial aprovou a amostra, o caminho é exatamente
+// /audio/amostras/<livroId>.mp3 e o arquivo existe. Nunca recebe URL/caminho do áudio integral.
+const RAIZ_PUBLIC = path.join(__dirname, '..', '..', 'public');
+
+function arquivoDaAmostraExiste(caminhoPublico) {
+  try { return fs.statSync(path.join(RAIZ_PUBLIC, caminhoPublico)).isFile(); } catch (e) { return false; }
+}
+
+function audioAmostraDisponivel(livro, amostra, livroId, existe) {
+  const a = amostra && amostra.audioAmostra;
+  if (!a || a.aprovada !== true || !livro || livro.audiobookDisponivel !== true) return null;
+  if (a.arquivo !== '/audio/amostras/' + livroId + '.mp3') return null;
+  if (!(existe || arquivoDaAmostraExiste)(a.arquivo)) return null;
+  return a;
+}
+
+function rotuloDuracao(segundos) {
+  if (!Number.isFinite(segundos) || segundos <= 0) return '';
+  const min = Math.round(segundos / 60);
+  return min <= 1 ? 'Cerca de 1 minuto' : 'Cerca de ' + min + ' minutos';
+}
+
+function audioBlocoHtml(a, tituloObra) {
+  if (!a) return '';
+  const dur = rotuloDuracao(a.duracaoSegundos);
+  return '<section class="ouvir-audio" id="audio-amostra" aria-labelledby="audio-titulo">'
+    + '<h2 id="audio-titulo" class="secao-titulo">Ouça um trecho do audiobook</h2>'
+    + '<p class="secao-texto">Conheça uma amostra da versão narrada de ' + escapar(tituloObra) + '.</p>'
+    + '<audio id="audio-player" controls preload="none" src="' + escapar(a.arquivo) + '">'
+    + 'Seu navegador não reproduz áudio neste formato.</audio>'
+    + '<div class="audio-ui" id="audio-ui" hidden>'
+    + '<button class="btn btn-audio" type="button" id="audio-tocar" aria-label="Ouvir amostra">'
+    + '<svg viewBox="0 0 24 24" aria-hidden="true" id="audio-icone"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>'
+    + '<span id="audio-rotulo">Ouvir amostra</span></button>'
+    + '<button class="btn btn-audio-recomecar" type="button" id="audio-recomecar" hidden>Recomeçar</button>'
+    + '<div class="audio-progresso" id="audio-progresso-caixa" hidden><div class="audio-barra" aria-hidden="true"><div class="audio-barra-cheia" id="audio-barra"></div></div>'
+    + '<span class="audio-tempo" id="audio-tempo" aria-hidden="true"></span></div>'
+    + '</div>'
+    + (dur ? '<p class="audio-duracao">' + escapar(dur) + '</p>' : '')
+    + '<p class="ouvir-status" id="audio-status" role="status" aria-live="polite"></p>'
+    + '</section>';
 }
 
 function paragrafosHtml(trecho) {
@@ -113,6 +167,8 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
   const capa = typeof livro.capa === 'string' && livro.capa.startsWith('/loja/capas/') ? livro.capa : '/loja/capas/' + livroId + '.jpg';
   const descricao = typeof amostra.chamada === 'string' && amostra.chamada.trim() ? amostra.chamada.trim() : 'Leia um trecho de ' + titulo + '.';
 
+  const audioAmostra = audioAmostraDisponivel(livro, amostra, livroId, deps.arquivoExiste);
+
   const trocas = {
     TITLE: escapar(titulo + ' — Experimente ZUNI Suprema'),
     DESCRIPTION: escapar(descricao),
@@ -121,11 +177,14 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
     CHAMADA_BLOCK: typeof amostra.chamada === 'string' && amostra.chamada.trim() ? '<p class="chamada">' + escapar(amostra.chamada.trim()) + '</p>' : '',
     TITULO_TRECHO_BLOCK: typeof amostra.tituloTrecho === 'string' && amostra.tituloTrecho.trim() ? '<h3>' + escapar(amostra.tituloTrecho.trim()) + '</h3>' : '',
     TRECHO_HTML: paragrafosHtml(trecho),
-    CONTINUE_BLOCK: capitulosHtml(amostra.outrosCapitulos),
+    TEMAS_BLOCK: temasHtml(amostra.outrosCapitulos, titulo),
+    AUDIOBOOK_OPCAO: audiobookOpcaoHtml(livro, titulo),
     AVISO_BLOCK: amostra.avisoInformativo === true
       ? '<p class="aviso">Conteúdo de caráter informativo, que não substitui o acompanhamento de um profissional de saúde.</p>'
       : '',
-    TTS: amostra.ttsDisponivel === true ? '1' : '0',
+    AUDIO_BLOCK: audioBlocoHtml(audioAmostra, titulo),
+    // Com amostra oficial, a voz do navegador não é oferecida como demonstração comercial.
+    TTS: amostra.ttsDisponivel === true && !audioAmostra ? '1' : '0',
     CHECKOUT_URL: escapar(checkoutUrl),
     PRECO: escapar(formatarPreco(preco)),
     VOLTAR_URL: escapar(voltarUrl),
@@ -133,6 +192,13 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
   };
 
   let html = deps.template || carregarTemplate();
+  // Voz do navegador desligada (obra com amostra oficial do audiobook ou sem ttsDisponivel): o bloco nem vai para a página.
+  html = audioAmostra
+    ? html.replace(/<!--AUDIO-(INICIO|FIM)-->\s*/g, '')
+    : html.replace(/<!--AUDIO-INICIO-->[\s\S]*?<!--AUDIO-FIM-->\s*/g, '');
+  html = trocas.TTS !== '1'
+    ? html.replace(/<!--TTS-INICIO-->[\s\S]*?<!--TTS-FIM-->\s*/g, '')
+    : html.replace(/<!--TTS-(INICIO|FIM)-->\s*/g, '');
   html = html.replace(/\{\{([A-Z_]+)\}\}/g, (m, chave) => (Object.prototype.hasOwnProperty.call(trocas, chave) ? trocas[chave] : ''));
   return { status: 200, html };
 }

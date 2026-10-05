@@ -94,14 +94,20 @@ function executar(opcoes = {}) {
   });
   await teste('desempenho: a tag vem DEPOIS do conteúdo e do script de voz, em bloco próprio e assíncrona (não bloqueia a renderização)', async () => {
     const iBloco = pagina.indexOf('<!-- Pinterest Tag oficial');
-    for (const antes of ['id="trecho"', 'Continue explorando na obra', 'Continue a leitura', 'src="/js/experimente-tts.js"', "var texto = document.getElementById('trecho')", '</footer>']) assert.ok(pagina.indexOf(antes) > 0 && pagina.indexOf(antes) < iBloco, 'deveria vir antes da tag: ' + antes);
+    for (const antes of ['id="trecho"', 'id="temas-titulo"', 'Continue a leitura', "document.getElementById('audio-player')", '</footer>']) assert.ok(pagina.indexOf(antes) > 0 && pagina.indexOf(antes) < iBloco, 'deveria vir antes da tag: ' + antes);
     assert.ok(/t\.async=!0/.test(codigo) && !/document\.write/.test(codigo));
     assert.strictEqual((pagina.match(/pintrk\(/g) || []).length, 2); // só load + page em toda a página
     assert.ok(!/<script[^>]+src="https?:/.test(pagina), 'nenhum <script src> externo estático; o loader é criado pela própria tag');
   });
   await teste('J. TTS independe do Pinterest: o script de voz não referencia pintrk nem espera pela tag', async () => {
-    const wiring = pagina.match(/<script>([\s\S]*?)<\/script>/)[1];
-    assert.ok(wiring.includes("document.getElementById('btn-ouvir')") && !/pintrk|Pinterest|__zuniPin/.test(wiring));
+    // E6B: o template tem dois scripts de interface (amostra do audiobook e voz do navegador); nenhum referencia a tag.
+    // A variante sem amostra oficial (obras sem audiobook) mantém o script de voz; ambos ficam antes da tag.
+    const variante = renderizarExperimenteObra({ livroId: 'ela-tem-classe' }, { amostra: () => ({ ...AMOSTRAS['ela-tem-classe'], ttsDisponivel: true, audioAmostra: undefined }) }).html;
+    const pega = (h) => (h.match(/<script>([\s\S]*?)<\/script>/g) || []).filter((s) => /getElementById\('(btn-ouvir|audio-player)'\)/.test(s));
+    assert.strictEqual(pega(pagina).length, 1);
+    assert.strictEqual(pega(variante).length, 1);
+    assert.ok(pega(variante)[0].includes("document.getElementById('btn-ouvir')"));
+    [...pega(pagina), ...pega(variante)].forEach((w) => assert.ok(!/pintrk|Pinterest|__zuniPin/.test(w)));
     assert.ok(!/pintrk|Pinterest/.test(ler('public/js/experimente-tts.js')));
   });
   await teste('K. o CTA de compra independe do Pinterest: âncoras simples, sem handler nem atributo de rastreio', async () => {
@@ -137,10 +143,10 @@ function executar(opcoes = {}) {
     // fora do bloco da tag não há nenhuma referência a pintrk
     assert.ok(!/pintrk/.test(pagina.replace(BLOCO, '')));
   });
-  await teste('conteúdo intacto: trecho (422 palavras), título, CTAs, "Continue explorando", rodapé e TTS não mudaram', async () => {
+  await teste('conteúdo intacto: trecho (422 palavras), título, CTAs, "Você também encontrará nesta obra", rodapé e TTS não mudaram', async () => {
     assert.strictEqual(trecho.trim().split(/\s+/).length, 422);
-    for (const t of ['Da aparência à presença', 'Continue explorando na obra', 'Continue a leitura', 'Voltar ao Universo Feminino', 'Adquirir livro — R$ 34,90', '<footer>Livro digital • acesso após a confirmação do pagamento</footer>', 'id="btn-ouvir"']) assert.ok(pagina.includes(t), t);
-    assert.ok(pagina.indexOf('id="btn-ouvir"') < pagina.indexOf('id="trecho"'));
+    for (const t of ['Da aparência à presença', 'Você também encontrará nesta obra', 'Continue a leitura', 'Voltar ao Universo Feminino', 'Adquirir livro — R$ 34,90', '<footer>Livro digital • acesso após a confirmação do pagamento</footer>', 'id="audio-tocar"']) assert.ok(pagina.includes(t), t); // E6B: amostra oficial do audiobook no lugar da voz do navegador
+    assert.ok(pagina.indexOf('id="audio-tocar"') < pagina.indexOf('id="trecho"'));
   });
   await teste('as outras páginas do funil mantêm só o que já tinham: Loja e vitrine (load+page); checkout-livro (load+page + eventos via módulo); Direciona (load+page+addtocart+checkout)', async () => {
     const eventos = (f) => [...ler(f).matchAll(/pintrk\(\s*'(\w+)'/g)].map((m) => m[1]);

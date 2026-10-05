@@ -47,15 +47,18 @@
 
   /* Trecho: coluna de leitura confortável (fonte >= 16px; ~60-70 caracteres por linha no desktop) */
   .leitura { padding: 22px 0 8px; }
-  .leitura h2 { margin: 0 0 4px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--acento); }
+  /* Títulos de seção autoexplicativos (público maduro): 15px, negrito, caixa-alta */
+  .secao-titulo { margin: 0 0 6px; font-family: var(--sans); font-size: 0.9375rem; font-weight: 700; letter-spacing: 0.1em; line-height: 1.35; text-transform: uppercase; color: var(--acento); }
+  .secao-texto { margin: 0 0 12px; font-size: 1.0625rem; line-height: 1.55; color: var(--tinta); }
   .leitura h3 { margin: 6px 0 12px; font-size: 1.25rem; font-weight: normal; line-height: 1.3; }
   .trecho { padding: 4px 0 0; font-size: 1.0625rem; line-height: 1.75; }
   .trecho p { margin: 0 0 1em; }
   .fim-trecho { margin: 16px 0 0; padding-top: 12px; border-top: 1px solid var(--borda); font-family: var(--sans); font-size: 0.875rem; color: var(--suave); }
-  .aviso { margin: 12px 0 0; font-family: var(--sans); font-size: 0.8125rem; color: var(--suave); }
+  .aviso { margin: 12px 0 0; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); }
 
   /* Ouvir: secundário, não domina a leitura */
-  .ouvir { margin: 12px 0 18px; }
+  .ouvir { margin: 24px 0 6px; padding: 16px; border: 1px solid var(--borda); border-radius: 10px; background: var(--carta); }
+  .ouvir .secao-texto { margin-bottom: 14px; }
   .ouvir[hidden] { display: none; }
   .ouvir-controles { display: flex; flex-wrap: wrap; gap: 10px; }
   .ouvir-status { margin: 8px 0 0; min-height: 1.4em; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); }
@@ -67,18 +70,44 @@
   .btn-primario:hover { background: var(--acento-escuro); }
   .btn[hidden] { display: none; }
 
-  /* Continue explorando: títulos reais de capítulos fora do trecho, em chips discretos que quebram linha */
-  .explorar { margin: 26px 0 0; padding-top: 18px; border-top: 1px solid var(--borda); }
-  .explorar h2 { margin: 0 0 10px; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; color: var(--acento); }
-  .capitulos { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; font-family: var(--sans); }
-  .capitulos li { padding: 6px 12px; border: 1px solid var(--borda); border-radius: 999px; background: #fbf7f0; font-size: 0.9375rem; line-height: 1.3; color: var(--tinta); overflow-wrap: anywhere; }
+  /* Amostra do audiobook: o player nativo funciona sem JavaScript; com JS entra a interface simplificada */
+  .ouvir-audio { margin: 24px 0 6px; padding: 16px; border: 1px solid var(--borda); border-radius: 10px; background: var(--carta); }
+  .ouvir-audio .secao-texto { margin-bottom: 14px; }
+  .ouvir-audio audio { display: block; width: 100%; min-height: 48px; }
+  .ouvir-audio.com-js audio { display: none; }
+  .audio-ui { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+  .audio-ui[hidden] { display: none; }
+  .btn-audio { min-width: 11.5rem; }
+  .btn-audio-recomecar { border-color: var(--borda); color: var(--suave); }
+  .audio-progresso { flex: 1 1 100%; display: flex; align-items: center; gap: 12px; }
+  .audio-progresso[hidden] { display: none; }
+  .audio-barra { flex: 1; height: 6px; border-radius: 3px; background: var(--borda); overflow: hidden; }
+  .audio-barra-cheia { height: 100%; width: 0; background: var(--acento); }
+  .audio-tempo { flex: none; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); font-variant-numeric: tabular-nums; }
+  .audio-duracao { margin: 10px 0 0; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); }
+
+  /* Você também encontrará nesta obra: lista editorial (não são links nem botões) */
+  .temas { margin: 28px 0 0; padding-top: 20px; border-top: 1px solid var(--borda); }
+  .temas-lista { margin: 4px 0 0; padding: 0; list-style: none; font-size: 1.125rem; line-height: 1.45; }
+  .temas-lista li { position: relative; padding: 11px 0 11px 22px; border-bottom: 1px solid var(--borda); }
+  .temas-lista li::before { content: ''; position: absolute; left: 4px; top: 1.15em; width: 7px; height: 7px; border-radius: 50%; background: var(--dourado); }
+  .temas-lista li:last-child { border-bottom: 0; }
+
+  /* Como você pode aproveitar esta obra / Compra simples e segura */
+  .opcoes, .seguro { margin: 28px 0 0; padding-top: 20px; border-top: 1px solid var(--borda); }
+  .opcao { margin: 14px 0 0; padding: 14px 16px; border: 1px solid var(--borda); border-radius: 10px; background: var(--carta); }
+  .opcao h3 { margin: 0 0 8px; font-family: var(--sans); font-size: 1.0625rem; font-weight: 700; line-height: 1.3; }
+  .opcao p { margin: 0; font-size: 1.0625rem; line-height: 1.55; }
+  .opcao ul { margin: 0; padding-left: 1.2em; font-size: 1.0625rem; line-height: 1.55; }
+  .opcao li { margin: 0 0 6px; }
+  .seguro p { margin: 0; font-size: 1.0625rem; line-height: 1.6; }
 
   .compra { margin: 26px 0 0; padding: 20px 0 6px; border-top: 1px solid var(--borda); }
   .compra h2 { margin: 0 0 14px; font-size: 1.25rem; font-weight: normal; }
   .compra-botoes { display: grid; gap: 12px; }
   .compra .btn { width: 100%; }
 
-  footer { padding: 18px 0 40px; font-family: var(--sans); font-size: 0.8125rem; color: var(--suave); text-align: center; }
+  footer { padding: 18px 0 40px; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); text-align: center; }
 
   @media (min-width: 640px) {
     .pagina { padding: 0 28px; }
@@ -104,29 +133,52 @@
   </header>
 
   <main>
-    <section class="leitura" aria-labelledby="leia-titulo">
-      <h2 id="leia-titulo">Leia um trecho</h2>
-      {{TITULO_TRECHO_BLOCK}}
-      <div class="ouvir" id="ouvir" data-tts="{{TTS}}" hidden>
-        <div class="ouvir-controles">
-          <button class="btn" type="button" id="btn-ouvir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><span id="btn-ouvir-rotulo">Ouvir este trecho</span></button>
-          <button class="btn" type="button" id="btn-parar" hidden>Parar</button>
-        </div>
-        <p class="ouvir-status" id="ouvir-status" role="status" aria-live="polite"></p>
-      </div>
+    {{AUDIO_BLOCK}}
 
+    <!--TTS-INICIO-->
+    <div class="ouvir" id="ouvir" data-tts="{{TTS}}" hidden>
+      <h2 id="ouca-titulo" class="secao-titulo">Ouça um trecho da obra</h2>
+      <p class="secao-texto">Experimente uma amostra em áudio de {{TITULO}}.</p>
+      <div class="ouvir-controles">
+        <button class="btn" type="button" id="btn-ouvir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg><span id="btn-ouvir-rotulo">Ouvir este trecho</span></button>
+        <button class="btn" type="button" id="btn-parar" hidden>Parar</button>
+      </div>
+      <p class="ouvir-status" id="ouvir-status" role="status" aria-live="polite"></p>
+    </div>
+    <!--TTS-FIM-->
+
+    <section class="leitura" aria-labelledby="leia-titulo">
+      <h2 id="leia-titulo" class="secao-titulo">Leia um trecho da obra</h2>
+      <p class="secao-texto">Conheça algumas páginas de {{TITULO}}.</p>
+      {{TITULO_TRECHO_BLOCK}}
       <div class="trecho" id="trecho">
 {{TRECHO_HTML}}
       </div>
       <p class="fim-trecho">Este é apenas um trecho da obra.</p>
       {{AVISO_BLOCK}}
-
     </section>
 
-    {{CONTINUE_BLOCK}}
+    {{TEMAS_BLOCK}}
+
+    <section class="opcoes" aria-labelledby="opcoes-titulo">
+      <h2 id="opcoes-titulo" class="secao-titulo">Como você pode aproveitar esta obra</h2>
+      <div class="opcao">
+        <h3>Livro digital</h3>
+        <ul>
+          <li>Leia na tela do seu aparelho.</li>
+          <li>Depois da compra, você recebe as orientações de acesso.</li>
+        </ul>
+      </div>
+      {{AUDIOBOOK_OPCAO}}
+    </section>
+
+    <section class="seguro" aria-labelledby="seguro-titulo">
+      <h2 id="seguro-titulo" class="secao-titulo">Compra simples e segura</h2>
+      <p>Escolha sua opção e faça o pagamento com cartão em ambiente seguro. Após a confirmação, você receberá as orientações para acessar sua compra. Você faz tudo aqui, nesta página, de forma simples e segura.</p>
+    </section>
 
     <section class="compra" aria-labelledby="continue-leitura">
-      <h2 id="continue-leitura">Continue a leitura</h2>
+      <h2 id="continue-leitura">Gostou da experiência? Continue a leitura.</h2>
       <div class="compra-botoes">
         <a class="btn btn-primario" href="{{CHECKOUT_URL}}">Adquirir livro — {{PRECO}}</a>
         <a class="btn" href="{{VOLTAR_URL}}">{{VOLTAR_ROTULO}}</a>
@@ -137,6 +189,57 @@
   <footer>Livro digital • acesso após a confirmação do pagamento</footer>
 </div>
 
+<!--AUDIO-INICIO-->
+<script>
+  // Amostra do audiobook: melhora a apresentação do player; sem JavaScript o player nativo continua funcionando.
+  // Sem autoplay: só toca depois do clique/toque do visitante.
+  (function () {
+    var secao = document.getElementById('audio-amostra');
+    var audio = document.getElementById('audio-player');
+    var ui = document.getElementById('audio-ui');
+    if (!secao || !audio || !ui || typeof audio.play !== 'function') return;
+    var tocar = document.getElementById('audio-tocar');
+    var rotulo = document.getElementById('audio-rotulo');
+    var icone = document.getElementById('audio-icone');
+    var recomecar = document.getElementById('audio-recomecar');
+    var caixa = document.getElementById('audio-progresso-caixa');
+    var barra = document.getElementById('audio-barra');
+    var tempo = document.getElementById('audio-tempo');
+    var status = document.getElementById('audio-status');
+    var PLAY = 'M8 5v14l11-7z', PAUSE = 'M7 5h4v14H7zM13 5h4v14h-4z';
+    function fmt(s) { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ':' + ('0' + (s % 60)).slice(-2); }
+    function estado(tocando) {
+      rotulo.textContent = tocando ? 'Pausar' : (audio.currentTime > 0 && !audio.ended ? 'Continuar' : 'Ouvir amostra');
+      tocar.setAttribute('aria-label', tocando ? 'Pausar a amostra' : (audio.currentTime > 0 && !audio.ended ? 'Continuar a amostra' : 'Ouvir amostra'));
+      icone.firstChild.setAttribute('d', tocando ? PAUSE : PLAY);
+    }
+    function progresso() {
+      var d = audio.duration;
+      if (!isFinite(d) || d <= 0) { tempo.textContent = fmt(audio.currentTime); return; }
+      barra.style.width = Math.min(100, (audio.currentTime / d) * 100) + '%';
+      tempo.textContent = fmt(audio.currentTime) + ' de ' + fmt(d);
+    }
+    secao.className += ' com-js';
+    audio.controls = false;
+    ui.hidden = false;
+    tocar.addEventListener('click', function () {
+      if (audio.paused) {
+        var p = audio.play();
+        if (p && p.catch) p.catch(function () { status.textContent = 'Não foi possível reproduzir a amostra agora.'; audio.controls = true; audio.style.display = 'block'; ui.hidden = true; });
+      } else { audio.pause(); }
+    });
+    recomecar.addEventListener('click', function () { audio.currentTime = 0; var p = audio.play(); if (p && p.catch) p.catch(function () {}); });
+    audio.addEventListener('play', function () { estado(true); caixa.hidden = false; recomecar.hidden = false; status.textContent = ''; });
+    audio.addEventListener('pause', function () { estado(false); });
+    audio.addEventListener('ended', function () { estado(false); status.textContent = 'Fim da amostra.'; });
+    audio.addEventListener('timeupdate', progresso);
+    audio.addEventListener('loadedmetadata', progresso);
+    audio.addEventListener('error', function () { status.textContent = 'Não foi possível carregar a amostra agora.'; });
+    window.addEventListener('pagehide', function () { audio.pause(); });
+  })();
+</script>
+<!--AUDIO-FIM-->
+<!--TTS-INICIO-->
 <script src="/js/experimente-tts.js"></script>
 <script>
   // Leitura em voz com a voz do navegador: sem rede, sem custo. Cancela ao sair da página.
@@ -173,6 +276,7 @@
     window.addEventListener('beforeunload', function () { leitor.parar(); });
   })();
 </script>
+<!--TTS-FIM-->
 
 <!-- Pinterest Tag oficial (mesma tag da Loja, da vitrine e dos checkouts): só PageVisit (load + page).
      Carrega depois do conteúdo e de forma assíncrona; qualquer falha é engolida (a página não depende dela).

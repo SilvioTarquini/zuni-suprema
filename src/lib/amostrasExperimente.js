@@ -19,6 +19,9 @@
 //   origemUniverso    slug do universo editorial ('universo-feminino'); define o "Voltar"
 //   avisoInformativo  true exibe o aviso de conteúdo informativo (obras de saúde)
 //   ttsDisponivel     true habilita "Ouvir este trecho" (voz do navegador, sem custo)
+//   audioAmostra      (opcional) { aprovada, arquivo, duracaoSegundos } — amostra CURTA do audiobook oficial, arquivo
+//                     estático em /audio/amostras/<livroId>.mp3 (só o trecho aprovado; nunca o áudio integral).
+//                     Só é exibida se aprovada === true, o catálogo marca audiobookDisponivel e o arquivo existe.
 //
 // NUNCA colocar aqui o texto integral da obra, o módulo de dados do flipbook, URLs de áudio ou de storage.
 
@@ -57,7 +60,13 @@ const AMOSTRAS = Object.freeze({
     ]),
     origemUniverso: 'universo-feminino',
     avisoInformativo: false,
-    ttsDisponivel: true
+    // Ela tem audiobook oficial: a demonstração comercial é a amostra real (candidato aprovado), não a voz do navegador.
+    ttsDisponivel: false,
+    audioAmostra: Object.freeze({
+      aprovada: true,
+      arquivo: '/audio/amostras/ela-tem-classe.mp3',
+      duracaoSegundos: 65
+    })
   })
 });
 

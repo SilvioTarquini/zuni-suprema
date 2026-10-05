@@ -50,6 +50,9 @@ const html200 = (params = {}) => {
   return r.html;
 };
 const amostra = obterAmostra('ela-tem-classe');
+// E6B: Ela tem amostra oficial do audiobook e a voz do navegador fica desligada. A infraestrutura genérica de voz
+// (obras sem audiobook) continua testada com uma variante da mesma obra SEM audioAmostra e com ttsDisponivel.
+const htmlComTts = () => renderizarExperimenteObra({ livroId: 'ela-tem-classe' }, { amostra: () => ({ ...amostra, ttsDisponivel: true, audioAmostra: undefined }) }).html;
 const srvAmostra = ler('src/lib/amostrasExperimente.js');
 const srv = ler('src/server.js');
 
@@ -146,8 +149,11 @@ const srv = ler('src/server.js');
     assert.ok(!alt.includes('R$ 34,90'));
   });
   await teste('G. nenhum preço (nem campo comercial) existe em amostrasExperimente.js ou no template', async () => {
-    assert.ok(!/R\$|\b\d{1,3}[.,]\d{2}\b|preco|pre[cç]o|checkout|audiobook|capa\b|Storage|bucket|supabase|\.mp3|https?:/i.test(srvAmostra.replace(/\/\/.*$/gm, '').replace(/"[^"\n]{40,}"/g, '"…"')), 'campo comercial no registro');
-    assert.deepStrictEqual(Object.keys(amostra).sort(), ['aprovada', 'avisoInformativo', 'chamada', 'livroId', 'origemUniverso', 'outrosCapitulos', 'tituloTrecho', 'trecho', 'ttsDisponivel']);
+    // E6B: o único dado de mídia permitido no registro é o caminho público da amostra curta (/audio/amostras/<id>.mp3).
+    const semAmostraAudio = srvAmostra.replace(/\/\/.*$/gm, '').replace(/'\/audio\/amostras\/ela-tem-classe\.mp3'/, "'…'").replace(/"[^"\n]{40,}"/g, '"…"');
+    assert.ok(!/R\$|\b\d{1,3}[.,]\d{2}\b|preco|pre[cç]o|checkout|audiobook|capa\b|Storage|bucket|supabase|\.mp3|https?:/i.test(semAmostraAudio), 'campo comercial no registro');
+    assert.deepStrictEqual(Object.keys(amostra).sort(), ['aprovada', 'audioAmostra', 'avisoInformativo', 'chamada', 'livroId', 'origemUniverso', 'outrosCapitulos', 'tituloTrecho', 'trecho', 'ttsDisponivel']);
+    assert.deepStrictEqual(Object.keys(amostra.audioAmostra).sort(), ['aprovada', 'arquivo', 'duracaoSegundos']);
     assert.ok(!/R\$|\d{2},\d{2}/.test(ler('templates/experimente-obra.html')));
   });
   await teste('H. a capa vem do catálogo (caminho da Loja) e existe em disco', async () => {
@@ -157,26 +163,27 @@ const srv = ler('src/server.js');
     assert.ok(outra.includes('src="/loja/capas/alternativa.jpg"'));
   });
 
-  console.log('\nContinue explorando e CTA final');
-  await teste('P. "Continue explorando na obra": os 5 títulos reais, só títulos, fora do trecho, em chips', async () => {
+  console.log('\nTemas da obra e CTA final');
+  await teste('P. "Você também encontrará nesta obra": os 5 títulos reais, só títulos, fora do trecho, em lista editorial (E6A)', async () => {
     const h = html200();
     const titulos = ['Perfumes e Assinatura Feminina', 'O Poder das Cores', 'A Voz Elegante', 'Rotinas e Hábitos da Mulher Elegante', 'O Envelhecimento Elegante'];
     assert.deepStrictEqual([...amostra.outrosCapitulos], titulos);
-    assert.ok(h.includes('<h2 id="explorar-titulo">Continue explorando na obra</h2>'));
-    const lista = h.match(/<ul class="capitulos">([\s\S]*?)<\/ul>/)[1];
+    assert.ok(h.includes('<h2 id="temas-titulo" class="secao-titulo">Você também encontrará nesta obra</h2>'));
+    assert.ok(h.includes('<p class="secao-texto">Entre os temas abordados em Ela Tem Classe:</p>'));
+    const lista = h.match(/<ul class="temas-lista">([\s\S]*?)<\/ul>/)[1];
     assert.deepStrictEqual([...lista.matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1]), titulos);
-    assert.ok(!/<a\b/.test(lista), 'chips não são links (sem falsa promessa de navegação)');
+    assert.ok(!/<a\b|<button|onclick|role="button"|tabindex/.test(lista), 'os temas não são links nem botões');
     const trechoHtml = h.match(/<div class="trecho" id="trecho">([\s\S]*?)<\/div>/)[1];
     titulos.forEach((t) => assert.ok(!trechoHtml.includes(t) && !amostra.trecho.includes(t), 'título dentro do trecho: ' + t));
-    assert.ok(h.indexOf('Este é apenas um trecho da obra.') < h.indexOf('Continue explorando na obra') && h.indexOf('Continue explorando na obra') < h.indexOf('Continue a leitura'));
-    if (obra) { // os títulos existem na obra, em capítulos fora do trecho
-      for (const t of titulos) { const s = obra.find((x) => x.titulo.endsWith(t)); assert.ok(s, 'título inexistente na obra: ' + t); assert.ok(!['F1', 'V1C1'].includes(s.id)); }
-    }
-    assert.ok(/\.capitulos \{[^}]*flex-wrap: wrap/.test(ler('templates/experimente-obra.html')), 'chips quebram linha');
+    assert.ok(h.indexOf('Este é apenas um trecho da obra.') < h.indexOf('id="temas-titulo"') && h.indexOf('id="temas-titulo"') < h.indexOf('id="continue-leitura"'));
+    if (obra) { for (const t of titulos) { const sec = obra.find((x) => x.titulo.endsWith(t)); assert.ok(sec, 'título inexistente na obra: ' + t); assert.ok(!['F1', 'V1C1'].includes(sec.id)); } }
+    const css = ler('templates/experimente-obra.html');
+    assert.ok(!/\.capitulos|border-radius: 999px/.test(css), 'sem aparência de botão/chip');
+    assert.ok(!/\.temas-lista[^}]*cursor: pointer/.test(css));
   });
   await teste('CTA final: "Continue a leitura" + Adquirir (preço do catálogo) + Voltar ao Universo Feminino', async () => {
     const h = html200();
-    assert.ok(/<h2 id="continue-leitura">Continue a leitura<\/h2>/.test(h));
+    assert.ok(/<h2 id="continue-leitura">Gostou da experiência\? Continue a leitura\.<\/h2>/.test(h));
     const secao = h.match(/<section class="compra"[\s\S]*?<\/section>/)[0];
     assert.ok(secao.includes('Adquirir livro — R$ 34,90') && secao.includes('href="/loja/universo-feminino/">Voltar ao Universo Feminino</a>'));
   });
@@ -208,8 +215,8 @@ const srv = ler('src/server.js');
 
   console.log('\nLeitura em voz (escopo)');
   await teste('I. "Ouvir este trecho" lê SOMENTE o trecho: o elemento lido contém só os 7 parágrafos aprovados', async () => {
-    const h = html200();
-    const script = ler('templates/experimente-obra.html').match(/<script>([\s\S]*?)<\/script>/)[1];
+    const h = htmlComTts();
+    const script = (ler('templates/experimente-obra.html').match(/<script>([\s\S]*?)<\/script>/g) || []).find((s) => s.includes('criarLeitor'));
     assert.ok(/document\.getElementById\('trecho'\)\.innerText/.test(script));
     assert.strictEqual((script.match(/innerText/g) || []).length, 1); // única fonte de texto falado (textContent só atualiza rótulos da interface)
     assert.ok(script.includes('texto: texto') && script.includes("var texto = document.getElementById('trecho').innerText;"));
@@ -222,7 +229,12 @@ const srv = ler('src/server.js');
   await teste('TTS: sem rede, sem áudio pronto, sem audiobook; o módulo de voz é o mesmo já testado na E2', async () => {
     const src = ler('public/js/experimente-tts.js').replace(/\/\/.*$/gm, '');
     for (const p of ['fetch', 'XMLHttpRequest', 'sendBeacon', 'WebSocket', 'new Audio', 'audiobook', '.mp3']) assert.ok(!src.includes(p), p);
-    assert.ok(!/<audio|<video|\.mp3|audiobook/i.test(html200()));
+    // E6B: a página só referencia a amostra curta oficial; nunca áudio integral. (A variante sem amostra não tem mídia alguma.)
+    assert.ok(!/<audio|<video|\.mp3|audiobookStorage|audiobookUrl|audiobookPartes/i.test(htmlComTts()));
+    const h = html200();
+    assert.deepStrictEqual([...h.matchAll(/\.mp3/g)].length, 1);
+    assert.deepStrictEqual([...h.matchAll(/<audio\b[^>]*src="([^"]+)"/g)].map((m) => m[1]), ['/audio/amostras/ela-tem-classe.mp3']);
+    assert.ok(!/<video|audiobookStorage|audiobookUrl|audiobookPartes/i.test(h));
   });
 
   console.log('\nVitrine Universo Feminino');
@@ -255,14 +267,17 @@ const srv = ler('src/server.js');
     const livro = buscarLivro('ela-tem-classe');
     assert.ok(livro.audiobookStorage && livro.audiobookUrl);
     const h = html200({ origem: 'universo-feminino', cupom: 'X1' });
-    for (const p of [livro.audiobookStorage.bucket, livro.audiobookStorage.path, livro.audiobookUrl, 'audiobookStorage', 'audiobookUrl', 'audiobookPartes', 'supabase.co', '.mp3', 'zuni-audiobooks', 'bucket', livro.indicadoPara, livro.descricao.slice(0, 50), livro.resumo.slice(0, 50)]) assert.ok(!h.includes(p), 'vazou: ' + String(p).slice(0, 40));
+    for (const p of [livro.audiobookStorage.bucket, livro.audiobookStorage.path, livro.audiobookUrl, 'audiobookStorage', 'audiobookUrl', 'audiobookPartes', 'supabase.co', 'zuni-audiobooks', 'bucket', livro.indicadoPara, livro.descricao.slice(0, 50), livro.resumo.slice(0, 50)]) assert.ok(!h.includes(p), 'vazou: ' + String(p).slice(0, 40));
+    // E6B: a única mídia é a amostra curta pública (E6B); nenhuma outra referência a .mp3.
+    assert.deepStrictEqual([...h.matchAll(/[^"'\s=]*\.mp3/g)].map((m) => m[0]), ['/audio/amostras/ela-tem-classe.mp3']);
   });
   await teste('R. nenhuma IA, RAG, chat, Mentor, banco, rede externa ou Pinterest na página nova', async () => {
     // E5: a única exceção permitida é o bloco da tag oficial do Pinterest (load + page); fora dele, nenhum pintrk.
     const h = html200().replace(/<!-- Pinterest Tag oficial[\s\S]*?<\/script>/, '').toLowerCase();
     for (const p of ['experimente-livro-chat', 'experimente-chat', 'api/', 'openai', 'anthropic', 'claude', 'supabase', 'embedding', 'mentor', 'livro-vivo', 'fetch(', 'xmlhttprequest', 'sendbeacon', 'pintrk', '<form', '<input', '<textarea', 'stripe']) assert.ok(!h.includes(p), p);
     assert.ok(!/<script[^>]+src="https?:/.test(h) && !/<link[^>]+href="https?:/.test(h));
-    assert.deepStrictEqual([...html200().matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]), ['/js/experimente-tts.js']);
+    assert.deepStrictEqual([...html200().matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]), []); // E6B: Ela usa a amostra oficial; o módulo da voz do navegador nem é carregado
+    assert.deepStrictEqual([...htmlComTts().matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]), ['/js/experimente-tts.js']);
   });
   await teste('S. o endpoint de lead continua desativado (410, sem e-mail nem gravação)', async () => {
     assert.ok(/const LEAD_ENDPOINT_ATIVO = false;/.test(srv));
@@ -290,16 +305,25 @@ const srv = ler('src/server.js');
     assert.ok(!/permitirPlaceholder/.test(srv));
     assert.ok(ler('public/experimente.html').includes('Capítulo 1 — O cérebro que reage antes de pensar')); // legado intacto
   });
-  await teste('microajuste 1: "Ouvir este trecho" fica logo abaixo de "Da aparência à presença" e ANTES do primeiro parágrafo; o TTS segue lendo só o trecho', async () => {
+  await teste('E6B: "Ouça um trecho do audiobook" (amostra oficial) vem ANTES de "Leia um trecho da obra"; sem TTS comercial para Ela', async () => {
     const h = html200();
-    const iTitulo = h.indexOf('<h3>Da aparência à presença</h3>'), iOuvir = h.indexOf('id="btn-ouvir"'), iTrecho = h.indexOf('id="trecho"'), iPrimeiroP = h.indexOf('<p>Existe uma diferença profunda');
-    assert.ok(iTitulo > 0 && iTitulo < iOuvir && iOuvir < iTrecho && iTrecho < iPrimeiroP, 'ordem: título → ouvir → trecho → 1º parágrafo');
-    assert.ok(!h.slice(h.indexOf('Este é apenas um trecho da obra.')).includes('id="btn-ouvir"'), 'o controle não fica mais depois do trecho');
+    const iA = h.indexOf('>Ouça um trecho do audiobook<'), iLeiaB = h.indexOf('>Leia um trecho da obra<');
+    assert.ok(iA > 0 && iA < iLeiaB && iLeiaB < h.indexOf('id="trecho"'));
+    assert.ok(h.includes('<p class="secao-texto">Conheça uma amostra da versão narrada de Ela Tem Classe.</p>'));
+    assert.ok(!h.includes('id="btn-ouvir"') && !h.includes('Ouça um trecho da obra') && !h.includes('Ouvir este trecho'), 'sem bloco TTS para Ela');
+    assert.ok(!/narradora|voz humana|\bIA\b|Google Cloud|\bTTS\b|voz sintética/i.test(h.replace(/<script[\s\S]*?<\/script>/g, '')), 'sem jargão técnico');
+  });
+  await teste('E6A→E6B: com a variante SEM amostra oficial, "Ouça um trecho da obra" (voz do navegador) vem ANTES de "Leia um trecho da obra" e do primeiro parágrafo; o TTS segue lendo só o trecho', async () => {
+    const h = htmlComTts();
+    const iOuca = h.indexOf('>Ouça um trecho da obra<'), iBtn = h.indexOf('id="btn-ouvir"'), iLeia = h.indexOf('>Leia um trecho da obra<'), iTitulo = h.indexOf('<h3>Da aparência à presença</h3>'), iTrecho = h.indexOf('id="trecho"'), iP = h.indexOf('<p>Existe uma diferença profunda');
+    assert.ok(iOuca > 0 && iOuca < iBtn && iBtn < iLeia && iLeia < iTitulo && iTitulo < iTrecho && iTrecho < iP, 'ordem: ouça → controle → leia → título → trecho → 1º parágrafo');
+    assert.ok(h.includes('<p class="secao-texto">Experimente uma amostra em áudio de Ela Tem Classe.</p>') && h.includes('<p class="secao-texto">Conheça algumas páginas de Ela Tem Classe.</p>'));
+    assert.ok(!/<audio\b|<section class="ouvir-audio"/.test(h), 'a variante sem amostra oficial não tem player de audiobook');
     assert.strictEqual((h.match(/id="btn-ouvir"/g) || []).length, 1);
     const lido = h.match(/<div class="trecho" id="trecho">([\s\S]*?)<\/div>/)[1];
-    assert.ok(!/btn-ouvir|Ouvir este trecho|ouvir-status/.test(lido), 'o controle não está dentro do elemento lido');
+    assert.ok(!/btn-ouvir|Ouvir este trecho|ouvir-status|Ouça um trecho/.test(lido), 'o controle não está dentro do elemento lido');
     const texto = lido.replace(/<[^>]+>/g, '\n').split('\n').map((x) => x.trim()).filter(Boolean).join('\n\n');
-    assert.strictEqual(texto, amostra.trecho); // continua sendo exatamente o trecho aprovado (422 palavras)
+    assert.strictEqual(texto, amostra.trecho);
     assert.strictEqual(palavras(texto), 422);
   });
   await teste('microajuste 2: rodapé exatamente "Livro digital • acesso após a confirmação do pagamento"; texto antigo removido; nada mais mudou', async () => {
@@ -307,13 +331,13 @@ const srv = ler('src/server.js');
     assert.ok(h.includes('<footer>Livro digital • acesso após a confirmação do pagamento</footer>'));
     assert.ok(!/Produto 100% digital|sem envio físico|O acesso chega por link/.test(h));
     assert.strictEqual((h.match(/<footer>/g) || []).length, 1);
-    for (const t of ['Continue explorando na obra', 'Continue a leitura', 'Este é apenas um trecho da obra.', 'Voltar ao Universo Feminino', 'Da aparência à presença', 'A diferença entre chamar atenção e permanecer na memória de alguém.']) assert.ok(h.includes(t), t);
+    for (const t of ['Você também encontrará nesta obra', 'Continue a leitura', 'Este é apenas um trecho da obra.', 'Voltar ao Universo Feminino', 'Da aparência à presença', 'A diferença entre chamar atenção e permanecer na memória de alguém.']) assert.ok(h.includes(t), t);
   });
   await teste('acessibilidade: headings, alt da capa, botões reais, região de status do TTS', async () => {
     const h = html200();
     assert.strictEqual((h.match(/<h1>/g) || []).length, 1);
-    assert.deepStrictEqual([...h.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]), ['Leia um trecho', 'Continue explorando na obra', 'Continue a leitura']);
-    assert.ok(h.includes('alt="Capa de Ela Tem Classe"') && /<button class="btn" type="button" id="btn-ouvir"/.test(h) && /role="status" aria-live="polite"/.test(h));
+    assert.deepStrictEqual([...h.matchAll(/<h2[^>]*>([^<]+)<\/h2>/g)].map((m) => m[1]), ['Ouça um trecho do audiobook', 'Leia um trecho da obra', 'Você também encontrará nesta obra', 'Como você pode aproveitar esta obra', 'Compra simples e segura', 'Gostou da experiência? Continue a leitura.']);
+    assert.ok(h.includes('alt="Capa de Ela Tem Classe"') && /<button class="btn btn-audio" type="button" id="audio-tocar"/.test(h) && /role="status" aria-live="polite"/.test(h));
   });
 
   console.log(`\nTotal: ${total} | Passaram: ${ok}${pulados ? ` (${pulados} pulados: flipbook ausente)` : ''} | Falharam: ${total - ok}`);

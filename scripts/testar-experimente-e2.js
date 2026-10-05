@@ -113,7 +113,7 @@ function fatiar(inicio, fim) {
     assert.strictEqual(status, 200);
     for (const p of privados) assert.ok(!html.includes(p), 'vazou: ' + p.slice(0, 40));
     assert.ok(html.includes('Primeiro parágrafo sintético de teste.') && html.includes('Segundo parágrafo sintético de teste.'));
-    assert.strictEqual((html.match(/<p>/g) || []).length, 2); // exatamente os 2 parágrafos do trecho
+    assert.strictEqual((html.match(/<div class="trecho" id="trecho">([\s\S]*?)<\/div>/)[1].match(/<p>/g) || []).length, 2); // exatamente os 2 parágrafos do trecho (E6A: a página tem outros <p> fora do trecho)
   });
   await teste('HTML do trecho é escapado (nada de tags, entidades ou recursão de template)', async () => {
     const { html } = render({}, { amostra: () => amostraFixture({ trecho: '<script>alert(1)</script> & "aspas" {{TITULO}} {{CHECKOUT_URL}}', chamada: '<img src=x onerror=alert(1)>', tituloTrecho: '<b>x</b>' }) });
@@ -177,8 +177,10 @@ function fatiar(inicio, fim) {
   await teste('título do trecho, chamada e TTS são opcionais; TTS pode ser desligado', async () => {
     assert.ok(!render({}, { amostra: () => amostraFixture({ chamada: null }) }).html.includes('class="chamada"'));
     assert.ok(render({}, { amostra: () => amostraFixture({ tituloTrecho: 'Capítulo X' }) }).html.includes('<h3>Capítulo X</h3>'));
-    assert.ok(render().html.includes('data-tts="1"'));
-    assert.ok(render({}, { amostra: () => amostraFixture({ ttsDisponivel: false }) }).html.includes('data-tts="0"'));
+    assert.ok(render({}, { amostra: () => amostraFixture({ ttsDisponivel: true }) }).html.includes('data-tts="1"'));
+    // E6B: TTS desligado = o bloco da voz do navegador nem vai para a página (antes ficava oculto com data-tts="0").
+    assert.ok(!render({}, { amostra: () => amostraFixture({ ttsDisponivel: false }) }).html.includes('id="btn-ouvir"'));
+    assert.ok(!renderizarExperimenteObra({ livroId: 'ela-tem-classe' }).html.includes('id="btn-ouvir"'), 'Ela Tem Classe (amostra oficial do audiobook, registro real) não oferece a voz do navegador');
   });
 
   console.log('\nSem chat, sem IA, sem custo');
@@ -272,7 +274,9 @@ function fatiar(inicio, fim) {
     assert.doesNotThrow(() => { l.iniciar(); l.parar(); });
   });
   await teste('a página cancela a leitura ao sair (pagehide/beforeunload) e esconde o áudio sem suporte', async () => {
-    const script = templateSrc.match(/<script>([\s\S]*?)<\/script>/)[1];
+    // E6B: o template tem também o script da amostra de audiobook; o da voz do navegador é o que usa criarLeitor.
+    const script = (templateSrc.match(/<script>[\s\S]*?<\/script>/g) || []).find((s) => s.includes('criarLeitor'));
+    assert.ok(script, 'script do leitor por voz presente');
     assert.ok(/addEventListener\('pagehide'[\s\S]*leitor\.parar\(\)/.test(script) && /addEventListener\('beforeunload'[\s\S]*leitor\.parar\(\)/.test(script));
     assert.ok(/if \(!synth \|\| !Utterance\) return;/.test(script));
     assert.ok(/id="ouvir"[^>]*hidden/.test(templateSrc));
