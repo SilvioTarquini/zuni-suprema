@@ -173,5 +173,25 @@
     window.addEventListener('beforeunload', function () { leitor.parar(); });
   })();
 </script>
+
+<!-- Pinterest Tag oficial (mesma tag da Loja, da vitrine e dos checkouts): só PageVisit (load + page).
+     Carrega depois do conteúdo e de forma assíncrona; qualquer falha é engolida (a página não depende dela).
+     Sem parâmetros de e-mail, sem eventos novos, sem texto da amostra. AddToCart e Purchase continuam só no checkout. -->
+<script>
+  (function () {
+    try {
+      if (window.__zuniPinVisita) return; // execução duplicada não repete o PageVisit
+      window.__zuniPinVisita = true;
+      !function(e){if(!window.pintrk){window.pintrk = function () {
+      window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var
+        n=window.pintrk;n.queue=[],n.version="3.0";var
+        t=document.createElement("script");t.async=!0,t.src=e;var
+        r=document.getElementsByTagName("script")[0];
+        r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+      pintrk('load', '2612519382245');
+      pintrk('page');
+    } catch (e) {}
+  })();
+</script>
 </body>
 </html>

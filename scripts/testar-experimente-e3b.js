@@ -258,7 +258,8 @@ const srv = ler('src/server.js');
     for (const p of [livro.audiobookStorage.bucket, livro.audiobookStorage.path, livro.audiobookUrl, 'audiobookStorage', 'audiobookUrl', 'audiobookPartes', 'supabase.co', '.mp3', 'zuni-audiobooks', 'bucket', livro.indicadoPara, livro.descricao.slice(0, 50), livro.resumo.slice(0, 50)]) assert.ok(!h.includes(p), 'vazou: ' + String(p).slice(0, 40));
   });
   await teste('R. nenhuma IA, RAG, chat, Mentor, banco, rede externa ou Pinterest na página nova', async () => {
-    const h = html200().toLowerCase();
+    // E5: a única exceção permitida é o bloco da tag oficial do Pinterest (load + page); fora dele, nenhum pintrk.
+    const h = html200().replace(/<!-- Pinterest Tag oficial[\s\S]*?<\/script>/, '').toLowerCase();
     for (const p of ['experimente-livro-chat', 'experimente-chat', 'api/', 'openai', 'anthropic', 'claude', 'supabase', 'embedding', 'mentor', 'livro-vivo', 'fetch(', 'xmlhttprequest', 'sendbeacon', 'pintrk', '<form', '<input', '<textarea', 'stripe']) assert.ok(!h.includes(p), p);
     assert.ok(!/<script[^>]+src="https?:/.test(h) && !/<link[^>]+href="https?:/.test(h));
     assert.deepStrictEqual([...html200().matchAll(/<script[^>]+src="([^"]+)"/g)].map((m) => m[1]), ['/js/experimente-tts.js']);

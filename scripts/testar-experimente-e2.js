@@ -184,7 +184,8 @@ function fatiar(inicio, fim) {
   console.log('\nSem chat, sem IA, sem custo');
   await teste('L/M. template e código da página não carregam chat, Mentor, OpenAI, Claude, RAG, Supabase nem embeddings', async () => {
     const proibidos = ['experimente-livro-chat', 'experimente-chat', 'api/', 'openai', 'anthropic', 'claude', 'supabase', 'embedding', 'rag', 'mentor', 'livro-vivo', 'livro vivo', 'fetch(', 'xmlhttprequest', 'sendbeacon', 'websocket', 'eventsource', 'pintrk', '<form', '<input', '<textarea'];
-    const html = render().html.toLowerCase();
+    // E5: a única exceção permitida é o bloco da tag oficial do Pinterest (load + page); fora dele, nenhum pintrk.
+    const html = render().html.replace(/<!-- Pinterest Tag oficial[\s\S]*?<\/script>/, '').toLowerCase();
     for (const p of proibidos) assert.ok(!html.includes(p), 'página contém: ' + p);
     const codigo = ler('src/lib/experimenteObra.js') + ler('src/lib/amostrasExperimente.js');
     for (const m of ['openai', 'anthropic', 'supabase', 'express-rate-limit']) assert.ok(!new RegExp(`require\\(['"][^'"]*${m}`).test(codigo), 'require de ' + m);
