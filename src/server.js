@@ -19,6 +19,7 @@ const { buscarLivro, serializarLivroCatalogo } = require('./lib/catalogoLivros')
 const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSessionId, marcarPedidoPendenteProcessado } = require('./lib/pedidosCheckoutStripe');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
+const { calcularPrecoBaseLivro } = require('./lib/precoLivro');
 const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
@@ -70,11 +71,7 @@ function assertSupabase() {
 // silenciosamente a cobrança do audiolivro sempre que os dois eram usados
 // juntos.
 async function calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom }) {
-  let precoBase = livro.precoPromocional || livro.preco;
-  if (audiolivroIncluido && livro.audiobookDisponivel) {
-    precoBase += livro.precoAudiobook;
-  }
-  precoBase = Math.round(precoBase * 100) / 100;
+  const precoBase = calcularPrecoBaseLivro(livro, audiolivroIncluido);
 
   if (!cupom) {
     return { precoFinal: precoBase, cupomValidado: null, cupomInvalido: false };
@@ -2042,13 +2039,17 @@ app.get('/api/validar-cupom', async (req, res) => {
 
     console.log('[VALIDAR-CUPOM] [3] Buscando livro:', livroId);
     const livro = buscarLivro(livroId);
-    console.log('[VALIDAR-CUPOM] [3] Resultado da busca de livro:', livro);
     if (!livro) {
       return res.status(404).json({ valido: false, error: 'Livro não encontrado.' });
     }
 
     console.log('[VALIDAR-CUPOM] [4] Calculando desconto');
-    const { precoOriginal, desconto, precoFinal } = calcularDesconto(livro, cupom);
+    // Mesma base do checkout real (preço vigente + audiolivro opcional): a
+    // pré-visualização nunca usa livro.preco cru (ausente em obras só com
+    // precoPromocional) nem ignora o audiolivro.
+    const audiolivroIncluido = req.query.audiolivroIncluido === 'true' || req.query.audiolivroIncluido === '1';
+    const precoBase = calcularPrecoBaseLivro(livro, audiolivroIncluido);
+    const { precoOriginal, desconto, precoFinal } = calcularDesconto({ preco: precoBase, categoria: livro.categoria }, cupom);
     console.log('[VALIDAR-CUPOM] [4] Desconto calculado:', { precoOriginal, desconto, precoFinal });
     return res.json({
       valido: true,

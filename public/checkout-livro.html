@@ -32,6 +32,7 @@
 <!-- end Pinterest Tag -->
 <title>Comprar livro — ZUNI Suprema</title>
 <script src="https://js.stripe.com/v3/"></script>
+<script src="/js/checkout-livro-cliente.js"></script>
 <style>
   :root {
     --fundo: #0f0f0f;
@@ -304,8 +305,31 @@
   let metodoPagamento = 'CARTAO'; // único método na tela (PIX desligado em 29/09/2026)
   let pollingInterval = null;
   let livroAtual = null;
-  let cupomAplicado = null;
   let audiolivroIncluido = false;
+  // Estado de preço estruturado (livro + áudio + cupom validado pelo servidor).
+  // O total exibido e o valor enviado ao Pinterest saem dele, nunca do texto da tela.
+  const precoEstado = ZuniCheckoutLivro.criarEstadoPreco(async (codigo, id, audio) => {
+    const res = await fetch(`/api/validar-cupom?codigo=${encodeURIComponent(codigo)}&livroId=${encodeURIComponent(id)}&audiolivroIncluido=${audio ? 'true' : 'false'}`);
+    const data = await res.json();
+    if (!res.ok || !data.valido) return { ok: false, erro: data.error || 'Cupom inválido ou expirado.' };
+    return { ok: true, precoOriginal: data.precoOriginal, desconto: data.desconto, precoFinal: data.precoFinal };
+  });
+
+  function formatarReais(n) {
+    return `R$ ${n.toFixed(2).replace('.', ',')}`;
+  }
+
+  // Única função que escreve o preço na tela.
+  function renderizarPreco(visao) {
+    const original = document.getElementById('preco-original');
+    if (visao.cupom) {
+      original.textContent = formatarReais(visao.precoOriginal);
+      original.style.display = 'block';
+    } else {
+      original.style.display = 'none';
+    }
+    document.getElementById('preco-livro').textContent = formatarReais(visao.precoFinal);
+  }
 
   function mostrarErro(msg) {
     const erro = document.getElementById('erro');
@@ -333,12 +357,15 @@
       const livro = await res.json();
       livroAtual = livro;
       document.getElementById('titulo-livro').textContent = livro.titulo;
-      document.getElementById('preco-livro').textContent = `R$ ${livro.preco.toFixed(2).replace('.', ',')}`;
+      precoEstado.definirLivro(livroId, livro);
+      renderizarPreco(precoEstado.visao());
       atualizarLinkWhatsapp(livro.titulo);
 
       if (livro.audiobookDisponivel) {
         document.getElementById('opcao-audiolivro-container').style.display = 'flex';
         document.getElementById('preco-audiolivro').textContent = `+ R$ ${livro.precoAudiobook.toFixed(2).replace('.', ',')}`;
+        // o navegador pode restaurar o checkbox marcado (voltar/recarregar)
+        if (document.getElementById('audiolivro-checkbox').checked) await atualizarPrecoAudiolivro();
       }
 
       const cupomDaUrl = params.get('cupom');
@@ -354,22 +381,19 @@
     }
   }
 
-  function atualizarPrecoAudiolivro() {
+  async function atualizarPrecoAudiolivro() {
     audiolivroIncluido = document.getElementById('audiolivro-checkbox').checked;
-    if (livroAtual) {
-      let precoFinal = livroAtual.precoPromocional || livroAtual.preco;
-      if (audiolivroIncluido) {
-        precoFinal += livroAtual.precoAudiobook;
-      }
-      if (cupomAplicado) {
-        const cupom = cupomAplicado;
-        if (cupom.tipo === 'percentual') {
-          precoFinal = precoFinal * (1 - cupom.desconto / 100);
-        } else if (cupom.tipo === 'fixo') {
-          precoFinal = Math.max(0, precoFinal - cupom.desconto);
-        }
-      }
-      document.getElementById('preco-livro').textContent = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
+    if (!livroAtual) return;
+    const statusEl = document.getElementById('cupom-status');
+    const r = await precoEstado.definirAudio(audiolivroIncluido);
+    if (r.descartada) return;
+    renderizarPreco(r.visao);
+    if (r.visao.cupom) {
+      statusEl.className = 'cupom-status valido';
+      statusEl.textContent = `Cupom aplicado — você economiza ${formatarReais(r.visao.desconto)}.`;
+    } else if (r.visao.cupomPerdido) {
+      statusEl.className = 'cupom-status invalido';
+      statusEl.textContent = r.erro || 'Cupom inválido ou expirado.';
     }
   }
 
@@ -378,47 +402,21 @@
     document.getElementById('cupom-toggle').style.display = 'none';
   }
 
-  function exibirPrecoComDesconto(precoOriginal, precoFinal) {
-    const original = document.getElementById('preco-original');
-    original.textContent = `R$ ${precoOriginal.toFixed(2).replace('.', ',')}`;
-    original.style.display = 'block';
-    document.getElementById('preco-livro').textContent = `R$ ${precoFinal.toFixed(2).replace('.', ',')}`;
-  }
-
-  function limparDesconto() {
-    document.getElementById('preco-original').style.display = 'none';
-    if (livroAtual) {
-      document.getElementById('preco-livro').textContent = `R$ ${livroAtual.preco.toFixed(2).replace('.', ',')}`;
-    }
-  }
-
   async function aplicarCupom(codigo) {
     const statusEl = document.getElementById('cupom-status');
     statusEl.className = 'cupom-status';
     statusEl.textContent = 'Validando cupom…';
 
-    try {
-      const res = await fetch(`/api/validar-cupom?codigo=${encodeURIComponent(codigo)}&livroId=${encodeURIComponent(livroId)}`);
-      const data = await res.json();
-
-      if (!res.ok || !data.valido) {
-        cupomAplicado = null;
-        limparDesconto();
-        statusEl.className = 'cupom-status invalido';
-        statusEl.textContent = data.error || 'Cupom inválido ou expirado.';
-        return;
-      }
-
-      cupomAplicado = codigo.trim().toUpperCase();
-      exibirPrecoComDesconto(data.precoOriginal, data.precoFinal);
-      statusEl.className = 'cupom-status valido';
-      statusEl.textContent = `Cupom aplicado — você economiza R$ ${data.desconto.toFixed(2).replace('.', ',')}.`;
-    } catch {
-      cupomAplicado = null;
-      limparDesconto();
+    const r = await precoEstado.aplicarCupom(codigo);
+    if (r.descartada) return;
+    renderizarPreco(r.visao);
+    if (!r.ok) {
       statusEl.className = 'cupom-status invalido';
-      statusEl.textContent = 'Não foi possível validar o cupom agora.';
+      statusEl.textContent = r.erro;
+      return;
     }
+    statusEl.className = 'cupom-status valido';
+    statusEl.textContent = `Cupom aplicado — você economiza ${formatarReais(r.visao.desconto)}.`;
   }
 
   function aplicarCupomManual() {
@@ -438,52 +436,21 @@
   }
 
   // ── Pinterest (fail-open: nunca bloqueia pagamento, confirmação, redirect ou acesso) ──
-  let compraPinterestDisparada = false;
-
-  function pinTrack(evento, dados) {
-    try {
-      if (typeof pintrk === 'function') pintrk('track', evento, dados);
-    } catch (e) {}
-  }
-
-  function valorExibidoAtual() {
-    try {
-      const txt = document.getElementById('preco-livro').textContent || '';
-      const n = parseFloat(txt.replace(/[^\d,]/g, '').replace(',', '.'));
-      return Number.isFinite(n) && n > 0 ? n : null;
-    } catch (e) { return null; }
-  }
+  // O valor vem do estado de preço estruturado (precoEstado), não do texto da tela.
+  const pinterest = ZuniCheckoutLivro.criarPinterestLivro({
+    pintrk: typeof pintrk === 'function' ? pintrk : null,
+    sessionStorage: (() => { try { return window.sessionStorage; } catch (e) { return null; } })(),
+    localStorage: (() => { try { return window.localStorage; } catch (e) { return null; } })(),
+    livroId
+  });
 
   function registrarInicioCheckoutPinterest(pedidoId) {
-    try {
-      const valor = valorExibidoAtual();
-      const dados = { product_id: livroId, order_quantity: 1 };
-      if (valor !== null) {
-        dados.value = valor;
-        dados.currency = 'BRL';
-        if (pedidoId) {
-          try { sessionStorage.setItem('pin_val_' + pedidoId, String(valor)); } catch (e) {}
-        }
-      }
-      pinTrack('addtocart', dados);
-    } catch (e) {}
+    pinterest.inicioCheckout(pedidoId, precoEstado.valorTransacao());
   }
 
   // Só é chamada depois que /stripe-status devolveu pago:true (webhook processado).
   function registrarCompraPinterest(pedidoId) {
-    try {
-      if (!pedidoId || compraPinterestDisparada) return;
-      const chave = 'pin_compra_' + pedidoId;
-      try { if (localStorage.getItem(chave)) return; } catch (e) {}
-      compraPinterestDisparada = true;
-      const dados = { product_id: livroId, order_id: pedidoId, order_quantity: 1 };
-      try {
-        const v = parseFloat(sessionStorage.getItem('pin_val_' + pedidoId));
-        if (Number.isFinite(v) && v > 0) { dados.value = v; dados.currency = 'BRL'; }
-      } catch (e) {}
-      pinTrack('checkout', dados);
-      try { localStorage.setItem(chave, '1'); } catch (e) {}
-    } catch (e) {}
+    pinterest.compra(pedidoId);
   }
 
   // Redireciona sempre; o atraso curto só dá tempo ao beacon e não espera o Pinterest.
@@ -519,7 +486,7 @@
         const res = await fetch('/api/checkout/livro/stripe-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cupom: cupomAplicado, audiolivroIncluido })
+          body: JSON.stringify({ livroId, name, email, cupom: precoEstado.estado.cupom, audiolivroIncluido })
         });
         const data = await res.json();
 
@@ -538,7 +505,7 @@
         const res = await fetch('/api/checkout/livro', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cupom: cupomAplicado, audiolivroIncluido })
+          body: JSON.stringify({ livroId, name, email, cupom: precoEstado.estado.cupom, audiolivroIncluido })
         });
         const data = await res.json();
         if (!res.ok || !data.qrCodeText) throw new Error(data.error || 'Erro ao gerar QR Code PIX.');

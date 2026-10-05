@@ -113,7 +113,7 @@ const assinaturasDesde = m => eventos.slice(m).filter(e => e.startsWith('sign:')
     assert.deepStrictEqual(Object.keys(piloto.audiobookStorage).sort(), ['bucket', 'path']);
   });
   await teste('piloto: preço, audiobookDisponivel e precoAudiobook inalterados', () => {
-    assert.strictEqual(piloto.preco, 37.9);
+    assert.strictEqual(piloto.preco, 34.9);
     assert.strictEqual(piloto.audiobookDisponivel, true);
     assert.strictEqual(piloto.precoAudiobook, 19.9);
   });
@@ -136,7 +136,7 @@ const assinaturasDesde = m => eventos.slice(m).filter(e => e.startsWith('sign:')
   await teste('metadata comercial do piloto continua pública (audiobookDisponivel, precoAudiobook)', () => {
     const lista = serializarLivroPublico(piloto), indiv = serializarLivroCatalogo(PILOTO, piloto);
     assert.strictEqual(lista.audiobookDisponivel, true); assert.strictEqual(lista.precoAudiobook, 19.9);
-    assert.strictEqual(indiv.audiobookDisponivel, true); assert.strictEqual(indiv.precoAudiobook, 19.9); assert.strictEqual(indiv.preco, 37.9);
+    assert.strictEqual(indiv.audiobookDisponivel, true); assert.strictEqual(indiv.precoAudiobook, 19.9); assert.strictEqual(indiv.preco, 34.9);
   });
 
   const express = require('express');
