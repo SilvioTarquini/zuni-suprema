@@ -2307,7 +2307,9 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
         fulfillment_type: 'livro',
         ...(origem ? { origem } : {})
       },
-      return_url: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&pedidoId=${pedidoId}&email=${encodeURIComponent(email)}&status=retorno`
+      // Sem e-mail (nem outro dado do comprador) na URL de retorno: ela passa por logs de acesso, pelo objeto da
+      // sessão na Stripe e por páginas com tag de anúncio. O retorno se identifica só pelo pedidoId (UUID opaco).
+      return_url: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&pedidoId=${pedidoId}&status=retorno`
     });
 
     await vincularStripeSessionId(pedidoId, stripeSession.id);
