@@ -1,6 +1,6 @@
 # RADAR DE OPORTUNIDADES — ZUNI SUPREMA
 
-**Última atualização:** 20 de agosto de 2026
+**Última atualização:** 5 de outubro de 2026 (seção 12 acrescentada; demais seções de 20 de agosto de 2026)
 **Status:** registro estratégico. Nada aqui é para execução imediata.
 **Janela de ativação prevista:** ~30 de agosto de 2026, após conclusão da estruturação em curso.
 
@@ -410,6 +410,26 @@ e não promocional em espaços de discussão do nicho alimenta o GEO.
 
 O Livro Vivo (2.1) e o audiobook em duas vozes (2.2) podem ser executados em paralelo a
 partir da Fase 1 — custo marginal quase nulo e efeito imediato sobre valor percebido.
+
+---
+
+## 12. Projetos estratégicos a preservar no radar (registrado em 05/10/2026 — NÃO iniciar agora)
+
+Contexto: a prioridade vigente é a **primeira venda externa** com os ativos já prontos (ver bloco
+"Checkpoint comercial 05/10/2026" no `STATUS_ZUNI.md`). Estes itens ficam aqui para não se perderem;
+só entram em execução com necessidade comercial concreta.
+
+- **Expansão seletiva do Experimente** (hoje só Ela Tem Classe) — futura biblioteca de degustação.
+- **Expansão seletiva do Livro-Vivo** — regra pretendida: 30 perguntas no TOTAL / 30 dias.
+- **Romances e novos ambientes editoriais.**
+- **ZUNI Horizontes** e **ZUNI Direciona** (evolução).
+- **Audiobook standalone** (hoje o áudio é adicional à compra do livro).
+- **Internacionalização.**
+- **Automação de campanhas.**
+- **Radar Tecnológico.**
+- **Mentora Executiva Digital.**
+- **Cópia Digital Certificada ZUNI Suprema** (Copy ID anônimo; política de download a formalizar).
+- **Descomissionamento completo do MercadoPago** (auditoria + regressão antes de cancelar a conta).
 
 ---
 

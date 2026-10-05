@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
+**Última atualização**: 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -47,6 +47,83 @@ registra o que **pode ser feito**.
 **Regra de migração**: quando um item do radar entrar em execução, ele é movido para a
 seção correspondente do `STATUS_ZUNI.md` e marcado como migrado no radar. Os dois
 arquivos nunca devem divergir sobre o mesmo item.
+
+---
+
+## Checkpoint comercial 05/10/2026 — Livros / Universo Feminino / Experimente (EM PRODUÇÃO)
+
+> Bloco canônico da frente comercial iniciada após 30/09. Não registra dados pessoais, tokens,
+> UUIDs, payment IDs nem segredos. Estado do código em `origin/main` = `0b81bd9`.
+
+**PRIORIDADE ATUAL DA ZUNI: gerar a primeira venda externa e receita com os ativos já prontos.**
+Novo trabalho técnico deve, de preferência, ajudar a vender, medir, entregar, converter,
+aumentar valor percebido ou proteger o processo comercial. Evitar expansão técnica sem
+necessidade comercial concreta. **Próximo movimento principal: campanha real para Universo
+Feminino / Ela Tem Classe / Experimente, com Pinterest como primeiro canal** (ainda NÃO iniciada).
+
+**1. Validação ponta a ponta do comércio de livros — PASS (05/10/2026).** Fluxo comprovado em
+produção: Experimente → checkout → Stripe → pagamento → webhook → fulfillment → e-mail → acesso →
+leitura → refund → webhook de estorno → revogação automática. Foi uma **compra interna real de
+validação, não uma venda externa orgânica**. Produto: Ela Tem Classe, R$ 34,90, só livro (audiobook
+adicional custa R$ 19,90), sem cupom, cartão, origem `universo-feminino` preservada em pedido e
+metadata Stripe. Auditado read-only: 1 cobrança, 1 evento de conclusão, 1 fulfillment, 1 acesso, e-mail
+entregue ao comprador, nenhuma duplicidade.
+
+**2. Reembolso / revogação (comprovado).** Refund total reconhecido pelo Stripe, webhook
+`charge.refunded` recebido e processado, acesso revogado automaticamente (~1 s), registro preservado
+para auditoria, token revogado deixa de valer (`verificarAcesso`), sem nova cobrança nem novo
+fulfillment. O fluxo de estorno envia um e-mail interno de aviso à caixa da ZUNI.
+
+**3. Universo Feminino** — ambiente editorial/comercial temático (não só filtro de catálogo), em
+produção em `/loja/universo-feminino/`. Obras: Ela Tem Classe, A Inteligência do Corpo Feminino,
+Código Feminino, A Mulher que Permanece Inteira, Inesquecível (`inesquecivel-charme-feminino`).
+Preços definidos no catálogo (fonte única: `src/lib/catalogoLivros.js`). Origem `universo-feminino`
+(whitelist em `origemCompra.js`) vai para `payload.origem` e `metadata.origem`; é independente do
+Pinterest e não altera preço/entrega.
+
+**4. Experimente ZUNI v1** — em produção só para Ela Tem Classe: `/experimente/ela-tem-classe/`.
+Amostra oficial do audiobook (~65 s, arquivo curto estático em `public/audio/amostras/`, separado do
+integral), sem autoplay, player Ouvir/Pausar/Continuar/Parar/Recomeçar (Parar volta a 0:00; `pagehide`
+pausa), trecho de leitura de 422 palavras, temas em lista editorial, CTA com preço vindo do catálogo e
+origem preservada, nenhuma exposição do integral. **Fail-closed**: obra sem `amostraDisponivel` e
+amostra aprovada em `src/lib/amostrasExperimente.js` responde 404 (as outras 4 do Universo Feminino).
+**O TTS do navegador NÃO representa o audiobook oficial**; para obras com audiobook produzido,
+preferir a amostra da versão oficial (TTS só como fallback/acessibilidade quando apropriado).
+Nova obra no Experimente = aprovação editorial do trecho + (se houver audiobook) corte aprovado da
+amostra, nunca texto/áudio integral.
+
+**5. Política de acesso.** Produção aplica `LIVRO_ACESSO_DIAS=30` → **acesso online efetivo de 30
+dias** (validado na compra real; o e-mail mostra a mesma data do banco). O código tem fallback de
+7 dias se a variável faltar/for inválida. **Dívida de robustez**: tornar a regra de 30 dias
+explícita/testada no código para evitar regressão silenciosa (não alterado).
+
+**6. Pinterest.** Tag instrumentada no funil: Experimente = PageVisit (`load`+`page`); checkout = page /
+AddToCart conforme implementação; Purchase (`checkout`) preparado para disparar após `pago:true`.
+**`PINTEREST_PURCHASE = NOT_CONFIRMED`** — não confirmado diretamente na plataforma. Não bloqueia a
+validade do fluxo comercial, mas **deve ser confirmado antes/durante o início do tráfego pago**.
+
+**7. Privacidade.** A `return_url` do Stripe para livros não leva mais e-mail do comprador
+(em produção). Dívidas conhecidas: alguns logs ainda podem conter e-mail; `?cupom=` na URL pode chegar
+ao Pinterest no `page`. Sanear oportunamente.
+
+**8. Download / cópia digital — NÃO implementado como política.** Hoje: leitura online funciona e a
+interface do leitor oferece ações de download/impressão. A política futura pretendida (cópia digital
+autorizada, permanente após download — conceito "Cópia Digital Certificada ZUNI Suprema", com Copy ID
+anônimo) é **proposta futura, ainda a formalizar e reconciliar tecnicamente**. Não prometer PDF nem
+download permanente na comunicação enquanto a entrega técnica não existir.
+
+**9. Audiobook.** Arquitetura de entrega privada em **estágio piloto de produção**: só Ela Tem Classe usa
+a configuração privada; as demais obras seguem legacy (detalhes e restrições nas notas de memória do
+projeto; não expor caminhos privados, UUIDs de storage, URLs assinadas nem o mapa de migração). A
+amostra pública do Experimente é separada do integral. **Audiobook standalone ainda NÃO existe como
+produto independente** (hoje é adicional à compra do livro).
+
+**10. MercadoPago — dívida operacional.** Permanece como legado/inativo em partes do sistema (ex.: botão
+Pix). **Não remover agora.** Decisão: fazer antes uma auditoria de descomissionamento completo +
+regressão total; só depois dela dizer "agora é seguro cancelar a conta comercial Mercado Pago" e
+apagar variáveis/credenciais.
+
+**Projetos estratégicos no radar (não iniciar agora):** ver `RADAR_OPORTUNIDADES.md` → seção 12.
 
 ---
 
