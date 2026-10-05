@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Universo Feminino — ZUNI Suprema</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Livros para diferentes momentos da vida de uma mulher. Livro digital e audiobook — Loja ZUNI Suprema.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Universo Feminino — ZUNI Suprema">
+<meta property="og:description" content="Livros para diferentes momentos da vida de uma mulher. Conhecimento, reflexão e novas perspectivas.">
+<meta name="theme-color" content="#f7f2ea">
+<style>
+  :root {
+    --fundo: #f7f2ea;
+    --carta: #fffdf9;
+    --tinta: #231d1a;
+    --suave: #5e544d;
+    --borda: #e6dccd;
+    --acento: #5a2d3f;
+    --acento-escuro: #44202f;
+    --dourado: #b8963e;
+    --serif: Georgia, 'Times New Roman', serif;
+    --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--fundo);
+    color: var(--tinta);
+    font-family: var(--serif);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body:has(dialog[open]) { overflow: hidden; }
+
+  a { color: inherit; }
+
+  :focus-visible {
+    outline: 3px solid var(--acento);
+    outline-offset: 2px;
+  }
+
+  .pagina {
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 0 16px;
+  }
+
+  /* ── Barra superior: marca + caminho permanente para a Loja completa ── */
+  .barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--borda);
+  }
+
+  .marca {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    text-decoration: none;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tinta);
+  }
+  .marca .selo {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--dourado);
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--serif);
+    font-size: 0.8rem;
+    letter-spacing: 0;
+    color: var(--dourado);
+  }
+
+  .link-loja {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 4px;
+    font-family: var(--sans);
+    font-size: 0.875rem;
+    color: var(--acento);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  /* ── Abertura curta: a primeira obra aparece logo abaixo ── */
+  .abertura { padding: 22px 0 6px; }
+
+  .abertura .sobretitulo {
+    margin: 0 0 8px;
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--acento);
+  }
+
+  .abertura h1 {
+    margin: 0 0 10px;
+    font-size: clamp(1.45rem, 5.6vw, 2.3rem);
+    font-weight: normal;
+    line-height: 1.22;
+    max-width: 24em;
+  }
+
+  .abertura .intro {
+    margin: 0 0 8px;
+    font-size: 1rem;
+    color: var(--suave);
+    max-width: 34em;
+  }
+
+  .abertura .fecho {
+    margin: 0;
+    font-size: 1.0625rem;
+    font-style: italic;
+    color: var(--acento);
+  }
+
+  /* ── Seções editoriais ── */
+  .secao { padding-top: 26px; }
+
+  .secao-cabeca {
+    margin-bottom: 12px;
+    padding-top: 14px;
+    border-top: 1px solid var(--borda);
+  }
+  .secao:first-of-type .secao-cabeca { border-top: 0; padding-top: 0; }
+
+  .secao-cabeca h2 {
+    margin: 0 0 4px;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--acento);
+  }
+  .secao-cabeca p {
+    margin: 0;
+    font-size: 0.975rem;
+    color: var(--suave);
+    max-width: 38em;
+  }
+
+  .lista {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  /* ── Card editorial: capa à esquerda, texto à direita (compacto no celular) ── */
+  .obra {
+    display: grid;
+    grid-template-columns: 104px 1fr;
+    gap: 14px;
+    padding: 12px;
+    background: var(--carta);
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+  }
+
+  .capa {
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    align-self: start;
+  }
+  .capa img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: contain;
+    background: #efe7da;
+    border-radius: 4px;
+    box-shadow: 0 1px 3px rgba(35, 29, 26, 0.18);
+  }
+
+  .obra-texto { display: flex; flex-direction: column; min-width: 0; }
+
+  .obra h3 {
+    margin: 0 0 4px;
+    font-size: 1.15rem;
+    font-weight: normal;
+    line-height: 1.25;
+  }
+
+  .obra .chamada {
+    margin: 0 0 8px;
+    font-size: 0.9375rem;
+    line-height: 1.45;
+    color: var(--suave);
+  }
+  /* Obra sem microchamada editorial: cai no resumo do catálogo, cortado em 3 linhas. */
+  .obra .chamada.cortada {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .formatos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+    font-family: var(--sans);
+  }
+  .formatos li {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 9px;
+    border: 1px solid var(--borda);
+    border-radius: 999px;
+    background: #fbf7f0;
+    font-size: 0.8125rem;
+    color: var(--tinta);
+  }
+  .formatos svg { width: 14px; height: 14px; flex: none; }
+
+  .obra-rodape {
+    margin-top: auto;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 12px;
+  }
+
+  .preco {
+    font-family: var(--sans);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    color: var(--tinta);
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    padding: 0 18px;
+    border-radius: 8px;
+    border: 1px solid var(--acento);
+    font-family: var(--sans);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    text-align: center;
+  }
+  .btn-primario { background: var(--acento); color: #fff; }
+  .btn-primario:hover { background: var(--acento-escuro); }
+  .btn-secundario { background: transparent; color: var(--acento); }
+  .btn-secundario:hover { background: rgba(90, 45, 63, 0.07); }
+
+  .obra .btn { flex: 1 1 140px; }
+
+  /* ── Ponte: ZUNI Direciona (discreta, sem competir com os livros) ── */
+  .direciona {
+    margin-top: 34px;
+    padding: 18px 16px;
+    border: 1px solid var(--borda);
+    border-radius: 10px;
+    background: transparent;
+  }
+  .direciona h2 {
+    margin: 0 0 6px;
+    font-size: 1.1rem;
+    font-weight: normal;
+  }
+  .direciona p {
+    margin: 0 0 14px;
+    font-size: 0.975rem;
+    color: var(--suave);
+    max-width: 38em;
+  }
+
+  /* ── Saída para a Loja completa ── */
+  .loja-completa {
+    margin: 26px 0 0;
+    padding: 22px 0 8px;
+    border-top: 1px solid var(--borda);
+    text-align: center;
+  }
+  .loja-completa .btn { width: 100%; max-width: 420px; }
+
+  footer {
+    padding: 18px 0 40px;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--suave);
+    text-align: center;
+  }
+
+  .estado {
+    padding: 28px 0;
+    color: var(--suave);
+  }
+
+  /* ── Detalhe da obra: <dialog> nativo (ESC, foco preso e devolvido ao botão de origem) ── */
+  dialog.detalhe {
+    width: 100%;
+    max-width: 520px;
+    max-height: 92vh;
+    max-height: 92dvh;
+    margin: auto 0 0;
+    padding: 0;
+    border: 0;
+    border-radius: 16px 16px 0 0;
+    background: var(--carta);
+    color: var(--tinta);
+    overflow: hidden;
+  }
+  dialog.detalhe[open] { display: flex; flex-direction: column; }
+  dialog.detalhe::backdrop { background: rgba(35, 29, 26, 0.6); }
+
+  .detalhe-topo {
+    display: flex;
+    justify-content: flex-end;
+    padding: 6px 8px 0;
+    flex: none;
+  }
+  .detalhe-fechar {
+    width: 48px;
+    height: 48px;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--tinta);
+    font-size: 1.75rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .detalhe-fechar:hover { background: rgba(35, 29, 26, 0.07); }
+
+  .detalhe-corpo {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0 20px 12px;
+  }
+
+  .detalhe-capa {
+    display: block;
+    width: 132px;
+    height: auto;
+    aspect-ratio: 2 / 3;
+    object-fit: contain;
+    margin: 0 auto 14px;
+    background: #efe7da;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(35, 29, 26, 0.22);
+  }
+
+  .detalhe h2 {
+    margin: 0 0 8px;
+    font-size: 1.4rem;
+    font-weight: normal;
+    line-height: 1.25;
+    text-align: center;
+  }
+  .detalhe .formatos { justify-content: center; margin-bottom: 14px; }
+  .detalhe .chamada-det {
+    margin: 0 0 16px;
+    font-size: 1.0625rem;
+    font-style: italic;
+    text-align: center;
+    color: var(--acento);
+  }
+  .detalhe .rotulo-sobre {
+    margin: 0 0 6px;
+    padding-top: 12px;
+    border-top: 1px solid var(--borda);
+    font-family: var(--sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--acento);
+  }
+  .detalhe .sobre-det p {
+    margin: 0 0 10px;
+    font-size: 0.975rem;
+    color: var(--tinta);
+  }
+  .detalhe .nota-saude {
+    margin: 0 0 10px;
+    font-family: var(--sans);
+    font-size: 0.8125rem;
+    color: var(--suave);
+  }
+  .detalhe .nota-audio {
+    margin: 0 0 8px;
+    font-family: var(--sans);
+    font-size: 0.875rem;
+    color: var(--suave);
+  }
+
+  .detalhe-acao {
+    flex: none;
+    padding: 12px 20px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--borda);
+    background: var(--carta);
+  }
+  .detalhe-acao .btn { width: 100%; }
+
+  @media (min-width: 640px) {
+    .pagina { padding: 0 28px; }
+    .abertura { padding-top: 40px; }
+    .lista { grid-template-columns: 1fr 1fr; gap: 18px; }
+    .obra { grid-template-columns: 128px 1fr; }
+    dialog.detalhe {
+      margin: auto;
+      border-radius: 16px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .lista { gap: 22px; }
+    .obra { grid-template-columns: 140px 1fr; padding: 16px; }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .btn { transition: background-color 0.15s ease; }
+  }
+</style>
+</head>
+<body>
+
+<div class="pagina">
+  <div class="barra">
+    <a class="marca" href="/loja/" aria-label="ZUNI Suprema — Loja"><span class="selo" aria-hidden="true">Z</span>ZUNI Suprema</a>
+    <a class="link-loja" href="/loja/">Loja completa</a>
+  </div>
+
+  <header class="abertura">
+    <p class="sobretitulo">Universo Feminino</p>
+    <h1>Livros para diferentes momentos da vida de uma mulher.</h1>
+    <p class="intro">Conhecimento, reflexão e novas perspectivas para compreender melhor a si mesma, seus vínculos e suas escolhas.</p>
+    <p class="fecho">Comece pela obra que conversa com o seu momento.</p>
+  </header>
+
+  <main id="vitrine" aria-live="polite">
+    <p class="estado" id="estado">Carregando as obras…</p>
+    <noscript><p class="estado">Para ver as obras, ative o JavaScript ou acesse a <a href="/loja/">Loja ZUNI completa</a>.</p></noscript>
+  </main>
+
+  <section class="direciona" aria-labelledby="direciona-titulo">
+    <h2 id="direciona-titulo">Há uma situação específica acontecendo em sua vida?</h2>
+    <p>Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para ajudá-la a compreender melhor sua situação antes de decidir.</p>
+    <a class="btn btn-secundario" href="/checkout">Conhecer o ZUNI Direciona</a>
+  </section>
+
+  <div class="loja-completa">
+    <a class="btn btn-secundario" href="/loja/">Explorar todas as obras da Loja ZUNI</a>
+  </div>
+
+  <footer>Produto 100% digital — sem envio físico. O acesso chega por link após a confirmação do pagamento.</footer>
+</div>
+
+<dialog class="detalhe" id="detalhe" aria-labelledby="det-titulo">
+  <div class="detalhe-topo">
+    <button class="detalhe-fechar" type="button" id="det-fechar" aria-label="Fechar detalhes da obra">×</button>
+  </div>
+  <div class="detalhe-corpo">
+    <img class="detalhe-capa" id="det-capa" width="500" height="750" alt="">
+    <h2 id="det-titulo"></h2>
+    <ul class="formatos" id="det-formatos"></ul>
+    <p class="chamada-det" id="det-chamada"></p>
+    <h3 class="rotulo-sobre">Sobre esta obra</h3>
+    <div class="sobre-det" id="det-sobre"></div>
+    <p class="nota-saude" id="det-nota-saude" hidden>Conteúdo de caráter informativo, que não substitui o acompanhamento de um profissional de saúde.</p>
+    <p class="nota-audio" id="det-nota-audio" hidden></p>
+  </div>
+  <div class="detalhe-acao">
+    <a class="btn btn-primario" id="det-comprar" href="#"></a>
+  </div>
+</dialog>
+
+<script>
+  // Fonte única dos dados comerciais: GET /api/livros (preço, formatos, textos). Nada de preço aqui.
+  // A configuração abaixo é só editorial (agrupamento e frase de cada território).
+  // Para um novo universo/intenção, basta outra lista de seções (e o departamento correspondente).
+  const DEPARTAMENTO = 'Universo Feminino';
+  const SECOES = [
+    { id: 'para-comecar', titulo: 'Para começar', frase: 'Uma porta de entrada para presença, elegância e percepção de si.', ids: ['ela-tem-classe'] },
+    { id: 'corpo-autoconhecimento', titulo: 'Corpo & Autoconhecimento', frase: 'Conhecimento para compreender melhor o corpo, seus ciclos e suas transformações.', ids: ['a-inteligencia-do-corpo-feminino', 'codigo-feminino'] },
+    { id: 'identidade-presenca', titulo: 'Identidade & Presença', frase: 'Obras sobre presença, autoestima, maturidade e a forma como uma mulher ocupa seu lugar no mundo.', ids: ['inesquecivel-charme-feminino'] },
+    { id: 'afeto-relacionamentos', titulo: 'Afeto & Relacionamentos', frase: 'Para compreender vínculos, limites, escolhas e relações que fazem parte da vida.', ids: ['a-mulher-que-permanece-inteira'] }
+  ];
+  const ORIGEM = 'universo-feminino';
+
+  // Apresentação comercial condensada, SOMENTE texto (nada de preço, formato ou link).
+  // Cada frase é rastreável ao resumo/descrição públicos da obra em /api/livros; linguagem informativa,
+  // sem causalidade médica, diagnóstico ou promessa terapêutica. Obra fora deste mapa cai no resumo do catálogo.
+  // saude: true exibe o aviso de que o conteúdo é informativo.
+  const EDITORIAL = {
+    'ela-tem-classe': {
+      chamada: 'Elegância que começa na presença, e não apenas na aparência.',
+      sobre: [
+        'Um guia de elegância em dois volumes: o primeiro dedicado à elegância, ao estilo e ao refinamento moderno; o segundo, à presença, ao magnetismo e à sofisticação avançada.',
+        'A obra propõe reflexões sobre como a elegância nasce do encontro entre estética e inteligência emocional — postura serena, discrição e autenticidade, sem depender de excesso ou performance.'
+      ]
+    },
+    'a-inteligencia-do-corpo-feminino': {
+      chamada: 'Um convite para compreender melhor os sinais do corpo, sem a lógica da culpa.',
+      saude: true,
+      sobre: [
+        'A obra aborda temas como inchaço, celulite e cansaço e percorre, capítulo a capítulo, intestino, fígado, sistema linfático e pele, propondo trocar a lógica da culpa pela escuta do corpo.',
+        'Traz ainda anexos práticos de consulta rápida: um checklist diário de rotina e a Escala de Bristol.'
+      ]
+    },
+    'codigo-feminino': {
+      chamada: 'Um mapa de autocuidado para conhecer o corpo e a experiência feminina nas diferentes fases da vida.',
+      saude: true,
+      sobre: [
+        'Reúne, em 12 partes e dois apêndices práticos, temas como pele, hormônios, sono, prevenção, sexualidade e as diferentes fases da vida, incluindo a menopausa, sob uma perspectiva integrativa.',
+        'Pensado para ser lido com calma e revisitado aos poucos: um mapa de autocuidado, não uma lista de regras rígidas.'
+      ]
+    },
+    'inesquecivel-charme-feminino': {
+      chamada: 'Presença, autenticidade e autoestima como base para conexões mais leves e saudáveis.',
+      sobre: [
+        'Em cinco partes, a obra percorre o verdadeiro charme feminino, presença e comunicação, maturidade afetiva, relacionamentos saudáveis e um bloco final de perguntas para o autoconhecimento.',
+        'Sua proposta é que o magnetismo nasce de verdade, e não de competição ou estratégia.'
+      ]
+    },
+    'a-mulher-que-permanece-inteira': {
+      chamada: 'Reflexões sobre vínculos, escolhas e a preservação de si nas relações.',
+      sobre: [
+        'Em seis partes, a obra percorre autoestima, perfis emocionais masculinos, relacionamentos tóxicos e proteção emocional, comunicação moderna e exercícios práticos de desenvolvimento.',
+        'Parte da premissa de que o amor saudável não destrói o amor-próprio: fortalece.'
+      ]
+    }
+  };
+
+  const brl = (n) => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
+  const precoVigente = (l) => l.precoPromocional || l.preco;
+  const urlCapa = (id) => '/loja/capas/' + encodeURIComponent(id) + '.jpg';
+
+  // Preserva ?cupom= da URL (como a Loja) e marca a origem para uso futuro (campanhas).
+  function urlCheckout(id) {
+    const q = new URLSearchParams({ livro: id, origem: ORIGEM });
+    const cupom = new URLSearchParams(window.location.search).get('cupom');
+    if (cupom) q.set('cupom', cupom);
+    return '/checkout-livro.html?' + q.toString();
+  }
+
+  function el(tag, props, filhos) {
+    const e = document.createElement(tag);
+    if (props) for (const [k, v] of Object.entries(props)) {
+      if (k === 'text') e.textContent = v;
+      else if (k === 'class') e.className = v;
+      else e.setAttribute(k, v);
+    }
+    (filhos || []).forEach((f) => e.appendChild(f));
+    return e;
+  }
+
+  const ICONE_FONES = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="3" y="14" width="4" height="6" rx="1.5"/><rect x="17" y="14" width="4" height="6" rx="1.5"/></svg>';
+  const ICONE_LIVRO = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z"/><path d="M4 21V5"/></svg>';
+  const ICONE_CONVERSA = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.5 7.2L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>';
+
+  function chipsFormatos(l) {
+    const itens = [{ icone: ICONE_LIVRO, texto: 'Livro digital' }];
+    if (l.audiobookDisponivel) itens.push({ icone: ICONE_FONES, texto: 'Audiobook' });
+    if (l.chatDisponivel) itens.push({ icone: ICONE_CONVERSA, texto: 'Livro-Vivo' });
+    return itens.map((i) => {
+      const li = el('li');
+      li.innerHTML = i.icone;
+      li.appendChild(document.createTextNode(i.texto));
+      return li;
+    });
+  }
+
+  // ── Detalhe da obra ──
+  const dlg = document.getElementById('detalhe');
+
+  function abrirDetalhe(id, l) {
+    const titulo = l.tituloPublico || l.titulo;
+    const capa = document.getElementById('det-capa');
+    capa.src = urlCapa(id);
+    capa.alt = 'Capa de ' + titulo;
+    document.getElementById('det-titulo').textContent = titulo;
+    const fm = document.getElementById('det-formatos');
+    fm.replaceChildren(...chipsFormatos(l));
+    const ed = EDITORIAL[id];
+    document.getElementById('det-chamada').textContent = ed ? ed.chamada : (l.resumo || '');
+    document.getElementById('det-sobre').replaceChildren(...(ed ? ed.sobre : [l.descricao || '']).map((t) => el('p', { text: t })));
+    document.getElementById('det-nota-saude').hidden = !(ed && ed.saude);
+    const nota = document.getElementById('det-nota-audio');
+    if (l.audiobookDisponivel && l.precoAudiobook) {
+      nota.hidden = false;
+      nota.textContent = 'Audiobook disponível: você pode adicioná-lo na finalização da compra por + ' + brl(l.precoAudiobook).replace(' ', ' ') + '.';
+    } else {
+      nota.hidden = true;
+    }
+    const comprar = document.getElementById('det-comprar');
+    comprar.href = urlCheckout(id);
+    comprar.textContent = 'Adquirir livro — ' + brl(precoVigente(l));
+    document.querySelector('.detalhe-corpo').scrollTop = 0;
+    dlg.showModal();
+  }
+
+  document.getElementById('det-fechar').addEventListener('click', () => dlg.close());
+  dlg.addEventListener('click', (ev) => { if (ev.target === dlg) dlg.close(); }); // toque fora (no fundo)
+
+  // ── Card ──
+  function criarCard(id, l, primeiro) {
+    const titulo = l.tituloPublico || l.titulo;
+    const img = el('img', { src: urlCapa(id), width: '500', height: '750', alt: 'Capa de ' + titulo, decoding: 'async' });
+    if (primeiro) img.setAttribute('fetchpriority', 'high'); else img.setAttribute('loading', 'lazy');
+    const capa = el('button', { class: 'capa', type: 'button', tabindex: '-1', 'aria-hidden': 'true' }, [img]);
+
+    const abrir = () => abrirDetalhe(id, l);
+    const botao = el('button', { class: 'btn btn-primario', type: 'button', text: 'Conhecer a obra', 'aria-label': 'Conhecer a obra ' + titulo });
+    // Futuro: quando o catálogo tiver amostra, o CTA "Experimentar" entra aqui, ao lado de "Conhecer a obra".
+
+    const formatos = el('ul', { class: 'formatos', 'aria-label': 'Formatos disponíveis' }, chipsFormatos(l));
+    const preco = el('div', { class: 'preco', text: brl(precoVigente(l)) });
+    const ed = EDITORIAL[id];
+
+    const texto = el('div', { class: 'obra-texto' }, [
+      el('h3', { text: titulo }),
+      el('p', { class: ed ? 'chamada' : 'chamada cortada', text: ed ? ed.chamada : (l.resumo || '') }),
+      formatos,
+      el('div', { class: 'obra-rodape' }, [preco, botao])
+    ]);
+    const card = el('article', { class: 'obra' }, [capa, texto]);
+    capa.addEventListener('click', () => { botao.focus(); abrir(); });
+    botao.addEventListener('click', abrir);
+    return card;
+  }
+
+  // ── Vitrine ──
+  async function iniciar() {
+    const raiz = document.getElementById('vitrine');
+    let catalogo;
+    try {
+      const res = await fetch('/api/livros');
+      if (!res.ok) throw new Error('catálogo indisponível');
+      catalogo = await res.json();
+    } catch (e) {
+      document.getElementById('estado').innerHTML = 'Não foi possível carregar as obras agora. Tente novamente em instantes ou acesse a <a href="/loja/">Loja ZUNI completa</a>.';
+      return;
+    }
+
+    // Só obras do departamento; as cinco imagens são as únicas criadas no DOM.
+    const doUniverso = Object.entries(catalogo).filter(([, l]) => l.departamento === DEPARTAMENTO);
+    const porId = new Map(doUniverso);
+    const usados = new Set();
+    const fragmento = document.createDocumentFragment();
+    let primeiro = true;
+
+    function montarSecao(def, pares) {
+      if (!pares.length) return;
+      const lista = el('div', { class: 'lista' });
+      pares.forEach(([id, l]) => { lista.appendChild(criarCard(id, l, primeiro)); primeiro = false; });
+      fragmento.appendChild(el('section', { class: 'secao', 'aria-labelledby': 'sec-' + def.id }, [
+        el('div', { class: 'secao-cabeca' }, [el('h2', { id: 'sec-' + def.id, text: def.titulo }), el('p', { text: def.frase })]),
+        lista
+      ]));
+    }
+
+    SECOES.forEach((def) => {
+      const pares = def.ids.filter((id) => porId.has(id)).map((id) => { usados.add(id); return [id, porId.get(id)]; });
+      montarSecao(def, pares);
+    });
+
+    // Obras futuras do mesmo departamento ainda sem seção editorial não ficam escondidas.
+    const restantes = doUniverso.filter(([id]) => !usados.has(id));
+    montarSecao({ id: 'mais', titulo: 'Mais do Universo Feminino', frase: 'Outras obras desta coleção.' }, restantes);
+
+    if (!fragmento.childNodes.length) {
+      document.getElementById('estado').innerHTML = 'Nenhuma obra disponível agora. Veja a <a href="/loja/">Loja ZUNI completa</a>.';
+      return;
+    }
+    raiz.replaceChildren(fragmento);
+  }
+
+  iniciar();
+</script>
+</body>
+</html>
