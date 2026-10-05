@@ -125,6 +125,15 @@ function ffprobe() {
     assert.ok(/<div class="audio-ui" id="audio-ui" hidden>/.test(pagina), 'JS revela; sem JS permanece oculta');
     assert.ok(/\.ouvir-audio\.com-js audio \{ display: none; \}/.test(template), 'só esconde o player nativo depois que o JS assumiu');
   });
+  await teste('botão Parar: existe, oculto no estado inicial, mesmo padrão visual de Recomeçar; o handler pausa, zera o tempo e restaura o estado inicial (comportamento real em testar-experimente-e6b-player.js)', async () => {
+    assert.ok(/<button class="btn btn-audio-parar" type="button" id="audio-parar" hidden>Parar<\/button>/.test(pagina));
+    assert.ok(pagina.indexOf('id="audio-tocar"') < pagina.indexOf('id="audio-parar"') && pagina.indexOf('id="audio-parar"') < pagina.indexOf('id="audio-recomecar"'));
+    assert.ok(/\.btn-audio-recomecar, \.btn-audio-parar \{/.test(template));
+    const js = pagina.match(/<script>\s*\/\/ Amostra do audiobook[\s\S]*?<\/script>/)[0];
+    assert.ok(/parar\.addEventListener\('click', function \(\) \{\s*audio\.pause\(\); audio\.currentTime = 0;\s*inicial\(\);/.test(js));
+    assert.ok(/'ended', function \(\) \{ audio\.currentTime = 0; inicial\(\);/.test(js));
+    assert.ok(!/Depois da compra, você recebe as orientações de acesso/.test(pagina));
+  });
   await teste('controles ≥ 44px (botões .btn 48px) e acessíveis: botão real, aria-label, status em região viva, foco visível', async () => {
     assert.ok(/\.btn \{[^}]*min-height: 48px/.test(template));
     assert.ok(/\.ouvir-audio audio \{[^}]*min-height: 48px/.test(template));
@@ -159,7 +168,8 @@ function ffprobe() {
   });
   await teste('formatos: livro digital sem promessa de baixar/salvar/PDF/permanente/30 dias; audiobook só como opção adicional, sem venda avulsa', async () => {
     const s = pagina.match(/<section class="opcoes"[\s\S]*?<\/section>/)[0];
-    assert.deepStrictEqual([...s.match(/<h3>Livro digital<\/h3>\s*<ul>([\s\S]*?)<\/ul>/)[1].matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1]), ['Leia na tela do seu aparelho.', 'Depois da compra, você recebe as orientações de acesso.']);
+    assert.deepStrictEqual([...s.match(/<h3>Livro digital<\/h3>\s*<ul>([\s\S]*?)<\/ul>/)[1].matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1]), ['Leia na tela do seu aparelho.']);
+    assert.ok(!/Depois da compra|orientações de acesso/.test(s.match(/<h3>Livro digital<\/h3>[\s\S]*?<\/ul>/)[0]), 'sem a frase de pós-compra no card do livro digital (a compra real mostrou acesso imediato)');
     assert.ok(!/baixar|salvar|pdf|permanente|definitiv|30 dias|vital[ií]ci|ilimitad|para sempre/i.test(visivel(pagina)));
     assert.ok(s.includes('<h3>Audiobook (opção adicional)</h3>') && s.includes('você poderá acrescentá-la durante a compra do livro.'));
     assert.ok(!/comprar (o )?audiobook|audiobook avulso|apenas o audiobook|só o audiobook|R\$[^<]*audiobook/i.test(visivel(s)));

@@ -106,6 +106,7 @@ function audioBlocoHtml(a, tituloObra) {
     + '<button class="btn btn-audio" type="button" id="audio-tocar" aria-label="Ouvir amostra">'
     + '<svg viewBox="0 0 24 24" aria-hidden="true" id="audio-icone"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>'
     + '<span id="audio-rotulo">Ouvir amostra</span></button>'
+    + '<button class="btn btn-audio-parar" type="button" id="audio-parar" hidden>Parar</button>'
     + '<button class="btn btn-audio-recomecar" type="button" id="audio-recomecar" hidden>Recomeçar</button>'
     + '<div class="audio-progresso" id="audio-progresso-caixa" hidden><div class="audio-barra" aria-hidden="true"><div class="audio-barra-cheia" id="audio-barra"></div></div>'
     + '<span class="audio-tempo" id="audio-tempo" aria-hidden="true"></span></div>'

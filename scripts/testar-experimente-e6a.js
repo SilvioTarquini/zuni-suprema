@@ -107,7 +107,7 @@ const secao = (id) => { const m = pagina.match(new RegExp(`<section[^>]*aria-lab
     const s = secao('opcoes-titulo');
     assert.ok(s.includes('>Como você pode aproveitar esta obra</h2>'));
     assert.deepStrictEqual([...s.match(/<h3>Livro digital<\/h3>\s*<ul>([\s\S]*?)<\/ul>/)[1].matchAll(/<li>([^<]*)<\/li>/g)].map((m) => m[1]), [
-      'Leia na tela do seu aparelho.', 'Depois da compra, você recebe as orientações de acesso.']); // E6B: removido "baixar ou salvar" (promessa maior que a entrega)
+      'Leia na tela do seu aparelho.']); // E6B: removidos "baixar ou salvar" e, após a compra real, "Depois da compra, você recebe as orientações de acesso."
     assert.ok(!/baixar|salvar/i.test(s));
   });
   await teste('nenhuma promessa de PDF, cópia permanente, download definitivo, prazo (30 dias) ou acesso vitalício', async () => {

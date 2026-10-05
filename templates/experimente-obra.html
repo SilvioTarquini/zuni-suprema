@@ -78,7 +78,7 @@
   .audio-ui { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 12px; }
   .audio-ui[hidden] { display: none; }
   .btn-audio { min-width: 11.5rem; }
-  .btn-audio-recomecar { border-color: var(--borda); color: var(--suave); }
+  .btn-audio-recomecar, .btn-audio-parar { border-color: var(--borda); color: var(--suave); }
   .audio-progresso { flex: 1 1 100%; display: flex; align-items: center; gap: 12px; }
   .audio-progresso[hidden] { display: none; }
   .audio-barra { flex: 1; height: 6px; border-radius: 3px; background: var(--borda); overflow: hidden; }
@@ -166,7 +166,6 @@
         <h3>Livro digital</h3>
         <ul>
           <li>Leia na tela do seu aparelho.</li>
-          <li>Depois da compra, você recebe as orientações de acesso.</li>
         </ul>
       </div>
       {{AUDIOBOOK_OPCAO}}
@@ -202,6 +201,7 @@
     var rotulo = document.getElementById('audio-rotulo');
     var icone = document.getElementById('audio-icone');
     var recomecar = document.getElementById('audio-recomecar');
+    var parar = document.getElementById('audio-parar');
     var caixa = document.getElementById('audio-progresso-caixa');
     var barra = document.getElementById('audio-barra');
     var tempo = document.getElementById('audio-tempo');
@@ -219,6 +219,12 @@
       barra.style.width = Math.min(100, (audio.currentTime / d) * 100) + '%';
       tempo.textContent = fmt(audio.currentTime) + ' de ' + fmt(d);
     }
+    // Estado inicial: só "Ouvir amostra"; Parar/Recomeçar e a barra aparecem depois que a amostra começa a tocar.
+    function inicial() {
+      parar.hidden = true; recomecar.hidden = true; caixa.hidden = true;
+      barra.style.width = '0%'; tempo.textContent = '';
+      estado(false);
+    }
     secao.className += ' com-js';
     audio.controls = false;
     ui.hidden = false;
@@ -229,9 +235,14 @@
       } else { audio.pause(); }
     });
     recomecar.addEventListener('click', function () { audio.currentTime = 0; var p = audio.play(); if (p && p.catch) p.catch(function () {}); });
-    audio.addEventListener('play', function () { estado(true); caixa.hidden = false; recomecar.hidden = false; status.textContent = ''; });
+    parar.addEventListener('click', function () {
+      audio.pause(); audio.currentTime = 0;
+      inicial(); status.textContent = '';
+      tocar.focus();
+    });
+    audio.addEventListener('play', function () { estado(true); caixa.hidden = false; parar.hidden = false; recomecar.hidden = false; status.textContent = ''; });
     audio.addEventListener('pause', function () { estado(false); });
-    audio.addEventListener('ended', function () { estado(false); status.textContent = 'Fim da amostra.'; });
+    audio.addEventListener('ended', function () { audio.currentTime = 0; inicial(); status.textContent = 'Fim da amostra.'; });
     audio.addEventListener('timeupdate', progresso);
     audio.addEventListener('loadedmetadata', progresso);
     audio.addEventListener('error', function () { status.textContent = 'Não foi possível carregar a amostra agora.'; });
