@@ -446,6 +446,65 @@
     color: var(--dourado);
   }
 
+  /* Porta editorial do Universo Feminino: entrada discreta, sem repetir as obras na home. */
+  .porta-universo {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 10px 24px 0;
+  }
+  .porta-universo .cartao {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 16px;
+    background: var(--fundo-carta);
+    border: 1px solid var(--borda);
+    border-left: 3px solid #8a4a63;
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .porta-universo .texto { flex: 1 1 260px; min-width: 0; }
+  .porta-universo .sobretitulo {
+    margin: 0 0 4px;
+    font-family: Arial, sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dourado-suave);
+  }
+  .porta-universo p.chamada {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    color: var(--texto);
+    max-width: 560px;
+  }
+  .porta-universo a.btn-universo {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    width: 100%;
+    padding: 11px 20px;
+    border: 1px solid var(--dourado);
+    border-radius: 4px;
+    color: var(--dourado-suave);
+    text-decoration: none;
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .porta-universo a.btn-universo:hover { background: rgba(184, 150, 62, 0.12); }
+  .porta-universo a.btn-universo:focus-visible { outline: 2px solid var(--dourado); outline-offset: 2px; }
+
+  @media (min-width: 640px) {
+    .porta-universo a.btn-universo { width: auto; }
+  }
+
   /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
      O corpo (.info) reaproveita as mesmas classes/estilos do card antigo
      (resumo, descricao-expandida.ativa, rodape-card, preco, selo-audiobook, selo-chat,
@@ -538,6 +597,16 @@
     </div>
   </div>
 </div>
+
+<nav class="porta-universo" aria-label="Universo Feminino">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Universo Feminino</p>
+      <p class="chamada">Uma seleção de obras para diferentes momentos da vida de uma mulher.</p>
+    </div>
+    <a class="btn-universo" id="porta-universo-link" href="/loja/universo-feminino/">Explorar o Universo Feminino</a>
+  </div>
+</nav>
 
 <main>
   <h2 style="margin-top: 56px; margin-bottom: 28px; font-size: 1.4rem; font-weight: normal; letter-spacing: 0.5px; color: var(--dourado-suave);">Livros</h2>
@@ -711,6 +780,14 @@
       });
     });
   }
+
+  // A porta do Universo Feminino leva junto o ?cupom= da Loja (a vitrine o repassa ao checkout).
+  (function () {
+    try {
+      const cupom = new URLSearchParams(window.location.search).get('cupom');
+      if (cupom) document.getElementById('porta-universo-link').href = '/loja/universo-feminino/?cupom=' + encodeURIComponent(cupom);
+    } catch (e) {}
+  })();
 
   // Renderizar ao carregar
   document.addEventListener('DOMContentLoaded', () => {

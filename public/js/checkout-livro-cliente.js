@@ -139,5 +139,19 @@
     };
   }
 
-  return { precoBaseCliente, criarEstadoPreco, criarPinterestLivro };
+  // Origem comercial (de qual vitrine a pessoa veio). Whitelist fechada, espelho de src/lib/origemCompra.js
+  // (o servidor revalida). Só contexto de análise: nunca altera preço, cupom, produto ou acesso, e nunca
+  // é escrita na página nem enviada ao Pinterest.
+  const ORIGENS_PERMITIDAS = ['universo-feminino'];
+
+  function lerOrigem(search) {
+    try {
+      const valor = new URLSearchParams(search).get('origem');
+      return ORIGENS_PERMITIDAS.includes(valor) ? valor : null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  return { precoBaseCliente, criarEstadoPreco, criarPinterestLivro, lerOrigem, ORIGENS_PERMITIDAS };
 });

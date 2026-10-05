@@ -306,6 +306,8 @@
   let pollingInterval = null;
   let livroAtual = null;
   let audiolivroIncluido = false;
+  // Origem validada pela whitelist (null se ausente/desconhecida). Só contexto de análise.
+  const origemCompra = ZuniCheckoutLivro.lerOrigem(window.location.search);
   // Estado de preço estruturado (livro + áudio + cupom validado pelo servidor).
   // O total exibido e o valor enviado ao Pinterest saem dele, nunca do texto da tela.
   const precoEstado = ZuniCheckoutLivro.criarEstadoPreco(async (codigo, id, audio) => {
@@ -486,7 +488,7 @@
         const res = await fetch('/api/checkout/livro/stripe-session', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ livroId, name, email, cupom: precoEstado.estado.cupom, audiolivroIncluido })
+          body: JSON.stringify({ livroId, name, email, cupom: precoEstado.estado.cupom, audiolivroIncluido, ...(origemCompra ? { origem: origemCompra } : {}) })
         });
         const data = await res.json();
 

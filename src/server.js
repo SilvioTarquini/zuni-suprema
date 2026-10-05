@@ -20,6 +20,7 @@ const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivr
 const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSessionId, marcarPedidoPendenteProcessado } = require('./lib/pedidosCheckoutStripe');
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { calcularPrecoBaseLivro } = require('./lib/precoLivro');
+const { normalizarOrigem } = require('./lib/origemCompra');
 const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
@@ -2231,6 +2232,9 @@ app.get('/api/checkout/livro/session-status', async (req, res) => {
 app.post('/api/checkout/livro/stripe-session', async (req, res) => {
   try {
     const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
+    // Origem comercial (ex.: 'universo-feminino'): whitelist, só contexto de análise —
+    // não altera preço, cupom, produto nem fulfillment. Valor fora da lista vira null.
+    const origem = normalizarOrigem(req.body.origem);
 
     if (!livroId || !name || !email) {
       return res.status(400).json({ error: 'Livro, nome e email são obrigatórios.' });
@@ -2254,7 +2258,7 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
       return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
     }
 
-    const payload = { livroId, email, audiolivroIncluido: Boolean(audiolivroIncluido) };
+    const payload = { livroId, email, audiolivroIncluido: Boolean(audiolivroIncluido), ...(origem ? { origem } : {}) };
     const pedidoId = await criarPedidoPendenteStripe({
       fulfillmentType: 'livro',
       payload,
@@ -2297,7 +2301,8 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
       ],
       metadata: {
         pedidoId,
-        fulfillment_type: 'livro'
+        fulfillment_type: 'livro',
+        ...(origem ? { origem } : {})
       },
       return_url: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&pedidoId=${pedidoId}&email=${encodeURIComponent(email)}&status=retorno`
     });
