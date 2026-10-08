@@ -2,6 +2,7 @@
 // Modos (sem rede, sem chaves, sem custo):  --auditar | --dry-run (padrão) | --preregistrar | --so-recuperacao --simulado
 // Recuperação real isolada (embeddings + leituras no acervo, SEM geração, teto US$ 0,05): --so-recuperacao (exige RAG3_V1_RECUPERACAO_AUTORIZADA=I_CONFIRM_V1_RECUP e RAG3_V1_RECUP_TETO_USD <= 0.05)
 // Modo pago: --executar  (exige RAG3_V1_EXECUCAO_AUTORIZADA=I_CONFIRM_V1, RAG3_V1_TETO_USD <= 5.00, pré-registro conferido e casos/critérios presentes).
+// Acesso ao Supabase: SOMENTE por supabaseRestrito.js (POST exato nas 2 RPCs de busca, origem autorizada, sem redirecionamento) — contenção operacional do benchmark, NÃO menor privilégio.
 // Nenhum modo imprime a BLIND_KEY, o mapeamento rótulo→variante ou o texto dos casos.
 const fs = require('fs');
 const os = require('os');
@@ -9,6 +10,7 @@ const path = require('path');
 const raiz = path.join(__dirname, '..');
 const R = require(path.join(raiz, 'src/rag3'));
 const X = require(path.join(raiz, 'src/rag3/benchmark/v1Executor'));
+const { criarClienteSupabaseRestrito, validarOrigem } = require(path.join(raiz, 'src/rag3/supabaseRestrito')); // ÚNICA porta para o Supabase (contenção operacional; não é menor privilégio)
 const { CASOS: DATASET } = require(path.join(raiz, 'src/rag3/benchmark/dataset'));
 const { POR_ID } = require(path.join(raiz, 'src/rag3/conceptLexicon'));
 
@@ -26,7 +28,7 @@ const arquivosProtegidos = () => ({
   'src/rag3/editorialPolicy.js': path.join(raiz, 'src/rag3/editorialPolicy.js'), 'src/rag3/knowledgeMode.js': path.join(raiz, 'src/rag3/knowledgeMode.js'), 'src/rag3/causalidade.js': path.join(raiz, 'src/rag3/causalidade.js'),
   'src/rag3/retrieval.js': path.join(raiz, 'src/rag3/retrieval.js'), 'src/rag3/queryPlanner.js': path.join(raiz, 'src/rag3/queryPlanner.js'), 'src/rag3/bookRecommendation.js': path.join(raiz, 'src/rag3/bookRecommendation.js'),
   'src/rag3/provenance.js': path.join(raiz, 'src/rag3/provenance.js'), 'src/rag3/config.js': path.join(raiz, 'src/rag3/config.js'), 'src/rag3/generation.js': path.join(raiz, 'src/rag3/generation.js'), 'src/rag3/providers.js': path.join(raiz, 'src/rag3/providers.js'),
-  'src/rag3/benchmark/v1Executor.js': path.join(raiz, 'src/rag3/benchmark/v1Executor.js'), 'src/rag3/benchmark/blindPackage.js': path.join(raiz, 'src/rag3/benchmark/blindPackage.js'), 'src/rag3/benchmark/rubricC2b.js': path.join(raiz, 'src/rag3/benchmark/rubricC2b.js'),
+  'src/rag3/benchmark/v1Executor.js': path.join(raiz, 'src/rag3/benchmark/v1Executor.js'), 'src/rag3/supabaseRestrito.js': path.join(raiz, 'src/rag3/supabaseRestrito.js'), 'src/rag3/benchmark/blindPackage.js': path.join(raiz, 'src/rag3/benchmark/blindPackage.js'), 'src/rag3/benchmark/rubricC2b.js': path.join(raiz, 'src/rag3/benchmark/rubricC2b.js'),
   'src/rag3/benchmark/lintResposta.js': path.join(raiz, 'src/rag3/benchmark/lintResposta.js'), 'src/rag3/pipeline.js': path.join(raiz, 'src/rag3/pipeline.js'), 'src/rag3/currentAdapter.js': path.join(raiz, 'src/rag3/currentAdapter.js'), 'src/rag3/benchmark/dataset.js': path.join(raiz, 'src/rag3/benchmark/dataset.js'),
   'scripts/rag3-v1-benchmark.js': __filename, 'src/server.js': path.join(raiz, 'src/server.js'), 'V1_CASOS_INEDITOS.json': CASOS_JSON, 'V1_CRITERIOS_E_RUBRICA.md': CRITERIOS_MD
 });
@@ -53,7 +55,9 @@ function itensDoPlano() {
 }
 async function montarItem(it, deps) {
   const v = await R.buildVariantRequests(it.basico, deps);
-  return { id: it.id, grupo: it.grupo, caso: it.caso, reqs: { generic: v.requests.generic, zuni: v.requests.zuni, current: v.requests.current }, hashes: { politica: v.requests.zuni.hashes.politica, pack: v.preparo.knowledgePack.hash, modo: v.requests.zuni.hashes.modo, orientacao: v.requests.zuni.hashes.orientacao, knowledgeMode: v.preparo.modo.modo, equivalente: v.equivalenciaZuni.equivalentes, status: v.preparo.retrieval.status }, _v: v };
+  const idsDoPacote = new Set(v.preparo.knowledgePack.blockIds || []); // blocos que de fato entraram no pacote enviado ao modelo (leitura apenas; nada é alterado)
+  const blocosFinais = v.preparo.retrieval.blocks.filter((b) => idsDoPacote.has(b.id)).map((b) => ({ id: b.id, fonte: b.source, tema: b.theme || null, obra: b.bookId || null, similaridade: b.similarity == null ? null : Number(Number(b.similarity).toFixed(4)) }));
+  return { id: it.id, grupo: it.grupo, caso: it.caso, reqs: { generic: v.requests.generic, zuni: v.requests.zuni, current: v.requests.current }, hashes: { politica: v.requests.zuni.hashes.politica, pack: v.preparo.knowledgePack.hash, modo: v.requests.zuni.hashes.modo, orientacao: v.requests.zuni.hashes.orientacao, knowledgeMode: v.preparo.modo.modo, equivalente: v.equivalenciaZuni.equivalentes, status: v.preparo.retrieval.status, blocos_finais: blocosFinais, blocos_recuperados_total: v.preparo.retrieval.blocks.length }, _v: v };
 }
 async function montarPlano({ embedder, store, config }) {
   const deps = { embedder, store, config, promptAtual: R.carregarPromptAtual() }; const plano = [];
@@ -115,9 +119,10 @@ async function recuperacao({ simulado, saidaArg }) {
     if (!fs.existsSync(CASOS_JSON)) { console.log('STOP: casos ausentes.'); return 22; }
     dirSaida = RECUP_DIR; if (fs.existsSync(path.join(dirSaida, 'recuperacao_metadados.json'))) { console.log('STOP: recuperação já executada (a autorização vale para uma única execução).'); return 23; }
     require(path.join(raiz, 'node_modules/dotenv')).config({ path: path.join(raiz, '.env') });
-    const { createClient } = require(path.join(raiz, 'node_modules/@supabase/supabase-js')); const { VALOR_AUTORIZACAO } = require(path.join(raiz, 'src/rag3/paidGuard'));
+    try { validarOrigem(process.env.SUPABASE_URL); } catch (e) { console.log('STOP: origem Supabase não autorizada (nenhuma requisição foi feita).'); return 24; }
+    const { VALOR_AUTORIZACAO } = require(path.join(raiz, 'src/rag3/paidGuard'));
     process.env.RAG3_ALLOW_PAID_CALLS = VALOR_AUTORIZACAO; // necessário só para o embedder; nenhum provedor de geração é criado neste modo
-    embedder = new R.OpenAIEmbedder({ apiKey: process.env.OPENAI_API_KEY, fetchImpl: fetch }); store = new R.SupabaseRpcVectorStore({ client: createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY, { auth: { persistSession: false } }) });
+    embedder = new R.OpenAIEmbedder({ apiKey: process.env.OPENAI_API_KEY, fetchImpl: fetch }); store = new R.SupabaseRpcVectorStore({ client: criarClienteSupabaseRestrito({ url: process.env.SUPABASE_URL, key: process.env.SUPABASE_KEY }) });
   }
   try {
     const contador = new X.EmbedderContador(embedder); const orcamento = new X.ReservaDeOrcamento({ tetoUsd: teto }); const deps = { embedder: contador, store, config: configV1(), promptAtual: R.carregarPromptAtual() };
@@ -148,13 +153,14 @@ const ARGS = process.argv.slice(2); const tem = (f) => ARGS.includes(f); const v
   if (!fs.existsSync(CASOS_JSON) || !fs.existsSync(CRITERIOS_MD)) { console.log('STOP: casos ou critérios ausentes.'); process.exit(14); }
   if (fs.existsSync(path.join(PASTA_INTERNO, 'V1_BLIND_KEY.json'))) { console.log('STOP: já existe execução V1 (a autorização vale para uma única execução).'); process.exit(15); }
   require(path.join(raiz, 'node_modules/dotenv')).config({ path: path.join(raiz, '.env') });
-  const { createClient } = require(path.join(raiz, 'node_modules/@supabase/supabase-js')); const { VALOR_AUTORIZACAO } = require(path.join(raiz, 'src/rag3/paidGuard'));
+  try { validarOrigem(process.env.SUPABASE_URL); } catch (e) { console.log('STOP: origem Supabase não autorizada (nenhuma requisição foi feita).'); process.exit(16); }
+  const { VALOR_AUTORIZACAO } = require(path.join(raiz, 'src/rag3/paidGuard'));
   const http = async (url, headers, body) => { const ac = new AbortController(); const t = setTimeout(() => ac.abort(), 180000); try { const resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body), signal: ac.signal }); const json = await resp.json().catch(() => null); if (!resp.ok) { const e = new Error('http'); e.status = resp.status; throw e; } return json; } finally { clearTimeout(t); } };
   const m = await fetch('https://api.openai.com/v1/models/' + MODELO_OPENAI, { headers: { Authorization: 'Bearer ' + process.env.OPENAI_API_KEY } }); if (!m.ok) { console.log('STOP: modelo OpenAI indisponível'); process.exit(4); }
   const config = configV1();
   process.env.RAG3_ALLOW_PAID_CALLS = VALOR_AUTORIZACAO;
   try {
-    const embedder = new R.OpenAIEmbedder({ apiKey: process.env.OPENAI_API_KEY, fetchImpl: fetch }); const store = new R.SupabaseRpcVectorStore({ client: createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY, { auth: { persistSession: false } }) });
+    const embedder = new R.OpenAIEmbedder({ apiKey: process.env.OPENAI_API_KEY, fetchImpl: fetch }); const store = new R.SupabaseRpcVectorStore({ client: criarClienteSupabaseRestrito({ url: process.env.SUPABASE_URL, key: process.env.SUPABASE_KEY }) });
     const orcamento = new X.ReservaDeOrcamento({ tetoUsd: teto }); orcamento.gasto += 0.01; // reserva fixa para os embeddings (~44 requisições, custo real << US$ 0,001)
     const plano = await montarPlano({ embedder, store, config });
     if (!plano.every((p) => p.hashes.equivalente)) { console.log('STOP: contexto B≠C não equivalente.'); process.exit(5); }
