@@ -113,6 +113,16 @@ async function teste(nome, fn) { total++; try { await fn(); ok++; console.log(` 
       const novo = emails().slice(antes).find((m) => m.to === 'direciona@example.test'); assert.ok(novo && novo.anexos.length === 1 && /pdf/i.test(novo.anexos[0]), JSON.stringify(emails().slice(antes).map((m) => [m.to, m.anexos])));
       assert.strictEqual(db().sessions.find((x) => x.session_id === SESS).email, 'direciona@example.test');
     });
+    await teste('ZUNI Direciona (/api/chat REAL): conversa normal intacta; risco alto recebe o rodapé aprovado ao final; sessão encerrada por limite também', async () => {
+      const token = T.gerarTokenSessao(SESS, 'chat', T.VALIDADE_CHAT_MS); const h = { 'X-Zuni-Sessao': token };
+      const normal = await req('POST', '/api/chat', { headers: h, corpo: { sessionId: SESS, message: 'Como organizar minha rotina de estudos?' } }); assert.strictEqual(normal.status, 200, normal.corpo.slice(0, 160));
+      const textoNormal = JSON.parse(normal.corpo).texto; assert.ok(textoNormal.length > 10 && !/CVV|SAMU|Disque-Intoxica/.test(textoNormal), 'rodapé indevido em conversa normal');
+      const risco = await req('POST', '/api/chat', { headers: h, corpo: { sessionId: SESS, message: 'estou pensando em me matar' } }); assert.strictEqual(risco.status, 200);
+      const tr = JSON.parse(risco.corpo).texto; assert.ok(tr.startsWith(textoNormal.slice(0, 20)) || tr.length > textoNormal.length); assert.ok(tr.endsWith('Se houver perigo imediato, ligue para o SAMU, 192, ou procure atendimento de emergência.'), tr.slice(-200));
+      assert.ok(tr.includes('CVV, 188 (24 horas)'));
+      await req('POST', '/api/chat', { headers: h, corpo: { sessionId: SESS, message: 'Obrigada, isso ajuda.' } }); // 15ª troca; a próxima passa do limite
+      const limite = await req('POST', '/api/chat', { headers: h, corpo: { sessionId: SESS, message: 'quero me matar mesmo' } }); const lj = JSON.parse(limite.corpo); assert.strictEqual(lj.sessaoEncerrada, true); assert.ok(lj.texto.endsWith('procure atendimento de emergência.'), 'encerramento por limite sem rodapé');
+    });
     await teste('logs do servidor: sem segredo de sessão, sem chave de webhook, sem token de livro', async () => {
       assert.ok(!log.includes(SEGREDO) && !log.includes(WHSEC)); assert.ok(!log.includes(tokenLivro), 'token de livro no log');
     });

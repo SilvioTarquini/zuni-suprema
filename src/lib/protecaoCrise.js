@@ -131,24 +131,28 @@ const DIRETIVA_INGESTAO_AMBIGUA = 'Há uma possível ingestão de medicamento em
 // Sinais LEGADOS diretos (mesma lista do Candidate, já sem os dois padrões migrados para o detector contextual), por tipo de serviço.
 const SINAIS_LEGADO = Object.freeze({
   emocional: ['suicid', 'me matar', 'tirar (a )?(minha )?vida', 'nao quero mais viver', 'acabar com tudo', 'autolesao'],
-  medico: ['overdose', 'envenen', 'dor forte no peito', 'falta de ar (forte|repentina|subita)', 'desmai', 'sangramento (intenso|forte)'],
+  medico: ['dor forte no peito', 'falta de ar (forte|repentina|subita)', 'desmai', 'sangramento (intenso|forte)'],
+  intoxicacao: ['overdose', 'envenen'], // mesmos gatilhos de antes; só passam a receber o rodapé de intoxicação (e não o de sintomas cardíacos)
   violencia: ['estou apanhando', 'ele me bate', 'ela me bate', 'me ameaca', 'violencia (domestica|em casa)']
 });
 const casaAlgum = (t, lista) => lista.some((r) => new RegExp(r).test(t));
 
+// Textos aprovados (09/10/2026). Mudar qualquer palavra exige nova aprovação editorial.
 const RODAPE = Object.freeze({
-  emocional: 'Se você está pensando em se machucar ou sente que não aguenta, você não precisa passar por isso sozinho(a): ligue agora para o CVV, 188 (gratuito, 24 horas), ou para o SAMU, 192, ou procure o pronto-socorro mais próximo. Se puder, avise também alguém de confiança.',
-  ingestao: 'Atenção: ingerir medicamento ou outra substância em quantidade maior que a prescrita pode ser uma emergência, mesmo sem sintomas agora. Ligue agora para o SAMU, 192, ou para o Disque-Intoxicação, 0800 722 6001, ou vá ao pronto-socorro mais próximo; leve a embalagem. Não fique sozinho(a).',
-  medico: 'Se isso está acontecendo agora, é uma situação de urgência: ligue para o SAMU, 192, ou vá ao pronto-socorro mais próximo.',
-  violencia: 'Se você está em perigo agora, ligue 190 (Polícia). Para apoio a mulheres em situação de violência, a Central de Atendimento à Mulher atende pelo 180.'
+  emocional: 'Se você está pensando em se machucar ou sente que não aguenta, não precisa enfrentar isso sozinho(a). Procure alguém de confiança que possa ficar com você. Para apoio emocional, ligue gratuitamente para o CVV, 188 (24 horas). Se houver perigo imediato, ligue para o SAMU, 192, ou procure atendimento de emergência.',
+  ingestao: 'Atenção: ingerir medicamentos ou outras substâncias em quantidade excessiva pode ser uma emergência, mesmo sem sintomas. Ligue imediatamente para o SAMU, 192, ou para o Disque-Intoxicação, 0800 722 6001. Não provoque vômito nem tente neutralizar a substância por conta própria. Se possível, tenha a embalagem disponível para informar aos profissionais de saúde.',
+  medico: 'Se você está apresentando dor forte no peito, falta de ar súbita, desmaio, sangramento intenso ou outro sinal grave, ligue imediatamente para o SAMU, 192. Procure atendimento de emergência sem demora.',
+  violencia: 'Se você está em perigo imediato, procure um local seguro, se isso for possível sem aumentar o risco, e ligue para a Polícia, 190. Mulheres em situação de violência também podem buscar orientação e apoio pela Central de Atendimento à Mulher, 180.'
 });
-// Número que, se já presente na resposta do modelo, dispensa repetir o rodapé daquele tipo.
-const MARCADOR_NA_RESPOSTA = Object.freeze({
-  emocional: /\b188\b/,
-  ingestao: /0800\s*722\s*6001/,
-  medico: /\b192\b/,
-  violencia: /\b(?:190|180)\b/
-});
+
+// REGRA DE EXIBIÇÃO (determinística, conservadora): a presença de um número de telefone na resposta do modelo NUNCA dispensa o rodapé.
+// O rodapé de um tipo só é omitido se o TEXTO APROVADO daquele tipo já estiver na resposta (comparação literal, sem diferenciar
+// caixa, espaços e quebras de linha). Qualquer outra forma de "orientação equivalente" não é verificável com segurança => o rodapé é
+// acrescentado (uma eventual repetição de número é preferível a uma orientação incompleta).
+const comparavel = (s) => String(s == null ? '' : s).replace(/\s+/g, ' ').trim().toLowerCase();
+
+// Convites comerciais (usado só na DEMO, em risco alto): frases com estes termos são removidas, nunca substituídas por outra oferta.
+const CONVITE_COMERCIAL = /sess[aã]o completa|livros? vivos?|adquir|compr(?:ar|e|a|as|ou)\b|assin(?:e|ar|atura)|pre[cç]o|r\$|checkout|\bloja\b|desconto|cupom|\bplano\b|\bpacote\b|bot[aã]o|bot[oõ]es|conhe[cç]a (?:a|o|os|as)\b|zuni direciona|mentor zuni suprema.{0,40}(?:acesso|sess)/i;
 
 function textosDoUsuario({ message, history }) {
   const anteriores = (Array.isArray(history) ? history : [])
@@ -174,6 +178,7 @@ function avaliarSeguranca({ message, history } = {}) {
   const prep = forte.map((f) => limparFigurados(normalizar(f)));
   const legadoEmocional = prep.some((t) => casaAlgum(t, SINAIS_LEGADO.emocional));
   const legadoMedico = prep.some((t) => casaAlgum(t, SINAIS_LEGADO.medico));
+  const legadoIntoxicacao = prep.some((t) => casaAlgum(t, SINAIS_LEGADO.intoxicacao));
   const legadoViolencia = prep.some((t) => casaAlgum(t, SINAIS_LEGADO.violencia));
   const crise = legadoEmocional || avRisco.some((r) => r.nivel === 'alto');
   const ingestaoAlta = avIng.some((r) => r.nivel === 'alto');
@@ -193,7 +198,7 @@ function avaliarSeguranca({ message, history } = {}) {
   }
 
   if (crise) { tipos.add('emocional'); diretivas.push(DIRETIVA_CRISE); }
-  if (ingestaoAlta) { tipos.add('ingestao'); diretivas.push(DIRETIVA_INGESTAO); }
+  if (ingestaoAlta || legadoIntoxicacao) { tipos.add('ingestao'); diretivas.push(DIRETIVA_INGESTAO); }
   if (legadoMedico) { tipos.add('medico'); diretivas.push('Prioridade de segurança: há sinal de possível emergência médica ou violência. Acolha primeiro, não faça aprofundamentos longos, oriente buscar atendimento imediato (SAMU 192 ou pronto-socorro) e não diagnostique nem oriente tratamento.'); }
   if (legadoViolencia) { tipos.add('violencia'); diretivas.push('Prioridade de segurança: há sinal de violência. Acolha, priorize a segurança imediata da pessoa (190 Polícia; 180 Central de Atendimento à Mulher) e não a pressione a decidir nada agora.'); }
   if (riscoAmbiguo) diretivas.push(DIRETIVA_RISCO_AMBIGUO);
@@ -209,13 +214,28 @@ function adicionarDiretivaAoSistema(systemPrompt, avaliacao) {
   return `${systemPrompt}\n\n<zuni_seguranca>\n${avaliacao.diretivas.join('\n')}\n</zuni_seguranca>`;
 }
 
-/** Garante, por código, os serviços de emergência na resposta quando há risco ALTO (não repete se o modelo já os citou). */
+/**
+ * Garante, por código, a orientação de segurança de CADA tipo de risco alto identificado, ao FINAL da resposta (a resposta principal
+ * é preservada). Cada tipo só é omitido se o seu texto aprovado já estiver literalmente na resposta (ver REGRA DE EXIBIÇÃO acima);
+ * mencionar apenas um telefone não conta. Vários tipos => vários rodapés, na ordem emocional, intoxicação, médico, violência.
+ */
 function aplicarRodapeSeguranca(texto, avaliacao) {
   const base = String(texto == null ? '' : texto);
   if (!avaliacao || !avaliacao.critico) return base;
-  const faltando = avaliacao.tipos.filter((tp) => !MARCADOR_NA_RESPOSTA[tp].test(base));
+  const corpo = comparavel(base);
+  const faltando = avaliacao.tipos.filter((tp) => RODAPE[tp] && !corpo.includes(comparavel(RODAPE[tp])));
   if (!faltando.length) return base;
   return `${base.trimEnd()}\n\n${faltando.map((tp) => RODAPE[tp]).join('\n\n')}`;
 }
 
-module.exports = { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca, avaliarRiscoAutolesao, avaliarIngestaoMedicamentosa, RODAPE, JANELA_FORTE, JANELA_ATENCAO };
+/**
+ * Remove, por frase, convites comerciais da resposta (uso: demo em risco alto). Determinístico, sem IA. Nunca acrescenta oferta
+ * nem substitui o texto de emergência. Se nada sobrar, devolve '' (o rodapé de segurança é anexado depois por quem chama).
+ */
+function removerConviteComercial(texto) {
+  const paragrafos = String(texto == null ? '' : texto).split(/\n{2,}/);
+  const limpos = paragrafos.map((p) => p.split(/(?<=[.!?…])\s+/).filter((frase) => !CONVITE_COMERCIAL.test(frase)).join(' ').trim()).filter(Boolean);
+  return limpos.join('\n\n');
+}
+
+module.exports = { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca, removerConviteComercial, avaliarRiscoAutolesao, avaliarIngestaoMedicamentosa, RODAPE, JANELA_FORTE, JANELA_ATENCAO };

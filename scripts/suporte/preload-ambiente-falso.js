@@ -71,3 +71,12 @@ Module._load = function (request, parent, isMain) {
   if (request === 'resend') return { Resend: class { constructor() { this.emails = { send: async (args) => { if (process.env.FAKE_EMAIL_LOG) fs.appendFileSync(process.env.FAKE_EMAIL_LOG, JSON.stringify({ to: args.to, subject: args.subject, html: args.html, anexos: (args.attachments || []).map((a) => a.filename) }) + '\n'); return { data: { id: 'fake-' + autoId++ }, error: null }; } }; } } };
   return loadOriginal.apply(this, arguments);
 };
+
+// Bloqueia QUALQUER chamada de rede externa feita via fetch (embeddings viram vetor falso); só localhost passa.
+const fetchOriginal = globalThis.fetch;
+globalThis.fetch = async (url, opts) => {
+  const u = String((url && url.url) || url);
+  if (/^https?:\/\/(127\.0\.0\.1|localhost)/.test(u)) return fetchOriginal(url, opts);
+  if (/api\.openai\.com\/v1\/embeddings/.test(u)) return new Response(JSON.stringify({ data: [{ embedding: [0.1, 0.2] }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+  return new Response('{}', { status: 503 });
+};

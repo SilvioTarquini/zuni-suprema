@@ -37,7 +37,7 @@ const { verificarLimite, registrarUso, auditarConsumo, gerarVisitorHash } = requ
 const { limparSessoesExpiradas } = require('./lib/limpezaSessoes');
 const { gerarTokenSessao, validarTokenSessao, VALIDADE_CHAT_MS, VALIDADE_DOWNLOAD_MS } = require('./lib/sessionToken');
 const { emailValido, criarLimitadorRelatorio, exigirAutorizacaoRelatorio, responderLimite } = require('./lib/protecaoRelatorio');
-const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca } = require('./lib/protecaoCrise');
+const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca, removerConviteComercial } = require('./lib/protecaoCrise');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -4169,6 +4169,9 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
     // Se é a última troca (antes do limite), adicionar CTA de upgrade
     const segurancaDemo = avaliarSeguranca({ message });
     promptFinal = adicionarDiretivaAoSistema(promptFinal, segurancaDemo);
+    if (segurancaDemo.critico) { // risco alto: nenhum convite comercial, nem do prompt da demo nem da última troca
+      promptFinal += '\n\n<zuni_seguranca_demo>\nEsta pessoa pode estar em risco. Não faça nenhum convite comercial: não mencione Sessão Completa, livros, botões, preços, links ou compra. Foque em acolher e em orientar a segurança.\n</zuni_seguranca_demo>';
+    }
     if (limite.ultimaTroca && !segurancaDemo.critico) { // em situação de risco, nunca convidar para compra
       promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em www.zunisuprema.com.br/checkout (R$ 27,90 via PIX)."`;
     }
@@ -4185,7 +4188,9 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
     const outputTokens = response.usage.output_tokens;
 
     // ── LIMPEZA DE MARKDOWN ──
-    responseText = aplicarRodapeSeguranca(limparMarkdown(responseText), segurancaDemo);
+    responseText = limparMarkdown(responseText);
+    if (segurancaDemo.critico) responseText = removerConviteComercial(responseText); // remove, por frase, qualquer convite comercial que o modelo tenha escrito
+    responseText = aplicarRodapeSeguranca(responseText, segurancaDemo);
 
     // ── REGISTRAR USO ──
     registrarUso(visitorHash, { input: inputTokens, output: outputTokens });
@@ -4209,7 +4214,7 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
       bloqueado: false,
       texto: responseText,
       contador: `${limite.contador + 1}/5`,
-      ultimaTroca: limite.ultimaTroca
+      ultimaTroca: limite.ultimaTroca && !segurancaDemo.critico // o cliente mostra o convite de compra quando isto é true: nunca em risco alto
     });
   } catch (error) {
     console.error('Erro em /api/experimente-chat:', error && error.message);

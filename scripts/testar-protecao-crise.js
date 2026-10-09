@@ -56,20 +56,60 @@ const av = (message, history) => S.avaliarSeguranca({ message, history });
     assert.strictEqual(S.adicionarDiretivaAoSistema('SISTEMA', av('oi, tudo bem?')), 'SISTEMA');
     const p = S.adicionarDiretivaAoSistema('SISTEMA', av('quero me matar')); assert.ok(p.startsWith('SISTEMA') && /<zuni_seguranca>[\s\S]*188[\s\S]*<\/zuni_seguranca>/.test(p));
   });
-  await teste('rodapé emocional: CVV 188 e SAMU 192, acrescentado quando o modelo não cita', async () => {
-    const t = S.aplicarRodapeSeguranca('Estou aqui com você.', av('quero me matar')); assert.ok(/188/.test(t) && /192/.test(t) && t.startsWith('Estou aqui com você.'));
+  // Textos APROVADOS em 09/10/2026 (copiados da aprovação; qualquer mudança no código quebra este teste de propósito).
+  const APROVADO = {
+    emocional: 'Se você está pensando em se machucar ou sente que não aguenta, não precisa enfrentar isso sozinho(a). Procure alguém de confiança que possa ficar com você. Para apoio emocional, ligue gratuitamente para o CVV, 188 (24 horas). Se houver perigo imediato, ligue para o SAMU, 192, ou procure atendimento de emergência.',
+    ingestao: 'Atenção: ingerir medicamentos ou outras substâncias em quantidade excessiva pode ser uma emergência, mesmo sem sintomas. Ligue imediatamente para o SAMU, 192, ou para o Disque-Intoxicação, 0800 722 6001. Não provoque vômito nem tente neutralizar a substância por conta própria. Se possível, tenha a embalagem disponível para informar aos profissionais de saúde.',
+    medico: 'Se você está apresentando dor forte no peito, falta de ar súbita, desmaio, sangramento intenso ou outro sinal grave, ligue imediatamente para o SAMU, 192. Procure atendimento de emergência sem demora.',
+    violencia: 'Se você está em perigo imediato, procure um local seguro, se isso for possível sem aumentar o risco, e ligue para a Polícia, 190. Mulheres em situação de violência também podem buscar orientação e apoio pela Central de Atendimento à Mulher, 180.'
+  };
+  const FRASE = { emocional: 'quero me matar', ingestao: 'tomei a cartela inteira de remédio', medico: 'estou com dor forte no peito', violencia: 'ele me bate' };
+  await teste('os quatro textos implementados são EXATAMENTE os aprovados', async () => {
+    assert.deepStrictEqual({ ...S.RODAPE }, APROVADO);
   });
-  await teste('rodapé não duplica se o modelo já citou o serviço', async () => {
-    const original = 'Ligue para o CVV, 188, agora.'; assert.strictEqual(S.aplicarRodapeSeguranca(original, av('quero me matar')), original);
+  for (const tipo of Object.keys(APROVADO)) {
+    await teste(`tipo ${tipo}: classificado sozinho e o rodapé aprovado é anexado AO FINAL, preservando a resposta principal`, async () => {
+      const a = av(FRASE[tipo]); assert.deepStrictEqual(a.tipos, [tipo]);
+      const t = S.aplicarRodapeSeguranca('Resposta principal do modelo.', a); assert.strictEqual(t, 'Resposta principal do modelo.\n\n' + APROVADO[tipo]);
+    });
+  }
+  await teste('gatilhos legados "overdose"/"envenenei" recebem o rodapé de INTOXICAÇÃO (não o de sintomas cardíacos)', async () => {
+    for (const f of ['acho que foi overdose', 'estou envenenada']) { const a = av(f); assert.ok(a.tipos.includes('ingestao') && !a.tipos.includes('medico'), f + ' => ' + a.tipos); }
   });
-  await teste('rodapé de ingestão: SAMU 192 e Disque-Intoxicação 0800 722 6001, sem recomendar induzir vômito', async () => {
-    const t = S.aplicarRodapeSeguranca('Ok.', av('tomei a cartela inteira de remédio')); assert.ok(/192/.test(t) && /0800 722 6001/.test(t)); assert.ok(!/induz|vômito/i.test(S.RODAPE.ingestao));
+  await teste('múltiplos riscos: cada tipo recebe o SEU rodapé, na ordem emocional, intoxicação, médico, violência', async () => {
+    const a = av('quero me matar, tomei a cartela inteira de remédio, estou com dor forte no peito e ele me bate'); assert.deepStrictEqual(a.tipos, ['emocional', 'ingestao', 'medico', 'violencia']);
+    assert.strictEqual(S.aplicarRodapeSeguranca('Ok.', a), 'Ok.\n\n' + ['emocional', 'ingestao', 'medico', 'violencia'].map((k) => APROVADO[k]).join('\n\n'));
+    const dois = S.aplicarRodapeSeguranca('Ok.', av('quero me matar e tomei a cartela inteira de remédio')); assert.ok(dois.includes(APROVADO.emocional) && dois.includes(APROVADO.ingestao));
   });
-  await teste('dois tipos simultâneos => dois rodapés', async () => {
-    const t = S.aplicarRodapeSeguranca('Ok.', av('quero me matar e tomei a cartela inteira de remédio')); assert.ok(/188/.test(t) && /0800 722 6001/.test(t));
+  await teste('resposta da IA que SÓ MENCIONA um telefone NÃO dispensa o rodapé (188, 192, 0800, 190/180, todos)', async () => {
+    const casos = [['emocional', 'Ligue para o CVV, 188, agora.'], ['emocional', 'Pode ligar 188 ou 192.'], ['ingestao', 'Ligue 0800 722 6001 e 192.'], ['medico', 'Ligue 192.'], ['violencia', 'Ligue 190 ou 180.']];
+    for (const [tipo, modelo] of casos) { const t = S.aplicarRodapeSeguranca(modelo, av(FRASE[tipo])); assert.ok(t.startsWith(modelo) && t.endsWith(APROVADO[tipo]), tipo + ': ' + modelo); }
   });
-  await teste('rodapé sem promessa clínica/diagnóstico', async () => {
-    for (const r of Object.values(S.RODAPE)) assert.ok(!/diagn|tratamento|cura|garant/i.test(r), r.slice(0, 40));
+  await teste('resposta que JÁ CONTÉM a orientação completa (texto aprovado) NÃO duplica; variação de caixa/espaços/quebras também não', async () => {
+    for (const tipo of Object.keys(APROVADO)) {
+      const a = av(FRASE[tipo]); const original = 'Sinto muito.\n\n' + APROVADO[tipo]; assert.strictEqual(S.aplicarRodapeSeguranca(original, a), original);
+      const variado = 'Sinto muito.  ' + APROVADO[tipo].toUpperCase().replace(/ /g, '\n'); assert.strictEqual(S.aplicarRodapeSeguranca(variado, a), variado);
+    }
+  });
+  await teste('orientação PARCIAL ou parafraseada não é verificável => o rodapé é acrescentado', async () => {
+    const parcial = APROVADO.emocional.split('. ').slice(0, 2).join('. ') + '.'; const t = S.aplicarRodapeSeguranca(parcial, av(FRASE.emocional)); assert.ok(t.startsWith(parcial) && t.endsWith(APROVADO.emocional));
+    const t2 = S.aplicarRodapeSeguranca('Ligue imediatamente para o SAMU, 192, ou Disque-Intoxicação 0800 722 6001 agora.', av(FRASE.ingestao)); assert.ok(t2.endsWith(APROVADO.ingestao));
+  });
+  await teste('com vários tipos, só o tipo já presente é omitido; os demais são acrescentados', async () => {
+    const a = av('quero me matar e tomei a cartela inteira de remédio'); const t = S.aplicarRodapeSeguranca('Ok.\n\n' + APROVADO.emocional, a);
+    assert.strictEqual(t, 'Ok.\n\n' + APROVADO.emocional + '\n\n' + APROVADO.ingestao);
+  });
+  await teste('sem risco alto (nenhum sinal, ambíguo, risco recente): nenhum rodapé e resposta intacta', async () => {
+    for (const m of ['como organizar minha semana?', 'não vejo saída', 'tomei cinco comprimidos de dipirona']) assert.strictEqual(S.aplicarRodapeSeguranca('Resposta normal.', av(m)), 'Resposta normal.', m);
+    assert.strictEqual(S.aplicarRodapeSeguranca('Resposta normal.', av('e a rotina?', [{ role: 'user', content: 'quero morrer' }, { role: 'user', content: 'a' }, { role: 'user', content: 'b' }, { role: 'user', content: 'c' }])), 'Resposta normal.');
+  });
+  await teste('removerConviteComercial: tira só as frases comerciais, preserva o acolhimento; nunca acrescenta oferta', async () => {
+    const bruto = 'Sinto muito que você esteja passando por isso. Estou aqui com você.\n\nSe quiser aprofundar, conheça a Sessão Completa do Mentor (R$ 27,90). Acesse o checkout nos botões da tela.';
+    const t = S.removerConviteComercial(bruto); assert.ok(/Estou aqui com você/.test(t) && !/Sess[ãa]o Completa|R\$|checkout|bot[õo]es/i.test(t));
+    assert.strictEqual(S.removerConviteComercial('Texto sem oferta.'), 'Texto sem oferta.'); assert.strictEqual(S.removerConviteComercial(undefined), '');
+  });
+  await teste('rodapé sem promessa clínica/diagnóstico e sem chamada comercial', async () => {
+    for (const r of Object.values(S.RODAPE)) assert.ok(!/diagn|tratamento|cura\b|garant|sess[ãa]o completa|compr|R\$/i.test(r), r.slice(0, 40));
   });
   await teste('entradas inválidas não quebram', async () => {
     for (const x of [undefined, null, '', 5, {}]) { const a = S.avaliarSeguranca({ message: x, history: x }); assert.ok(!a.critico); }
@@ -89,7 +129,9 @@ const av = (message, history) => S.avaliarSeguranca({ message, history });
   await teste('estático: demo — diretiva, rodapé e sem CTA de compra em crise', async () => {
     assert.ok(/const segurancaDemo = avaliarSeguranca\(\{ message \}\)/.test(srv));
     assert.ok(/if \(limite\.ultimaTroca && !segurancaDemo\.critico\)/.test(srv));
-    assert.ok(/aplicarRodapeSeguranca\(limparMarkdown\(responseText\), segurancaDemo\)/.test(srv));
+    assert.ok(/if \(segurancaDemo\.critico\) responseText = removerConviteComercial\(responseText\)/.test(srv));
+    assert.ok(/responseText = aplicarRodapeSeguranca\(responseText, segurancaDemo\)/.test(srv));
+    assert.ok(/ultimaTroca: limite\.ultimaTroca && !segurancaDemo\.critico/.test(srv));
   });
   for (const rota of ['src/routes/livroChat.js', 'src/routes/experimenteLivroChat.js']) {
     await teste(`estático: ${rota} protege gerarRespostaClaude`, async () => {
@@ -134,7 +176,46 @@ const av = (message, history) => S.avaliarSeguranca({ message, history });
     const b = await post('/api/experimente-livro-chat', { sessionId: 'sess-comum-1', pergunta: 'qual o tema do capítulo?', historico: [] });
     assert.strictEqual(b.corpo.resposta, respostaModelo.texto);
   });
+  await teste('degustação do livro, 5ª troca: SEM risco => ultimaTroca true (convite de compra do cliente); COM risco alto => false + rodapé aprovado', async () => {
+    for (let i = 0; i < 4; i++) { await post('/api/experimente-livro-chat', { sessionId: 'sess-ultima-ok', pergunta: 'pergunta comum ' + i, historico: [] }); await post('/api/experimente-livro-chat', { sessionId: 'sess-ultima-risco', pergunta: 'pergunta comum ' + i, historico: [] }); }
+    const normal = await post('/api/experimente-livro-chat', { sessionId: 'sess-ultima-ok', pergunta: 'última pergunta comum', historico: [] });
+    assert.strictEqual(normal.corpo.ultimaTroca, true); assert.strictEqual(normal.corpo.resposta, respostaModelo.texto);
+    const risco = await post('/api/experimente-livro-chat', { sessionId: 'sess-ultima-risco', pergunta: 'quero me matar', historico: [] });
+    assert.strictEqual(risco.status, 200); assert.strictEqual(risco.corpo.ultimaTroca, false); assert.strictEqual(risco.corpo.resposta, respostaModelo.texto + '\n\n' + APROVADO.emocional);
+  });
+  await teste('Livro-Vivo pago: os quatro tipos entram com o texto aprovado; conversa normal segue intacta', async () => {
+    for (const tipo of Object.keys(APROVADO)) { const r = await post('/api/livro-chat', { token: 't', livro_id: LIVRO, pergunta: FRASE[tipo], historico: [] }); assert.ok(r.corpo.resposta.endsWith(APROVADO[tipo]), tipo); }
+    const normal = await post('/api/livro-chat', { token: 't', livro_id: LIVRO, pergunta: 'resuma o capítulo sobre rotina', historico: [] }); assert.strictEqual(normal.corpo.resposta, respostaModelo.texto);
+  });
   server.close(); Module._load = loadOriginal;
+
+  console.log('== Demo do Direciona (rota real extraída de server.js, dependências falsas) ==');
+  const srvTexto = lerLF('src/server.js'); const bloco = srvTexto.slice(srvTexto.indexOf("app.post('/api/experimente-chat'"), srvTexto.indexOf('/**\n * GET /experimente\n'));
+  function montarDemo(textoModelo, ultimaTroca) {
+    const reg = { prompts: [] }; let handler;
+    const AnthropicFalso = { default: class { constructor() { this.messages = { create: async (args) => { reg.prompts.push(args.system); return { content: [{ text: textoModelo }], usage: { input_tokens: 1, output_tokens: 2 } }; } }; } } };
+    new Function('app', 'criarLimiterMentorDemo', 'SESSION_ID_MAX_CHARS', 'MENSAGEM_MAX_CHARS', 'gerarVisitorHash', 'verificarLimite', 'registrarUso', 'auditarConsumo', 'orcamentoDemo', 'extrairIpConfiavel', 'searchKnowledge', 'SYSTEM_PROMPT_DEMO', 'limparMarkdown', 'avaliarSeguranca', 'adicionarDiretivaAoSistema', 'aplicarRodapeSeguranca', 'removerConviteComercial', 'require', 'console', bloco)(
+      { post: (r, mw, h) => { handler = h; } }, () => (req, res, next) => next(), 100, 500, () => 'v', () => ({ permitido: true, contador: ultimaTroca ? 4 : 1, ultimaTroca, horasAteReset: 1 }), () => {}, async () => {},
+      { consumir: () => ({ permitido: true }) }, () => '1.1.1.1', async () => [], 'PROMPT-DEMO', (t) => t, S.avaliarSeguranca, S.adicionarDiretivaAoSistema, S.aplicarRodapeSeguranca, S.removerConviteComercial,
+      (m) => (m === '@anthropic-ai/sdk' ? AnthropicFalso : require(m)), { log() {}, error() {}, warn() {} });
+    const chamar = async (message) => { let status = 200, corpo; const res = { status(c) { status = c; return res; }, json(b) { corpo = b; return res; } }; await handler({ body: { message, sessionId: 'S-demo' }, headers: {}, socket: {} }, res); return { status, corpo }; };
+    return { reg, chamar };
+  }
+  const OFERTA = 'Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor (R$ 27,90). Acesse o checkout nos botões da tela.';
+  await teste('demo em RISCO ALTO (inclusive na última troca): sem convite de compra, sem ultimaTroca, rodapé aprovado ao final, acolhimento preservado', async () => {
+    const d = montarDemo('Sinto muito que você esteja assim. Estou aqui com você. ' + OFERTA, true); const r = await d.chamar('quero me matar');
+    assert.strictEqual(r.status, 200); assert.strictEqual(r.corpo.ultimaTroca, false);
+    assert.ok(!/Sess[ãa]o Completa|R\$|checkout|bot[õo]es/i.test(r.corpo.texto.replace(APROVADO.emocional, ''))); assert.ok(/Estou aqui com você/.test(r.corpo.texto)); assert.ok(r.corpo.texto.endsWith(APROVADO.emocional));
+    assert.ok(/<zuni_seguranca_demo>/.test(d.reg.prompts[0]) && !/INSTRUÇÃO PARA ÚLTIMA TROCA/.test(d.reg.prompts[0]), 'prompt de risco não pode pedir CTA');
+  });
+  await teste('demo SEM risco: última troca mantém o comportamento anterior (CTA no prompt e ultimaTroca true); resposta intacta e sem rodapé', async () => {
+    const d = montarDemo('Resposta normal da demo.', true); const r = await d.chamar('como melhorar meu sono?');
+    assert.strictEqual(r.corpo.ultimaTroca, true); assert.strictEqual(r.corpo.texto, 'Resposta normal da demo.'); assert.ok(/INSTRUÇÃO PARA ÚLTIMA TROCA/.test(d.reg.prompts[0])); assert.ok(!/<zuni_seguranca/.test(d.reg.prompts[0]));
+    const d2 = montarDemo(OFERTA, false); assert.strictEqual((await d2.chamar('como organizar minhas finanças?')).corpo.texto, OFERTA, 'fora de risco, nada é removido');
+  });
+  await teste('demo em risco alto (4 tipos): cada tipo recebe o texto aprovado', async () => {
+    for (const tipo of Object.keys(APROVADO)) { const d = montarDemo('Estou aqui.', false); const r = await d.chamar(FRASE[tipo]); assert.ok(r.corpo.texto.endsWith(APROVADO[tipo]) && r.corpo.texto.startsWith('Estou aqui.'), tipo); }
+  });
 
   console.log(`\nTotal: ${total} | Passaram: ${ok} | Falharam: ${falhas.length}`);
   if (falhas.length) { console.log('Falhas:', falhas.join('; ')); process.exit(1); }

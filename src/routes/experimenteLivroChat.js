@@ -186,7 +186,8 @@ router.post('/api/experimente-livro-chat', limiterPorIp, async (req, res) => {
 
     // Usar contador PRÉ-INCREMENTO para determinar ultimaTroca (antes de registrar)
     const proximaTroca = limitePre.contador + 1;
-    const ultimaTroca = proximaTroca === LIMITE_TROCAS;
+    // O cliente mostra o convite de compra do volume quando ultimaTroca é true: nunca em risco alto.
+    const ultimaTroca = proximaTroca === LIMITE_TROCAS && !avaliarSeguranca({ message: perguntaSanitizada, history: historicoSanitizado }).critico;
 
     return res.json({
       resposta,
