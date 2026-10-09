@@ -949,7 +949,7 @@ addMsg('user', msg);
             const data = await res.json();
             if (data.error) msg = data.error;
           } catch (_) {}
-          throw new Error(msg);
+          const falha = new Error(msg); falha.recuperar = (res.status === 401); throw falha;
         }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
@@ -968,12 +968,22 @@ addMsg('user', msg);
       } catch (err) {
         if (statusEl) {
           statusEl.style.color = '#8f1e17';
-          statusEl.textContent = `${err.message || 'Erro ao gerar o PDF.'} Toque no botão para tentar de novo.`;
+          statusEl.textContent = err.recuperar ? (err.message || '') : `${err.message || 'Erro ao gerar o PDF.'} Toque no botão para tentar de novo.`;
+          if (err.recuperar) adicionarLinkRecuperacao(statusEl);
         }
       } finally {
         btn.disabled = false;
         btn.textContent = textoNormal || textoOriginal;
       }
+    }
+
+    // 401 no PDF/e-mail: token de sessão expirado ou ausente (ver /recuperar-sintese.html — código de uso único por e-mail).
+    function adicionarLinkRecuperacao(el) {
+      const a = document.createElement('a');
+      a.href = '/recuperar-sintese.html';
+      a.textContent = ' Confirmar meu acesso';
+      a.style.cssText = 'color:inherit;text-decoration:underline;font-weight:600;';
+      el.appendChild(a);
     }
 
     function baixarDossie() {
@@ -1015,10 +1025,11 @@ addMsg('user', msg);
           body: JSON.stringify({ sessionId, email })
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'Erro ao enviar.');
+        if (!res.ok) { const falha = new Error(data.error || 'Erro ao enviar.'); falha.recuperar = (res.status === 401); throw falha; }
         status.textContent = `Enviamos para ${email}. Verifique sua caixa de entrada (e o spam).`;
       } catch (e) {
         status.textContent = e.message || 'Erro ao enviar. Tente novamente.';
+        if (e.recuperar) adicionarLinkRecuperacao(status);
         btn.disabled = false;
         input.disabled = false;
       }

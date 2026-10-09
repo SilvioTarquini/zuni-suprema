@@ -91,7 +91,7 @@ function exigirAutorizacaoRelatorio({ validarToken, rota, aoNegar = () => {} }) 
     try { autorizado = Boolean(token) && validarToken(sessionId, 'chat', token) === true; } catch (_) { autorizado = false; }
     if (!autorizado) {
       try { aoNegar(rota); } catch (_) { /* contador nunca derruba a resposta */ }
-      return res.status(401).json({ error: 'Não autorizado. Reabra sua sessão para continuar.' });
+      return res.status(401).json({ error: 'Para sua segurança, confirme seu acesso em zunisuprema.com.br/recuperar-sintese.html (ou atualize esta página com Ctrl+F5 e tente de novo).' });
     }
     req.sessionIdAutorizado = sessionId;
     return next();

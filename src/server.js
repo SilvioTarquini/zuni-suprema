@@ -24,6 +24,7 @@ const { normalizarOrigem } = require('./lib/origemCompra');
 const { renderizarExperimenteObra } = require('./lib/experimenteObra');
 const { MENSAGEM_MAX_CHARS, SESSION_ID_MAX_CHARS, criarLimiterMentorDemo, orcamentoDemo: orcamentoDemoMemoria, extrairIpConfiavel } = require('./lib/protecaoMentorDemo');
 const { criarOrcamentoDemoPersistente } = require('./lib/orcamentoDemoPersistente');
+const { criarRecuperacaoSessao, normalizarEmail: normalizarEmailRecuperacao } = require('./lib/recuperacaoSessao');
 const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
@@ -53,12 +54,12 @@ const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
   : null;
 
 // Capa do PDF da Síntese ZUNI Direciona.
-//   true  -> página de capa é a imagem public/capa-sintese-zuni-direciona.jpg (full-bleed)
+//   true  -> página de capa é a imagem public/capa-sintese-zuni-direciona.jpg (full-bleed, proporção preservada: 'cover' centralizado)
 //   false -> capa em vetor desenhada por desenharCapaVetorMentor() (comportamento anterior)
 // Só afeta os PDFs que usam a capa vetor (chat-mentor / productType nulo/antigo).
 // Mapa Astral e Mapa Integrado (capa PNG de astrologia) não são afetados.
 // Canalização da capa em imagem pronta e testada; ligar quando a arte final entrar.
-const CAPA_SINTESE_EM_IMAGEM = false;
+const CAPA_SINTESE_EM_IMAGEM = true; // capa nova (arte final de 09/10/2026, 950x1487) aplicada; false volta à capa vetorial
 
 // Orçamento diário da demo. Por padrão é o de memória (comportamento anterior). Com DEMO_LIMITES_PERSISTENTES=1 e Supabase
 // configurado (e a migração 008 aplicada) passa a ser persistente; se o banco falhar, volta ao de memória (nunca libera tudo).
@@ -920,6 +921,7 @@ app.get('/', (req, res) => {
 });
 
 app.get('/chat', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
   res.sendFile(path.join(__dirname, '../public/chat.html'));
 });
 
@@ -1591,11 +1593,12 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
         doc.addPage();
       }
     } else if (capaSinteseComoImagem) {
-      // Capa em imagem: JPG A4 (1051x1487) cobrindo a página A4 inteira. x=0/y=0
-      // são coordenadas absolutas de página no PDFKit — ignora a margem de 50.
+      // Capa em imagem (950x1487, proporção de livro — NÃO é A4): cobre a página A4 inteira SEM distorcer, centralizada
+      // (opção 'cover' do PDFKit: escala pela largura e recorta ~9,5% da altura, ~4,7% em cima e embaixo, onde a arte não tem texto).
+      // x=0/y=0 são coordenadas absolutas de página no PDFKit — ignora a margem de 50.
       const capaSintesePath = path.join(__dirname, '../public/capa-sintese-zuni-direciona.jpg');
       if (fs.existsSync(capaSintesePath)) {
-        doc.image(capaSintesePath, 0, 0, { width: doc.page.width, height: doc.page.height });
+        doc.image(capaSintesePath, 0, 0, { cover: [doc.page.width, doc.page.height], align: 'center', valign: 'center' });
         doc.addPage();
       } else {
         desenharCapaVetorMentor(doc, userName, productType);
@@ -3101,6 +3104,74 @@ app.get('/api/relatorio/teste/:sessionId', (req, res, next) => {
   }
 });
 
+// ── Recuperação do acesso (comprador legítimo, outro dia ou outro aparelho): código de uso único por e-mail ──
+// Ver lib/recuperacaoSessao.js. O token novo só trafega no CORPO da resposta; o e-mail leva apenas o código de 6 dígitos.
+async function buscarSessaoPagaPorEmail(emailNorm) {
+  const { data, error } = await assertSupabase()
+    .from('sessions')
+    .select('session_id,email,paid,estornado_em,product_type,updated_at')
+    .ilike('email', emailNorm) // `_`/`%` podem ampliar o conjunto; o filtro exato abaixo decide
+    .eq('paid', true)
+    .is('estornado_em', null)
+    .order('updated_at', { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  const linha = (data || []).find((r) => normalizarEmailRecuperacao(r.email) === emailNorm);
+  return linha ? { sessionId: linha.session_id, email: linha.email, productType: linha.product_type || null } : null;
+}
+
+// Se o segredo de sessão faltar/for curto, a recuperação fica DESATIVADA (503) em vez de derrubar o servidor.
+let recuperacaoSessao = null;
+try {
+  recuperacaoSessao = criarRecuperacaoSessao({
+  buscarSessaoPagaPorEmail,
+  emailValido,
+  segredo: process.env.SESSION_TOKEN_SECRET || '',
+  gerarToken: (sessionId) => gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS),
+  enviarCodigo: ({ para, codigo }) => require('./lib/email').enviarEmail({
+    to: para,
+    subject: 'Seu código de acesso à ZUNI Suprema',
+    tipo: 'codigo-acesso',
+    html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;color:#2b2b2b"><h2 style="color:#B8963E;margin-bottom:8px">Seu código de acesso</h2><p>Use o código abaixo para voltar à sua Síntese ZUNI Direciona. Ele vale por 10 minutos e só pode ser usado uma vez.</p><p style="font-size:32px;letter-spacing:8px;font-weight:bold;margin:20px 0">${codigo}</p><p style="font-size:13px;color:#666">Se você não pediu este código, ignore esta mensagem: ninguém terá acesso sem ele.</p></div>`
+  })
+  });
+} catch (e) {
+  console.error('[RECUPERACAO] desativada:', e.message);
+}
+
+function responderRecuperacaoLimite(res, r) {
+  res.set('Retry-After', String(Math.max(1, r.retryAfterSeg || 60)));
+  return res.status(429).json({ error: 'Muitas tentativas. Aguarde um pouco e tente de novo.' });
+}
+
+app.post('/api/sessao/recuperar/solicitar', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!recuperacaoSessao) return res.status(503).json({ error: 'Recuperação indisponível no momento.' });
+  try {
+    const r = await recuperacaoSessao.solicitar({ email: req.body && req.body.email, ipKey: extrairIpConfiavel(req) });
+    if (r.status === 'invalido') return res.status(400).json({ error: 'Informe um e-mail válido.' });
+    if (r.status === 'limite') return responderRecuperacaoLimite(res, r);
+    return res.json({ enviado: true, mensagem: 'Se houver uma compra com este e-mail, enviamos um código de 6 dígitos para ele. O código vale por 10 minutos.' });
+  } catch (error) {
+    console.error('Erro em /api/sessao/recuperar/solicitar:', error && error.message);
+    return res.status(500).json({ error: 'Não foi possível processar agora. Tente novamente.' });
+  }
+});
+
+app.post('/api/sessao/recuperar/confirmar', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!recuperacaoSessao) return res.status(503).json({ error: 'Recuperação indisponível no momento.' });
+  try {
+    const r = await recuperacaoSessao.confirmar({ email: req.body && req.body.email, codigo: req.body && req.body.codigo, ipKey: extrairIpConfiavel(req) });
+    if (r.status === 'limite') return responderRecuperacaoLimite(res, r);
+    if (r.status !== 'ok') return res.status(400).json({ error: 'Código inválido ou expirado. Peça um novo código.' });
+    return res.json({ sessionId: r.sessionId, token: r.token, productType: r.productType });
+  } catch (error) {
+    console.error('Erro em /api/sessao/recuperar/confirmar:', error && error.message);
+    return res.status(500).json({ error: 'Não foi possível processar agora. Tente novamente.' });
+  }
+});
+
 const multer = require('multer');
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -4417,7 +4488,10 @@ app.post('/api/brinde/gerar', async (req, res) => {
 });
 
 // Servir arquivos estáticos — deve ficar DEPOIS de rotas explícitas
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../public'), {
+  // Páginas do fluxo do relatório sempre revalidam (ETag): uma versão antiga em cache não fica presa sem o token.
+  setHeaders: (res, caminho) => { if (/[\\/](chat|recuperar-sintese)\.html$/.test(caminho)) res.setHeader('Cache-Control', 'no-cache'); }
+}));
 
 const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => {
