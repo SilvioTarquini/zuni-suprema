@@ -942,7 +942,7 @@ addMsg('user', msg);
       }
 
       try {
-        const res = await fetch('/api/relatorio/download/' + sessionId);
+        const res = await fetch('/api/relatorio/download/' + sessionId, { headers: { 'X-Zuni-Sessao': getZuniToken() } });
         if (!res.ok) {
           let msg = 'Não foi possível gerar o PDF agora.';
           try {
@@ -1011,7 +1011,7 @@ addMsg('user', msg);
       try {
         const res = await fetch('/api/relatorio/enviar-email', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Zuni-Sessao': getZuniToken() },
           body: JSON.stringify({ sessionId, email })
         });
         const data = await res.json();
@@ -1029,7 +1029,7 @@ addMsg('user', msg);
       try {
         await fetch('/api/relatorio', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', 'X-Zuni-Sessao': getZuniToken() },
           body: JSON.stringify({ sessionId })
         });
         window.location.href = '/obrigado.html';

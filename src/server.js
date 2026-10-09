@@ -22,7 +22,8 @@ const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscar
 const { calcularPrecoBaseLivro } = require('./lib/precoLivro');
 const { normalizarOrigem } = require('./lib/origemCompra');
 const { renderizarExperimenteObra } = require('./lib/experimenteObra');
-const { MENSAGEM_MAX_CHARS, SESSION_ID_MAX_CHARS, criarLimiterMentorDemo, orcamentoDemo, extrairIpConfiavel } = require('./lib/protecaoMentorDemo');
+const { MENSAGEM_MAX_CHARS, SESSION_ID_MAX_CHARS, criarLimiterMentorDemo, orcamentoDemo: orcamentoDemoMemoria, extrairIpConfiavel } = require('./lib/protecaoMentorDemo');
+const { criarOrcamentoDemoPersistente } = require('./lib/orcamentoDemoPersistente');
 const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
 const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
@@ -34,6 +35,8 @@ const { calcularAstrologiaB } = require('./lib/astrologia-b');
 const { verificarLimite, registrarUso, auditarConsumo, gerarVisitorHash } = require('./lib/rateLimitExperimente');
 const { limparSessoesExpiradas } = require('./lib/limpezaSessoes');
 const { gerarTokenSessao, validarTokenSessao, VALIDADE_CHAT_MS, VALIDADE_DOWNLOAD_MS } = require('./lib/sessionToken');
+const { emailValido, criarLimitadorRelatorio, exigirAutorizacaoRelatorio, responderLimite } = require('./lib/protecaoRelatorio');
+const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca } = require('./lib/protecaoCrise');
 
 const mpClient = process.env.MERCADOPAGO_TOKEN
   ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
@@ -56,6 +59,20 @@ const supabase = process.env.SUPABASE_URL && process.env.SUPABASE_KEY
 // Mapa Astral e Mapa Integrado (capa PNG de astrologia) não são afetados.
 // Canalização da capa em imagem pronta e testada; ligar quando a arte final entrar.
 const CAPA_SINTESE_EM_IMAGEM = false;
+
+// Orçamento diário da demo. Por padrão é o de memória (comportamento anterior). Com DEMO_LIMITES_PERSISTENTES=1 e Supabase
+// configurado (e a migração 008 aplicada) passa a ser persistente; se o banco falhar, volta ao de memória (nunca libera tudo).
+const orcamentoDemoPersistente = (process.env.DEMO_LIMITES_PERSISTENTES === '1' && supabase)
+  ? criarOrcamentoDemoPersistente({
+    rpc: (nome, args) => supabase.rpc(nome, args),
+    fallback: orcamentoDemoMemoria,
+    sal: process.env.SESSION_TOKEN_SECRET || '',
+    limiteDiaPorIp: process.env.DEMO_LIMITE_DIA_IP,
+    limiteDiaGlobal: process.env.DEMO_LIMITE_DIA_GLOBAL,
+    aoEvento: (e) => console.warn(`[DEMO_ORCAMENTO] ${e}`)
+  })
+  : null;
+const orcamentoDemo = { consumir: async (ip) => (orcamentoDemoPersistente ? orcamentoDemoPersistente.consumir(ip) : orcamentoDemoMemoria.consumir(ip)) };
 
 function assertSupabase() {
   if (!supabase) {
@@ -1749,7 +1766,7 @@ async function triggerMake(name, email, summary) {
     return { ok: false, motivo: 'erro' };
   }
 }
-async function gerarEEnviarRelatorio(sessionId) {
+async function gerarEEnviarRelatorio(sessionId, { destinatario = null } = {}) {
   const session = await getSession(sessionId);
   if (!session) throw new Error(`Sessão ${sessionId} não encontrada para gerar relatório.`);
 
@@ -1763,7 +1780,8 @@ async function gerarEEnviarRelatorio(sessionId) {
     console.error(`[CUPOM] Falha ao gerar cupom de sessão para ${sessionId}:`, err.message);
   }
 
-  await sendEmail(session.email, session.name, pdfPath, cupom, session.productType);
+  // destinatario (opcional) vale so para este envio; session.email NUNCA e alterado por aqui.
+  await sendEmail(destinatario || session.email, session.name, pdfPath, cupom, session.productType);
   apagarPdfTemp(pdfPath);
 
   try {
@@ -2814,7 +2832,7 @@ app.post('/api/chat', async (req, res) => {
         await upsertSession(session);
       }
 
-      return res.json({ texto: mensagemEncerramento, contador: session.counter, sessaoEncerrada: true, productType: session.productType });
+      return res.json({ texto: aplicarRodapeSeguranca(mensagemEncerramento, avaliarSeguranca({ message, history: session.history })), contador: session.counter, sessaoEncerrada: true, productType: session.productType });
     }
     // ────────────────────────────────────────────────────────
     // Busca RAG: usa tema da sessão se disponível (busca híbrida), senão genérica
@@ -2906,7 +2924,11 @@ app.post('/api/chat', async (req, res) => {
     }
     // ────────────────────────────────────────────────────────
 
-    const responseText = await generateClaudeResponse(messagesParaClaude, systemPromptFinal);
+    // Salvaguarda determinística de crise (lib/protecaoCrise.js): diretiva no prompt + rodapé de emergência garantido por código.
+    // Avalia a fala do usuário e o histórico SEM o contexto de RAG. Não é triagem clínica.
+    const segurancaChat = avaliarSeguranca({ message, history: session.history });
+    systemPromptFinal = adicionarDiretivaAoSistema(systemPromptFinal, segurancaChat);
+    const responseText = aplicarRodapeSeguranca(await generateClaudeResponse(messagesParaClaude, systemPromptFinal), segurancaChat);
 
     session.history.push({ role: 'user', message });
     session.history.push({ role: 'assistant', message: responseText });
@@ -2948,23 +2970,29 @@ app.post('/api/chat', async (req, res) => {
     return res.status(500).json({ error: 'Erro ao processar a mensagem de chat.' });
   }
 });
-app.post('/api/relatorio', async (req, res) => {
+// ── Síntese em PDF: autorização por token de sessão + limites (lib/protecaoRelatorio.js) ──
+// O sessionId é um identificador, NÃO uma credencial: todas as rotas abaixo exigem o token HMAC de escopo 'chat'
+// (header X-Zuni-Sessao) válido para o próprio sessionId, ANTES de consultar banco ou gerar qualquer coisa.
+const limitadorRelatorio = criarLimitadorRelatorio();
+const autorizarRelatorio = (rota) => exigirAutorizacaoRelatorio({ validarToken: validarTokenSessao, rota, aoNegar: registrarAuthNegado });
+
+// Carrega a sessão e confere pagamento. Devolve a sessão ou já responde (404/403) e devolve null.
+async function carregarSessaoPagaOuResponder(sessionId, res) {
+  const session = await getSession(sessionId);
+  if (!session) { res.status(404).json({ error: 'Sessão não encontrada.' }); return null; }
+  if (!session.paid) { res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' }); return null; }
+  return session;
+}
+
+app.post('/api/relatorio', autorizarRelatorio('/api/relatorio'), async (req, res) => {
+  let lim = null;
   try {
-    const { sessionId } = req.body;
+    const sessionId = req.sessionIdAutorizado;
+    const session = await carregarSessaoPagaOuResponder(sessionId, res);
+    if (!session) return undefined;
 
-    if (!sessionId) {
-      return res.status(400).json({ error: 'sessionId é obrigatório.' });
-    }
-
-    const session = await getSession(sessionId);
-
-    if (!session) {
-      return res.status(404).json({ error: 'Sessão não encontrada.' });
-    }
-
-    if (!session.paid) {
-      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
-    }
+    lim = limitadorRelatorio.adquirir('relatorio', sessionId);
+    if (!lim.ok) return responderLimite(res, lim);
 
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
@@ -2972,24 +3000,24 @@ app.post('/api/relatorio', async (req, res) => {
     apagarPdfTemp(pdfPath);
     await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
 
-    return res.json({ relatório: reportText });
+    lim.liberar();
+    return res.json({ enviado: true });
   } catch (error) {
+    if (lim && lim.ok) lim.liberar({ devolver: true });
     console.error('Erro em /api/relatorio:', error);
     return res.status(500).json({ error: 'Erro ao gerar o relatório.' });
   }
 });
-app.get('/api/relatorio/download/:sessionId', async (req, res) => {
+
+app.get('/api/relatorio/download/:sessionId', autorizarRelatorio('/api/relatorio/download'), async (req, res) => {
+  let lim = null;
   try {
-    const { sessionId } = req.params;
-    const session = await getSession(sessionId);
+    const sessionId = req.sessionIdAutorizado;
+    const session = await carregarSessaoPagaOuResponder(sessionId, res);
+    if (!session) return undefined;
 
-    if (!session) {
-      return res.status(404).json({ error: 'Sessão não encontrada.' });
-    }
-
-    if (!session.paid) {
-      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
-    }
+    lim = limitadorRelatorio.adquirir('download', sessionId);
+    if (!lim.ok) return responderLimite(res, lim);
 
     const reportData = await generateReportText(session);
     const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
@@ -3002,6 +3030,7 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${nomeArquivoDownload}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
     // unlink só no callback — depois de o stream terminar (sucesso ou erro)
     res.sendFile(pdfPath, (err) => {
       if (err && !res.headersSent) {
@@ -3011,86 +3040,62 @@ app.get('/api/relatorio/download/:sessionId', async (req, res) => {
         console.warn(`[RELATORIO] Falha no stream do PDF de download: ${err.message}`);
       }
       apagarPdfTemp(pdfPath);
+      if (lim) lim.liberar({ devolver: Boolean(err) });
     });
+    return undefined;
   } catch (error) {
+    if (lim && lim.ok) lim.liberar({ devolver: true });
     console.error('Erro em /api/relatorio/download:', error);
-    res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
+    return res.status(500).json({ error: 'Erro ao gerar PDF para download.' });
   }
 });
 
-app.post('/api/relatorio/enviar-email', async (req, res) => {
+app.post('/api/relatorio/enviar-email', autorizarRelatorio('/api/relatorio/enviar-email'), async (req, res) => {
+  let lim = null;
   try {
-    const { sessionId, email } = req.body;
-
-    if (!sessionId || !email) {
-      return res.status(400).json({ error: 'sessionId e email são obrigatórios.' });
-    }
-
-    const emailNormalizado = String(email).trim();
-    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailNormalizado);
-    if (!emailValido) {
+    const sessionId = req.sessionIdAutorizado;
+    const emailNormalizado = String((req.body && req.body.email) || '').trim();
+    if (!emailValido(emailNormalizado)) {
       return res.status(400).json({ error: 'Informe um e-mail válido.' });
     }
 
-    const session = await getSession(sessionId);
+    const session = await carregarSessaoPagaOuResponder(sessionId, res);
+    if (!session) return undefined;
 
-    if (!session) {
-      return res.status(404).json({ error: 'Sessão não encontrada.' });
-    }
+    lim = limitadorRelatorio.adquirir('enviar-email', sessionId);
+    if (!lim.ok) return responderLimite(res, lim);
 
-    if (!session.paid) {
-      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
-    }
+    // O e-mail gravado na sessão (o do comprador) NÃO é alterado: o endereço informado vale só para este envio.
+    await gerarEEnviarRelatorio(sessionId, { destinatario: emailNormalizado });
 
-    if (session.email !== emailNormalizado) {
-      session.email = emailNormalizado;
-      await upsertSession(session);
-    }
-
-    await gerarEEnviarRelatorio(sessionId);
-
+    lim.liberar();
     return res.json({ enviado: true });
   } catch (error) {
+    if (lim && lim.ok) lim.liberar({ devolver: true });
     console.error('Erro em /api/relatorio/enviar-email:', error);
     return res.status(500).json({ error: 'Erro ao enviar o relatório por e-mail.' });
   }
 });
-// ROTA DE DESENVOLVIMENTO — permite gerar o relatório de qualquer sessão
-// sem depender do contador de 20 mensagens. Bloqueada em produção, exceto
-// se a sessão já tiver pelo menos 3 mensagens no histórico.
-app.get('/api/relatorio/teste/:sessionId', async (req, res) => {
+
+// ROTA DE DESENVOLVIMENTO — desligada por padrão. Só existe com ROTA_TESTE_RELATORIO=1 (nunca definida em produção)
+// e, mesmo assim, exige o token de sessão e o limite. Antes dependia do modo do ambiente, que NÃO está definido no Railway.
+app.get('/api/relatorio/teste/:sessionId', (req, res, next) => {
+  if (process.env.ROTA_TESTE_RELATORIO !== '1') return res.status(404).json({ error: 'Não encontrado.' });
+  return next();
+}, autorizarRelatorio('/api/relatorio/teste'), async (req, res) => {
+  let lim = null;
   try {
-    const { sessionId } = req.params;
-
-    if (!sessionId) {
-      return res.status(400).json({ error: 'sessionId é obrigatório.' });
-    }
-
-    const session = await getSession(sessionId);
-
-    if (!session) {
-      return res.status(404).json({ error: 'Sessão não encontrada.' });
-    }
-
-    if (!session.paid) {
-      return res.status(403).json({ error: 'Sessão não liberada. Aguarde a confirmação do pagamento.' });
-    }
-
-    const isDev = process.env.NODE_ENV !== 'production';
-    const temHistoricoSuficiente = (session.history || []).length >= 3;
-
-    if (!isDev && !temHistoricoSuficiente) {
-      return res.status(403).json({ error: 'Rota de teste indisponível em produção para esta sessão.' });
-    }
+    const sessionId = req.sessionIdAutorizado;
+    const session = await carregarSessaoPagaOuResponder(sessionId, res);
+    if (!session) return undefined;
+    lim = limitadorRelatorio.adquirir('relatorio', sessionId);
+    if (!lim.ok) return responderLimite(res, lim);
 
     const reportData = await generateReportText(session);
-    const pdfPath = await generatePdf(reportData.text, sessionId, session.name, reportData.ascendenteInvalido, session.productType, Boolean(session.mapaNatal));
-    await sendEmail(session.email, session.name, pdfPath, null, session.productType);
-    apagarPdfTemp(pdfPath);
-    await triggerMake(session.name, session.email, reportData.text.slice(0, 1200));
-
-    return res.json({ relatório: reportText });
+    lim.liberar();
+    return res.json({ relatorio: reportData.text });
   } catch (error) {
+    if (lim && lim.ok) lim.liberar({ devolver: true });
     console.error('Erro em /api/relatorio/teste/:sessionId:', error);
     return res.status(500).json({ error: 'Erro ao gerar o relatório de teste.' });
   }
@@ -4062,7 +4067,7 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
     }
 
     // ── ORÇAMENTO DE CUSTO (por IP e global; independe do sessionId) ──
-    const orcamento = orcamentoDemo.consumir(extrairIpConfiavel(req));
+    const orcamento = await orcamentoDemo.consumir(extrairIpConfiavel(req));
     if (!orcamento.permitido) {
       return res.status(429).json({
         bloqueado: true,
@@ -4091,7 +4096,9 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
     let promptFinal = SYSTEM_PROMPT_DEMO;
 
     // Se é a última troca (antes do limite), adicionar CTA de upgrade
-    if (limite.ultimaTroca) {
+    const segurancaDemo = avaliarSeguranca({ message });
+    promptFinal = adicionarDiretivaAoSistema(promptFinal, segurancaDemo);
+    if (limite.ultimaTroca && !segurancaDemo.critico) { // em situação de risco, nunca convidar para compra
       promptFinal += `\n\n--- INSTRUÇÃO PARA ÚLTIMA TROCA ---\nEsta é a última troca gratuita do visitante. Ao final da sua resposta, adicione discretamente um convite à sessão completa do Mentor: "Se este diálogo tocou em algo profundo, conheça a Sessão Completa do Mentor ZUNI Suprema — uma jornada de até 15 trocas, com análise integrada de sua situação. Acesse em www.zunisuprema.com.br/checkout (R$ 27,90 via PIX)."`;
     }
 
@@ -4107,7 +4114,7 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
     const outputTokens = response.usage.output_tokens;
 
     // ── LIMPEZA DE MARKDOWN ──
-    responseText = limparMarkdown(responseText);
+    responseText = aplicarRodapeSeguranca(limparMarkdown(responseText), segurancaDemo);
 
     // ── REGISTRAR USO ──
     registrarUso(visitorHash, { input: inputTokens, output: outputTokens });

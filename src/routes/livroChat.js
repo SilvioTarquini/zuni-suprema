@@ -118,7 +118,14 @@ REGRA CRÍTICA SOBRE EMERGÊNCIA MÉDICA, SINAIS DE ALERTA E AVISOS DE CONFLITO 
   return `${persona}${contexto}`;
 }
 
-async function gerarRespostaClaude(systemPrompt, messages) {
+const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca } = require('../lib/protecaoCrise');
+
+// Salvaguarda determinística de crise: avalia a pergunta atual e o histórico do usuário (nunca o RAG), reforça o prompt
+// e garante o rodapé de emergência por código. Não é triagem clínica.
+async function gerarRespostaClaude(systemPromptBase, messages) {
+  const ultima = messages[messages.length - 1];
+  const seguranca = avaliarSeguranca({ message: ultima && ultima.content, history: messages.slice(0, -1) });
+  const systemPrompt = adicionarDiretivaAoSistema(systemPromptBase, seguranca);
   const Anthropic = require('@anthropic-ai/sdk');
   const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
 
@@ -129,7 +136,7 @@ async function gerarRespostaClaude(systemPrompt, messages) {
     messages
   });
 
-  return response.content[0].text;
+  return aplicarRodapeSeguranca(response.content[0].text, seguranca);
 }
 
 router.post('/api/livro-chat', limiterPorIp, async (req, res) => {

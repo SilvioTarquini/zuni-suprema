@@ -325,11 +325,12 @@ function fatiar(inicio, fim) {
     let handler;
     const consoleFalso = { log: (...a) => reg.logs.push(a.join(' ')), error: (...a) => reg.erros.push(a.map((x) => (x && x.message) || String(x)).join(' ')), warn: (...a) => reg.logs.push(a.join(' ')) };
     const AnthropicFalso = { default: class { constructor() { this.messages = { create: async (args) => { reg.claude++; reg.ultimoPrompt = args; if (opcoes.claudeFalha) throw new Error('falha-claude'); return { content: [{ text: 'Resposta simulada do Mentor.' }], usage: { input_tokens: 111, output_tokens: 222 } }; } }; } } };
-    new Function('app', 'criarLimiterMentorDemo', 'SESSION_ID_MAX_CHARS', 'MENSAGEM_MAX_CHARS', 'gerarVisitorHash', 'verificarLimite', 'registrarUso', 'auditarConsumo', 'orcamentoDemo', 'extrairIpConfiavel', 'searchKnowledge', 'SYSTEM_PROMPT_DEMO', 'limparMarkdown', 'require', 'console', blocoMentor)(
+    new Function('app', 'criarLimiterMentorDemo', 'SESSION_ID_MAX_CHARS', 'MENSAGEM_MAX_CHARS', 'gerarVisitorHash', 'verificarLimite', 'registrarUso', 'auditarConsumo', 'orcamentoDemo', 'extrairIpConfiavel', 'searchKnowledge', 'SYSTEM_PROMPT_DEMO', 'limparMarkdown', 'avaliarSeguranca', 'adicionarDiretivaAoSistema', 'aplicarRodapeSeguranca', 'require', 'console', blocoMentor)(
       { post: (r, mw, h) => { handler = h; } },
       () => (req, res, next) => next(), protecao.SESSION_ID_MAX_CHARS, protecao.MENSAGEM_MAX_CHARS,
       rl.gerarVisitorHash, rl.verificarLimite, rl.registrarUso, async () => {}, opcoes.orcamento || protecao.criarOrcamentoDemo(), protecao.extrairIpConfiavel,
       async (q, n, t, o) => { reg.rag.push({ q, n, t, o }); return [reg.chunk]; }, 'PROMPT-DE-SISTEMA-SECRETO-DA-DEMO', (t) => t,
+      require('../src/lib/protecaoCrise').avaliarSeguranca, require('../src/lib/protecaoCrise').adicionarDiretivaAoSistema, require('../src/lib/protecaoCrise').aplicarRodapeSeguranca,
       (m) => (m === '@anthropic-ai/sdk' ? AnthropicFalso : require(m)), consoleFalso
     );
     const chamar = async (body, xff, ip = '10.0.0.1') => {
