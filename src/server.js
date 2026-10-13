@@ -4227,16 +4227,17 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
 
 /**
  * GET /experimente
- * Serve a página de landing
  */
+// Hub público das degustações editoriais aprovadas. A experiência interativa
+// histórica de Bastidores permanece publicada em /experimente.html.
 app.get('/experimente', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/experimente.html'));
+  res.sendFile(path.join(__dirname, '../public/experimente-hub.html'));
 });
 
 /**
  * GET /experimente/:livroId/
  * Experimente ZUNI por obra (template único). Fail-closed: sem amostra aprovada → 404 genérico.
- * Convive com a página antiga /experimente (Bastidores), que não foi alterada.
+ * Convive com a página antiga /experimente.html (Bastidores), que não foi alterada.
  */
 app.get('/experimente/:livroId', (req, res) => {
   const resultado = renderizarExperimenteObra({

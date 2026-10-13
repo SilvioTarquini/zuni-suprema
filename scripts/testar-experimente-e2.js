@@ -15,7 +15,9 @@ delete process.env.SUPABASE_URL;
 delete process.env.SUPABASE_KEY;
 
 const raiz = path.join(__dirname, '..');
-const ler = (p) => fs.readFileSync(path.join(raiz, p), 'utf8');
+// Os recortes de rotas abaixo usam marcadores com \n; normalizar evita que um
+// checkout Windows (CRLF) altere a leitura estática do código-fonte.
+const ler = (p) => fs.readFileSync(path.join(raiz, p), 'utf8').replace(/\r\n/g, '\n');
 const { CATALOGO, buscarLivro } = require(path.join(raiz, 'src/lib/catalogoLivros'));
 const { AMOSTRAS, obterAmostra, MAX_TRECHO_CHARS } = require(path.join(raiz, 'src/lib/amostrasExperimente'));
 const { renderizarExperimenteObra, PAGINA_INDISPONIVEL } = require(path.join(raiz, 'src/lib/experimenteObra'));
@@ -463,8 +465,9 @@ function fatiar(inicio, fim) {
   });
 
   console.log('\nLegado preservado e invariantes');
-  await teste('/experimente (legado) e Bastidores seguem de pé: rota, texto do capítulo e catálogo da degustação', async () => {
-    assert.ok(/app\.get\('\/experimente', \(req, res\) => \{\s*res\.sendFile/.test(srv));
+  await teste('/experimente serve o hub e Bastidores segue publicado em /experimente.html', async () => {
+    assert.ok(/app\.get\('\/experimente', \(req, res\) => \{\s*res\.sendFile\(path\.join\(__dirname, '\.\.\/public\/experimente-hub\.html'\)\)/.test(srv));
+    assert.ok(ler('public/experimente-hub.html').includes('/experimente.html#modulo-livro'));
     assert.ok(ler('public/experimente.html').includes('Capítulo 1 — O cérebro que reage antes de pensar'));
     assert.ok(buscarLivro('os-bastidores-da-mente-1-degustacao').teaser === true);
   });

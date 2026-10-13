@@ -184,7 +184,8 @@
 
   .badge-volume,
   .badge-audio,
-  .badge-chat {
+  .badge-chat,
+  .badge-experimente {
     position: absolute;
     font-family: Arial, sans-serif;
   }
@@ -225,6 +226,19 @@
   .badge-chat {
     top: 8px;
     right: 8px;
+  }
+
+  .badge-experimente {
+    bottom: 8px;
+    left: 8px;
+    background: rgba(15, 15, 15, 0.82);
+    color: var(--dourado-suave);
+    border: 1px solid var(--dourado);
+    border-radius: 4px;
+    padding: 3px 6px;
+    font-size: 0.61rem;
+    font-weight: bold;
+    letter-spacing: 0.5px;
   }
 
   .info {
@@ -356,6 +370,10 @@
     border-radius: 4px;
     font-family: Arial, sans-serif;
     font-weight: bold;
+  }
+
+  a.comprar[hidden] {
+    display: none;
   }
 
   a.comprar:disabled,
@@ -590,9 +608,9 @@
 
 <div class="faixa-mentor">
   <div class="cartao">
-    <p>Antes de comprar, leia grátis o primeiro capítulo de "Os Bastidores da Mente — Volume I" e converse com a obra. Ou, se preferir ir direto ao ponto, converse com o Mentor ZUNI Suprema.</p>
+    <p>Conheça as experiências gratuitas da ZUNI: degustações editoriais de obras selecionadas e a experiência interativa de "Os Bastidores da Mente — Volume I".</p>
     <div class="acoes">
-      <a class="btn-mentor" href="/experimente.html#modulo-livro">Ler grátis + conversar</a>
+      <a class="btn-mentor" id="porta-experimente-link" href="/experimente">Conheça o Experimente ZUNI</a>
       <a class="btn-mentor btn-mentor-secundario" href="/checkout.html">Conheça o Mentor ZUNI</a>
     </div>
   </div>
@@ -635,6 +653,7 @@
         <span class="selo-chat" id="painel-selo-chat" hidden>💬 Converse com o livro</span>
         <span class="selo-audiobook" id="painel-selo-audiobook" hidden></span>
         <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
+        <a class="comprar" id="painel-experimentar" href="#" hidden>Experimentar a obra</a>
         <a class="comprar" id="painel-comprar" href="#"></a>
       </div>
     </div>
@@ -665,6 +684,7 @@
   let painelPreco = null;
   let painelSeloAudiobook = null;
   let painelSeloChat = null;
+  let painelExperimentar = null;
   let painelComprar = null;
   let cardComFocoAnterior = null;
 
@@ -678,6 +698,7 @@
     painelPreco = document.getElementById('painel-preco');
     painelSeloAudiobook = document.getElementById('painel-selo-audiobook');
     painelSeloChat = document.getElementById('painel-selo-chat');
+    painelExperimentar = document.getElementById('painel-experimentar');
     painelComprar = document.getElementById('painel-comprar');
 
     painelFechar.addEventListener('click', fecharPainel);
@@ -692,6 +713,7 @@
   function abrirPainelDetalhe(livroId, livro, urlCapa, cardOrigem, cupom) {
     const tituloExibido = livro.tituloPublico || livro.titulo;
     const urlCompra = `/checkout-livro.html?livro=${encodeURIComponent(livroId)}${cupom ? `&cupom=${encodeURIComponent(cupom)}` : ''}`;
+    const urlExperimente = `/experimente/${encodeURIComponent(livroId)}/${cupom ? `?cupom=${encodeURIComponent(cupom)}` : ''}`;
 
     painelCapaImg.src = urlCapa;
     painelCapaImg.alt = `Capa — ${tituloExibido}`;
@@ -708,6 +730,13 @@
     }
 
     painelSeloChat.hidden = !livro.chatDisponivel;
+
+    painelExperimentar.hidden = livro.amostraDisponivel !== true;
+    if (livro.amostraDisponivel === true) {
+      painelExperimentar.href = urlExperimente;
+    } else {
+      painelExperimentar.removeAttribute('href');
+    }
 
     painelComprar.href = urlCompra;
     painelComprar.textContent = livro.preco === 0 ? 'Ler grátis' : 'Comprar';
@@ -761,6 +790,7 @@
           ${livro.volume ? `<span class="badge-volume">Vol. ${livro.volume}</span>` : ''}
           ${livro.audiobookDisponivel ? `<span class="badge-audio" aria-hidden="true">🎧</span>` : ''}
           ${livro.chatDisponivel ? `<span class="badge-chat" aria-hidden="true">💬</span>` : ''}
+          ${livro.amostraDisponivel === true ? `<span class="badge-experimente">EXPERIMENTE</span>` : ''}
         </div>
         <div class="info">
           <h2>${tituloExibido}</h2>
@@ -781,11 +811,15 @@
     });
   }
 
-  // A porta do Universo Feminino leva junto o ?cupom= da Loja (a vitrine o repassa ao checkout).
+  // As portas comerciais preservam o cupom da Loja. O hub repassa o cupom somente
+  // para obras que o catálogo confirma como disponíveis para degustação.
   (function () {
     try {
       const cupom = new URLSearchParams(window.location.search).get('cupom');
-      if (cupom) document.getElementById('porta-universo-link').href = '/loja/universo-feminino/?cupom=' + encodeURIComponent(cupom);
+      if (cupom) {
+        document.getElementById('porta-universo-link').href = '/loja/universo-feminino/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-experimente-link').href = '/experimente?cupom=' + encodeURIComponent(cupom);
+      }
     } catch (e) {}
   })();
 
