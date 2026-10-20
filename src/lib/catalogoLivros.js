@@ -300,6 +300,25 @@ const CATALOGO = {
     descricao: 'Uma leitura sobre os bastidores dos negócios e da negociação humana: interesses, expectativas, preço, prazo, poder de decisão e acordos difíceis. A obra ajuda a enxergar as engrenagens que movem margens, parcerias e sociedades antes que o impasse se torne ruptura.',
     indicadoPara: 'Empreendedores, gestores, negociadores e líderes que enfrentam impasses comerciais, acordos difíceis e desalinhamentos de expectativas.'
   },
+  'toda-reuniao-tem-duas-pautas': {
+    titulo: 'Toda Reunião Tem Duas Pautas',
+    subtitulo: 'Os bastidores do trabalho',
+    colecao: 'Coleção Além das Aparências e dos Sentimentos · Volume 2',
+    tempoLeitura: '3 min de leitura',
+    preco: 57.90,
+    precoDe: 79.90,
+    precoOriginal: 79.90,
+    precoPromocional: 57.90,
+    categoria: 'principal',
+    departamento: 'Executive',
+    formato: 'Flipbook HTML + Download PDF',
+    ativoNaLoja: true,
+    amostraDisponivel: false,
+    descricaoCurta: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor — as forças que decidem quem fala, quem se cala e quem vai embora numa reunião.',
+    resumo: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor — as forças que decidem quem fala, quem se cala e quem vai embora numa reunião.',
+    descricao: 'Volume 2 da Coleção Além das Aparências e dos Sentimentos. Contos sobre os bastidores do ambiente de trabalho — a pauta que está na folha e a que ninguém leu em voz alta. Cada conto mostra a cena, revisita o que cada lado protegia e termina com uma nota de Davi, mediador de conflitos.',
+    indicadoPara: 'Profissionais, gestores e líderes que enfrentam dinâmicas de poder, exposição e conflitos não ditos no ambiente de trabalho.'
+  },
   'da-terra-ao-resultado': {
     titulo: 'Da Terra ao Resultado',
     subtitulo: 'Manual prático para produzir melhor, cuidar da terra e aumentar a renda',
