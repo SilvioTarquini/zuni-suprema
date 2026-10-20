@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
+**Última atualização**: 20/10/2026 — diagnóstico e achados sobre 3 obras novas travadas no deploy (ver bloco "Checkpoint 20/10/2026" ao final do arquivo). Seção anterior datada de 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -840,3 +840,21 @@ Candidatas de menor mudança: uma regra geral única na política editorial e/ou
 - **Casos e critérios** fora do repositório em `ZUNI-C2B\` (`V1_CASOS_INEDITOS.json/.md`, `V1_CRITERIOS_E_RUBRICA.md`, `V1_PLANO_EXECUCAO.md`, `V1_P2_PRONTIDAO.md`); auditoria: cobertura mínima atendida e nenhum trecho de 6 palavras dos enunciados em arquivos do repositório.
 - **Testes offline:** C1 46/46, C2-B 30/30, V0.1 12/12, V0.2 13/13, V1-P2 segurança 19/19, executor V1 20/20.
 - **Intocados:** `editorialPolicy.js`, retrieval, planner, limiares 0,506/0,543, proveniência, recomendação de livros, produção, banco, STAGING, matriz C2-C.1, BLIND_KEY anterior. Sem commit. **V1 paga NÃO autorizada**; condições exatas em `V1_P2_PRONTIDAO.md`.
+
+---
+
+## Checkpoint 20/10/2026 — 3 obras novas travadas no deploy + Supabase pausado
+
+> Diagnóstico read-only feito em 20/10/2026. Commits já estão em `origin/main`; nada foi deployado ainda. Sem push/deploy nesta sessão — aguardando aprovação.
+
+**1. Causa do 404 em `/experimente/vender-bem-vender-sempre`, `/toda-mesa-tem-dois-lados`, `/da-terra-ao-resultado`: deploy do Railway parado, não é bug de código.**
+Commits `2fb2e8b` (3 obras) e `754da89` (catálogo público vira array) estão pushados em `origin/main` desde 20/10. Último deploy com sucesso no Railway: `46c751d8`, 13/10/2026 17:34:37 — nenhuma tentativa de deploy (sucesso ou falha) depois disso. Prova: `GET /api/livros` em produção ainda devolve o formato antigo (objeto, sem as 3 obras novas); localmente, rodando o mesmo commit de `origin/main`, as 3 rotas `/experimente/<id>` respondem 200 e `/api/livros` já devolve array. Rotas e dados das 3 obras estão corretos (catálogo com `amostraDisponivel: true`, amostra aprovada em `amostrasExperimente.js`) — só falta o deploy acontecer.
+
+**2. Conversão objeto→array do catálogo — risco avaliado, NÃO é o que foi descrito.**
+A estrutura interna `CATALOGO` em `src/lib/catalogoLivros.js` continua sendo um objeto indexado por `livroId` (não foi convertida). A mudança real do commit `754da89` foi só na resposta pública de `GET /api/livros` (agora array via `listarLivrosPublicos()`) e nos dois HTMLs da vitrine que a consomem, com fallback de compatibilidade. Todo lookup por chave no projeto (`buscarLivro()`, `CATALOGO[id]`, Stripe, webhook, Resend, `LIVRO_ACESSO_DIAS`) continua intacto.
+
+**3. Pendência bloqueante para os 3 livros, mesmo depois do deploy**: nenhum tem `private/livros/<id>/index.html` (rota de entrega pós-compra, `src/routes/livros.js:83`) nem capa em `public/loja/capas/`. Quem comprar hoje paga e não consegue ler — ver passos 2 e 3 da sessão de 20/10 para o que foi feito a respeito (capas geradas, flipbooks copiados — conferir se já comitado).
+
+**4. Branch local não mesclada**: `chore/experimente-integracao-segura` (commit `e4f791f`, worktree `zuni-suprema-experimente-44a169b`) tem um hub `/experimente` diferente (`experimente-hub.html`), nunca mesclado nem enviado a `origin`. Não é a causa do 404 atual — main já tem `/experimente/:livroId` genérico — mas é trabalho pendente/esquecido, decidir se mescla ou descarta.
+
+**5. Supabase de produção encontrado PAUSADO (INACTIVE) em 20/10 — causa provável dos "fetch failed" de `[LIMPEZA-SESSOES]`; reativado em 20/10.**
