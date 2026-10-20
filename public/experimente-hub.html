@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Conheça as experiências gratuitas e as degustações editoriais da ZUNI Suprema.">
+<meta name="theme-color" content="#0f0f0f">
+<title>Experimente ZUNI — ZUNI Suprema</title>
+<style>
+  :root { --fundo:#0f0f0f; --carta:#171512; --tinta:#f2ead9; --suave:#b6ab93; --borda:#2a2620; --dourado:#b8963e; --dourado-suave:#d9c68f; --serif:Georgia,'Times New Roman',serif; --sans:Arial,sans-serif; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:linear-gradient(160deg,#15120d 0,#0f0f0f 38rem); color:var(--tinta); font-family:var(--serif); line-height:1.5; }
+  a { color:inherit; }
+  :focus-visible { outline:3px solid var(--dourado); outline-offset:3px; }
+  .pagina { width:min(100% - 32px, 70rem); margin:0 auto; }
+  .barra { min-height:64px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid var(--borda); }
+  .marca { color:var(--tinta); text-decoration:none; display:inline-flex; align-items:center; gap:10px; font:600 .8rem var(--sans); letter-spacing:.14em; text-transform:uppercase; }
+  .selo { border:1px solid var(--dourado); width:28px; height:28px; border-radius:50%; display:inline-grid; place-items:center; color:var(--dourado); font:1rem var(--serif); letter-spacing:0; }
+  .voltar { color:var(--dourado-suave); font:.85rem var(--sans); text-underline-offset:3px; }
+  .abertura { padding:clamp(48px,10vw,96px) 0 48px; max-width:46rem; }
+  .sobretitulo, .rotulo { margin:0 0 12px; color:var(--dourado); font:600 .75rem var(--sans); letter-spacing:.17em; text-transform:uppercase; }
+  h1 { margin:0; max-width:14ch; font-size:clamp(2.2rem,7vw,4.5rem); font-weight:normal; line-height:1.04; }
+  .intro { margin:20px 0 0; max-width:38rem; color:var(--suave); font-size:clamp(1.05rem,2.5vw,1.25rem); }
+  .secao { padding:30px 0 48px; border-top:1px solid var(--borda); }
+  h2 { margin:0 0 8px; color:var(--dourado-suave); font-size:clamp(1.45rem,4vw,2rem); font-weight:normal; }
+  .secao-intro { margin:0 0 22px; color:var(--suave); }
+  .amostras { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr)); gap:18px; }
+  .obra { min-height:100%; display:flex; flex-direction:column; overflow:hidden; background:var(--carta); border:1px solid var(--borda); border-radius:10px; }
+  .obra img { display:block; width:100%; aspect-ratio:2/3; max-height:25rem; object-fit:cover; background:#211c14; }
+  .obra-corpo { display:flex; flex:1; flex-direction:column; padding:20px; }
+  .obra h3 { margin:0 0 9px; font-size:1.35rem; font-weight:normal; line-height:1.2; }
+  .obra p { margin:0 0 20px; color:var(--suave); }
+  .acoes { margin-top:auto; display:flex; flex-wrap:wrap; gap:10px; }
+  .btn { min-height:46px; display:inline-flex; align-items:center; justify-content:center; padding:0 17px; border:1px solid var(--dourado); border-radius:6px; color:var(--dourado-suave); font:600 .88rem var(--sans); text-align:center; text-decoration:none; }
+  .btn-principal { background:var(--dourado); color:#17120b; }
+  .legado { display:grid; grid-template-columns:1fr; gap:24px; padding:clamp(22px,5vw,38px); background:linear-gradient(135deg,#1c1811,#171512); border:1px solid var(--borda); border-radius:10px; }
+  .legado h2 { color:var(--tinta); }
+  .legado p { margin:0; color:var(--suave); max-width:48rem; }
+  .estado { margin:0; padding:24px; color:var(--suave); background:var(--carta); border:1px solid var(--borda); border-radius:10px; }
+  .erro { color:#efab96; }
+  footer { padding:12px 0 36px; color:var(--suave); font:.8rem var(--sans); text-align:center; }
+  @media (min-width:640px) { .pagina { width:min(100% - 56px,70rem); } .legado { grid-template-columns:1fr auto; align-items:center; } }
+</style>
+</head>
+<body>
+  <div class="pagina">
+    <header class="barra">
+      <a class="marca" href="/loja/"><span class="selo" aria-hidden="true">Z</span>ZUNI Suprema</a>
+      <a class="voltar" href="/loja/">Voltar à Loja</a>
+    </header>
+
+    <main>
+      <section class="abertura" aria-labelledby="titulo-principal">
+        <p class="sobretitulo">Experimente ZUNI</p>
+        <h1 id="titulo-principal">Conheça uma obra antes de escolhê-la.</h1>
+        <p class="intro">Aqui você encontra somente degustações editoriais já aprovadas, com uma amostra real de leitura ou áudio. Novas obras aparecem quando estiverem prontas.</p>
+      </section>
+
+      <section class="secao" aria-labelledby="amostras-titulo">
+        <p class="rotulo">Degustações editoriais</p>
+        <h2 id="amostras-titulo">Obras disponíveis para experimentar</h2>
+        <p class="secao-intro">A disponibilidade é confirmada diretamente pelo catálogo da ZUNI.</p>
+        <div class="amostras" id="amostras" aria-live="polite">
+          <p class="estado">Carregando as degustações disponíveis…</p>
+        </div>
+        <noscript><p class="estado">Ative o JavaScript para ver as degustações editoriais disponíveis. A experiência interativa de Bastidores continua acessível abaixo.</p></noscript>
+      </section>
+
+      <section class="secao" aria-labelledby="interativa-titulo">
+        <div class="legado">
+          <div>
+            <p class="rotulo">Experiência interativa</p>
+            <h2 id="interativa-titulo">Os Bastidores da Mente — Volume I</h2>
+            <p>Leia um trecho do primeiro capítulo, ouça com a voz do seu aparelho e converse gratuitamente com o capítulo ou com o Mentor ZUNI. Esta é uma experiência interativa própria, diferente das degustações editoriais por obra.</p>
+          </div>
+          <div class="acoes"><a class="btn" id="link-legado" href="/experimente.html#modulo-livro">Acessar experiência interativa</a></div>
+        </div>
+      </section>
+    </main>
+
+    <footer>ZUNI Suprema — experiências gratuitas, sem compromisso de compra.</footer>
+  </div>
+<script>
+  (function () {
+    var params = new URLSearchParams(window.location.search);
+    var cupom = params.get('cupom');
+    var origem = params.get('origem') === 'universo-feminino' ? 'universo-feminino' : null;
+    var lista = document.getElementById('amostras');
+
+    function urlExperimente(id) {
+      var destino = new URLSearchParams();
+      if (origem) destino.set('origem', origem);
+      if (cupom) destino.set('cupom', cupom);
+      var query = destino.toString();
+      return '/experimente/' + encodeURIComponent(id) + '/' + (query ? '?' + query : '');
+    }
+
+    function capa(livro, id) {
+      return typeof livro.capa === 'string' && livro.capa.indexOf('/loja/capas/') === 0 ? livro.capa : '/loja/capas/' + encodeURIComponent(id) + '.jpg';
+    }
+
+    function criarObra(id, livro) {
+      var artigo = document.createElement('article');
+      artigo.className = 'obra';
+      var imagem = document.createElement('img');
+      imagem.src = capa(livro, id);
+      imagem.alt = 'Capa de ' + (livro.tituloPublico || livro.titulo || 'uma obra ZUNI');
+      imagem.loading = 'lazy';
+      var corpo = document.createElement('div');
+      corpo.className = 'obra-corpo';
+      var titulo = document.createElement('h3');
+      titulo.textContent = livro.tituloPublico || livro.titulo;
+      var texto = document.createElement('p');
+      texto.textContent = livro.resumo || 'Leia uma amostra desta obra.';
+      var acoes = document.createElement('div');
+      acoes.className = 'acoes';
+      var botao = document.createElement('a');
+      botao.className = 'btn btn-principal';
+      botao.href = urlExperimente(id);
+      botao.textContent = id === 'ela-tem-classe' ? 'Experimentar Ela Tem Classe' : 'Ler trecho da obra';
+      acoes.appendChild(botao);
+      corpo.append(titulo, texto, acoes);
+      artigo.append(imagem, corpo);
+      return artigo;
+    }
+
+    var linkLegado = document.getElementById('link-legado');
+    if (linkLegado) {
+      var legado = new URLSearchParams();
+      if (origem) legado.set('origem', origem);
+      if (cupom) legado.set('cupom', cupom);
+      linkLegado.href = '/experimente.html' + (legado.toString() ? '?' + legado.toString() : '') + '#modulo-livro';
+    }
+
+    fetch('/api/livros')
+      .then(function (res) { if (!res.ok) throw new Error('catálogo indisponível'); return res.json(); })
+      .then(function (catalogo) {
+        // /api/livros pode devolver array (livroId já embutido em cada item) ou,
+        // por compatibilidade, objeto indexado por livroId — normaliza para pares.
+        var entradas = Array.isArray(catalogo)
+          ? catalogo.map(function (livro) { return [livro.livroId, livro]; })
+          : Object.entries(catalogo);
+        var obras = entradas.filter(function (entrada) { return entrada[1] && entrada[1].amostraDisponivel === true; });
+        lista.replaceChildren();
+        if (!obras.length) {
+          var vazia = document.createElement('p');
+          vazia.className = 'estado';
+          vazia.textContent = 'Nenhuma degustação editorial está disponível neste momento.';
+          lista.appendChild(vazia);
+          return;
+        }
+        obras.sort(function (a, b) { return a[0] === 'ela-tem-classe' ? -1 : b[0] === 'ela-tem-classe' ? 1 : 0; });
+        obras.forEach(function (entrada) { lista.appendChild(criarObra(entrada[0], entrada[1])); });
+      })
+      .catch(function () { lista.innerHTML = '<p class="estado erro">Não foi possível carregar as degustações agora. Tente novamente em instantes.</p>'; });
+  })();
+</script>
+</body>
+</html>

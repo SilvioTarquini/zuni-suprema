@@ -14,7 +14,9 @@ delete process.env.SUPABASE_URL;
 delete process.env.SUPABASE_KEY;
 
 const raiz = path.join(__dirname, '..');
-const ler = (p) => fs.readFileSync(path.join(raiz, p), 'utf8');
+// Os recortes de rotas abaixo usam marcadores com \n; normalizar evita que um
+// checkout Windows (CRLF) altere a leitura estática do código-fonte.
+const ler = (p) => fs.readFileSync(path.join(raiz, p), 'utf8').replace(/\r\n/g, '\n');
 const { CATALOGO, buscarLivro } = require(path.join(raiz, 'src/lib/catalogoLivros'));
 const { AMOSTRAS, obterAmostra, MAX_TRECHO_CHARS } = require(path.join(raiz, 'src/lib/amostrasExperimente'));
 const { renderizarExperimenteObra, escapar, PAGINA_INDISPONIVEL } = require(path.join(raiz, 'src/lib/experimenteObra'));
@@ -298,11 +300,12 @@ const srv = ler('src/server.js');
     assert.ok(o.consumir('b').permitido); assert.strictEqual(o.consumir('c').motivo, 'global');
     assert.strictEqual(protecao.MENSAGEM_MAX_CHARS, 500);
   });
-  await teste('rota: /experimente/:livroId convive com o legado /experimente; resposta 200 pública e 404 sem cache', async () => {
-    assert.ok(/app\.get\('\/experimente', \(req, res\) => \{\s*res\.sendFile/.test(srv));
+  await teste('rota: /experimente/:livroId convive com o hub /experimente e o legado /experimente.html; resposta 200 pública e 404 sem cache', async () => {
+    assert.ok(/app\.get\('\/experimente', \(req, res\) => \{\s*res\.sendFile\(path\.join\(__dirname, '\.\.\/public\/experimente-hub\.html'\)\)/.test(srv));
     assert.ok(/app\.get\('\/experimente\/:livroId'/.test(srv));
     assert.ok(/resultado\.status === 200 \? 'public, max-age=60' : 'no-store'/.test(srv));
     assert.ok(!/permitirPlaceholder/.test(srv));
+    assert.ok(ler('public/experimente-hub.html').includes('/experimente.html#modulo-livro'));
     assert.ok(ler('public/experimente.html').includes('Capítulo 1 — O cérebro que reage antes de pensar')); // legado intacto
   });
   await teste('E6B: "Ouça um trecho do audiobook" (amostra oficial) vem ANTES de "Leia um trecho da obra"; sem TTS comercial para Ela', async () => {

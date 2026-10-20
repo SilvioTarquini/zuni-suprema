@@ -927,7 +927,7 @@
 
           <div id="livro-mensagem-limite" style="display: none; background: #fff3cd; border: 1px solid #ffc107; padding: 12px; border-radius: 4px; margin-top: 15px; color: #856404; font-size: 14px;">
             <strong>⚠️ Limite atingido</strong> — Você chegou ao máximo de perguntas nesta sessão (5 perguntas por 24h). <br>
-            <a href="https://www.zunisuprema.com.br/loja/" style="color: #856404; font-weight: bold;">Adquira o Volume I completo para acesso ilimitado</a>.
+            <a data-checkout-volume-i href="/checkout-livro.html?livro=os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal" style="color: #856404; font-weight: bold;">Adquira o Volume I completo para acesso ilimitado</a>.
             <p style="margin-top: 8px; font-size: 12px; color: #7a6b03;">Versão digital — leitura online e download em PDF. Não é um livro físico.</p>
           </div>
         </div>
@@ -935,7 +935,7 @@
         <!-- CTA de Compra -->
         <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 1px solid #e0e0e0;">
           <h4 style="color: #1a1a3e; margin-bottom: 15px;">🎁 Gostou? Aprofunde a Leitura</h4>
-          <a href="https://www.zunisuprema.com.br/loja/" style="display: inline-block; background: #d4af37; color: #1a1a3e; padding: 14px 30px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 16px;">Adquirir O Volume I Completo — R$ 57,90</a>
+          <a data-checkout-volume-i href="/checkout-livro.html?livro=os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal" style="display: inline-block; background: #d4af37; color: #1a1a3e; padding: 14px 30px; border-radius: 4px; text-decoration: none; font-weight: bold; font-size: 16px;">Adquirir O Volume I Completo — R$ 57,90</a>
           <p style="color: #666; font-size: 12px; margin-top: 6px;">Versão digital — leitura online e download em PDF. Não é um livro físico.</p>
           <p style="color: #666; font-size: 14px; margin-top: 12px;">Acesso a todos os 12 capítulos + chat ilimitado + leitor de voz</p>
         </div>
@@ -953,6 +953,23 @@
     </div>
   </div>
 
+  <script>
+    // As CTAs específicas do Volume I mantêm cupom e origem quando a pessoa
+    // chega por uma campanha. O checkout continua validando os dois valores.
+    (function () {
+      try {
+        var entrada = new URLSearchParams(window.location.search);
+        var destino = new URLSearchParams({ livro: 'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal' });
+        var cupom = entrada.get('cupom');
+        var origem = entrada.get('origem');
+        if (cupom) destino.set('cupom', cupom);
+        if (origem === 'universo-feminino') destino.set('origem', origem);
+        document.querySelectorAll('[data-checkout-volume-i]').forEach(function (link) {
+          link.href = '/checkout-livro.html?' + destino.toString();
+        });
+      } catch (e) {}
+    })();
+  </script>
   <script src="/js/experimente-client.js"></script>
 </body>
 </html>
