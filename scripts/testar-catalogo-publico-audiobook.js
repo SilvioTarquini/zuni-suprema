@@ -17,7 +17,7 @@ require.cache[acessoPath] = {
   exports: { verificarAcesso: async (token) => (token === 'token-ok' ? { tipo_produto: 'livro' } : null) }
 };
 
-const { CATALOGO, buscarLivro, serializarLivroPublico, serializarLivroCatalogo } = require(catalogoPath);
+const { CATALOGO, buscarLivro, serializarLivroPublico, listarLivrosPublicos, serializarLivroCatalogo } = require(catalogoPath);
 
 let total = 0;
 const falhas = [];
@@ -38,18 +38,17 @@ const idPartes = ids.find(id => Array.isArray(CATALOGO[id].audiobookPartes) && C
 const idSemAudio = ids.find(id => !CATALOGO[id].audiobookDisponivel && !CATALOGO[id].audiobookUrl && !CATALOGO[id].audiobookPartes);
 
 // Reproduz exatamente o que /api/livros devolve (mesma composição do handler).
-const listagem = Object.fromEntries(
-  Object.entries(CATALOGO).filter(([, l]) => !l.teaser).map(([id, l]) => [id, serializarLivroPublico(l)])
-);
+const listagem = listarLivrosPublicos();
+const listagemPorId = new Map(listagem.map((livro) => [livro.livroId, livro]));
 const jsonListagem = JSON.stringify(listagem);
 
 console.log('Catálogo público (listagem e individual)');
 teste('A. listagem sem a chave audiobookUrl', () => {
-  ids.forEach(id => assert.ok(!('audiobookUrl' in listagem[id]), id));
+  ids.forEach(id => assert.ok(!('audiobookUrl' in listagemPorId.get(id)), id));
   assert.ok(!jsonListagem.includes('"audiobookUrl"'));
 });
 teste('B. listagem sem a chave audiobookPartes', () => {
-  ids.forEach(id => assert.ok(!('audiobookPartes' in listagem[id]), id));
+  ids.forEach(id => assert.ok(!('audiobookPartes' in listagemPorId.get(id)), id));
   assert.ok(!jsonListagem.includes('"audiobookPartes"'));
 });
 teste('A/B+. nenhuma URL de storage do audiobook em nenhum ponto da listagem', () => {
@@ -67,13 +66,13 @@ teste('E. audiobookDisponivel preservado (listagem e individual)', () => {
   const esperado = ids.filter(id => CATALOGO[id].audiobookDisponivel === true);
   assert.strictEqual(esperado.length, 12);
   esperado.forEach(id => {
-    assert.strictEqual(listagem[id].audiobookDisponivel, true, id);
+    assert.strictEqual(listagemPorId.get(id).audiobookDisponivel, true, id);
     assert.strictEqual(serializarLivroCatalogo(id, buscarLivro(id)).audiobookDisponivel, true, id);
   });
 });
 teste('F. precoAudiobook preservado (listagem e individual)', () => {
   ids.filter(id => CATALOGO[id].precoAudiobook).forEach(id => {
-    assert.strictEqual(listagem[id].precoAudiobook, CATALOGO[id].precoAudiobook, id);
+    assert.strictEqual(listagemPorId.get(id).precoAudiobook, CATALOGO[id].precoAudiobook, id);
     assert.strictEqual(serializarLivroCatalogo(id, buscarLivro(id)).precoAudiobook, CATALOGO[id].precoAudiobook, id);
   });
 });
@@ -89,12 +88,12 @@ teste('G. obra sem audiobook continua normal', () => {
 });
 teste('G+. metadata pública da loja preservada (título, preços, categoria, departamento, volume, capa, resumo, descrição, chat)', () => {
   ids.forEach(id => {
-    const orig = CATALOGO[id], pub = listagem[id];
+    const orig = CATALOGO[id], pub = listagemPorId.get(id);
     ['titulo', 'preco', 'precoPromocional', 'precoOriginal', 'categoria', 'departamento', 'volume', 'capa', 'resumo', 'descricao', 'chatDisponivel', 'subtitulo']
       .forEach(campo => assert.strictEqual(pub[campo], orig[campo], `${id}.${campo}`));
   });
   assert.ok(!jsonListagem.includes('indicadoPara'));
-  assert.ok(!(`${os_teaser()}` in listagem));
+  assert.ok(!listagem.some((livro) => livro.livroId === os_teaser()));
 });
 function os_teaser() { return Object.keys(CATALOGO).find(id => CATALOGO[id].teaser) || '__nenhum__'; }
 teste('H. serialização não altera o catálogo interno', () => {
@@ -113,7 +112,7 @@ teste('server.js não referencia audiobookUrl/audiobookPartes em código (só em
   assert.ok(!/audiobookUrl|audiobookPartes/.test(codigo));
 });
 teste('as duas rotas públicas usam os serializadores', () => {
-  assert.ok(/serializarLivroPublico\(livro\)/.test(serverSrc));
+  assert.ok(/listarLivrosPublicos\(\)/.test(serverSrc));
   assert.ok(/res\.json\(serializarLivroCatalogo\(req\.params\.livroId, livro\)\)/.test(serverSrc));
 });
 teste('nenhum frontend público (public/, templates/) usa audiobookUrl/audiobookPartes', () => {

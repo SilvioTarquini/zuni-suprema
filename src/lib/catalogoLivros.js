@@ -572,6 +572,15 @@ function serializarLivroPublico(livro) {
   return publico;
 }
 
+// A estrutura interna continua indexada por livroId para os lookups do servidor.
+// A vitrine, por outro lado, recebe uma lista: cada item já carrega seu livroId e
+// pode ser filtrado/ordenado com os métodos nativos de Array.
+function listarLivrosPublicos() {
+  return Object.entries(CATALOGO)
+    .filter(([, livro]) => !livro.teaser)
+    .map(([livroId, livro]) => ({ livroId, ...serializarLivroPublico(livro) }));
+}
+
 function serializarLivroCatalogo(livroId, livro) {
   return {
     livroId,
@@ -583,4 +592,11 @@ function serializarLivroCatalogo(livroId, livro) {
   };
 }
 
-module.exports = { CATALOGO, buscarLivro, obterVozPadraoParaDepartamento, serializarLivroPublico, serializarLivroCatalogo };
+module.exports = {
+  CATALOGO,
+  buscarLivro,
+  obterVozPadraoParaDepartamento,
+  serializarLivroPublico,
+  listarLivrosPublicos,
+  serializarLivroCatalogo
+};

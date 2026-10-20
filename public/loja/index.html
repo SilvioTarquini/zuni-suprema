@@ -642,7 +642,7 @@
 </div>
 
 <script>
-  let CATALOGO = {};
+  let CATALOGO = [];
 
   // Preço: mesma lógica de sempre (Grátis / riscado+promocional / preço simples),
   // isolada em função porque o card enxuto e o painel de detalhe usam os dois.
@@ -733,14 +733,20 @@
     try {
       const res = await fetch('/api/livros');
       if (!res.ok) throw new Error('Erro ao carregar catálogo');
-      CATALOGO = await res.json();
+      const catalogoRecebido = await res.json();
+      // /api/livros devolve uma lista; o fallback mantém a vitrine compatível
+      // com uma resposta antiga indexada por livroId durante uma atualização.
+      CATALOGO = Array.isArray(catalogoRecebido)
+        ? catalogoRecebido
+        : Object.entries(catalogoRecebido).map(([livroId, livro]) => ({ livroId, ...livro }));
     } catch (err) {
       console.error('Erro ao buscar catálogo:', err);
       gradiLivros.innerHTML = '<p style="color: var(--texto-suave);">Erro ao carregar catálogo. Tente recarregar a página.</p>';
       return;
     }
 
-    Object.entries(CATALOGO).forEach(([livroId, livro]) => {
+    CATALOGO.forEach((livro) => {
+      const { livroId } = livro;
       // Usar .jpg para Universo Feminino + Masculino (comprimidos) + 15 novas obras, .png para o resto
       const universosFeminino = ['codigo-feminino', 'ela-tem-classe', 'inesquecivel-charme-feminino', 'a-inteligencia-do-corpo-feminino', 'a-mulher-que-permanece-inteira'];
       const universoMasculino = ['a-arte-da-presenca-masculina', 'a-presenca-em-acao-apendice', 'a-arte-invisivel-elegancia-masculina', 'guia-integral-saude-beleza-masculina'];

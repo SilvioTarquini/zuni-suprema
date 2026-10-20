@@ -2063,19 +2063,14 @@ async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
 }
 
 app.get('/api/livros', (req, res) => {
-  const { CATALOGO, serializarLivroPublico } = require('./lib/catalogoLivros');
+  const { listarLivrosPublicos } = require('./lib/catalogoLivros');
   // teaser: true é metadado interno (ex.: degustação usada só pelo chat de
   // /experimente.html) — não é produto de loja, não deve aparecer em nenhuma listagem
   // pública. Lookup por ID (/api/livros/catalogo/:livroId) continua funcionando normalmente.
   // indicadoPara (Mentor) e audiobookUrl/audiobookPartes (arquivos do audiolivro,
   // entregues só por /audiolivros/:livroId com token) nunca vão para a resposta
   // pública — removidos em serializarLivroPublico.
-  const catalogoPublico = Object.fromEntries(
-    Object.entries(CATALOGO)
-      .filter(([, livro]) => !livro.teaser)
-      .map(([id, livro]) => [id, serializarLivroPublico(livro)])
-  );
-  return res.json(catalogoPublico);
+  return res.json(listarLivrosPublicos());
 });
 
 app.get('/api/livros/catalogo/:livroId', (req, res) => {

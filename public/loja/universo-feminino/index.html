@@ -687,14 +687,21 @@
     try {
       const res = await fetch('/api/livros');
       if (!res.ok) throw new Error('catálogo indisponível');
-      catalogo = await res.json();
+      const catalogoRecebido = await res.json();
+      // A API lista obras em Array; aceita a resposta indexada legada enquanto
+      // uma versão antiga do servidor ainda estiver em cache.
+      catalogo = Array.isArray(catalogoRecebido)
+        ? catalogoRecebido
+        : Object.entries(catalogoRecebido).map(([livroId, livro]) => ({ livroId, ...livro }));
     } catch (e) {
       document.getElementById('estado').innerHTML = 'Não foi possível carregar as obras agora. Tente novamente em instantes ou acesse a <a href="/loja/">Loja ZUNI completa</a>.';
       return;
     }
 
     // Só obras do departamento; as cinco imagens são as únicas criadas no DOM.
-    const doUniverso = Object.entries(catalogo).filter(([, l]) => l.departamento === DEPARTAMENTO);
+    const doUniverso = catalogo
+      .filter((livro) => livro.departamento === DEPARTAMENTO)
+      .map((livro) => [livro.livroId, livro]);
     const porId = new Map(doUniverso);
     const usados = new Set();
     const fragmento = document.createDocumentFragment();
