@@ -1499,6 +1499,44 @@ function renderMarkdownToPDF(doc, texto, opcoes = {}) {
   });
 }
 
+// Chamada comercial exclusiva da Síntese ZUNI Direciona. O link é nativo
+// do PDFKit, portanto permanece clicável no arquivo anexado ou baixado.
+function renderChamadaBibliotecaZuni(doc) {
+  const urlBiblioteca = 'https://www.zunisuprema.com.br/loja';
+  const x = 50;
+  const largura = 495;
+  const altura = 126;
+
+  doc.moveDown(1.5);
+  if (doc.y + altura > doc.page.height - 55) doc.addPage();
+
+  const y = doc.y;
+  doc.save();
+  doc.roundedRect(x, y, largura, altura, 8).fillAndStroke('#faf7ef', '#d9c68f');
+  doc.restore();
+
+  doc.fillColor('#8a6d1f').font('Helvetica-Bold').fontSize(12)
+     .text('PRÓXIMO PASSO RECOMENDADO', x + 18, y + 16, { width: largura - 36 });
+
+  doc.fillColor('#2c2c2c').font('Helvetica').fontSize(10.5)
+     .text('Acesse a ', x + 18, y + 43, { continued: true })
+     .fillColor('#8a6d1f').font('Helvetica-Bold')
+     .text('Biblioteca ZUNI Suprema (www.zunisuprema.com.br/loja)', {
+       continued: true,
+       link: urlBiblioteca,
+       underline: true
+     })
+     .fillColor('#2c2c2c').font('Helvetica')
+     .text(' para ler ou ouvir as obras completas indicadas nesta sessão utilizando seu cupom exclusivo de 7 dias enviado ao seu e-mail.', {
+       width: largura - 36,
+       lineGap: 3
+     });
+
+  doc.y = y + altura;
+  doc.moveDown(0.3);
+  doc.fillColor('black').font('Helvetica').fontSize(11);
+}
+
 // Decide se o PDF leva a capa PNG de astrologia/numerologia. Positivo por
 // identidade: é o produto Mapa Integrado, ou é uma leitura de Mapa Astral que de
 // fato calculou o mapa natal. Tudo o mais — Chat Mentor ('chat-mentor'), sessões
@@ -1654,6 +1692,12 @@ async function generatePdf(reportText, sessionId, userName, ascendenteInvalido =
 
     // Renderizar conteúdo com formatação Markdown
     renderMarkdownToPDF(doc, reportText, { fontSize: 11, lineGap: 4, maxWidth: 500 });
+
+    // A ponte para a Biblioteca faz parte apenas da entrega do ZUNI Direciona;
+    // não aparece nos PDFs de Mapa Astral ou Mapa Integrado.
+    if (productType === 'chat-mentor') {
+      renderChamadaBibliotecaZuni(doc);
+    }
 
     // Adicionar footer com numeração de página durante rendering
     let pageNumber = 1;

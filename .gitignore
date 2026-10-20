@@ -15,5 +15,6 @@ screenshots-validacao/
 # Logs/artefatos de teste local do checkout Stripe (server_stripe_test.log,
 # stripe_listen.log, stripe_listen_err.log, stripe_listen.pid)
 server_stripe_test.log
+server_test_boot*.log
 stripe_listen*.log
 stripe_listen.pid

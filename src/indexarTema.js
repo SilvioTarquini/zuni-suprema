@@ -292,4 +292,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { indexarTema, parseBlocos, dividirEmSubChunks, expandirBlocosParaChunks, dividirParagrafoPorFrase };
+module.exports = { indexarTema, parseBlocos, dividirEmSubChunks, expandirBlocosParaChunks, dividirParagrafoPorFrase, gerarEmbeddingsBatch, EMBEDDING_MODEL };

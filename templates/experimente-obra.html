@@ -40,6 +40,7 @@
   .capa { display: block; width: min(60vw, 220px); height: auto; aspect-ratio: 2 / 3; object-fit: contain; margin: 0 auto 16px; background: #efe7da; border-radius: 4px; box-shadow: 0 3px 10px rgba(35, 29, 26, 0.22); }
   .obra-topo h1 { margin: 0 0 8px; font-size: clamp(1.5rem, 6vw, 2rem); font-weight: normal; line-height: 1.2; }
   .chamada { margin: 0 auto; max-width: 30em; font-size: 1.0625rem; font-style: italic; color: var(--acento); }
+  .tempo-leitura { margin: 10px 0 0; font-family: var(--sans); font-size: 0.8125rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--suave); }
 
   /* Atalho discreto de compra no topo (a compra principal fica depois do trecho) */
   .compra-topo { margin: 8px 0 0; }
@@ -129,6 +130,7 @@
     <img class="capa" src="{{CAPA_URL}}" width="500" height="750" alt="Capa de {{TITULO}}">
     <h1>{{TITULO}}</h1>
     {{CHAMADA_BLOCK}}
+    {{TEMPO_LEITURA_BLOCK}}
     <p class="compra-topo"><a href="{{CHECKOUT_URL}}">Adquirir livro — {{PRECO}}</a></p>
   </header>
 

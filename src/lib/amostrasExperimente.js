@@ -15,6 +15,7 @@
 //   trecho            texto do trecho aprovado, texto puro; parágrafos separados por linha em branco
 //   tituloTrecho      (opcional) título do trecho
 //   chamada           (opcional) microcopy editorial curta, exibida sob o título
+//   tempoLeitura      (opcional) tempo estimado da amostra, exibido na página
 //   outrosCapitulos   (opcional) títulos reais de capítulos que NÃO fazem parte do trecho ("Continue explorando")
 //   origemUniverso    slug do universo editorial ('universo-feminino'); define o "Voltar"
 //   avisoInformativo  true exibe o aviso de conteúdo informativo (obras de saúde)
@@ -67,6 +68,65 @@ const AMOSTRAS = Object.freeze({
       arquivo: '/audio/amostras/ela-tem-classe.mp3',
       duracaoSegundos: 65
     })
+  }),
+  // Trechos originais aprovados para a degustação comercial das novas obras.
+  // São amostras editoriais curtas, não capítulos integrais.
+  'vender-bem-vender-sempre': Object.freeze({
+    livroId: 'vender-bem-vender-sempre',
+    aprovada: true,
+    trecho: [
+      'Este livro é para quem vende ou está começando a vender. Especialmente para a vendedora domiciliar: a mulher que pega o mostruário, sai de casa e vai bater na porta das pessoas para conseguir uma renda, muitas vezes sem nunca ter feito um treinamento. É também para quem atende numa loja, para quem visita empresas, para quem vende pelo celular e para quem lidera, treina ou está montando um grupo de vendedoras.',
+      'O método é o mesmo para todas. O que muda são detalhes práticos. Vender bem e ser honesta não são coisas opostas. Existem por aí técnicas que só funcionam enquanto a cliente não percebe. Este manual não ensina truques ou pressões artificiais; ensina método, contas, roteiros e exercícios focados em construir uma carteira de clientes duradoura e lucrativa.'
+    ].join('\n\n'),
+    tituloTrecho: 'Venda é processo antes de ser resultado',
+    chamada: 'Um começo prático para vender com clareza, rotina e respeito.',
+    tempoLeitura: '3 min de leitura',
+    outrosCapitulos: Object.freeze([
+      'Os primeiros 30 dias de organização comercial',
+      'WhatsApp sem insistência: conversa que avança',
+      'PIX, proposta e confirmação com clareza',
+      'Pós-venda que transforma cliente em relacionamento'
+    ]),
+    avisoInformativo: false,
+    ttsDisponivel: true
+  }),
+  'toda-mesa-tem-dois-lados': Object.freeze({
+    livroId: 'toda-mesa-tem-dois-lados',
+    aprovada: true,
+    trecho: [
+      'Este é um livro de histórias comuns. Um fornecedor que anuncia um reajuste por mensagem. Uma vendedora que dá um desconto que ninguém pediu. Dois amigos que abrem uma padaria no aperto de mão. Um pai que não larga o comando da empresa que fundou.',
+      'O que este livro faz de diferente é olhar para trás da cortina. Por trás de cada preço, de cada pedido, de cada recusa, há um mecanismo que funciona sozinho, depressa, quase sempre sem que a própria pessoa perceba: uma necessidade real, uma vaidade, um medo antigo ou uma defesa que se ativa antes de qualquer pensamento. O livro propõe aprender a ver no outro o que ele não diz, e em si mesmo o que prefere não admitir, permitindo conduzir acordos que duram.'
+    ].join('\n\n'),
+    tituloTrecho: 'Antes da proposta, existe a mesa',
+    chamada: 'Uma leitura dos interesses que se escondem atrás de preço, prazo e recusa.',
+    tempoLeitura: '3 min de leitura',
+    outrosCapitulos: Object.freeze([
+      'Posições, interesses e concessões',
+      'O preço como sinal de valor e risco',
+      'Acordos difíceis sem erosão de margem',
+      'Sócios, clientes e expectativas desalinhadas'
+    ]),
+    avisoInformativo: false,
+    ttsDisponivel: true
+  }),
+  'da-terra-ao-resultado': Object.freeze({
+    livroId: 'da-terra-ao-resultado',
+    aprovada: true,
+    trecho: [
+      'Quem trabalha na terra precisa fazer a produção render, pagar as contas e guardar forças e recursos para os períodos difíceis. Água, solo, trabalho e dinheiro precisam caminhar juntos. Colher mais pode ajudar, mas também pode aumentar perdas, endividamento e dependência de um comprador.',
+      'Este manual ajuda a descobrir onde está o problema, escolher uma solução que caiba na propriedade e verificar se ela deu resultado. A sequência proposta começa pelo mercado e pela viabilidade, passa pelo solo e pela água, entra no manejo vegetal e animal e termina na conservação, na venda e no financiamento, combinando a experiência diária do produtor com informações confiáveis para decidir com segurança.'
+    ].join('\n\n'),
+    tituloTrecho: 'Produzir bem começa por observar',
+    chamada: 'Uma introdução à gestão que protege a terra, a produção e a margem.',
+    tempoLeitura: '3 min de leitura',
+    outrosCapitulos: Object.freeze([
+      'Solo e água: decisões que atravessam safras',
+      'Custos visíveis e desperdícios silenciosos',
+      'Manejo seguro e planejamento de propriedade',
+      'Comercialização sem entregar toda a margem'
+    ]),
+    avisoInformativo: true,
+    ttsDisponivel: true
   })
 });
 

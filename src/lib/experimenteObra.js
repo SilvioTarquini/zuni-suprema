@@ -169,6 +169,9 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
   const descricao = typeof amostra.chamada === 'string' && amostra.chamada.trim() ? amostra.chamada.trim() : 'Leia um trecho de ' + titulo + '.';
 
   const audioAmostra = audioAmostraDisponivel(livro, amostra, livroId, deps.arquivoExiste);
+  const tempoLeitura = typeof amostra.tempoLeitura === 'string' && amostra.tempoLeitura.trim().length <= 40
+    ? amostra.tempoLeitura.trim()
+    : null;
 
   const trocas = {
     TITLE: escapar(titulo + ' — Experimente ZUNI Suprema'),
@@ -176,6 +179,7 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
     CAPA_URL: escapar(capa),
     TITULO: escapar(titulo),
     CHAMADA_BLOCK: typeof amostra.chamada === 'string' && amostra.chamada.trim() ? '<p class="chamada">' + escapar(amostra.chamada.trim()) + '</p>' : '',
+    TEMPO_LEITURA_BLOCK: tempoLeitura ? '<p class="tempo-leitura">' + escapar(tempoLeitura) + '</p>' : '',
     TITULO_TRECHO_BLOCK: typeof amostra.tituloTrecho === 'string' && amostra.tituloTrecho.trim() ? '<h3>' + escapar(amostra.tituloTrecho.trim()) + '</h3>' : '',
     TRECHO_HTML: paragrafosHtml(trecho),
     TEMAS_BLOCK: temasHtml(amostra.outrosCapitulos, titulo),
