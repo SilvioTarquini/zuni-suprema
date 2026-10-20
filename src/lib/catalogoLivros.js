@@ -313,7 +313,7 @@ const CATALOGO = {
     departamento: 'Executive',
     formato: 'Flipbook HTML + Download PDF',
     ativoNaLoja: true,
-    amostraDisponivel: false,
+    amostraDisponivel: true,
     descricaoCurta: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor — as forças que decidem quem fala, quem se cala e quem vai embora numa reunião.',
     resumo: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor — as forças que decidem quem fala, quem se cala e quem vai embora numa reunião.',
     descricao: 'Volume 2 da Coleção Além das Aparências e dos Sentimentos. Contos sobre os bastidores do ambiente de trabalho — a pauta que está na folha e a que ninguém leu em voz alta. Cada conto mostra a cena, revisita o que cada lado protegia e termina com uma nota de Davi, mediador de conflitos.',

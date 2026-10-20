@@ -127,6 +127,45 @@ const AMOSTRAS = Object.freeze({
     ]),
     avisoInformativo: true,
     ttsDisponivel: true
+  }),
+  // Toda Reunião Tem Duas Pautas (Volume 2 da Coleção Além das Aparências e dos
+  // Sentimentos) — trecho idêntico ao da obra: abertura do Conto 1 ("A Planilha"),
+  // versão de Tiago, texto completo até o fim de sua versão. Aprovado em 20/10/2026.
+  'toda-reuniao-tem-duas-pautas': Object.freeze({
+    livroId: 'toda-reuniao-tem-duas-pautas',
+    aprovada: true,
+    trecho: [
+      'CONTO 1 — A Planilha',
+      'A versão de Tiago',
+      'Meu pai foi porteiro de um prédio comercial por vinte e dois anos. No dia em que comecei no meu primeiro estágio, ele ajeitou o meu colarinho na porta de casa e disse uma frase que eu carrego até hoje, queira ou não:',
+      '— Lá dentro você não pode errar, filho. Eles estão esperando você errar.',
+      'Eu sou o primeiro da família com diploma. Naquela época eu era analista havia dois anos, e passei um fim de semana inteiro montando a projeção trimestral. Conferi três vezes. Na terceira, já era domingo à noite e a Isa, minha namorada, tinha desistido de me esperar para o filme.',
+      'Segunda-feira, nove da manhã, sala de reunião do terceiro andar. Na tela, a minha planilha. Na cabeceira, o diretor, o Almeida, que ainda não tinha tirado os olhos do celular. Eu estava indo bem. No quarto slide, a Mariana, minha gestora, levantou a caneta.',
+      '— Tiago, essa linha 40 não bate. Tá trinta por cento acima do trimestre passado. Vamos rever esses números juntos depois?',
+      'Eu sabia por que estava trinta por cento acima. Abri a boca para explicar.',
+      '— Está certo. Eu conferi três vezes, é que…',
+      'Foi aí que o Almeida ergueu os olhos do celular. Só isso. Não disse nada, não fez cara de nada. Olhou para a tela, depois para mim. E a frase que eu estava dizendo morreu no meio, porque de repente ela me pareceu a frase de quem está se defendendo, e quem se defende é porque errou.',
+      '— …tudo bem. A gente revê.',
+      'Passei os slides que faltavam sem levantar a voz nem os olhos. A mão que segurava o controle do projetor estava suando. Eu só pensava numa coisa: agora ele sabe. Não sabia dizer o quê, exatamente. Que eu não era dali, talvez. Que o meu pai tinha razão.',
+      'Na saída, a Mariana me pediu para passar na sala dela às três. Às três, com a planilha aberta, levou dois minutos. A linha 40 excluía as devoluções, do jeito que a própria diretoria tinha pedido no trimestre anterior. O número estava certo. Ela tinha lido o filtro errado.',
+      '— Ah, ok. Então está certo. Ótimo.',
+      'E passou para o assunto seguinte.',
+      'Eu saí da sala dela com razão e sem nada. Porque a dúvida tinha sido dita na frente do diretor, e a resposta tinha sido dita para mim, numa sala fechada, em quatro palavras. Mais tarde fui olhar a ata da reunião, que a assistente mandava para todo mundo. Estava lá: "Linha 40 da projeção: rever." Nunca saiu uma ata dizendo que tinha sido revista.',
+      'Naquela noite eu briguei com a Isa por causa do volume da televisão. Briguei feio, por uma coisa que nunca tinha me incomodado. Ela me perguntou o que estava acontecendo e eu disse que não era nada.',
+      'Depois disso eu mudei o meu jeito de trabalhar, e achei que estava sendo esperto. Parei de deixar rascunho na pasta compartilhada. Passei a entregar tudo no último minuto, pronto, impecável, para ninguém nunca mais encontrar um número meu pela metade. A Mariana começou a pedir atualização todo dia. Eu respondia cada vez com menos palavras. No fim, eram duas: "em andamento".',
+      'Um mês depois, atualizei o currículo.'
+    ].join('\n\n'),
+    tituloTrecho: 'A Planilha',
+    chamada: 'A pauta que não está na folha: histórias de trabalho narradas por Davi.',
+    tempoLeitura: '3 min de leitura',
+    outrosCapitulos: Object.freeze([
+      'A versão de Mariana (a Segunda Vez)',
+      'O corredor: o que não se diz na sala',
+      'A plateia: perder algo diante de todos',
+      'A nota de Davi ao final de cada conto'
+    ]),
+    avisoInformativo: false,
+    ttsDisponivel: true
   })
 });
 
