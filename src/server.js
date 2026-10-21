@@ -2063,6 +2063,14 @@ async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
   return reportText;
 }
 
+// Prazo de leitura no site depois da compra (LIVRO_ACESSO_DIAS): as páginas estáticas da loja e do checkout leem daqui,
+// para o número nunca ficar fixo no HTML. Só leitura, sem dados de cliente.
+app.get('/api/config/prazo-acesso', (req, res) => {
+  const { diasParaExibir, textoPrazoLeitura } = require('./lib/prazoAcesso');
+  res.set('Cache-Control', 'public, max-age=300');
+  res.json({ dias: diasParaExibir(), texto: textoPrazoLeitura() });
+});
+
 app.get('/api/livros', (req, res) => {
   const { listarLivrosPublicos } = require('./lib/catalogoLivros');
   // teaser: true é metadado interno (ex.: degustação usada só pelo chat de

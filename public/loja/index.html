@@ -606,7 +606,7 @@
 <header class="topo">
   <span class="selo"></span>
   <h1>Livros ZUNI Suprema</h1>
-  <p>Após a confirmação do pagamento, cada livro fica disponível por um prazo determinado para leitura na tela, download e impressão.</p>
+  <p id="prazo-loja">Após a confirmação do pagamento, cada livro fica disponível por um prazo determinado para leitura na tela, download e impressão.</p>
   <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span> O acesso chega por link logo após a confirmação do pagamento.</p>
 </header>
 
@@ -849,6 +849,17 @@
     iniciarPainel();
     renderizarLivros();
   });
+
+  // Prazo de leitura no site: o número vem do servidor (mesma configuração do acesso). Sem resposta, fica o texto genérico.
+  fetch('/api/config/prazo-acesso')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      const el = document.getElementById('prazo-loja');
+      if (el && d && typeof d.texto === 'string' && d.texto) {
+        el.textContent = 'Após a confirmação do pagamento, cada livro fica disponível para leitura na tela, download e impressão. ' + d.texto;
+      }
+    })
+    .catch(() => {});
 </script>
 
 </body>

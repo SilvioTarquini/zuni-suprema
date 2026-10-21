@@ -22,7 +22,8 @@ function assertSupabase() {
   return supabase;
 }
 
-const DIAS_DE_ACESSO = parseInt(process.env.LIVRO_ACESSO_DIAS || '7', 10);
+// Mesmo valor de antes (LIVRO_ACESSO_DIAS, padrão 7), agora numa fonte única compartilhada com as páginas públicas.
+const { DIAS_DE_ACESSO } = require('./prazoAcesso');
 
 /**
  * Gera um token de acesso único para um livro, vinculado ao comprador,

@@ -19,6 +19,12 @@
 const fs = require('fs/promises');
 const { patchMotorB, ehMotorB } = require('./leitorMobileMotorB');
 const { patchMotorC, ehMotorC, patchMotorD, ehMotorD } = require('./leitorMobileMotoresCD');
+const { patchDaTerra, ehLeitorDaTerra } = require('./leitorMobileTerra');
+const { patchMotorE, ehMotorE } = require('./leitorMobileMotorE');
+const { patchPaginador } = require('./leitorMobilePaginador');
+
+// Livros do motor A cujo paginador recebe a revalidação/divisão de blocos (ver leitorMobilePaginador.js).
+const LIVROS_COM_PAGINADOR_CORRIGIDO = new Set(['vender-bem-vender-sempre', 'toda-reuniao-tem-duas-pautas']);
 
 // HTML sem bundle (ex.: Os Bastidores da Mente) já é responsivo: não há o que
 // remendar e isso não é falha.
@@ -181,10 +187,14 @@ const NOVO_LAYOUT = String.raw`
 
 // Aplica o patch ao HTML completo do livro. Devolve { ok, html, motivo }.
 // Nunca lança: qualquer problema vira { ok:false, motivo }.
-function aplicarPatchLeitor(htmlOriginal) {
+function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
   try {
     const iMarcador = htmlOriginal.lastIndexOf(MARCADOR_TEMPLATE);
-    if (iMarcador < 0) return { ok: false, motivo: MOTIVO_SEM_BUNDLE };
+    if (iMarcador < 0) {
+      // Flipbook estático sem bundle (Da Terra ao Resultado) tem patch próprio; os demais sem bundle já são responsivos.
+      if (ehLeitorDaTerra(htmlOriginal)) return patchDaTerra(htmlOriginal);
+      return { ok: false, motivo: MOTIVO_SEM_BUNDLE };
+    }
 
     // O JSON do template começa logo depois do marcador (na mesma linha ou na
     // seguinte, conforme o bundle) e termina no primeiro "</script>" literal —
@@ -207,12 +217,17 @@ function aplicarPatchLeitor(htmlOriginal) {
         .replace(ANCORA_LIMITE_FONTE, () => 'Math.min(1.6, Math.max(0.8')
         .replace(ANCORA_INIT, () => '    this.bind();\n    this.zsInstall();\n    this.layout();')
         .replace(ANCORA_FIM_HELMET, () => CSS_PATCH + ANCORA_FIM_HELMET);
+
+      // Correção do paginador (texto cortado com A+ e blocos maiores que a página): só nos livros auditados.
+      if (LIVROS_COM_PAGINADOR_CORRIGIDO.has(opcoes.livroId)) template = patchPaginador(template);
     } else if (ehMotorB(template)) {
       template = patchMotorB(template);
     } else if (ehMotorC(template)) {
       template = patchMotorC(template);
     } else if (ehMotorD(template)) {
       template = patchMotorD(template);
+    } else if (ehMotorE(template)) {
+      template = patchMotorE(template);
     } else {
       return { ok: false, motivo: 'leitor não reconhecido (âncora layout() não encontrada)' };
     }
@@ -242,7 +257,7 @@ async function lerLivroComPatch(livroId, htmlPath) {
 
   const original = await fs.readFile(htmlPath, 'utf8');
   let html = original;
-  const resultado = aplicarPatchLeitor(original);
+  const resultado = aplicarPatchLeitor(original, { livroId });
   if (resultado.ok) {
     html = resultado.html;
   } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE) {

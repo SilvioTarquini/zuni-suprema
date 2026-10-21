@@ -106,6 +106,7 @@
   .compra { margin: 26px 0 0; padding: 20px 0 6px; border-top: 1px solid var(--borda); }
   .compra h2 { margin: 0 0 14px; font-size: 1.25rem; font-weight: normal; }
   .compra-botoes { display: grid; gap: 12px; }
+  .prazo-leitura { margin: 12px 0 0; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); text-align: center; }
   .compra .btn { width: 100%; }
 
   footer { padding: 18px 0 40px; font-family: var(--sans); font-size: 0.875rem; color: var(--suave); text-align: center; }
@@ -184,6 +185,7 @@
         <a class="btn btn-primario" href="{{CHECKOUT_URL}}">Adquirir livro — {{PRECO}}</a>
         <a class="btn" href="{{VOLTAR_URL}}">{{VOLTAR_ROTULO}}</a>
       </div>
+      {{PRAZO_BLOCK}}
     </section>
   </main>
 

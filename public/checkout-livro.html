@@ -151,6 +151,7 @@
   .pix-bloco img { width: 180px; height: 180px; border-radius: 6px; background: #fff; padding: 8px; margin-bottom: 12px; }
   .pix-bloco input { text-align: center; font-size: 0.75rem; }
   .rodape { margin-top: 20px; font-size: 0.75rem; color: var(--texto-suave); }
+  .prazo-leitura { margin: 0 0 12px; font-size: 0.8rem; line-height: 1.5; color: var(--texto-suave); text-align: center; }
   .ajuda-whatsapp { margin-top: 14px; text-align: center; font-size: 0.9rem; }
   .ajuda-whatsapp a { color: var(--texto-suave); text-decoration: underline; }
   .ajuda-whatsapp a:hover { color: var(--dourado-suave); }
@@ -257,7 +258,7 @@
     </div>
     <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
     <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span> Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria.</p>
-
+    <p class="prazo-leitura" id="prazo-leitura" hidden></p>
     <label for="name">Nome completo</label>
     <input type="text" id="name" autocomplete="name" placeholder="Ex: Maria da Silva" />
     <label for="email">E-mail</label>
@@ -588,6 +589,18 @@
 
   carregarLivro();
   verificarRetornoCartao();
+</script>
+
+<script>
+  // Prazo de leitura no site (vem do servidor, mesma configuração do acesso; sem resposta, nada é exibido).
+  // Script separado: aparece mesmo que o restante da página falhe ao carregar.
+  fetch('/api/config/prazo-acesso')
+    .then((r) => (r.ok ? r.json() : null))
+    .then((d) => {
+      const el = document.getElementById('prazo-leitura');
+      if (el && d && typeof d.texto === 'string' && d.texto) { el.textContent = d.texto; el.hidden = false; }
+    })
+    .catch(() => {});
 </script>
 
 </body>

@@ -19,6 +19,7 @@ const path = require('path');
 const { buscarLivro } = require('./catalogoLivros');
 const { obterAmostra, UNIVERSOS, MAX_TRECHO_CHARS, MARCADOR_PLACEHOLDER } = require('./amostrasExperimente');
 const { normalizarOrigem } = require('./origemCompra');
+const { textoPrazoLeitura } = require('./prazoAcesso');
 
 const LIVRO_ID_VALIDO = /^[a-z0-9-]{1,80}$/;
 const CUPOM_VALIDO = /^[A-Za-z0-9_-]{1,40}$/;
@@ -124,6 +125,11 @@ function avisoHtml(aviso) {
   return texto ? '<p class="aviso">' + escapar(texto) + '</p>' : '';
 }
 
+// Prazo de leitura no site (vem de LIVRO_ACESSO_DIAS, ver lib/prazoAcesso.js); sem prazo válido, nada é exibido.
+function prazoHtml(texto) {
+  return typeof texto === 'string' && texto.trim() ? '<p class="prazo-leitura">' + escapar(texto.trim()) + '</p>' : '';
+}
+
 function paragrafosHtml(trecho) {
   return trecho
     .replace(/\r\n/g, '\n')
@@ -196,6 +202,7 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
     AUDIO_BLOCK: audioBlocoHtml(audioAmostra, titulo),
     // Com amostra oficial, a voz do navegador não é oferecida como demonstração comercial.
     TTS: amostra.ttsDisponivel === true && !audioAmostra ? '1' : '0',
+    PRAZO_BLOCK: prazoHtml((deps.prazo || textoPrazoLeitura)()),
     CHECKOUT_URL: escapar(checkoutUrl),
     PRECO: escapar(formatarPreco(preco)),
     VOLTAR_URL: escapar(voltarUrl),
