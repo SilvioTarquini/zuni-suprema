@@ -911,3 +911,22 @@ A entrega (`private/livros/<id>/index.html`, token-protegida) e a degustação (
 **Commits**: `e40b855` (feature) e `491a0da` (docs). Push aprovado e feito (`832f225..491a0da`), deploy automático `de3a564c` (commit `491a0da`) **SUCCESS**. Confirmado em produção: `/loja/`, `/loja/empreender-e-crescer/`, `/loja/universo-feminino/` todos 200, bloco "Explorar Empreender e Crescer" presente no HTML da `/loja/`.
 
 **Bug encontrado logo depois em produção, já corrigido**: na `/loja/` (não no universo), o card de Toda Reunião Tem Duas Pautas aparecia com a capa quebrada (só alt text). Causa: `toda-reuniao-tem-duas-pautas` estava ausente da lista hardcoded `novasObras` em `public/loja/index.html`, que decide entre `.jpg` e `.png` por obra — sem entrada na lista, o JS tentava `/loja/capas/toda-reuniao-tem-duas-pautas.png` (inexistente; confirmado 404 em produção). O arquivo da capa em si estava correto e íntegro (1024×1536, 243.108 bytes, `.jpg`) — não precisou regenerar. `/loja/empreender-e-crescer/` nunca teve esse bug (usa `.jpg` direto, sem essa lista). Corrigido adicionando o id à lista (commit `270a02b`), testado localmente (as 4 capas 200/`image/jpeg` nas duas páginas), push feito (`491a0da..270a02b`), deploy automático `4c4789ca` **SUCCESS**. Confirmado em produção: `/loja/capas/toda-reuniao-tem-duas-pautas.jpg` 200/`image/jpeg`.
+
+---
+
+## Livro-Vivo das 4 obras do Empreender e Crescer — indexado em produção (21/10/2026)
+
+Rodado `node src/indexarLivro.js <livro_id> <txt>` contra o Supabase de produção (ref `yirxjunmjfnajotcnywc`, via `SUPABASE_URL`/`SUPABASE_KEY` do `.env`). Verificação por `SELECT` em `public.documentos` — todas as linhas com embedding:
+
+| livro_id | linhas | com embedding | corpo min–max (chars) |
+|---|---|---|---|
+| `da-terra-ao-resultado` | 73 | 73 | 645–2317 |
+| `vender-bem-vender-sempre` | 91 | 91 | 300–2364 |
+| `toda-mesa-tem-dois-lados` | 124 | 124 | 470–2038 |
+| `toda-reuniao-tem-duas-pautas` | 93 | 93 | 619–2230 |
+
+- **Vender Bem, Vender Sempre foi indexado a partir do PDF de 07/09** (ainda não há .docx final). **Reindexar quando o .docx final existir** — `indexarLivro.js` apaga e reinsere os chunks do mesmo `livro_id`, então é seguro rodar de novo.
+- **Fontes .txt** em `C:\Users\Silvio\Documents\1 - Zuni Suprema\livro-vivo-txt\` (fora do repo, devem continuar lá).
+- Os 5 títulos "Próximo módulo" ficaram fora da indexação.
+- **Teste de busca** (`match_documents_livro`, `match_count=3`) retornou trechos dos 4 livros. Observação: em `da-terra-ao-resultado`, a pergunta "como melhorar o solo da horta?" trouxe o Cap. 9 (semeadora) em 1º e o Cap. 4 (conhecer o solo) só em 3º — recuperação funcional, mas com margem de ajuste de relevância; os outros 3 livros trouxeram os capítulos esperados no topo.
+- Pendência (iv) do checkpoint de 20/10 (indexar o Livro-Vivo das 4 obras) → **fechada**. Nenhum código alterado.
