@@ -116,6 +116,14 @@ function audioBlocoHtml(a, tituloObra) {
     + '</section>';
 }
 
+const AVISO_PADRAO_SAUDE = 'Conteúdo de caráter informativo, que não substitui o acompanhamento de um profissional de saúde.';
+
+// avisoInformativo por obra: true = aviso padrão de saúde; string não vazia = texto próprio da obra; qualquer outra coisa = sem aviso.
+function avisoHtml(aviso) {
+  const texto = aviso === true ? AVISO_PADRAO_SAUDE : (typeof aviso === 'string' ? aviso.trim() : '');
+  return texto ? '<p class="aviso">' + escapar(texto) + '</p>' : '';
+}
+
 function paragrafosHtml(trecho) {
   return trecho
     .replace(/\r\n/g, '\n')
@@ -184,9 +192,7 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
     TRECHO_HTML: paragrafosHtml(trecho),
     TEMAS_BLOCK: temasHtml(amostra.outrosCapitulos, titulo),
     AUDIOBOOK_OPCAO: audiobookOpcaoHtml(livro, titulo),
-    AVISO_BLOCK: amostra.avisoInformativo === true
-      ? '<p class="aviso">Conteúdo de caráter informativo, que não substitui o acompanhamento de um profissional de saúde.</p>'
-      : '',
+    AVISO_BLOCK: avisoHtml(amostra.avisoInformativo),
     AUDIO_BLOCK: audioBlocoHtml(audioAmostra, titulo),
     // Com amostra oficial, a voz do navegador não é oferecida como demonstração comercial.
     TTS: amostra.ttsDisponivel === true && !audioAmostra ? '1' : '0',

@@ -18,7 +18,7 @@
 //   tempoLeitura      (opcional) tempo estimado da amostra, exibido na página
 //   outrosCapitulos   (opcional) títulos reais de capítulos que NÃO fazem parte do trecho ("Continue explorando")
 //   origemUniverso    slug do universo editorial ('universo-feminino'); define o "Voltar"
-//   avisoInformativo  true exibe o aviso de conteúdo informativo (obras de saúde)
+//   avisoInformativo  false/ausente: sem aviso; true: aviso padrão de saúde; string: texto próprio da obra
 //   ttsDisponivel     true habilita "Ouvir este trecho" (voz do navegador, sem custo)
 //   audioAmostra      (opcional) { aprovada, arquivo, duracaoSegundos } — amostra CURTA do audiobook oficial, arquivo
 //                     estático em /audio/amostras/<livroId>.mp3 (só o trecho aprovado; nunca o áudio integral).
@@ -125,7 +125,7 @@ const AMOSTRAS = Object.freeze({
       'Manejo seguro e planejamento de propriedade',
       'Comercialização sem entregar toda a margem'
     ]),
-    avisoInformativo: true,
+    avisoInformativo: 'Conteúdo de caráter informativo. Doses, defensivos, medicamentos veterinários, projetos de irrigação e financiamentos devem ser definidos com um responsável técnico habilitado.',
     ttsDisponivel: true
   }),
   // Toda Reunião Tem Duas Pautas (Volume 2 da Coleção Além das Aparências e dos

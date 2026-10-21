@@ -21,6 +21,7 @@ const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSes
 const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { calcularPrecoBaseLivro } = require('./lib/precoLivro');
 const { normalizarOrigem } = require('./lib/origemCompra');
+const { saudacaoEmail } = require('./lib/saudacaoEmail');
 const { renderizarExperimenteObra } = require('./lib/experimenteObra');
 const { MENSAGEM_MAX_CHARS, SESSION_ID_MAX_CHARS, criarLimiterMentorDemo, orcamentoDemo: orcamentoDemoMemoria, extrairIpConfiavel } = require('./lib/protecaoMentorDemo');
 const { criarOrcamentoDemoPersistente } = require('./lib/orcamentoDemoPersistente');
@@ -745,7 +746,7 @@ async function processarFulfillmentChatMentor(stripeSession, eventType) {
 // marcarPedidoPendenteProcessado). Falha só no envio de e-mail não deve
 // bloquear o acesso, que já foi concedido.
 async function fulfillLivro(pedido, paymentId) {
-  const { livroId, email, audiolivroIncluido } = pedido.payload;
+  const { livroId, email, audiolivroIncluido, nome } = pedido.payload;
 
   let acesso;
   let acessoAudiolivro = null;
@@ -800,7 +801,7 @@ async function fulfillLivro(pedido, paymentId) {
   // enviarEmailAcessoLivro trata os próprios erros internamente (Resend)
   // e devolve false em vez de lançar — por isso o resultado é checado
   // explicitamente aqui, não um try/catch (que nunca capturaria nada).
-  const emailEnviado = await enviarEmailAcessoLivro(email, livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
+  const emailEnviado = await enviarEmailAcessoLivro(email, livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token, nome);
   if (!emailEnviado) {
     console.error(`[LIVRO_EMAIL_FALHOU] pedidoId=${pedido.id} email=${email}`);
     // Não relança — o acesso já foi concedido e gravado, só o e-mail falhou.
@@ -1908,7 +1909,7 @@ async function marcarPagoSeAprovado(order) {
 // buscarPedidoPendente() recupera os dados reais a partir dessa
 // referência para então chamar criarAcesso().
 
-async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudiolivro) {
+async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudiolivro, nome) {
   const tipo = 'acesso-livro';
   try {
     const { enviarEmail } = require('./lib/email');
@@ -1923,7 +1924,7 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
 
     const html = `
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
-          <p>Olá!</p>
+          <p>${saudacaoEmail(nome)}</p>
           <p>Seu pagamento foi confirmado e o acesso ao seu livro já está liberado.</p>
           <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
           <p><a href="${linkAcesso}" style="color:#B8963E;font-weight:bold;">Acessar meu livro</a></p>
@@ -2000,7 +2001,7 @@ async function criarAcessoLivroSeAplicavel(order, paymentId) {
   // enviarEmailAcessoLivro trata os próprios erros internamente (Resend) e
   // devolve false em vez de lançar — checagem explícita do retorno, mesmo
   // padrão aplicado ao fulfillment Stripe (fulfillLivro) em src/server.js.
-  const emailEnviado = await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token);
+  const emailEnviado = await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token, pedido.nome);
   if (!emailEnviado) {
     console.error(`[LIVRO_EMAIL_FALHOU] referencia=${referencia} email=${pedido.email}`);
   }
@@ -2321,7 +2322,7 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
       return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
     }
 
-    const payload = { livroId, email, audiolivroIncluido: Boolean(audiolivroIncluido), ...(origem ? { origem } : {}) };
+    const payload = { livroId, email, audiolivroIncluido: Boolean(audiolivroIncluido), ...(typeof name === 'string' && name.trim() ? { nome: name.trim().slice(0, 120) } : {}), ...(origem ? { origem } : {}) };
     const pedidoId = await criarPedidoPendenteStripe({
       fulfillmentType: 'livro',
       payload,
@@ -2350,6 +2351,9 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
       ui_mode: 'embedded_page',
       mode: 'payment',
       client_reference_id: pedidoId,
+      // E-mail já informado no formulário vem preenchido no Stripe; se não tiver formato válido, não é enviado
+      // (a Stripe recusaria a sessão inteira) e o cliente digita no formulário do Stripe.
+      ...(typeof email === 'string' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ? { customer_email: email.trim() } : {}),
       line_items: [
         {
           price_data: {

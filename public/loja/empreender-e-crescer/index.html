@@ -574,7 +574,7 @@
   // Apresentação comercial condensada, SOMENTE texto (nada de preço, formato ou link).
   // Cada frase é rastreável ao resumo/descrição públicos da obra em /api/livros; linguagem informativa,
   // sem causalidade médica, diagnóstico ou promessa terapêutica. Obra fora deste mapa cai no resumo do catálogo.
-  // saude: true exibe o aviso de que o conteúdo é informativo.
+  // aviso: texto do aviso exibido no detalhe da obra (por obra; sem o campo, nenhum aviso).
   const EDITORIAL = {
     'vender-bem-vender-sempre': {
       chamada: 'Método prático para vender com ética, clareza e previsibilidade — da primeira conversa ao pós-venda.',
@@ -599,7 +599,7 @@
     },
     'da-terra-ao-resultado': {
       chamada: 'Estratégias verificáveis para fazer a produção render e proteger a margem.',
-      saude: true,
+      aviso: 'Conteúdo de caráter informativo. Doses, defensivos, medicamentos veterinários, projetos de irrigação e financiamentos devem ser definidos com um responsável técnico habilitado.',
       sobre: [
         'Um manual para pequenos e médios produtores sobre mercado, solo, água, adubação segura, custos, manejo e comercialização.',
         'A proposta é produzir melhor, proteger a margem e cuidar da terra com atenção aos limites e à realidade de cada propriedade.'
@@ -668,7 +668,9 @@
     const ed = EDITORIAL[id];
     document.getElementById('det-chamada').textContent = ed ? ed.chamada : (l.resumo || '');
     document.getElementById('det-sobre').replaceChildren(...(ed ? ed.sobre : [l.descricao || '']).map((t) => el('p', { text: t })));
-    document.getElementById('det-nota-saude').hidden = !(ed && ed.saude);
+    const notaAviso = document.getElementById('det-nota-saude');
+    notaAviso.textContent = (ed && ed.aviso) || '';
+    notaAviso.hidden = !(ed && ed.aviso);
     const nota = document.getElementById('det-nota-audio');
     if (l.audiobookDisponivel && l.precoAudiobook) {
       nota.hidden = false;

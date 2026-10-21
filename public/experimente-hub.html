@@ -26,7 +26,7 @@
   .secao-intro { margin:0 0 22px; color:var(--suave); }
   .amostras { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,17rem),1fr)); gap:18px; }
   .obra { min-height:100%; display:flex; flex-direction:column; overflow:hidden; background:var(--carta); border:1px solid var(--borda); border-radius:10px; }
-  .obra img { display:block; width:100%; aspect-ratio:2/3; max-height:25rem; object-fit:cover; background:#211c14; }
+  .obra img { display:block; width:100%; height:auto; aspect-ratio:2/3; object-fit:contain; background:#211c14; }
   .obra-corpo { display:flex; flex:1; flex-direction:column; padding:20px; }
   .obra h3 { margin:0 0 9px; font-size:1.35rem; font-weight:normal; line-height:1.2; }
   .obra p { margin:0 0 20px; color:var(--suave); }
@@ -53,13 +53,12 @@
       <section class="abertura" aria-labelledby="titulo-principal">
         <p class="sobretitulo">Experimente ZUNI</p>
         <h1 id="titulo-principal">Conheça uma obra antes de escolhê-la.</h1>
-        <p class="intro">Aqui você encontra somente degustações editoriais já aprovadas, com uma amostra real de leitura ou áudio. Novas obras aparecem quando estiverem prontas.</p>
+        <p class="intro">Leia ou ouça um trecho real de cada obra antes de decidir. Novos títulos aparecem aqui assim que ficam prontos.</p>
       </section>
 
       <section class="secao" aria-labelledby="amostras-titulo">
         <p class="rotulo">Degustações editoriais</p>
         <h2 id="amostras-titulo">Obras disponíveis para experimentar</h2>
-        <p class="secao-intro">A disponibilidade é confirmada diretamente pelo catálogo da ZUNI.</p>
         <div class="amostras" id="amostras" aria-live="polite">
           <p class="estado">Carregando as degustações disponíveis…</p>
         </div>
