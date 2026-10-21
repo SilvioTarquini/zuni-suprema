@@ -523,6 +523,9 @@
     .porta-universo a.btn-universo { width: auto; }
   }
 
+  /* Porta editorial de Empreender e Crescer: mesma estrutura, acento diferente. */
+  .porta-empreender .cartao { border-left-color: #2d5a40; }
+
   /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
      O corpo (.info) reaproveita as mesmas classes/estilos do card antigo
      (resumo, descricao-expandida.ativa, rodape-card, preco, selo-audiobook, selo-chat,
@@ -623,6 +626,16 @@
       <p class="chamada">Uma seleção de obras para diferentes momentos da vida de uma mulher.</p>
     </div>
     <a class="btn-universo" id="porta-universo-link" href="/loja/universo-feminino/">Explorar o Universo Feminino</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-empreender" aria-label="Empreender e Crescer">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Empreender e Crescer</p>
+      <p class="chamada">Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria.</p>
+    </div>
+    <a class="btn-universo" id="porta-empreender-link" href="/loja/empreender-e-crescer/">Explorar Empreender e Crescer</a>
   </div>
 </nav>
 
@@ -824,6 +837,7 @@
       const cupom = new URLSearchParams(window.location.search).get('cupom');
       if (cupom) {
         document.getElementById('porta-universo-link').href = '/loja/universo-feminino/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-empreender-link').href = '/loja/empreender-e-crescer/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-experimente-link').href = '/experimente?cupom=' + encodeURIComponent(cupom);
       }
     } catch (e) {}
