@@ -150,7 +150,7 @@ const AMOSTRAS = Object.freeze({
       'Na saída, a Mariana me pediu para passar na sala dela às três. Às três, com a planilha aberta, levou dois minutos. A linha 40 excluía as devoluções, do jeito que a própria diretoria tinha pedido no trimestre anterior. O número estava certo. Ela tinha lido o filtro errado.',
       '— Ah, ok. Então está certo. Ótimo.',
       'E passou para o assunto seguinte.',
-      'Eu saí da sala dela com razão e sem nada. Porque a dúvida tinha sido dita na frente do diretor, e a resposta tinha sido dita para mim, numa sala fechada, em quatro palavras. Mais tarde fui olhar a ata da reunião, que a assistente mandava para todo mundo. Estava lá: "Linha 40 da projeção: rever." Nunca saiu uma ata dizendo que tinha sido revista.',
+      'Eu saí da sala dela com razão e sem nada. Porque a dúvida tinha sido dita na frente do diretor, e a resposta tinha sido dita para mim, numa sala fechada, em meia dúzia de palavras. Mais tarde fui olhar a ata da reunião, que a assistente mandava para todo mundo. Estava lá: "Linha 40 da projeção: rever." Nunca saiu uma ata dizendo que tinha sido revista.',
       'Naquela noite eu briguei com a Isa por causa do volume da televisão. Briguei feio, por uma coisa que nunca tinha me incomodado. Ela me perguntou o que estava acontecendo e eu disse que não era nada.',
       'Depois disso eu mudei o meu jeito de trabalhar, e achei que estava sendo esperto. Parei de deixar rascunho na pasta compartilhada. Passei a entregar tudo no último minuto, pronto, impecável, para ninguém nunca mais encontrar um número meu pela metade. A Mariana começou a pedir atualização todo dia. Eu respondia cada vez com menos palavras. No fim, eram duas: "em andamento".',
       'Um mês depois, atualizei o currículo.'
