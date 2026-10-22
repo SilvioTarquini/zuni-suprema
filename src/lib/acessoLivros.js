@@ -121,6 +121,32 @@ async function verificarAcesso(token, livroId, tiposPermitidos = ['livro']) {
 }
 
 /**
+ * Diz por que um token foi negado, só para escolher a mensagem exibida:
+ * 'revogado' (estorno/disputa), 'expirado' (prazo vencido) ou null
+ * (token inexistente, outro livro/tipo ou erro de consulta).
+ *
+ * @param {string} token
+ * @param {string} livroId
+ * @returns {Promise<'revogado'|'expirado'|null>}
+ */
+async function motivoNegacaoAcesso(token, livroId) {
+  if (!token) return null;
+  const supabaseClient = assertSupabase();
+
+  const { data, error } = await supabaseClient
+    .from('acessos_livros')
+    .select('revogado_em, data_expiracao')
+    .eq('token', token)
+    .eq('livro_id', livroId)
+    .single();
+
+  if (error || !data) return null;
+  if (data.revogado_em) return 'revogado';
+  if (new Date(data.data_expiracao).getTime() < Date.now()) return 'expirado';
+  return null;
+}
+
+/**
  * Busca o acesso mais recente de um comprador a um livro, pelo e-mail
  * usado na compra. Usado para o polling de status do checkout via
  * cartão, onde ainda não se tem o token no momento do retorno.
@@ -147,4 +173,4 @@ async function buscarAcessoPorEmail({ livroId, email }) {
   return { token: data.token, expiraEm: new Date(data.data_expiracao) };
 }
 
-module.exports = { criarAcesso, verificarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO };
+module.exports = { criarAcesso, verificarAcesso, motivoNegacaoAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO };

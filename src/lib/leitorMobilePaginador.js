@@ -111,6 +111,10 @@ function patchPaginador(template) {
   if (!m) throw new Error('âncora não encontrada: chave de fonte no localStorage');
   const chave = m[1];
   let t = template;
+  // Celular de até 380 px (360x640): com a página escalada pela largura, a fonte padrão fica em ~11,3 px na tela.
+  // Sem tamanho salvo pelo leitor, o padrão passa a 1,1 (~12,4 px). Quem já escolheu um tamanho mantém o dele.
+  const aLeituraFonte = "parseFloat(localStorage.getItem('" + chave + "')) || 1;";
+  t = substituir(t, aLeituraFonte, "parseFloat(localStorage.getItem('" + chave + "')) || (window.innerWidth <= 380 ? 1.1 : 1);");
   t = substituir(t, A_FIM_PAGINATE, "    meas.innerHTML='';\n    return this.zsAjustar(blocks, pages);\n  }");
   // buildPages passa a somar os cortes de TODOS os capítulos e a guardar o último tamanho de fonte sem corte.
   t = substituir(t, A_BUILDPAGES, '  buildPages(){\n    this.zsCortes = 0;\n    this.zsBuildOriginal();\n    if(!this.zsCortes) this.zsFonteOk = this.fontScale;\n  }\n\n  zsBuildOriginal(){\n');

@@ -23,7 +23,7 @@ const path = require('path');
 const fs = require('fs').promises;
 const express = require('express');
 const router = express.Router();
-const { verificarAcesso } = require('../lib/acessoLivros');
+const { verificarAcesso, motivoNegacaoAcesso } = require('../lib/acessoLivros');
 const { buscarLivro } = require('../lib/catalogoLivros');
 const audiolivroStorage = require('../lib/audiolivroStorage');
 const { lerLivroComPatch } = require('../lib/leitorMobile');
@@ -31,6 +31,8 @@ const { lerLivroComPatch } = require('../lib/leitorMobile');
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
 const CONTEUDO_LIVROS_DIR = path.join(__dirname, '..', '..', 'private', 'livros');
 const PAGINA_ACESSO_EXPIRADO = path.join(PUBLIC_DIR, 'livros', '_acesso-expirado.html');
+
+const PAGINA_ACESSO_REVOGADO = path.join(PUBLIC_DIR, 'livros', '_acesso-revogado.html');
 
 const LIVRO_ID_VALIDO = /^[a-zA-Z0-9_-]+$/;
 
@@ -58,7 +60,8 @@ function exigirAcesso(tiposPermitidos) {
       const acesso = await verificarAcesso(token, livroId, tiposPermitidos);
 
       if (!acesso) {
-        return res.status(403).sendFile(PAGINA_ACESSO_EXPIRADO);
+        const motivo = await motivoNegacaoAcesso(token, livroId);
+        return res.status(403).sendFile(motivo === 'revogado' ? PAGINA_ACESSO_REVOGADO : PAGINA_ACESSO_EXPIRADO);
       }
 
       req.acessoLivro = acesso;

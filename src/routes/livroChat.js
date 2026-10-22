@@ -22,7 +22,7 @@
 const express = require('express');
 const rateLimit = require('express-rate-limit');
 const { createClient } = require('@supabase/supabase-js');
-const { verificarAcesso } = require('../lib/acessoLivros');
+const { verificarAcesso, motivoNegacaoAcesso } = require('../lib/acessoLivros');
 const { verificarLimiteDiario, incrementarUsoDiario } = require('../lib/usoChatLivro');
 const { buscarLivro } = require('../lib/catalogoLivros');
 
@@ -156,6 +156,9 @@ router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
     // tem acesso ao texto completo da obra para conversar sobre ele.
     const acesso = await verificarAcesso(token, livro_id, ['livro']);
     if (!acesso) {
+      if (await motivoNegacaoAcesso(token, livro_id) === 'revogado') {
+        return res.status(401).json({ error: 'Este acesso foi encerrado porque o pagamento foi reembolsado. Se você acredita que houve um engano, fale com a gente pelo WhatsApp.' });
+      }
       return res.status(401).json({ error: 'Token inválido ou sem acesso a esta obra.' });
     }
 
