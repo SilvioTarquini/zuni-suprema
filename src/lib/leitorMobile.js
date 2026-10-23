@@ -22,6 +22,7 @@ const { patchMotorC, ehMotorC, patchMotorD, ehMotorD } = require('./leitorMobile
 const { patchDaTerra, ehLeitorDaTerra } = require('./leitorMobileTerra');
 const { patchMotorE, ehMotorE } = require('./leitorMobileMotorE');
 const { patchPaginador } = require('./leitorMobilePaginador');
+const { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoTemplate } = require('./leitorSemImpressao');
 
 // Livros do motor A cujo paginador recebe a revalidação/divisão de blocos (ver leitorMobilePaginador.js).
 const LIVROS_COM_PAGINADOR_CORRIGIDO = new Set(['vender-bem-vender-sempre', 'toda-reuniao-tem-duas-pautas']);
@@ -189,10 +190,16 @@ const NOVO_LAYOUT = String.raw`
 // Nunca lança: qualquer problema vira { ok:false, motivo }.
 function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
   try {
+    // Sem impressão nos 4 livros à venda; a auditoria pede { semImpressao: false } só para medir as folhas de impressão.
+    const semImpressao = opcoes.semImpressao !== false && ehLivroSemImpressao(opcoes.livroId);
+
     const iMarcador = htmlOriginal.lastIndexOf(MARCADOR_TEMPLATE);
     if (iMarcador < 0) {
       // Flipbook estático sem bundle (Da Terra ao Resultado) tem patch próprio; os demais sem bundle já são responsivos.
-      if (ehLeitorDaTerra(htmlOriginal)) return patchDaTerra(htmlOriginal);
+      if (ehLeitorDaTerra(htmlOriginal)) {
+        const r = patchDaTerra(htmlOriginal);
+        return r.ok && semImpressao ? { ok: true, html: tirarImpressaoDaTerra(r.html) } : r;
+      }
       return { ok: false, motivo: MOTIVO_SEM_BUNDLE };
     }
 
@@ -227,10 +234,12 @@ function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
     } else if (ehMotorD(template)) {
       template = patchMotorD(template);
     } else if (ehMotorE(template)) {
-      template = patchMotorE(template);
+      template = patchMotorE(template, { semImpressao });
     } else {
       return { ok: false, motivo: 'leitor não reconhecido (âncora layout() não encontrada)' };
     }
+
+    if (semImpressao) template = tirarImpressaoTemplate(opcoes.livroId, template);
 
     // '</' precisa sair escapado: o JSON vive dentro de uma <script> do HTML externo.
     const json = JSON.stringify(template).replace(/<\//g, '<\\/');
@@ -245,26 +254,27 @@ function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
 const CACHE_MAX = 6;
 const cache = new Map();
 
-async function lerLivroComPatch(livroId, htmlPath) {
+async function lerLivroComPatch(livroId, htmlPath, opcoes = {}) {
   const { mtimeMs } = await fs.stat(htmlPath);
+  const chave = opcoes.semImpressao === false ? livroId + '|com-impressao' : livroId;
 
-  const noCache = cache.get(livroId);
+  const noCache = cache.get(chave);
   if (noCache && noCache.mtimeMs === mtimeMs) {
-    cache.delete(livroId);
-    cache.set(livroId, noCache);
+    cache.delete(chave);
+    cache.set(chave, noCache);
     return noCache.html;
   }
 
   const original = await fs.readFile(htmlPath, 'utf8');
   let html = original;
-  const resultado = aplicarPatchLeitor(original, { livroId });
+  const resultado = aplicarPatchLeitor(original, { livroId, semImpressao: opcoes.semImpressao });
   if (resultado.ok) {
     html = resultado.html;
   } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE) {
     console.error(`[LEITOR_PATCH_FALHOU] livroId=${livroId} motivo=${resultado.motivo} — entregando o livro original.`);
   }
 
-  cache.set(livroId, { mtimeMs, html });
+  cache.set(chave, { mtimeMs, html });
   while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
   return html;
 }

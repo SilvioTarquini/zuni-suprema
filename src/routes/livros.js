@@ -9,7 +9,7 @@
 // qualquer arquivo ali dentro é acessível diretamente por URL. O conteúdo
 // pago fica em private/livros/, fora da árvore servida estaticamente, e só é
 // entregue através da rota abaixo, depois de exigirAcesso() validar o token:
-//   private/livros/<livroId>/index.html    -> HTML do livro (ler, baixar e imprimir já embutidos)
+//   private/livros/<livroId>/index.html    -> HTML do livro (leitura no site; sem botão de imprimir nas obras à venda)
 //
 // public/livros/_acesso-expirado.html é a única coisa que continua em
 // public/, pois não é conteúdo pago — só a página exibida quando o token é
@@ -73,7 +73,7 @@ function exigirAcesso(tiposPermitidos) {
   };
 }
 
-// Leitura na tela (HTML do livro, com ler/baixar/imprimir embutidos)
+// Leitura na tela (HTML do livro, só leitura no site)
 router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {
   const { livroId } = req.params;
 

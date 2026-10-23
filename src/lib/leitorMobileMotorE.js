@@ -180,11 +180,14 @@ const METODOS_E = String.raw`
 
 `;
 
-function patchMotorE(template) {
+function patchMotorE(template, opcoes = {}) {
   let t = template;
+  // Livro à venda sem impressão: o modo rolagem do celular não ganha o botão "Baixar em PDF".
+  const linhaPdf = "    barra.appendChild(botao('Baixar em PDF', 'Baixar em PDF', () => self.doPrint()));\n";
+  const metodos = opcoes.semImpressao ? substituir(METODOS_E, linhaPdf, '') : METODOS_E;
   t = substituir(t, A_MONTAGEM, A_MONTAGEM + '\n      this.zsGroups = groups;\n      this.zsSync();');
   t = substituir(t, A_TECLADO, A_TECLADO + "\n    this.zsResize = () => this.zsSync();\n    window.addEventListener('resize', this.zsResize);");
-  t = substituir(t, A_DESMONTAGEM, METODOS_E.replace(/^\n/, '') + A_DESMONTAGEM);
+  t = substituir(t, A_DESMONTAGEM, metodos.replace(/^\n/, '') + A_DESMONTAGEM);
   return t;
 }
 

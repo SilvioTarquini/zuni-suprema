@@ -1926,7 +1926,7 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
           <p>${saudacaoEmail(nome)}</p>
           <p>Seu pagamento foi confirmado e o acesso ao seu livro já está liberado.</p>
-          <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler na tela, baixar e imprimir por conta própria — não há envio de exemplar físico.</p>
+          <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler no site, no computador ou no celular — não há envio de exemplar físico.</p>
           <p><a href="${linkAcesso}" style="color:#B8963E;font-weight:bold;">Acessar meu livro</a></p>
           ${linkAudiolivro ? `<p><a href="${linkAudiolivro}" style="color:#B8963E;font-weight:bold;">▶️ Ouvir audiolivro</a></p>` : ''}
           <p style="color:#b6ab93;font-size:0.85rem;">O acesso fica disponível até ${expiraFormatado}.</p>

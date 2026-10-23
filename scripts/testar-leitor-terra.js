@@ -12,6 +12,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { chromium } = require('playwright');
 const { lerLivroComPatch } = require('../src/lib/leitorMobile');
+const { tirarImpressaoDaTerra } = require('../src/lib/leitorSemImpressao');
 
 const ARQUIVO = path.join(__dirname, '..', 'private', 'livros', 'da-terra-ao-resultado', 'index.html');
 let passaram = 0;
@@ -45,10 +46,10 @@ const status = (page) => page.evaluate(() => document.getElementById('status').t
   fs.writeFileSync(temp, servido);
   const browser = await chromium.launch();
 
-  await teste('patch aditivo: sem os dois blocos injetados, o arquivo é idêntico ao original', async () => {
+  await teste('patch aditivo: sem os dois blocos injetados, o arquivo é idêntico ao original (menos o botão de imprimir, retirado de propósito)', async () => {
     const sem = servido.replace(/<style id="zs-leitor-terra">[\s\S]*?<\/style>\n/, '').replace(/<script id="zs-leitor-terra">[\s\S]*?<\/script>\n/, '');
     assert.ok(servido.length > original.length, 'patch não foi aplicado');
-    assert.strictEqual(sem, original);
+    assert.strictEqual(sem, tirarImpressaoDaTerra(original));
   });
 
   const m = await abrir(browser, temp, { width: 390, height: 844 }, '?p=16');

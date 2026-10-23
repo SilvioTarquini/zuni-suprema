@@ -1,7 +1,7 @@
 // Teste local (sem rede externa, sem servidor, sem banco) do patch de celular de "Toda Mesa Tem Dois Lados"
 // (src/lib/leitorMobileMotorE.js), sobre o HTML exatamente como o servidor o entrega (lerLivroComPatch).
 //   - o servidor reconhece o leitor (sem [LEITOR_PATCH_FALHOU]);
-//   - celular: modo de rolagem contínua com texto >= 12 px, botões sem sobreposição, sumário, A−/A+ e PDF funcionando;
+//   - celular: modo de rolagem contínua com texto >= 12 px, botões sem sobreposição, sumário e A−/A+ funcionando; sem botão de imprimir/PDF;
 //   - o texto exibido no celular é o mesmo do livro (toda palavra do modo rolagem existe nas páginas do próprio leitor);
 //   - computador: leitor original, sem o modo de rolagem; cruzar o limite de largura liga e desliga o modo.
 // Uso: node scripts/testar-leitor-mesa.js
@@ -41,6 +41,10 @@ async function abrir(browser, arquivo, vp) {
   console.error = orig;
   const temp = path.join(os.tmpdir(), 'zuni-teste-leitor-mesa.html');
   fs.writeFileSync(temp, servido);
+  // Só para conferir o texto contra as folhas de impressão do livro (o HTML servido não tem como montá-las).
+  const comImpressao = await lerLivroComPatch('toda-mesa-tem-dois-lados', ARQUIVO, { semImpressao: false });
+  const tempImp = path.join(os.tmpdir(), 'zuni-teste-leitor-mesa-com-impressao.html');
+  fs.writeFileSync(tempImp, comImpressao);
   const browser = await chromium.launch();
 
   await teste('servidor reconhece o leitor: patch aplicado e sem [LEITOR_PATCH_FALHOU]', async () => {
@@ -73,7 +77,7 @@ async function abrir(browser, arquivo, vp) {
       }
       return { n: bs.length, sobre, fora: bs.filter((b) => b.left < -1 || b.right > innerWidth + 1).length };
     });
-    assert.strictEqual(r.n, 4);
+    assert.strictEqual(r.n, 3); // Sumário, A−, A+ (sem o botão de PDF)
     assert.strictEqual(r.sobre, 0);
     assert.strictEqual(r.fora, 0);
   });
@@ -98,14 +102,18 @@ async function abrir(browser, arquivo, vp) {
     });
     assert.ok(Math.abs(t) <= 12, 'topo da seção em ' + t + 'px');
   });
-  await teste('celular: "Baixar em PDF" aciona a impressão original do livro (#printPages)', async () => {
-    await m.page.evaluate(() => { window.print = () => {}; });
-    await m.page.evaluate(() => [...document.querySelectorAll('#zsScroll button')].find((b) => b.textContent === 'Baixar em PDF').click());
-    await m.page.waitForTimeout(1500);
-    assert.ok(await m.page.evaluate(() => !!document.querySelector('#printPages')));
+  await teste('celular: nenhum botão de imprimir/PDF no HTML servido (nem "Baixar em PDF")', async () => {
+    const achados = await m.page.evaluate(() => [...document.querySelectorAll('button, a, [role=button]')]
+      .filter((e) => /imprimir|pdf/i.test((e.textContent || '') + ' ' + (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || ''))).map((e) => e.textContent.trim()));
+    assert.deepStrictEqual(achados, []);
+    assert.ok(!(await m.page.evaluate(() => !!document.querySelector('#printPages'))), '#printPages não deveria existir sem pedir impressão');
   });
   await teste('celular: todas as palavras do modo rolagem existem nas páginas do próprio livro', async () => {
-    const r = await m.page.evaluate(() => {
+    const mi = await abrir(browser, tempImp, { width: 390, height: 844 });
+    await mi.page.evaluate(() => { window.print = () => {}; });
+    await mi.page.evaluate(() => [...document.querySelectorAll('#zsScroll button')].find((b) => b.textContent === 'Baixar em PDF').click());
+    await mi.page.waitForTimeout(1500);
+    const r = await mi.page.evaluate(() => {
       const pp = document.getElementById('printPages');
       pp.style.display = 'block';
       // sem diferenciar caixa (os títulos de nota saem em maiúsculas nas páginas do livro) e sem o ornamento do fim
@@ -118,6 +126,7 @@ async function abrir(browser, arquivo, vp) {
       for (const [w, n] of rol) { total += n; const d = n - (liv.get(w) || 0); if (d > 0) { faltam += d; if (ex.length < 5) ex.push(w + 'x' + d); } }
       return { total, faltam, ex };
     });
+    await mi.ctx.close();
     assert.ok(r.total > 5000, 'texto curto demais: ' + r.total);
     assert.strictEqual(r.faltam, 0, JSON.stringify(r));
   });
@@ -142,7 +151,7 @@ async function abrir(browser, arquivo, vp) {
   await d.ctx.close();
 
   await browser.close();
-  try { fs.unlinkSync(temp); } catch (e) { /* temporário */ }
+  for (const f of [temp, tempImp]) { try { fs.unlinkSync(f); } catch (e) { /* temporário */ } }
   console.log('\nTotal: ' + (passaram + falhas.length) + ' | Passaram: ' + passaram + ' | Falharam: ' + falhas.length);
   if (falhas.length) { console.log('Falhas: ' + falhas.join(' | ')); process.exit(1); }
   console.log('OK — leitor da Mesa (rolagem no celular, computador inalterado).');

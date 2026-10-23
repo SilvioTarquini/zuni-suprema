@@ -23,6 +23,7 @@ const path = require('path');
 const { pathToFileURL } = require('url');
 const { chromium } = require('playwright');
 const { lerLivroComPatch } = require('../src/lib/leitorMobile');
+const { ehLivroSemImpressao } = require('../src/lib/leitorSemImpressao');
 
 const RAIZ_LIVROS = path.join(__dirname, '..', 'private', 'livros');
 const MIN_PX_CELULAR = 12;
@@ -35,12 +36,12 @@ const TELAS = [
 
 const lista = (a, max = 14) => (a.length ? a.slice(0, max).join(',') + (a.length > max ? ',…' : '') : '-');
 
-async function htmlServido(livroId) {
+async function htmlServido(livroId, opcoes = {}) {
   const msgs = [];
   const original = console.error;
   console.error = (...a) => { msgs.push(a.join(' ')); };
   let html;
-  try { html = await lerLivroComPatch(livroId, path.join(RAIZ_LIVROS, livroId, 'index.html')); } finally { console.error = original; }
+  try { html = await lerLivroComPatch(livroId, path.join(RAIZ_LIVROS, livroId, 'index.html'), opcoes); } finally { console.error = original; }
   return { html, patchFalhou: msgs.some((m) => m.includes('[LEITOR_PATCH_FALHOU]')), mensagens: msgs };
 }
 
@@ -215,7 +216,7 @@ async function abrirPagina(browser, tela, arquivo, sufixo) {
 async function detectarMotor(page) {
   return page.evaluate(() => {
     if (document.querySelector('.page[data-kind]')) return 'estatico';
-    if (document.getElementById('openBtn') && document.getElementById('btnPrint')) return 'react';
+    if (document.getElementById('openBtn') && document.getElementById('btnNext')) return 'react';
     if ([...document.querySelectorAll('button')].some((b) => /baixar em pdf/i.test(b.textContent))) return 'componente';
     return 'desconhecido';
   });
@@ -273,17 +274,37 @@ async function auditarCenario(browser, arquivo, tela, fonteMax, motor) {
   return saida;
 }
 
+// Os 4 livros à venda não podem ter controle de imprimir/PDF no HTML servido (rota /livros/:id).
+async function controlesDeImpressao(browser, arquivo, tela) {
+  const { ctx, page } = await abrirPagina(browser, tela, arquivo);
+  await page.waitForTimeout(3500);
+  try {
+    await page.evaluate(() => { const b = document.getElementById('openBtn') || [...document.querySelectorAll('button')].find((x) => /clique para abrir|^›$/i.test(x.textContent.trim())); if (b) b.click(); });
+    await page.waitForTimeout(2500);
+    return await page.evaluate(() => [...document.querySelectorAll('button, a, [role=button]')]
+      .filter((e) => /^(btnPrint|printBtn)$/.test(e.id) || /imprimir|pdf/i.test((e.textContent || '') + ' ' + (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || '')))
+      .map((e) => (e.id || e.textContent.trim()).slice(0, 40)));
+  } finally { await ctx.close(); }
+}
+
 async function auditar(livroId) {
   const arquivoOriginal = path.join(RAIZ_LIVROS, livroId, 'index.html');
   if (!fs.existsSync(arquivoOriginal)) throw new Error(`Livro não encontrado: ${arquivoOriginal}`);
   const { html, patchFalhou, mensagens } = await htmlServido(livroId);
   const temp = path.join(os.tmpdir(), `zuni-auditoria-${livroId}.html`);
   fs.writeFileSync(temp, html);
+  // As folhas de impressão (cortes de página) só existem com o botão de impressão: nos livros sem ele, o texto é medido
+  // no HTML com impressão (mesmo patch, só sem a remoção). Quem lê continua sendo o HTML servido (conferido abaixo).
+  let tempMedicao = temp;
+  if (ehLivroSemImpressao(livroId)) {
+    tempMedicao = path.join(os.tmpdir(), `zuni-auditoria-${livroId}-com-impressao.html`);
+    fs.writeFileSync(tempMedicao, (await htmlServido(livroId, { semImpressao: false })).html);
+  }
 
   const browser = await chromium.launch();
   let motor = 'desconhecido';
   {
-    const { ctx, page } = await abrirPagina(browser, TELAS[0], temp);
+    const { ctx, page } = await abrirPagina(browser, TELAS[0], tempMedicao);
     await page.waitForTimeout(3000);
     motor = await detectarMotor(page);
     await ctx.close();
@@ -292,14 +313,22 @@ async function auditar(livroId) {
   for (const tela of TELAS) {
     for (const fonteMax of [false, true]) {
       if (motor === 'componente' && fonteMax) continue; // sem A−/A+ nesse leitor
-      linhas.push({ ...(await auditarCenario(browser, temp, tela, fonteMax, motor)), celular: tela.celular });
+      linhas.push({ ...(await auditarCenario(browser, motor === 'estatico' ? temp : tempMedicao, tela, fonteMax, motor)), celular: tela.celular });
+    }
+  }
+  const impressao = [];
+  if (ehLivroSemImpressao(livroId)) {
+    for (const tela of [TELAS[0], TELAS[1]]) {
+      const achados = await controlesDeImpressao(browser, temp, tela);
+      if (achados.length) impressao.push(`${tela.nome}: ${achados.join(', ')}`);
     }
   }
   await browser.close();
-  try { fs.unlinkSync(temp); } catch (e) { /* temporário */ }
+  for (const f of [temp, tempMedicao]) { try { fs.unlinkSync(f); } catch (e) { /* temporário */ } }
 
   const falhas = [];
   if (patchFalhou) falhas.push('[LEITOR_PATCH_FALHOU] ' + mensagens.join(' ').slice(0, 160));
+  if (impressao.length) falhas.push('controle de imprimir/PDF no HTML servido: ' + impressao.join(' | '));
   for (const l of linhas) {
     if (l.erro) falhas.push(`${l.tela}/${l.fonte}: erro de medição: ${l.erro}`);
     if (l.cortadas && l.cortadas.length) falhas.push(`${l.tela}/${l.fonte}: ${l.cortadas.length} página(s) com texto cortado`);

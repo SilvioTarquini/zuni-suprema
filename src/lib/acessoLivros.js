@@ -1,6 +1,6 @@
 // lib/acessoLivros.js
 //
-// Controla a liberação de acesso aos livros (leitura, download, impressão)
+// Controla a liberação de acesso aos livros (leitura no site)
 // após confirmação de pagamento via MercadoPago.
 //
 // Depende de um cliente Supabase (service role, pois grava na tabela
