@@ -45,7 +45,7 @@ const calcularPrecoFinalLivro = new Function(
 )(buscarCupom, calcularDesconto, calcularPrecoBaseLivro);
 
 const iniRota = srcServer.indexOf("app.get('/api/validar-cupom'");
-const fimRota = srcServer.indexOf("app.post('/api/checkout/livro/preference'");
+const fimRota = srcServer.indexOf("app.get('/api/checkout/livro/session-status'");
 assert.ok(iniRota > 0 && fimRota > iniRota, 'rota /api/validar-cupom não encontrada em server.js');
 let handlerValidarCupom = null;
 const appFalso = { get: (rota, h) => { if (rota === '/api/validar-cupom') handlerValidarCupom = h; } };

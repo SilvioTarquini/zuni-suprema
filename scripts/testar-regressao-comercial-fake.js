@@ -37,7 +37,7 @@ async function teste(nome, fn) { total++; try { await fn(); ok++; console.log(` 
   }));
   const PORTA = 19900 + Math.floor(Math.random() * 90);
   const env = { ...process.env, PORT: String(PORTA), SESSION_TOKEN_SECRET: SEGREDO, AUTH_CORTE_TS: '0', SUPABASE_URL: 'https://falso.example.test', SUPABASE_KEY: 'chave-falsa', ANTHROPIC_API_KEY: 'chave-falsa', RESEND_API_KEY: 're_falsa', RESEND_FROM_EMAIL: 'ZUNI <nao-responda@example.test>', STRIPE_SECRET_KEY: 'sk_test_falsa_local', STRIPE_WEBHOOK_SECRET: WHSEC, STRIPE_PUBLISHABLE_KEY: 'pk_test_falsa', FRONTEND_URL: 'http://localhost:' + PORTA, FAKE_DB_SEED: seed, FAKE_DB_DUMP: dump, FAKE_EMAIL_LOG: emailLog };
-  for (const k of ['OPENAI_API_KEY', 'ROTA_TESTE_RELATORIO', 'DEMO_LIMITES_PERSISTENTES', 'MERCADOPAGO_TOKEN']) delete env[k];
+  for (const k of ['OPENAI_API_KEY', 'ROTA_TESTE_RELATORIO', 'DEMO_LIMITES_PERSISTENTES']) delete env[k];
   const filho = spawn(process.execPath, ['-r', path.join(raiz, 'scripts/suporte/preload-ambiente-falso.js'), path.join(raiz, 'src/server.js')], { cwd: raiz, env, stdio: ['ignore', 'pipe', 'pipe'] });
   let log = ''; filho.stdout.on('data', (d) => { log += d; }); filho.stderr.on('data', (d) => { log += d; });
   const req = (metodo, caminho, { headers = {}, corpo, bruto } = {}) => new Promise((resolve, reject) => {

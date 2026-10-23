@@ -5,7 +5,6 @@ const cors = require('cors');
 const { createClient } = require('@supabase/supabase-js');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
-const { MercadoPagoConfig, Preference } = require('mercadopago');
 const Stripe = require('stripe');
 require('dotenv').config();
 
@@ -16,9 +15,7 @@ const experimenteLivroChatRouter = require('./routes/experimenteLivroChat');
 const { criarAcesso, buscarAcessoPorEmail, DIAS_DE_ACESSO } = require('./lib/acessoLivros');
 const crypto = require('crypto');
 const { buscarLivro, serializarLivroCatalogo } = require('./lib/catalogoLivros');
-const { criarPedidoPendente, buscarPedidoPendente } = require('./lib/pedidosLivros');
 const { criarPedidoPendenteStripe, buscarPedidoPendenteStripe, vincularStripeSessionId, marcarPedidoPendenteProcessado } = require('./lib/pedidosCheckoutStripe');
-const { criarPedidoPendente: criarPedidoPendenteSE, buscarPedidoPendente: buscarPedidoPendenteSE, deletarPedidoPendente: deletarPedidoPendenteSE } = require('./lib/pedidosSessoesExtras');
 const { calcularPrecoBaseLivro } = require('./lib/precoLivro');
 const { normalizarOrigem } = require('./lib/origemCompra');
 const { saudacaoEmail } = require('./lib/saudacaoEmail');
@@ -28,7 +25,7 @@ const { criarOrcamentoDemoPersistente } = require('./lib/orcamentoDemoPersistent
 const { criarRecuperacaoSessao, normalizarEmail: normalizarEmailRecuperacao } = require('./lib/recuperacaoSessao');
 const { mascararCodigo, criarCupomSessao, validarCupom, validarCupomSemMarcar, calcularDesconto } = require('./lib/cupons');
 const { gerarResumoSessao, salvarResumoSessao, injetarContextoJornada, injetarContextoPacko, injetarContextoMapaAstral, MEMORIA_ATIVA } = require('./lib/memoriaSessoes');
-const { criarPacoteSessoes, buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote, PREÇO_PACOTE, SESSOES_POR_PACOTE } = require('./lib/creditosSessao');
+const { buscarPacoteAtivo, consumirCredito, buscarResumosDoPacko, statusPacote } = require('./lib/creditosSessao');
 const { calcularMapaNatal } = require('./lib/astro');
 const { calcularNumerologia, calcularCaminhoDeVida, calcularEssencia } = require('./lib/numerologia');
 const { validarCodigo, registrarAcesso } = require('./lib/codigosExperimente');
@@ -41,12 +38,6 @@ const { gerarTokenSessao, validarTokenSessao, VALIDADE_CHAT_MS, VALIDADE_DOWNLOA
 const { emailValido, criarLimitadorRelatorio, exigirAutorizacaoRelatorio, responderLimite } = require('./lib/protecaoRelatorio');
 const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca, removerConviteComercial } = require('./lib/protecaoCrise');
 
-const mpClient = process.env.MERCADOPAGO_TOKEN
-  ? new MercadoPagoConfig({ accessToken: process.env.MERCADOPAGO_TOKEN })
-  : null;
-
-// Fase 1 da migração ZUNI Direciona (Sessão ZUNI) para Stripe. Os outros
-// quatro produtos continuam no mpClient acima — não misturar.
 const stripeClient = process.env.STRIPE_SECRET_KEY
   ? new Stripe(process.env.STRIPE_SECRET_KEY)
   : null;
@@ -85,9 +76,9 @@ function assertSupabase() {
 }
 
 // Calcula o preço final do checkout de um livro (livro + audiolivro
-// opcional + cupom) — única fonte da fórmula, usada pelas 3 rotas de
-// checkout (Stripe e as duas do MercadoPago), para nunca divergirem entre
-// si. Decisão de 27/09/2026: o desconto do cupom incide sobre o TOTAL
+// opcional + cupom) — única fonte da fórmula, usada pelo checkout do
+// livro, para nunca divergir.
+// Decisão de 27/09/2026: o desconto do cupom incide sobre o TOTAL
 // (livro + audiolivro), respeitando teto_reais quando existir — antes
 // disso, calcularDesconto(livro, cupom) usava só livro.preco (preço-base)
 // e o resultado substituía o preço já somado com o audiolivro, derrubando
@@ -837,8 +828,6 @@ async function processarFulfillmentLivro(stripeSession, eventType) {
 // Webhook Stripe — precisa do corpo BRUTO (express.raw) para a verificação
 // de assinatura, então tem que ser registrado ANTES do express.json()
 // global logo abaixo (senão o body já chega parseado/consumido).
-// MercadoPago segue com seu próprio webhook (/api/pagamento/webhook),
-// intocado, para os produtos ainda não migrados.
 //
 // A resposta só é enviada depois do fulfillment terminar (não é
 // fire-and-forget): uma falha real no processamento vira 500, o que faz o
@@ -1860,56 +1849,7 @@ async function gerarEEnviarRelatorio(sessionId, { destinatario = null } = {}) {
   }, 1000);
   // ────────────────────────────────────────────────────
 }
-async function consultarPedidoMercadoPago(pedidoId) {
-  const mpRes = await fetch(`https://api.mercadopago.com/v1/orders/${pedidoId}`, {
-    headers: { 'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}` }
-  });
-
-  if (!mpRes.ok) {
-    const errText = await mpRes.text();
-    throw new Error(`Erro ao consultar pedido no Mercado Pago (status ${mpRes.status}): ${errText}`);
-  }
-
-  return mpRes.json();
-}
-
-async function consultarPagamentoMercadoPago(paymentId) {
-  const mpRes = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-    headers: { 'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}` }
-  });
-
-  if (!mpRes.ok) {
-    const errText = await mpRes.text();
-    throw new Error(`Erro ao consultar pagamento no Mercado Pago (status ${mpRes.status}): ${errText}`);
-  }
-
-  return mpRes.json();
-}
-
-async function marcarPagoSeAprovado(order) {
-  const isPaid = order.status === 'approved' ||
-                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
-
-  if (isPaid && order.external_reference) {
-    const session = await getSession(order.external_reference);
-    if (session && !session.paid) {
-      session.paid = true;
-      await upsertSession(session);
-    }
-  }
-
-  return isPaid;
-}
-
-// ── LIVROS: checkout avulso e liberação de acesso ──────────────────
-// Os endpoints /api/checkout/livro* abaixo criam um pedido pendente via
-// criarPedidoPendente() (tabela pedidos_livros_pendentes) e usam a
-// referência curta devolvida como external_reference no MercadoPago —
-// a API de orders só aceita [A-Za-z0-9_-] com no máximo 64 caracteres,
-// curto demais para carregar nome e e-mail diretamente. No webhook,
-// buscarPedidoPendente() recupera os dados reais a partir dessa
-// referência para então chamar criarAcesso().
-
+// ── LIVROS: liberação de acesso ────────────────────────────────────
 async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudiolivro, nome) {
   const tipo = 'acesso-livro';
   try {
@@ -1948,127 +1888,6 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
     console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${error.message}`);
     return { sucesso: false, erro: error.message };
   }
-}
-
-async function enviarEmailConfirmacaoSessoesExtras(email, nomeCliente, pacoteId) {
-  const tipo = 'confirmacao-sessoes-extras';
-  try {
-    const { enviarEmail } = require('./lib/email');
-
-    const frontendUrl = process.env.FRONTEND_URL || 'https://www.zunisuprema.com.br';
-
-    const html = `
-        <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
-          <p>Olá ${nomeCliente}!</p>
-          <p>Seu pagamento foi confirmado. Você agora tem <strong>3 sessões extras</strong> disponíveis, válidas por 30 dias.</p>
-          <p><a href="${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=aprovado" style="color:#B8963E;font-weight:bold;">Agendar Sessão</a></p>
-
-          <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
-        </div>
-      `;
-
-    return await enviarEmail({ to: email, subject: '✨ Seu pacote de 3 Sessões Extras foi liberado', html, tipo });
-  } catch (error) {
-    console.error(`[EMAIL_FALHOU] tipo=${tipo} destinatario=${email} erro=${error.message}`);
-    return { sucesso: false, erro: error.message };
-  }
-}
-
-async function criarAcessoLivroSeAplicavel(order, paymentId) {
-  const referencia = order.external_reference;
-  if (!referencia || !referencia.startsWith('lv')) return null;
-
-  const pedido = await buscarPedidoPendente(referencia);
-  if (!pedido) return null;
-
-  const isPaid = order.status === 'approved' ||
-                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
-  if (!isPaid) return null;
-
-  const acesso = await criarAcesso({ livroId: pedido.livroId, email: pedido.email, paymentId });
-
-  let acessoAudiolivro = null;
-  if (pedido.audiolivroIncluido) {
-    const supabaseClient = assertSupabase();
-    const tokenAudiolivro = crypto.randomBytes(24).toString('hex');
-    const expiraEm = new Date(Date.now() + DIAS_DE_ACESSO * 24 * 60 * 60 * 1000);
-
-    await supabaseClient.from('acessos_livros').insert({
-      livro_id: pedido.livroId,
-      email: pedido.email,
-      token: tokenAudiolivro,
-      payment_id: `${paymentId}-audiolivro`,
-      data_pagamento: new Date().toISOString(),
-      data_expiracao: expiraEm.toISOString(),
-      tipo_produto: 'audiolivro'
-    });
-
-    acessoAudiolivro = { token: tokenAudiolivro, expiraEm };
-  }
-
-  // enviarEmailAcessoLivro trata os próprios erros internamente (Resend) e
-  // devolve false em vez de lançar — checagem explícita do retorno, mesmo
-  // padrão aplicado ao fulfillment Stripe (fulfillLivro) em src/server.js.
-  const emailEnviado = await enviarEmailAcessoLivro(pedido.email, pedido.livroId, acesso.token, acesso.expiraEm, acessoAudiolivro?.token, pedido.nome);
-  if (!emailEnviado) {
-    console.error(`[LIVRO_EMAIL_FALHOU] referencia=${referencia} email=${pedido.email}`);
-  }
-  return acesso;
-}
-
-async function criarPacoteSessoesSeAplicavel(order, paymentId) {
-  const referencia = order.external_reference;
-  if (!referencia || !referencia.startsWith('se')) return null;
-
-  const pedido = await buscarPedidoPendenteSE(referencia);
-  if (!pedido) return null;
-
-  const isPaid = order.status === 'approved' ||
-                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
-  if (!isPaid) return null;
-
-  const pacote = await criarPacoteSessoes({ email: pedido.email, paymentId });
-
-  // Enviar e-mail de confirmação
-  try {
-    await enviarEmailConfirmacaoSessoesExtras(pedido.email, pedido.nome, pacote.pacoteId);
-  } catch (err) {
-    console.error('[WEBHOOK] Erro ao enviar e-mail Sessões Extras:', err.message);
-    // Não propaga — pacote já foi criado
-  }
-
-  try {
-    await deletarPedidoPendenteSE(referencia);
-  } catch (err) {
-    console.error('[WEBHOOK] Erro ao deletar pedido pendente:', err.message);
-  }
-
-  return pacote;
-}
-
-async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
-  const referencia = order.external_reference;
-  if (!referencia || !referencia.startsWith('mi')) return null;
-
-  const session = await getSession(referencia);
-  if (!session || session.productType !== 'mapa-integrado') return null;
-
-  const isPaid = order.status === 'approved' ||
-                 Boolean(order.transactions?.payments?.some(p => p.status === 'approved'));
-  if (!isPaid) return null;
-
-  const reportText = await generateReportText(session);
-
-  try {
-    session.relatorioGerado = true;
-    session.relatorioTexto = reportText;
-    await upsertSession(session);
-    console.log(`[MAPA-INTEGRADO] Relatório gerado para sessão ${referencia}`);
-  } catch (err) {
-    console.error(`[MAPA-INTEGRADO] Erro ao salvar relatório: ${err.message}`);
-  }
-
-  return reportText;
 }
 
 // Prazo de leitura no site depois da compra (LIVRO_ACESSO_DIAS): as páginas estáticas da loja e do checkout leem daqui,
@@ -2151,148 +1970,6 @@ app.get('/api/validar-cupom', async (req, res) => {
   }
 });
 
-app.post('/api/checkout/livro/preference', async (req, res) => {
-  try {
-    const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
-
-    if (!livroId || !name || !email) {
-      return res.status(400).json({ error: 'Livro, nome e email são obrigatórios.' });
-    }
-
-    const livro = buscarLivro(livroId);
-    if (!livro) {
-      return res.status(404).json({ error: 'Livro não encontrado.' });
-    }
-
-    if (!mpClient) {
-      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
-    }
-
-    const { precoFinal } = await calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom });
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-    const frontendUrl = process.env.FRONTEND_URL;
-    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, audiolivroIncluido });
-
-    const preference = new Preference(mpClient);
-    const result = await preference.create({
-      body: {
-        items: [
-          {
-            id: livroId,
-            title: livro.titulo,
-            quantity: 1,
-            unit_price: precoFinal,
-            currency_id: 'BRL'
-          }
-        ],
-        payer: {
-          name: firstName,
-          surname: lastName,
-          email
-        },
-        external_reference: externalReference,
-        back_urls: {
-          success: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&email=${encodeURIComponent(email)}&status=retorno`,
-          pending: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&email=${encodeURIComponent(email)}&status=retorno`,
-          failure: `${frontendUrl}/checkout-livro.html?livro=${encodeURIComponent(livroId)}&erro=1`
-        },
-        // auto_return exige back_urls públicas em HTTPS — indisponível em dev local (http://localhost)
-        ...(frontendUrl.startsWith('https://') ? { auto_return: 'approved' } : {})
-      }
-    });
-
-    return res.json({ init_point: result.init_point });
-  } catch (error) {
-    console.error('Erro ao criar preferência Mercado Pago (livro):', error);
-    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
-  }
-});
-
-app.post('/api/checkout/livro', async (req, res) => {
-  try {
-    const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
-
-    if (!livroId || !name || !email) {
-      return res.status(400).json({ error: 'Livro, nome e email são obrigatórios.' });
-    }
-
-    const livro = buscarLivro(livroId);
-    if (!livro) {
-      return res.status(404).json({ error: 'Livro não encontrado.' });
-    }
-
-    const { precoFinal } = await calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom });
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-    const externalReference = await criarPedidoPendente({ livroId, nome: name, email, audiolivroIncluido });
-    const valorFormatado = precoFinal.toFixed(2);
-
-    const orderBody = {
-      type: 'online',
-      total_amount: valorFormatado,
-      external_reference: externalReference,
-      processing_mode: 'automatic',
-      transactions: {
-        payments: [
-          { amount: valorFormatado, payment_method: { id: 'pix', type: 'bank_transfer' } }
-        ]
-      },
-      payer: {
-        email,
-        first_name: firstName,
-        last_name: lastName
-      }
-    };
-
-    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': uuidv4()
-      },
-      body: JSON.stringify(orderBody)
-    });
-
-    if (!mpRes.ok) {
-      const errText = await mpRes.text();
-      const requestId = mpRes.headers.get('x-request-id');
-      console.error('Erro Mercado Pago (livro):', mpRes.status, errText, '| x-request-id:', requestId);
-      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
-    }
-
-    const order = await mpRes.json();
-    const paymentResponse = order.transactions?.payments?.[0];
-    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
-    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
-
-    if (!qrCodeText) {
-      console.error('Mercado Pago não retornou QR Code PIX (livro):', JSON.stringify(order));
-      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
-    }
-
-    return res.json({ pedidoId: order.id, qrCodeText, qrCodeImage });
-  } catch (error) {
-    console.error('Erro em /api/checkout/livro:', error);
-    return res.status(500).json({ error: 'Erro ao criar pedido.' });
-  }
-});
-
-app.get('/api/checkout/livro/status/:pedidoId', async (req, res) => {
-  try {
-    const { pedidoId } = req.params;
-    const order = await consultarPedidoMercadoPago(pedidoId);
-    const acesso = await criarAcessoLivroSeAplicavel(order, pedidoId);
-    return res.json({ pago: Boolean(acesso), token: acesso?.token || null });
-  } catch (error) {
-    console.error('Erro em /api/checkout/livro/status:', error);
-    return res.status(500).json({ pago: false });
-  }
-});
-
 app.get('/api/checkout/livro/session-status', async (req, res) => {
   try {
     const { livroId, email } = req.query;
@@ -2307,10 +1984,7 @@ app.get('/api/checkout/livro/session-status', async (req, res) => {
   }
 });
 
-// Fase 2 da migração para Stripe: só o botão Cartão de checkout-livro.html
-// passa a usar esta rota. O botão Pix continua em /api/checkout/livro
-// (MercadoPago), intocado — Pix no Stripe Brasil é só por convite (ver
-// STATUS_ZUNI.md), exceção temporária documentada.
+// Checkout Stripe (cartão) de checkout-livro.html. Pix no Stripe Brasil é só por convite (ver STATUS_ZUNI.md).
 app.post('/api/checkout/livro/stripe-session', async (req, res) => {
   try {
     const { livroId, name, email, cupom, audiolivroIncluido } = req.body;
@@ -2334,7 +2008,7 @@ app.post('/api/checkout/livro/stripe-session', async (req, res) => {
     // Preço sempre resolvido no servidor (catálogo + audiolivro + cupom) —
     // nunca aceito pronto do front. calcularPrecoFinalLivro aplica o cupom
     // sobre o TOTAL (livro + audiolivro), respeitando teto_reais — mesma
-    // função usada pelas rotas MercadoPago equivalentes, para nunca divergir.
+    // função usada em todo o fluxo de preço do livro, para nunca divergir.
     const { precoFinal, cupomInvalido } = await calcularPrecoFinalLivro({ livro, audiolivroIncluido, cupom });
     if (cupomInvalido) {
       return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
@@ -2429,57 +2103,6 @@ app.use('/', experimenteLivroChatRouter);
 // SESSÕES EXTRAS — Pacotes de 3 Sessões com Crédito
 // ═════════════════════════════════════════════════════════════════
 
-app.post('/api/checkout/sessoes-extras/preference', async (req, res) => {
-  try {
-    const { name, email } = req.body;
-
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
-    }
-
-    if (!mpClient) {
-      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
-    }
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-    const frontendUrl = process.env.FRONTEND_URL;
-    const externalReference = await criarPedidoPendenteSE({ nome: name, email });
-
-    const preference = new Preference(mpClient);
-    const result = await preference.create({
-      body: {
-        items: [
-          {
-            id: 'sessoes-extras',
-            title: `Sessões Extras — ${SESSOES_POR_PACOTE} sessões com continuidade de jornada`,
-            quantity: 1,
-            unit_price: PREÇO_PACOTE,
-            currency_id: 'BRL'
-          }
-        ],
-        payer: {
-          name: firstName,
-          surname: lastName,
-          email
-        },
-        external_reference: externalReference,
-        back_urls: {
-          success: `${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=aprovado`,
-          pending: `${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&status=pendente`,
-          failure: `${frontendUrl}/sessoes-extras-confirmacao.html?email=${encodeURIComponent(email)}&erro=1`
-        },
-        ...(frontendUrl?.startsWith('https://') ? { auto_return: 'approved' } : {})
-      }
-    });
-
-    return res.json({ init_point: result.init_point });
-  } catch (error) {
-    console.error('Erro ao criar preferência (Sessões Extras):', error);
-    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
-  }
-});
-
 app.get('/api/sessoes-extras/status', async (req, res) => {
   try {
     const { email } = req.query;
@@ -2550,16 +2173,6 @@ app.post('/api/sessoes-extras/iniciar-sessao', async (req, res) => {
 
 // ─────────────────────────────────────────────────────────────────
 
-app.get('/api/mercadopago/public-key', (req, res) => {
-  const publicKey = process.env.MERCADOPAGO_PUBLIC_KEY;
-
-  if (!publicKey) {
-    return res.status(500).json({ error: 'Mercado Pago não configurado.' });
-  }
-
-  return res.json({ publicKey });
-});
-
 app.get('/api/stripe/public-key', (req, res) => {
   const publicKey = process.env.STRIPE_PUBLISHABLE_KEY;
 
@@ -2570,84 +2183,7 @@ app.get('/api/stripe/public-key', (req, res) => {
   return res.json({ publicKey });
 });
 
-app.post('/api/checkout/preference', async (req, res) => {
-  try {
-    const { cupom } = req.body;
-
-    if (!mpClient) {
-      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
-    }
-
-    // Validar e calcular desconto se cupom fornecido
-    let unitPrice = 27.90;
-    if (cupom) {
-      const cupomValidado = await validarCupom(cupom);
-      if (!cupomValidado) {
-        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
-      }
-      const desconto = calcularDesconto({ preco: 27.90, categoria: undefined }, cupomValidado);
-      unitPrice = desconto.precoFinal;
-    }
-
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      productType: 'chat-mentor',
-      history: [],
-      counter: 0,
-      paid: unitPrice === 0,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
-    if (unitPrice === 0) {
-      console.log(`[CHECKOUT-PREF] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
-      const frontendUrl = process.env.FRONTEND_URL;
-      return res.json({
-        sessionId,
-        init_point: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno&cupom100=true`,
-        cupom100: true,
-        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
-      });
-    }
-
-    const frontendUrl = process.env.FRONTEND_URL;
-
-    const preference = new Preference(mpClient);
-    const result = await preference.create({
-      body: {
-        items: [
-          {
-            id: 'chat-mentor-zuni',
-            title: 'ZUNI Direciona — Sessão de orientação',
-            quantity: 1,
-            unit_price: unitPrice,
-            currency_id: 'BRL'
-          }
-        ],
-        external_reference: sessionId,
-        back_urls: {
-          success: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno`,
-          pending: `${frontendUrl}/checkout.html?sessionId=${sessionId}&status=retorno`,
-          failure: `${frontendUrl}/checkout.html?erro=1`
-        },
-        // auto_return exige back_urls públicas em HTTPS — indisponível em dev local (http://localhost)
-        ...(frontendUrl.startsWith('https://') ? { auto_return: 'approved' } : {})
-      }
-    });
-
-    return res.json({ sessionId, init_point: result.init_point });
-  } catch (error) {
-    console.error('Erro ao criar preferência Mercado Pago:', error);
-    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
-  }
-});
-
-// Fase 1 da migração para Stripe: só a Sessão ZUNI (ZUNI Direciona) passa
-// a usar esta rota. Os outros quatro produtos continuam em suas rotas
-// MercadoPago, intocadas (inclusive a /api/checkout/preference acima).
+// Checkout Stripe da Sessão ZUNI (ZUNI Direciona).
 app.post('/api/checkout/stripe-session', async (req, res) => {
   try {
     const { cupom, tema } = req.body;
@@ -2669,8 +2205,7 @@ app.post('/api/checkout/stripe-session', async (req, res) => {
 
     const sessionId = uuidv4();
 
-    // Cupom 100%: mesmo atalho já usado pelo fluxo MercadoPago — sem
-    // gateway nenhum, sessão marcada como paga na hora. O Stripe recusaria
+    // Cupom 100%: sem gateway nenhum, sessão marcada como paga na hora. O Stripe recusaria
     // uma Checkout Session de valor zero (mínimo de R$0,50 em BRL).
     if (unitPrice === 0) {
       await upsertSession({
@@ -2749,62 +2284,6 @@ app.get('/api/checkout/session-status/:sessionId', async (req, res) => {
   } catch (error) {
     console.error('Erro em /api/checkout/session-status:', error);
     return res.status(500).json({ pago: false });
-  }
-});
-
-app.post('/api/pagamento/webhook', async (req, res) => {
-  try {
-    const event = req.body;
-    const dataId = event.data?.id;
-
-    if (event.type === 'order' && dataId) {
-      const order = await consultarPedidoMercadoPago(dataId);
-      const pago = await marcarPagoSeAprovado(order);
-      try {
-        await criarAcessoLivroSeAplicavel(order, dataId);
-      } catch (err) {
-        console.error('[WEBHOOK] Erro ao liberar acesso a livro:', err.message);
-      }
-      try {
-        await criarPacoteSessoesSeAplicavel(order, dataId);
-      } catch (err) {
-        console.error('[WEBHOOK] Erro ao criar pacote de sessões extras:', err.message);
-      }
-      try {
-        await gerarRelatorioMapaIntegradoSeAplicavel(order, dataId);
-      } catch (err) {
-        console.error('[WEBHOOK] Erro ao gerar relatório Mapa Integrado:', err.message);
-      }
-      if (pago) {
-        console.log(`[WEBHOOK] Pagamento confirmado — pedido ${dataId}`);
-      }
-    } else if (event.type === 'payment' && dataId) {
-      const payment = await consultarPagamentoMercadoPago(dataId);
-      const pago = await marcarPagoSeAprovado(payment);
-      try {
-        await criarAcessoLivroSeAplicavel(payment, dataId);
-      } catch (err) {
-        console.error('[WEBHOOK] Erro ao liberar acesso a livro:', err.message);
-      }
-      try {
-        await criarPacoteSessoesSeAplicavel(payment, dataId);
-      } catch (err) {
-        console.error('[WEBHOOK] Erro ao criar pacote de sessões extras:', err.message);
-      }
-      try {
-        await gerarRelatorioMapaIntegradoSeAplicavel(payment, dataId);
-      } catch (err) {
-        console.error('[WEBHOOK] Erro ao gerar relatório Mapa Integrado:', err.message);
-      }
-      if (pago) {
-        console.log(`[WEBHOOK] Pagamento confirmado — pagamento ${dataId}`);
-      }
-    }
-
-    return res.json({ received: true });
-  } catch (error) {
-    console.error('Erro em /api/pagamento/webhook:', error);
-    return res.status(400).json({ error: error.message });
   }
 });
 
@@ -3475,568 +2954,37 @@ app.post('/api/questionario/gerar-resposta-b/:sessionId', async (req, res) => {
 
 // ── SERVIÇO ASTRO-NUMEROLÓGICO FORA DO AR (decisão de 30/09/2026) ──────────
 // Mapa Astral, Mapa Integrado e brinde "Estudo Integrativo" serão refeitos do
-// zero sobre um novo RAG. Código e tabelas ficam, só as portas de entrada
-// fecham. Este bloco precisa ficar ANTES das rotas abaixo e do express.static
-// (senão /brinde.html e /checkout-mapa-*.html abririam direto da pasta public).
-// Fica de fora de propósito: webhook do MercadoPago (pagamentos já em
-// andamento) e os GET de status dos checkouts (polling de quem já pagou).
+// zero sobre um novo RAG. Este bloco precisa ficar ANTES do express.static
+// (senão /brinde.html abriria direto da pasta public).
 const PAGINAS_ASTRO_FORA_DO_AR = new Set([
   '/brinde', '/brinde.html', '/checkout-mapa-astral.html', '/checkout-mapa-integrado.html'
 ]);
-const ROTAS_CHECKOUT_ASTRO = /^\/api\/checkout\/mapa-(astral|integrado)(\/preference|\/test)?$/;
+
+// ── MERCADOPAGO ENCERRADO ──────────────────────────────────────────────────
+// Todas as vendas passam pelo Stripe. Rotas antigas do MercadoPago (criação de
+// pedido, status e webhook) respondem 410 Gone — nunca 500 — para que quem
+// ainda chame (bookmark, retry de webhook) receba um fim definitivo, e não um
+// erro transitório que provoca nova tentativa.
+const ROTAS_MERCADOPAGO_ENCERRADAS = [
+  /^\/api\/pagamento\/webhook$/,
+  /^\/api\/mercadopago\//,
+  /^\/api\/checkout\/preference$/,
+  /^\/api\/checkout\/livro$/,
+  /^\/api\/checkout\/livro\/(preference|status\/[^/]+)$/,
+  /^\/api\/checkout\/sessoes-extras\/preference$/,
+  /^\/api\/checkout\/mapa-(astral|integrado)(\/.*)?$/
+];
 app.use((req, res, next) => {
   if (req.method === 'GET' && PAGINAS_ASTRO_FORA_DO_AR.has(req.path)) {
     return res.redirect(302, '/loja/');
   }
-  if (req.path.startsWith('/api/brinde/') || (req.method === 'POST' && ROTAS_CHECKOUT_ASTRO.test(req.path))) {
+  if (req.path.startsWith('/api/brinde/')) {
     return res.status(410).json({ error: 'Serviço em breve.' });
   }
+  if (ROTAS_MERCADOPAGO_ENCERRADAS.some((re) => re.test(req.path))) {
+    return res.status(410).json({ error: 'Esta forma de pagamento foi encerrada. Use o cartão pelo site.' });
+  }
   next();
-});
-
-// ── MAPA ASTRAL: checkout com dados de nascimento ────────────────
-app.post('/api/checkout/mapa-astral', async (req, res) => {
-  try {
-    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology, metodoPagamento } = req.body;
-
-    if (!name || !email || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
-    }
-
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      name,
-      email,
-      birthDate,
-      birthTime,
-      birthLocation,
-      birthNameFull: birthNameFull || null,
-      productType: productType || 'mapa-astral',
-      includeNumerology: includeNumerology || false,
-      history: [],
-      counter: 0,
-      paid: false,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-
-    const paymentMethod = { id: 'pix', type: 'bank_transfer' };
-    const payment = {
-      amount: '29.90',
-      payment_method: paymentMethod
-    };
-
-    const orderBody = {
-      type: 'online',
-      total_amount: '29.90',
-      external_reference: sessionId,
-      processing_mode: 'automatic',
-      transactions: {
-        payments: [payment]
-      },
-      payer: {
-        email,
-        first_name: firstName,
-        last_name: lastName
-      }
-    };
-
-    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': uuidv4()
-      },
-      body: JSON.stringify(orderBody)
-    });
-
-    if (!mpRes.ok) {
-      const errText = await mpRes.text();
-      const requestId = mpRes.headers.get('x-request-id');
-      console.error('Erro Mercado Pago (mapa-astral):', mpRes.status, errText, '| x-request-id:', requestId);
-      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
-    }
-
-    const order = await mpRes.json();
-    const paymentResponse = order.transactions?.payments?.[0];
-
-    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
-    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
-
-    if (!qrCodeText) {
-      console.error('Mercado Pago não retornou QR Code PIX (mapa-astral):', JSON.stringify(order));
-      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
-    }
-
-    return res.json({ sessionId, pedidoId: order.id, qrCodeText, qrCodeImage });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-astral:', error);
-    return res.status(500).json({ error: 'Erro ao criar pedido.' });
-  }
-});
-
-app.get('/api/checkout/mapa-astral/status/:pedidoId', async (req, res) => {
-  try {
-    const { pedidoId } = req.params;
-    const order = await consultarPedidoMercadoPago(pedidoId);
-    const pago = await marcarPagoSeAprovado(order);
-    if (!pago) return res.json({ pago: false });
-    return res.json({ pago: true, token: gerarTokenSessao(order.external_reference, 'chat', VALIDADE_CHAT_MS) });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-astral/status:', error);
-    return res.status(500).json({ pago: false });
-  }
-});
-
-app.post('/api/checkout/mapa-astral/preference', async (req, res) => {
-  try {
-    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology } = req.body;
-
-    if (!name || !email || !birthDate || !birthTime || !birthLocation) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
-    }
-
-    if (!mpClient) {
-      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
-    }
-
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      name,
-      email,
-      birthDate,
-      birthTime,
-      birthLocation,
-      birthNameFull: birthNameFull || null,
-      productType: productType || 'mapa-astral',
-      includeNumerology: includeNumerology || false,
-      history: [],
-      counter: 0,
-      paid: false,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-    const frontendUrl = process.env.FRONTEND_URL;
-
-    const preference = new Preference(mpClient);
-    const result = await preference.create({
-      body: {
-        items: [
-          {
-            id: 'leitura-mapa-astral',
-            title: 'Leitura de Mapa Astral',
-            quantity: 1,
-            unit_price: 29.90,
-            currency_id: 'BRL'
-          }
-        ],
-        payer: {
-          name: firstName,
-          surname: lastName,
-          email
-        },
-        external_reference: sessionId,
-        back_urls: {
-          success: `${frontendUrl}/checkout-mapa-astral.html?sessionId=${sessionId}&status=retorno`,
-          pending: `${frontendUrl}/checkout-mapa-astral.html?sessionId=${sessionId}&status=retorno`,
-          failure: `${frontendUrl}/checkout-mapa-astral.html?erro=1`
-        },
-        ...(frontendUrl.startsWith('https://') ? { auto_return: 'approved' } : {})
-      }
-    });
-
-    return res.json({ sessionId, init_point: result.init_point });
-  } catch (error) {
-    console.error('Erro ao criar preferência Mercado Pago (mapa-astral):', error);
-    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
-  }
-});
-
-app.get('/api/checkout/mapa-astral/session-status/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const session = await getSession(sessionId);
-    if (!session) return res.status(404).json({ pago: false });
-    if (!session.paid) return res.json({ pago: false });
-    return res.json({ pago: true, token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS) });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-astral/session-status:', error);
-    return res.status(500).json({ pago: false });
-  }
-});
-
-// ── TESTE: criar sessão mapa-astral já paga (apenas com ADMIN_TEST_KEY) ──
-app.post('/api/checkout/mapa-astral/test', async (req, res) => {
-  try {
-    const adminKey = req.headers['x-admin-key'];
-    if (!adminKey || adminKey !== process.env.ADMIN_TEST_KEY) {
-      return res.status(401).json({ error: 'Chave de acesso inválida.' });
-    }
-
-    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, productType, includeNumerology } = req.body;
-
-    if (!name || !email || !birthDate || !birthTime || !birthLocation) {
-      return res.status(400).json({ error: 'Campos obrigatórios: name, email, birthDate, birthTime, birthLocation' });
-    }
-
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      name,
-      email,
-      birthDate,
-      birthTime,
-      birthLocation,
-      birthNameFull: birthNameFull || null,
-      productType: productType || 'mapa-astral',
-      includeNumerology: includeNumerology || false,
-      history: [],
-      counter: 0,
-      paid: true,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    console.log(`[TEST] Sessão de teste criada: ${sessionId} (produto: ${productType})`);
-    return res.json({
-      sessionId,
-      chatUrl: `/chat.html?sessionId=${sessionId}`,
-      token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
-    });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-astral/test:', error);
-    return res.status(500).json({ error: 'Erro ao criar sessão de teste.' });
-  }
-});
-
-// ═════════════════════════════════════════════════════════════════
-// MAPA INTEGRADO — Mapa Astral com cálculo via AstroWay
-// ═════════════════════════════════════════════════════════════════
-
-app.post('/api/checkout/mapa-integrado', async (req, res) => {
-  try {
-    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, metodoPagamento, cupom } = req.body;
-
-    if (!name || !email || !birthDate || !birthTime || !birthLocation || !metodoPagamento) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
-    }
-
-    // Validar e calcular desconto se cupom fornecido
-    let precoFinal = 147.00;
-    if (cupom) {
-      const cupomValido = await validarCupom(cupom);
-      if (!cupomValido) {
-        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
-      }
-      const desconto = precoFinal * (cupomValido.percentual / 100);
-      precoFinal = Math.max(0, precoFinal - desconto);
-      console.log(`[MAPA-INTEGRADO] Cupom ${mascararCodigo(cupom)} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
-    }
-
-    // Validar formato de data e hora
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
-      return res.status(400).json({ error: 'Data inválida. Formato: YYYY-MM-DD' });
-    }
-
-    if (!/^\d{2}:\d{2}$/.test(birthTime)) {
-      return res.status(400).json({ error: 'Hora inválida. Formato: HH:MM' });
-    }
-
-    // Calcular mapa astral via AstroWay
-    console.log(`[MAPA-INTEGRADO] Calculando mapa para ${name}...`);
-
-    const mapaNatal = await calcularMapaNatal({
-      nome: name,
-      dataNascimento: birthDate,
-      horaNascimento: birthTime,
-      localNascimento: birthLocation
-    });
-
-    if (!mapaNatal.sucesso) {
-      console.error(`[MAPA-INTEGRADO] Erro ao calcular: ${mapaNatal.erro}`);
-      return res.status(400).json({ error: `Erro ao calcular mapa: ${mapaNatal.erro}` });
-    }
-
-    console.log(`[MAPA-INTEGRADO] Mapa calculado com sucesso. Créditos: ${mapaNatal.creditsUsed}`);
-
-    // Calcular numerologia
-    const caminhoDeVida = calcularCaminhoDeVida(birthDate);
-    const essencia = calcularEssencia(birthNameFull || name);
-    console.log(`[MAPA-INTEGRADO] Numerologia calculada: Caminho de Vida ${caminhoDeVida}, Essência ${essencia}`);
-
-    // Criar sessão com dados do mapa
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      name,
-      email,
-      birthDate,
-      birthTime,
-      birthLocation,
-      birthNameFull: birthNameFull || null,
-      productType: 'mapa-integrado',
-      includeNumerology: true,
-      mapaNatal: mapaNatal.mapaNatal,
-      casas: mapaNatal.casas,
-      aspectos: mapaNatal.aspectos,
-      caminhoDeVida,
-      essencia,
-      coordenadas: mapaNatal.coordenadas,
-      creditsUsed: mapaNatal.creditsUsed,
-      history: [],
-      counter: 0,
-      paid: false,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
-    if (precoFinal === 0) {
-      console.log(`[MAPA-INTEGRADO] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
-      session.paid = true;
-      await upsertSession(session);
-
-      return res.json({
-        sessionId,
-        pedidoId: `CUPOM-100-${sessionId}`,
-        qrCodeText: 'CUPOM 100% DESCONTO - PAGAMENTO AUTOMÁTICO',
-        qrCodeImage: '',
-        mapaNatal: mapaNatal.mapaNatal,
-        cupom100: true,
-        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
-      });
-    }
-
-    // Criar pedido no Mercado Pago
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-
-    const paymentMethod = { id: 'pix', type: 'bank_transfer' };
-    const payment = {
-      amount: precoFinal.toFixed(2),
-      payment_method: paymentMethod
-    };
-
-    const orderBody = {
-      type: 'online',
-      total_amount: precoFinal.toFixed(2),
-      external_reference: sessionId,
-      processing_mode: 'automatic',
-      transactions: {
-        payments: [payment]
-      },
-      payer: {
-        email,
-        first_name: firstName,
-        last_name: lastName
-      }
-    };
-
-    const mpRes = await fetch('https://api.mercadopago.com/v1/orders', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${process.env.MERCADOPAGO_TOKEN}`,
-        'Content-Type': 'application/json',
-        'X-Idempotency-Key': uuidv4()
-      },
-      body: JSON.stringify(orderBody)
-    });
-
-    if (!mpRes.ok) {
-      const errText = await mpRes.text();
-      const requestId = mpRes.headers.get('x-request-id');
-      console.error('Erro Mercado Pago (mapa-integrado):', mpRes.status, errText, '| x-request-id:', requestId);
-      return res.status(502).json({ error: 'Erro ao criar pedido no Mercado Pago.', status: mpRes.status, detail: errText, requestId });
-    }
-
-    const order = await mpRes.json();
-    const paymentResponse = order.transactions?.payments?.[0];
-
-    const qrCodeText = paymentResponse?.payment_method?.qr_code || '';
-    const qrCodeImage = paymentResponse?.payment_method?.qr_code_base64 || '';
-
-    if (!qrCodeText) {
-      console.error('Mercado Pago não retornou QR Code PIX (mapa-integrado):', JSON.stringify(order));
-      return res.status(502).json({ error: 'Erro ao gerar QR Code PIX.' });
-    }
-
-    console.log(`[MAPA-INTEGRADO] Pedido criado: ${order.id} (sessão: ${sessionId})`);
-
-    return res.json({
-      sessionId,
-      pedidoId: order.id,
-      qrCodeText,
-      qrCodeImage,
-      mapaNatal: mapaNatal.mapaNatal
-    });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-integrado:', error);
-    return res.status(500).json({ error: 'Erro ao criar pedido.' });
-  }
-});
-
-app.get('/api/checkout/mapa-integrado/status/:pedidoId', async (req, res) => {
-  try {
-    const { pedidoId } = req.params;
-    const order = await consultarPedidoMercadoPago(pedidoId);
-    const pago = await marcarPagoSeAprovado(order);
-    if (!pago) return res.json({ pago: false });
-    return res.json({ pago: true, token: gerarTokenSessao(order.external_reference, 'chat', VALIDADE_CHAT_MS) });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-integrado/status:', error);
-    return res.status(500).json({ pago: false });
-  }
-});
-
-app.post('/api/checkout/mapa-integrado/preference', async (req, res) => {
-  try {
-    const { name, email, birthDate, birthTime, birthLocation, birthNameFull, cupom } = req.body;
-
-    if (!name || !email || !birthDate || !birthTime || !birthLocation) {
-      return res.status(400).json({ error: 'Todos os campos são obrigatórios.' });
-    }
-
-    // Validar e calcular desconto se cupom fornecido
-    let precoFinal = 147.00;
-    if (cupom) {
-      const cupomValido = await validarCupom(cupom);
-      if (!cupomValido) {
-        return res.status(400).json({ error: 'Cupom inválido ou expirado.' });
-      }
-      const desconto = precoFinal * (cupomValido.percentual / 100);
-      precoFinal = Math.max(0, precoFinal - desconto);
-      console.log(`[MAPA-INTEGRADO-PREF] Cupom ${mascararCodigo(cupom)} aplicado: ${cupomValido.percentual}% desconto. Preço: R$ ${147.00} → R$ ${precoFinal.toFixed(2)}`);
-    }
-
-    if (!mpClient) {
-      return res.status(500).json({ error: 'Mercado Pago não configurado.' });
-    }
-
-    // Calcular mapa astral via AstroWay
-    console.log(`[MAPA-INTEGRADO-PREF] Calculando mapa para ${name}...`);
-
-    const mapaNatal = await calcularMapaNatal({
-      nome: name,
-      dataNascimento: birthDate,
-      horaNascimento: birthTime,
-      localNascimento: birthLocation
-    });
-
-    if (!mapaNatal.sucesso) {
-      console.error(`[MAPA-INTEGRADO-PREF] Erro ao calcular: ${mapaNatal.erro}`);
-      return res.status(400).json({ error: `Erro ao calcular mapa: ${mapaNatal.erro}` });
-    }
-
-    // Calcular numerologia
-    const caminhoDeVida2 = calcularCaminhoDeVida(birthDate);
-    const essencia2 = calcularEssencia(birthNameFull || name);
-    console.log(`[MAPA-INTEGRADO-PREF] Numerologia calculada: Caminho de Vida ${caminhoDeVida2}, Essência ${essencia2}`);
-
-    // Criar sessão com mapa
-    const sessionId = uuidv4();
-    const session = {
-      sessionId,
-      name,
-      email,
-      birthDate,
-      birthTime,
-      birthLocation,
-      birthNameFull: birthNameFull || null,
-      productType: 'mapa-integrado',
-      includeNumerology: true,
-      mapaNatal: mapaNatal.mapaNatal,
-      casas: mapaNatal.casas,
-      aspectos: mapaNatal.aspectos,
-      caminhoDeVida: caminhoDeVida2,
-      essencia: essencia2,
-      coordenadas: mapaNatal.coordenadas,
-      creditsUsed: mapaNatal.creditsUsed,
-      history: [],
-      counter: 0,
-      paid: false,
-      createdAt: new Date().toISOString()
-    };
-
-    await upsertSession(session);
-
-    // Se preço final é 0 (cupom 100%), marcar como pago automaticamente
-    if (precoFinal === 0) {
-      console.log(`[MAPA-INTEGRADO-PREF] Cupom 100% desconto: sessão marcada como paga automaticamente.`);
-      session.paid = true;
-      await upsertSession(session);
-
-      return res.json({
-        sessionId,
-        init_point: `${process.env.FRONTEND_URL}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno&cupom100=true`,
-        cupom100: true,
-        token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS)
-      });
-    }
-
-    const [firstName, ...restName] = name.trim().split(/\s+/);
-    const lastName = restName.join(' ') || firstName;
-    const frontendUrl = process.env.FRONTEND_URL;
-
-    const preference = new Preference(mpClient);
-    const result = await preference.create({
-      body: {
-        items: [
-          {
-            id: 'mapa-integrado',
-            title: 'Mapa Integrado — Mapa Astral com Análise Astrológica',
-            quantity: 1,
-            unit_price: precoFinal,
-            currency_id: 'BRL'
-          }
-        ],
-        payer: {
-          name: firstName,
-          surname: lastName,
-          email
-        },
-        external_reference: sessionId,
-        back_urls: {
-          success: `${frontendUrl}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno`,
-          pending: `${frontendUrl}/checkout-mapa-integrado.html?sessionId=${sessionId}&status=retorno`,
-          failure: `${frontendUrl}/checkout-mapa-integrado.html?erro=1`
-        },
-        ...(frontendUrl?.startsWith('https://') ? { auto_return: 'approved' } : {})
-      }
-    });
-
-    console.log(`[MAPA-INTEGRADO-PREF] Preferência criada: ${sessionId}`);
-
-    return res.json({ sessionId, init_point: result.init_point });
-  } catch (error) {
-    console.error('Erro ao criar preferência Mercado Pago (mapa-integrado):', error);
-    return res.status(500).json({ error: 'Erro ao gerar link de pagamento.' });
-  }
-});
-
-app.get('/api/checkout/mapa-integrado/session-status/:sessionId', async (req, res) => {
-  try {
-    const { sessionId } = req.params;
-    const session = await getSession(sessionId);
-    if (!session) return res.status(404).json({ pago: false });
-    if (!session.paid) return res.json({ pago: false });
-    return res.json({ pago: true, token: gerarTokenSessao(sessionId, 'chat', VALIDADE_CHAT_MS) });
-  } catch (error) {
-    console.error('Erro em /api/checkout/mapa-integrado/session-status:', error);
-    return res.status(500).json({ pago: false });
-  }
 });
 
 // ========================

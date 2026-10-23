@@ -87,7 +87,6 @@ teste('A5 servidor: e-mail usa saudacaoEmail e os dois fluxos passam o nome', ()
   const srv = ler('src/server.js');
   assert.ok(srv.includes('<p>${saudacaoEmail(nome)}</p>'));
   assert.ok(/acessoAudiolivro\?\.token, nome\)/.test(srv));
-  assert.ok(/acessoAudiolivro\?\.token, pedido\.nome\)/.test(srv));
   assert.ok(/\{ nome: name\.trim\(\)\.slice\(0, 120\) \}/.test(srv));
 });
 

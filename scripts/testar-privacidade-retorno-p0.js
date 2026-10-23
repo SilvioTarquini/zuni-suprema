@@ -122,10 +122,11 @@ const scriptLimpeza = htmlCheckout.match(/<script>\s*\/\/ Guarda o e-mail do ret
     for (const m of srv.matchAll(/return_url:\s*`([^`]*)`/g)) assert.ok(!/email/i.test(m[1]), 'return_url com e-mail: ' + m[1]);
     assert.ok(/pedidoId=\$\{pedidoId\}&status=retorno/.test(srv));
   });
-  await teste('as únicas URLs de retorno com e-mail que restam são as do Mercado Pago legado, sem tela que as acione (PIX desligado)', async () => {
+  await teste('não resta nenhuma URL de retorno com e-mail, e a tela só aciona o cartão (Stripe)', async () => {
     const restantes = [...srv.matchAll(/(success|pending|failure):\s*`[^`]*email=[^`]*`/g)].length;
-    assert.ok(restantes > 0 && restantes <= 6, 'legado MP: ' + restantes);
-    assert.ok(htmlCheckout.includes("let metodoPagamento = 'CARTAO';") && !/selecionarMetodo\s*\(/.test(htmlCheckout.replace(/\/\/.*$/gm, '').replace(/<!--[\s\S]*?-->/g, '')), 'a tela só aciona o cartão (Stripe)');
+    assert.strictEqual(restantes, 0, 'URLs de retorno com e-mail: ' + restantes);
+    const semComentarios = htmlCheckout.replace(/\/\/.*$/gm, '').replace(/<!--[\s\S]*?-->/g, '');
+    assert.ok(!/selecionarMetodo\s*\(/.test(semComentarios) && !semComentarios.includes("fetch('/api/checkout/livro',"), 'a tela só aciona o cartão (Stripe)');
   });
 
   console.log('\nPágina de retorno: nada depende do e-mail na URL');

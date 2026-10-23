@@ -25,11 +25,11 @@ function assertSupabase() {
 
 /**
  * Cria um novo pacote de créditos de sessão após pagamento confirmado
- * Chamado pelo webhook do MercadoPago quando pagamento de "Sessões Extras" é aprovado
+ * Cria o pacote de "Sessões Extras" após pagamento aprovado (venda hoje suspensa)
  *
  * @param {Object} params
  * @param {string} params.email - Email do cliente
- * @param {string} params.paymentId - ID do pagamento no MercadoPago
+ * @param {string} params.paymentId - ID do pagamento
  * @param {number} [params.sessoes] - Quantas sessões (padrão: 3)
  * @returns {Promise<{pacoteId: string, email: string, creditos: number, expiraEm: Date}>}
  */

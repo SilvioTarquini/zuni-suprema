@@ -13,7 +13,7 @@ delete process.env.LIVRO_PDF_BUCKET;
 const raiz = path.join(__dirname, '..');
 const srv = fs.readFileSync(path.join(raiz, 'src', 'server.js'), 'utf8');
 const ini = srv.indexOf('async function enviarEmailAcessoLivro(');
-const fim = srv.indexOf('async function enviarEmailConfirmacaoSessoesExtras(');
+const fim = srv.indexOf('// Prazo de leitura no site depois da compra');
 assert.ok(ini > 0 && fim > ini, 'função de e-mail não encontrada em server.js');
 
 const enviados = [];

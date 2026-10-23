@@ -1,7 +1,7 @@
 // lib/acessoLivros.js
 //
 // Controla a liberação de acesso aos livros (leitura no site)
-// após confirmação de pagamento via MercadoPago.
+// após confirmação de pagamento (Stripe).
 //
 // Depende de um cliente Supabase (service role, pois grava na tabela
 // `acessos_livros` que não tem policy pública). Usa o mesmo par de
@@ -28,18 +28,18 @@ const { DIAS_DE_ACESSO } = require('./prazoAcesso');
 /**
  * Gera um token de acesso único para um livro, vinculado ao comprador,
  * com prazo de expiração. Deve ser chamado a partir do webhook do
- * MercadoPago, assim que o pagamento for confirmado.
+ * Stripe, assim que o pagamento for confirmado.
  *
  * @param {Object} params
  * @param {string} params.livroId - identificador do livro (ex: 'os-bastidores-vol-5')
  * @param {string} params.email - e-mail do comprador
- * @param {string} [params.paymentId] - ID do pagamento no MercadoPago
+ * @param {string} [params.paymentId] - ID do pagamento (Stripe)
  * @returns {Promise<{token: string, expiraEm: Date}>}
  */
 async function criarAcesso({ livroId, email, paymentId }) {
   const supabaseClient = assertSupabase();
 
-  // Idempotente: o webhook do MercadoPago pode reenviar a mesma notificação
+  // Idempotente: o webhook pode reenviar a mesma notificação
   // mais de uma vez, então se já existe acesso criado para este pagamento,
   // devolve o token já existente em vez de gerar um novo.
   if (paymentId) {
