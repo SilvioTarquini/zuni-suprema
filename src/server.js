@@ -36,6 +36,7 @@ const { enviarResultadoNumerologia, registrarCaptura } = require('./lib/capturas
 const { calcularAstrologiaB } = require('./lib/astrologia-b');
 const { verificarLimite, registrarUso, auditarConsumo, gerarVisitorHash } = require('./lib/rateLimitExperimente');
 const { limparSessoesExpiradas } = require('./lib/limpezaSessoes');
+const { iniciarKeepalive, criarClientePadrao } = require('./lib/keepaliveSupabase');
 const { gerarTokenSessao, validarTokenSessao, VALIDADE_CHAT_MS, VALIDADE_DOWNLOAD_MS } = require('./lib/sessionToken');
 const { emailValido, criarLimitadorRelatorio, exigirAutorizacaoRelatorio, responderLimite } = require('./lib/protecaoRelatorio');
 const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca, removerConviteComercial } = require('./lib/protecaoCrise');
@@ -4572,5 +4573,9 @@ app.listen(PORT, () => {
   setInterval(() => {
     limparSessoesExpiradas().catch((e) => console.error('[LIMPEZA-SESSOES] intervalo:', e.message));
   }, UM_DIA_MS).unref();
+
+  // Sinal de vida: consulta leve a cada 6h (e 1 min após o boot) para o
+  // Supabase não pausar por inatividade. SUPABASE_KEEPALIVE=0 desliga.
+  iniciarKeepalive({ client: criarClientePadrao() });
 });
 
