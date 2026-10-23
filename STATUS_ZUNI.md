@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 22/10/2026, ~23h55 (horário de Brasília) — **produção na `main`, commit `8804d18` (Rodada 3A) no ar.** Rodadas 1, 2, 2.8/2.9, o ajuste "sem imprimir" e a Rodada 3A (PDF para guardar, botão "Baixar PDF", e-mail com link do PDF, capa do Toda Mesa corrigida) estão publicadas; os 4 PDFs estão no bucket privado `zuni-livros-pdf-private`; a leitura no site e o Livro-Vivo valem por **90 dias** (`LIVRO_ACESSO_DIAS=90` aplicado no Railway). **Faxina de projetos duplicados do Railway: pendente.** Detalhes no bloco "Checkpoint 22/10/2026" ao final do arquivo. Antes disso — 20/10/2026, ~22h06 — **produção na `main`, deploy `4c4789ca` SUCCESS (commit `270a02b`).** As 4 obras novas (Vender Bem Vender Sempre, Toda Mesa Tem Dois Lados, Da Terra ao Resultado, Toda Reunião Tem Duas Pautas) estão no ar: catálogo, capa, entrega e degustação funcionando. Novo Universo "Empreender e Crescer" (`/loja/empreender-e-crescer/`) também no ar, reunindo essas 4 obras (ver bloco "Empreender e Crescer" ao final do arquivo), com um bug de capa quebrada na `/loja/` encontrado e corrigido logo depois do deploy (lista `novasObras` em `public/loja/index.html` sem o id de Toda Reunião). Pendência remanescente: indexar o Livro-Vivo das 4 obras novas. Seções anteriores do mesmo dia: diagnóstico inicial e causa raiz do deploy parado (blocos "Checkpoint 20/10/2026" e "(continuação)"). Seção anterior a essas, datada de 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
+**Última atualização**: 23/10/2026, ~16h (horário de Brasília) — **produção na `main`, commit `6ed54d3` ATIVO no Railway: MercadoPago removido do código e sinal de vida do Supabase funcionando** (ver bloco "Checkpoint 23/10/2026" ao final). **Pendente do autor: apagar `MERCADOPAGO_TOKEN` e `MERCADOPAGO_PUBLIC_KEY` no Railway e, no painel do MercadoPago, desativar o webhook e revogar as credenciais.** Antes disso — 22/10/2026, ~23h55 — produção na `main`, commit `8804d18` (Rodada 3A) no ar. Rodadas 1, 2, 2.8/2.9, o ajuste "sem imprimir" e a Rodada 3A (PDF para guardar, botão "Baixar PDF", e-mail com link do PDF, capa do Toda Mesa corrigida) estão publicadas; os 4 PDFs estão no bucket privado `zuni-livros-pdf-private`; a leitura no site e o Livro-Vivo valem por **90 dias** (`LIVRO_ACESSO_DIAS=90` aplicado no Railway). **Faxina de projetos duplicados do Railway: pendente.** Detalhes no bloco "Checkpoint 22/10/2026" ao final do arquivo. Antes disso — 20/10/2026, ~22h06 — **produção na `main`, deploy `4c4789ca` SUCCESS (commit `270a02b`).** As 4 obras novas (Vender Bem Vender Sempre, Toda Mesa Tem Dois Lados, Da Terra ao Resultado, Toda Reunião Tem Duas Pautas) estão no ar: catálogo, capa, entrega e degustação funcionando. Novo Universo "Empreender e Crescer" (`/loja/empreender-e-crescer/`) também no ar, reunindo essas 4 obras (ver bloco "Empreender e Crescer" ao final do arquivo), com um bug de capa quebrada na `/loja/` encontrado e corrigido logo depois do deploy (lista `novasObras` em `public/loja/index.html` sem o id de Toda Reunião). Pendência remanescente: indexar o Livro-Vivo das 4 obras novas. Seções anteriores do mesmo dia: diagnóstico inicial e causa raiz do deploy parado (blocos "Checkpoint 20/10/2026" e "(continuação)"). Seção anterior a essas, datada de 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -28,7 +28,7 @@ IA (Claude API), uma livraria interativa ("livros vivos") e produtos personaliza
 astrologia/numerologia. Operada por um único fundador/desenvolvedor.
 
 **Stack**: Node.js/Express no Railway · Supabase (pgvector) · Claude API · embeddings
-OpenAI (`text-embedding-3-small`) · MercadoPago · Resend (e-mail) · webhooks Make/WhatsApp.
+OpenAI (`text-embedding-3-small`) · Stripe · Resend (e-mail) · webhooks Make/WhatsApp.
 Deploy via `git push origin main`.
 
 **Regra de processo fixa**: investigar → apresentar plano → aprovação explícita →
@@ -118,10 +118,9 @@ projeto; não expor caminhos privados, UUIDs de storage, URLs assinadas nem o ma
 amostra pública do Experimente é separada do integral. **Audiobook standalone ainda NÃO existe como
 produto independente** (hoje é adicional à compra do livro).
 
-**10. MercadoPago — dívida operacional.** Permanece como legado/inativo em partes do sistema (ex.: botão
-Pix). **Não remover agora.** Decisão: fazer antes uma auditoria de descomissionamento completo +
-regressão total; só depois dela dizer "agora é seguro cancelar a conta comercial Mercado Pago" e
-apagar variáveis/credenciais.
+**10. MercadoPago — RESOLVIDO em 23/10/2026.** Removido do código (commit `6ed54d3`, no ar): rotas, webhook,
+pacote e variáveis. Rotas antigas respondem 410. Falta só a faxina externa: apagar `MERCADOPAGO_TOKEN` e
+`MERCADOPAGO_PUBLIC_KEY` no Railway e, no painel do MercadoPago, desativar o webhook e revogar as credenciais.
 
 **Projetos estratégicos no radar (não iniciar agora):** ver `RADAR_OPORTUNIDADES.md` → seção 12.
 
@@ -979,7 +978,8 @@ Rodado `node src/indexarLivro.js <livro_id> <txt>` contra o Supabase de produç�
 1. **Faxina do Railway (pendente).** Projeto OFICIAL: `zuni-suprema` (www.zunisuprema.com.br, `main`, deploy automático, "Wait for CI" desligado). Duplicatas do site: `considerate-dream`, `gleaming-mercy`, `scintillating-empathy`, `resplendent-benevolence`, `heroic-nurturing`, `humorous-insight`, `virtuous-commitment`, `app-zunisuprema`. Do zuni-intelligence: `beautiful-perception`, `carefree-abundance`, `easygoing-warmth`, `wholesome-beauty`, `energetic-victory`, mais o staging (**não apagar `pgvector-staging` antes da auditoria**). Primeiro desligar; dias depois apagar. Depois, a regra no `CLAUDE.md` e um token de projeto do Railway. **Nunca** `railway up`, `railway init` ou `railway link` (provável origem das duplicatas).
 2. **Nova compra de teste (Vender Bem)**: e-mail com o link "Baixar o livro em PDF", download no celular, leitura, e depois reembolso → página "Acesso encerrado" no site e no PDF. Regra: nada que toque na compra vai ao ar sem nova compra de teste.
 3. Stripe → Webhooks: confirmar a URL `www.zunisuprema.com.br/api/webhooks/stripe`.
-4. Supabase: impedir nova pausa por inatividade.
+4. ~~Supabase: impedir nova pausa por inatividade.~~ **Feito em 23/10/2026** (sinal de vida, commit `7b2da92`; log `[KEEPALIVE] Supabase ok` confirmado em produção).
+4b. **Faxina do MercadoPago (autor):** apagar `MERCADOPAGO_TOKEN` e `MERCADOPAGO_PUBLIC_KEY` no Railway (projeto oficial); no painel do MercadoPago, desativar o webhook e revogar as credenciais.
 5. Auditoria (`scripts/auditar-flipbook.js`) dos outros ~25 livros do mesmo motor.
 6. **Abrir a loja e divulgar** (trazer o estudo de estratégia de caixa).
 7. **Rodada 3B:** Livro-Vivo injetado na hora de servir, com rede de segurança invisível (por minuto e por dia) e alerta de custo mensal, sem contador na tela (frase "Converse com o Livro-Vivo durante a sua leitura."), acesso sempre pelo e-mail do comprador, prioridade para obras técnicas; degustação com trecho real de capítulo e MP3 na voz WaveNet; consertar os testes quebrados.
@@ -987,3 +987,24 @@ Rodado `node src/indexarLivro.js <livro_id> <txt>` contra o Supabase de produç�
 9. Reindexar o Livro-Vivo do Vender Bem quando existir o .docx final (hoje veio do PDF de 07/09).
 
 **Decisões pendentes do autor.** (a) Livro-Vivo também nos livros de contos (Toda Mesa, Toda Reunião) ou só nos técnicos? (b) Falsa Moralidade: a versão final é a "Com Imagens" (01/10)? (c) Máscara para o Controle: título confirmado? O "Epílogo" duplicado é erro? (d) O Último Baile do Moinho: o texto de 09/09 é o final? (e) A Tradutora: idade da mãe de Iara no romance de 1979 (afeta a faixa etária). (f) Autoria: padronizar "Zuni Suprema" e "Silvio Tarquini"? (g) Haverá renovação do acesso?
+
+---
+
+## Checkpoint 23/10/2026 — MercadoPago removido e sinal de vida do Supabase
+
+**No ar (deploy do `6ed54d3` ATIVO no projeto oficial; verificado às 16h00):** `POST` e `GET` em `/api/pagamento/webhook` → **410**; `/api/checkout/livro/preference` → 410; `/`, `/loja/`, `/experimente`, `/checkout-livro.html?livro=vender-bem-vender-sempre` e `/api/config/prazo-acesso` → 200. O build levou ~13 min por fila do Railway (push às ~15h37, ativo ~15h51).
+
+**MercadoPago removido do código (`6ed54d3`).**
+- Saíram rotas, webhook e helpers do MercadoPago (livro Pix/preferência, checkout do Mentor, sessões extras, Mapa Astral, Mapa Integrado), o pacote `mercadopago`, as libs `pedidosLivros.js` e `pedidosSessoesExtras.js`, `src/pagamento.js`, as páginas `checkout-mapa-*.html`, o ramo/bloco Pix de `checkout-livro.html` e 3 testes + 1 doc só do MercadoPago.
+- Rotas antigas respondem **410 Gone** (nunca 500); `/brinde`, `/checkout-mapa-*.html` seguem redirecionando para `/loja/`.
+- Decisão do autor: Mapa Astral, Mapa Integrado e brinde ficam descontinuados até o futuro Astro-Num. **Sessões extras** (pacote de 3 sessões do Mentor, R$ 74,90) perderam a rota de compra — não havia botão em nenhuma página; as rotas de status/iniciar-sessão e a página de confirmação ficam para quem já tem créditos (os 7 créditos do banco, de 19/07, já expiraram).
+- Dados antigos no Supabase intactos (só SELECT). Pagamentos sem Stripe de jun–set/2026 foram declarados testes/cupons pelo autor.
+
+**Sinal de vida do Supabase (`7b2da92`).** `src/lib/keepaliveSupabase.js`: `select session_id from sessions limit 1` 1 min após o boot e a cada 6 h; falha loga uma vez e nunca derruba o servidor. Variável `SUPABASE_KEEPALIVE` (`0` desliga, `1` liga em qualquer ambiente; vazio = ligado só em produção). Confirmado nos logs de produção às 15h53 (`[KEEPALIVE] Supabase ok`). Teste local: `scripts/testar-keepalive-supabase.js`.
+
+**Pendente (autor), nesta ordem:** apagar `MERCADOPAGO_TOKEN` e `MERCADOPAGO_PUBLIC_KEY` no Railway (projeto oficial) → no painel do MercadoPago, desativar o webhook e revogar as credenciais.
+
+**Armadilhas.**
+- Os testes que sobem o `src/server.js` carregam o `.env` real (dotenv repõe as variáveis que o teste apaga) e falam com o Supabase de produção; `testar-relatorio-protecao.js` só passa sem `.env`. Limpeza de sessões roda no boot desses testes (UPDATE).
+- Testes que já falhavam antes e seguem iguais: `e2`, `e3b`, `e6a`, `e6b`, `catalogo-publico-audiobook`, os 8 `rag3-*`, `f2b`, `f3c`, `p0` (estes três quebram por regex em `server.js`), `normalizacao-maiusculas`.
+- Autor de todos os commits do repositório: `seu_email@gmail.com` (decisão de manter).
