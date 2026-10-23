@@ -98,15 +98,16 @@ async function teste(nome, fn) {
     const r = await get(porta, url('revogado-e-vencido'));
     assert(r.corpo.includes(TEXTO_REVOGADO));
   });
-  await teste('token inexistente: 403 com o texto genérico (expirado)', async () => {
+  await teste('token inexistente: 403 com a página "Não encontramos este acesso" (não diz que expirou nem que foi reembolsado)', async () => {
     const r = await get(porta, url('nao-existe'));
     assert.strictEqual(r.status, 403);
-    assert(r.corpo.includes(TEXTO_EXPIRADO));
+    assert(r.corpo.includes('Não encontramos este acesso'));
+    assert(!r.corpo.includes(TEXTO_EXPIRADO) && !r.corpo.includes(TEXTO_REVOGADO));
   });
-  await teste('sem token: 403 com o texto genérico (expirado)', async () => {
+  await teste('sem token: 403 com a página "Não encontramos este acesso"', async () => {
     const r = await get(porta, `/livros/${LIVRO}`);
     assert.strictEqual(r.status, 403);
-    assert(r.corpo.includes(TEXTO_EXPIRADO));
+    assert(r.corpo.includes('Não encontramos este acesso'));
   });
 
   console.log('Helper motivoNegacaoAcesso (usado também pelo Livro-Vivo)');

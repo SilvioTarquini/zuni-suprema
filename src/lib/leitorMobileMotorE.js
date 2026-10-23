@@ -13,6 +13,8 @@
 //
 // Toda âncora é obrigatória: se faltar alguma, substituir() lança e o chamador devolve o livro original.
 
+const { JS_IR_PARA_PDF } = require('./leitorSemImpressao');
+
 function substituir(texto, alvo, novo) {
   const partes = texto.split(alvo);
   if (partes.length !== 2) throw new Error(`âncora ocorre ${partes.length - 1}x: ${alvo.slice(0, 45)}`);
@@ -182,9 +184,10 @@ const METODOS_E = String.raw`
 
 function patchMotorE(template, opcoes = {}) {
   let t = template;
-  // Livro à venda sem impressão: o modo rolagem do celular não ganha o botão "Baixar em PDF".
+  // Livro à venda sem impressão: o botão do modo rolagem do celular vira "Baixar PDF" (rota /livros/<id>/pdf?token=…).
   const linhaPdf = "    barra.appendChild(botao('Baixar em PDF', 'Baixar em PDF', () => self.doPrint()));\n";
-  const metodos = opcoes.semImpressao ? substituir(METODOS_E, linhaPdf, '') : METODOS_E;
+  const linhaNova = "    barra.appendChild(botao('Baixar PDF', 'Baixar o livro em PDF', () => { " + JS_IR_PARA_PDF + " }));\n";
+  const metodos = opcoes.semImpressao ? substituir(METODOS_E, linhaPdf, linhaNova) : METODOS_E;
   t = substituir(t, A_MONTAGEM, A_MONTAGEM + '\n      this.zsGroups = groups;\n      this.zsSync();');
   t = substituir(t, A_TECLADO, A_TECLADO + "\n    this.zsResize = () => this.zsSync();\n    window.addEventListener('resize', this.zsResize);");
   t = substituir(t, A_DESMONTAGEM, metodos.replace(/^\n/, '') + A_DESMONTAGEM);

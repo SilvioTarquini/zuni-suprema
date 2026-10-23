@@ -11,11 +11,22 @@
 //   - páginas com menos de 30% de preenchimento (só onde a página tem altura fixa);
 //   - tamanho efetivo do texto de leitura (px na tela, já com a escala visual);
 //   - sobreposição de botões (apenas informativo, não derruba o código de saída);
-//   - ocorrência de [LEITOR_PATCH_FALHOU] ao aplicar o patch.
+//   - ocorrência de [LEITOR_PATCH_FALHOU] ao aplicar o patch;
+//   - livros à venda (lib/leitorSemImpressao.js): nenhum controle de imprimir / "Baixar em PDF" no HTML servido e o botão
+//     "Baixar PDF" visível.
 //
-// Código de saída ≠ 0 quando houver texto cortado, patch falho ou texto efetivo < 12 px em tela de celular.
+// CHECKLIST DE AUDITORIA de um livro à venda: "PDF gerado, com todo o texto, sem folhas em branco e com a rota de
+// download funcionando":
+//   1. node scripts/auditar-flipbook.js <livroId> --pdf   → leitura sem corte + PDF gerado (scripts/gerar-pdf-livro.js) com
+//      todas as letras e dígitos do leitor no texto extraído, e só a capa sem texto (nenhuma folha em branco);
+//   2. node scripts/testar-pdf-livro-rota.js              → rota GET /livros/:id/pdf (token válido, prazo vencido sem
+//      reembolso, revogado, inexistente) e botão "Baixar PDF" dos 4 leitores;
+//   3. node scripts/subir-pdfs-livros.js --enviar         → PDFs no Storage privado, acesso direto negado (a confirmar).
 //
-// Uso: node scripts/auditar-flipbook.js <livroId> [--json]
+// Código de saída ≠ 0 quando houver texto cortado, patch falho, texto efetivo < 12 px em tela de celular ou (com --pdf)
+// PDF incompleto.
+//
+// Uso: node scripts/auditar-flipbook.js <livroId> [--json] [--pdf]
 
 const fs = require('fs');
 const os = require('os');
@@ -274,20 +285,31 @@ async function auditarCenario(browser, arquivo, tela, fonteMax, motor) {
   return saida;
 }
 
-// Os 4 livros à venda não podem ter controle de imprimir/PDF no HTML servido (rota /livros/:id).
+// Os 4 livros à venda não podem ter controle de imprimir nem "Baixar em PDF" no HTML servido (rota /livros/:id) e precisam
+// do botão "Baixar PDF" visível (na capa ou, depois de aberto o livro, na barra). Devolve { proibidos, baixarPdfVisivel }.
 async function controlesDeImpressao(browser, arquivo, tela) {
   const { ctx, page } = await abrirPagina(browser, tela, arquivo);
   await page.waitForTimeout(3500);
+  const medir = () => page.evaluate(() => {
+    const todos = [...document.querySelectorAll('button, a, [role=button]')];
+    const rotulo = (e) => (e.textContent || '').replace(/\s+/g, ' ').trim();
+    return {
+      proibidos: todos
+        .filter((e) => /^(btnPrint|printBtn)$/.test(e.id) || /imprimir|baixar em pdf/i.test(rotulo(e) + ' ' + (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || '')))
+        .map((e) => (e.id || rotulo(e)).slice(0, 40)),
+      baixarPdf: todos.filter((e) => /^baixar pdf$/i.test(rotulo(e)) && e.offsetWidth > 0 && e.offsetHeight > 0).length
+    };
+  });
   try {
+    const antes = await medir();
     await page.evaluate(() => { const b = document.getElementById('openBtn') || [...document.querySelectorAll('button')].find((x) => /clique para abrir|^›$/i.test(x.textContent.trim())); if (b) b.click(); });
     await page.waitForTimeout(2500);
-    return await page.evaluate(() => [...document.querySelectorAll('button, a, [role=button]')]
-      .filter((e) => /^(btnPrint|printBtn)$/.test(e.id) || /imprimir|pdf/i.test((e.textContent || '') + ' ' + (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || '')))
-      .map((e) => (e.id || e.textContent.trim()).slice(0, 40)));
+    const depois = await medir();
+    return { proibidos: [...new Set([...antes.proibidos, ...depois.proibidos])], baixarPdfVisivel: Math.max(antes.baixarPdf, depois.baixarPdf) };
   } finally { await ctx.close(); }
 }
 
-async function auditar(livroId) {
+async function auditar(livroId, opcoes = {}) {
   const arquivoOriginal = path.join(RAIZ_LIVROS, livroId, 'index.html');
   if (!fs.existsSync(arquivoOriginal)) throw new Error(`Livro não encontrado: ${arquivoOriginal}`);
   const { html, patchFalhou, mensagens } = await htmlServido(livroId);
@@ -320,21 +342,35 @@ async function auditar(livroId) {
   if (ehLivroSemImpressao(livroId)) {
     for (const tela of [TELAS[0], TELAS[1]]) {
       const achados = await controlesDeImpressao(browser, temp, tela);
-      if (achados.length) impressao.push(`${tela.nome}: ${achados.join(', ')}`);
+      if (achados.proibidos.length) impressao.push(`${tela.nome}: ${achados.proibidos.join(', ')}`);
+      if (achados.baixarPdfVisivel < 1) impressao.push(`${tela.nome}: botão "Baixar PDF" não está visível`);
     }
   }
   await browser.close();
   for (const f of [temp, tempMedicao]) { try { fs.unlinkSync(f); } catch (e) { /* temporário */ } }
 
   const falhas = [];
+  let pdf = null;
   if (patchFalhou) falhas.push('[LEITOR_PATCH_FALHOU] ' + mensagens.join(' ').slice(0, 160));
-  if (impressao.length) falhas.push('controle de imprimir/PDF no HTML servido: ' + impressao.join(' | '));
+  if (impressao.length) falhas.push('botões de imprimir/PDF no HTML servido: ' + impressao.join(' | '));
+  if (opcoes.pdf) {
+    // Etapa do checklist: PDF gerado, com todo o texto e sem folhas em branco (só a capa, em imagem, não tem texto).
+    const { gerar } = require('./gerar-pdf-livro');
+    const { resolverPdf } = require('../src/lib/pdfLivro');
+    const g = await gerar(livroId, path.join(os.tmpdir(), 'zuni-pdfs-auditoria'));
+    pdf = { paginas: g.paginas, mb: g.mb, semTexto: g.semTexto, letrasEsperadas: g.letrasEsperadas, letrasFaltando: g.letrasFaltando, rota: !!resolverPdf(livroId) };
+    if (g.patchFalhou) falhas.push('PDF: patch falhou ao gerar');
+    if (g.letrasFaltando > 0) falhas.push(`PDF: ${g.letrasFaltando} letra(s)/dígito(s) do leitor ausentes no texto do PDF`);
+    const folhasEmBranco = g.semTexto.filter((n) => n !== 1);
+    if (folhasEmBranco.length) falhas.push(`PDF: ${folhasEmBranco.length} folha(s) sem texto além da capa [${folhasEmBranco.slice(0, 10).join(',')}]`);
+    if (!pdf.rota) falhas.push('PDF: livro sem PDF configurado na rota /livros/:id/pdf (lib/pdfLivro.js)');
+  }
   for (const l of linhas) {
     if (l.erro) falhas.push(`${l.tela}/${l.fonte}: erro de medição: ${l.erro}`);
     if (l.cortadas && l.cortadas.length) falhas.push(`${l.tela}/${l.fonte}: ${l.cortadas.length} página(s) com texto cortado`);
     if (l.celular && !l.indisponivel && (l.efetivo == null || l.efetivo < MIN_PX_CELULAR)) falhas.push(`${l.tela}/${l.fonte}: texto efetivo ${l.efetivo == null ? 'não medido' : l.efetivo + ' px'} (< ${MIN_PX_CELULAR} px)`);
   }
-  return { livroId, motor, patchFalhou, linhas, falhas };
+  return { livroId, motor, patchFalhou, linhas, falhas, pdf };
 }
 
 function imprimir(r) {
@@ -345,16 +381,17 @@ function imprimir(r) {
     if (l.erro && l.paginas == null) { console.log(`${l.tela.padEnd(9)} ${l.fonte.padEnd(7)} ERRO ${l.erro}`); continue; }
     console.log(`${l.tela.padEnd(9)} ${l.fonte.padEnd(7)} ${String(l.paginas).padStart(4)} ${String(l.corpo).padStart(5)} | ${String(l.cortadas.length).padStart(3)} [${lista(l.cortadas)}] | ${l.soTitulo.length} [${lista(l.soTitulo, 8)}] | ${l.baixas.length}/${l.fixas} | ${l.efetivo == null ? 'n/d' : l.efetivo} | ${l.sobrepoe == null ? 'n/d' : l.sobrepoe}`);
   }
+  if (r.pdf) console.log(`PDF: ${r.pdf.paginas} páginas | ${r.pdf.mb} MB | sem texto: ${r.pdf.semTexto.length ? '[' + r.pdf.semTexto.slice(0, 8).join(',') + ']' : '-'} (a capa em imagem é a página 1) | letras ausentes: ${r.pdf.letrasFaltando}/${r.pdf.letrasEsperadas} | rota configurada: ${r.pdf.rota ? 'sim' : 'NÃO'}`);
   console.log(r.falhas.length ? 'FALHAS:\n  - ' + r.falhas.join('\n  - ') : 'OK — nenhuma falha.');
 }
 
 if (require.main === module) {
   const livroId = process.argv[2];
   if (!livroId || livroId.startsWith('--')) {
-    console.error('Uso: node scripts/auditar-flipbook.js <livroId> [--json]');
+    console.error('Uso: node scripts/auditar-flipbook.js <livroId> [--json] [--pdf]');
     process.exit(2);
   }
-  auditar(livroId).then((r) => {
+  auditar(livroId, { pdf: process.argv.includes('--pdf') }).then((r) => {
     if (process.argv.includes('--json')) console.log(JSON.stringify(r));
     else imprimir(r);
     process.exit(r.falhas.length ? 1 : 0);

@@ -23,6 +23,7 @@ const { patchDaTerra, ehLeitorDaTerra } = require('./leitorMobileTerra');
 const { patchMotorE, ehMotorE } = require('./leitorMobileMotorE');
 const { patchPaginador } = require('./leitorMobilePaginador');
 const { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoTemplate } = require('./leitorSemImpressao');
+const { precisaCorrigirCapa, corrigirCapaMesa } = require('./leitorCapaMesa');
 
 // Livros do motor A cujo paginador recebe a revalidação/divisão de blocos (ver leitorMobilePaginador.js).
 const LIVROS_COM_PAGINADOR_CORRIGIDO = new Set(['vender-bem-vender-sempre', 'toda-reuniao-tem-duas-pautas']);
@@ -243,7 +244,9 @@ function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
 
     // '</' precisa sair escapado: o JSON vive dentro de uma <script> do HTML externo.
     const json = JSON.stringify(template).replace(/<\//g, '<\\/');
-    return { ok: true, html: htmlOriginal.slice(0, iLinha) + json + htmlOriginal.slice(iFim) };
+    const htmlFinal = htmlOriginal.slice(0, iLinha) + json + htmlOriginal.slice(iFim);
+    // Toda Mesa: a capa pedida por caminho relativo (capa.png, 400 em produção) passa a vir dentro do arquivo.
+    return { ok: true, html: precisaCorrigirCapa(opcoes.livroId) ? corrigirCapaMesa(htmlFinal, opcoes.livroId) : htmlFinal };
   } catch (err) {
     return { ok: false, motivo: `exceção: ${err.message}` };
   }

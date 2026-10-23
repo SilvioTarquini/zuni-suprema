@@ -96,11 +96,14 @@ function obterClienteStorage() {
  * @param {string} params.bucket
  * @param {string} params.path
  * @param {number} [params.ttlSegundos] - default: obterTtlSegundos()
+ * @param {string} [params.download] - nome do arquivo: a URL assinada responde com Content-Disposition: attachment
  * @returns {Promise<string>} URL assinada
  */
-async function gerarUrlAssinada({ bucket, path, ttlSegundos }) {
+async function gerarUrlAssinada({ bucket, path, ttlSegundos, download }) {
   const ttl = ttlSegundos || obterTtlSegundos();
-  const { data, error } = await obterClienteStorage().storage.from(bucket).createSignedUrl(path, ttl);
+  const { data, error } = download
+    ? await obterClienteStorage().storage.from(bucket).createSignedUrl(path, ttl, { download })
+    : await obterClienteStorage().storage.from(bucket).createSignedUrl(path, ttl);
   if (error || !data || !data.signedUrl) {
     throw new Error(`Falha ao gerar URL assinada: ${error ? error.message : 'resposta sem signedUrl'}`);
   }

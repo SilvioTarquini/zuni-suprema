@@ -77,7 +77,7 @@ async function abrir(browser, arquivo, vp) {
       }
       return { n: bs.length, sobre, fora: bs.filter((b) => b.left < -1 || b.right > innerWidth + 1).length };
     });
-    assert.strictEqual(r.n, 3); // Sumário, A−, A+ (sem o botão de PDF)
+    assert.strictEqual(r.n, 4); // Sumário, A−, A+ e Baixar PDF
     assert.strictEqual(r.sobre, 0);
     assert.strictEqual(r.fora, 0);
   });
@@ -102,10 +102,10 @@ async function abrir(browser, arquivo, vp) {
     });
     assert.ok(Math.abs(t) <= 12, 'topo da seção em ' + t + 'px');
   });
-  await teste('celular: nenhum botão de imprimir/PDF no HTML servido (nem "Baixar em PDF")', async () => {
-    const achados = await m.page.evaluate(() => [...document.querySelectorAll('button, a, [role=button]')]
+  await teste('celular: só "Baixar PDF" (rota /pdf); sem botão de imprimir nem "Baixar em PDF" no HTML servido', async () => {
+    const achados = await m.page.evaluate(() => [...document.querySelectorAll('#zsScroll button, #zsScroll a')]
       .filter((e) => /imprimir|pdf/i.test((e.textContent || '') + ' ' + (e.getAttribute('title') || '') + ' ' + (e.getAttribute('aria-label') || ''))).map((e) => e.textContent.trim()));
-    assert.deepStrictEqual(achados, []);
+    assert.deepStrictEqual(achados, ['Baixar PDF']);
     assert.ok(!(await m.page.evaluate(() => !!document.querySelector('#printPages'))), '#printPages não deveria existir sem pedir impressão');
   });
   await teste('celular: todas as palavras do modo rolagem existem nas páginas do próprio livro', async () => {

@@ -202,7 +202,7 @@ function renderizarExperimenteObra({ livroId, origem, cupom } = {}, deps = {}) {
     AUDIO_BLOCK: audioBlocoHtml(audioAmostra, titulo),
     // Com amostra oficial, a voz do navegador não é oferecida como demonstração comercial.
     TTS: amostra.ttsDisponivel === true && !audioAmostra ? '1' : '0',
-    PRAZO_BLOCK: prazoHtml((deps.prazo || textoPrazoLeitura)()),
+    PRAZO_BLOCK: prazoHtml((deps.prazo || textoPrazoLeitura)(livroId)),
     CHECKOUT_URL: escapar(checkoutUrl),
     PRECO: escapar(formatarPreco(preco)),
     VOLTAR_URL: escapar(voltarUrl),

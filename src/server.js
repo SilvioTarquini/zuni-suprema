@@ -1913,9 +1913,15 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
   const tipo = 'acesso-livro';
   try {
     const { enviarEmail } = require('./lib/email');
+    const { textoEmailLeituraPdf } = require('./lib/prazoAcesso');
 
     const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
     const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
+
+    // Livros com PDF para guardar: link da rota /livros/:id/pdf com o mesmo token (vale depois do prazo; só reembolso bloqueia).
+    const { resolverPdf } = require('./lib/pdfLivro');
+    const temPdf = !!resolverPdf(livroId);
+    const linkPdf = temPdf ? `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}/pdf?token=${encodeURIComponent(token)}` : '';
 
     let linkAudiolivro = '';
     if (tokenAudiolivro) {
@@ -1926,10 +1932,11 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
         <div style="background:#0f0f0f;color:#f2ead9;font-family:Georgia,'Times New Roman',serif;padding:32px;">
           <p>${saudacaoEmail(nome)}</p>
           <p>Seu pagamento foi confirmado e o acesso ao seu livro já está liberado.</p>
-          <p style="color:#b6ab93;font-size:0.9rem;">Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler no site, no computador ou no celular — não há envio de exemplar físico.</p>
+          <p style="color:#b6ab93;font-size:0.9rem;">${temPdf ? `Este é um produto 100% digital — não há envio de exemplar físico. ${textoEmailLeituraPdf()}` : 'Este é um produto 100% digital. Após a confirmação do pagamento, você recebe acesso para ler no site, no computador ou no celular — não há envio de exemplar físico.'}</p>
           <p><a href="${linkAcesso}" style="color:#B8963E;font-weight:bold;">Acessar meu livro</a></p>
+          ${linkPdf ? `<p><a href="${linkPdf}" style="color:#B8963E;font-weight:bold;">Baixar o livro em PDF</a></p>` : ''}
           ${linkAudiolivro ? `<p><a href="${linkAudiolivro}" style="color:#B8963E;font-weight:bold;">▶️ Ouvir audiolivro</a></p>` : ''}
-          <p style="color:#b6ab93;font-size:0.85rem;">O acesso fica disponível até ${expiraFormatado}.</p>
+          <p style="color:#b6ab93;font-size:0.85rem;">${temPdf ? `A leitura no site fica disponível até ${expiraFormatado}. O PDF é seu para guardar.` : `O acesso fica disponível até ${expiraFormatado}.`}</p>
 
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>
@@ -2068,7 +2075,9 @@ async function gerarRelatorioMapaIntegradoSeAplicavel(order, paymentId) {
 app.get('/api/config/prazo-acesso', (req, res) => {
   const { diasParaExibir, textoPrazoLeitura } = require('./lib/prazoAcesso');
   res.set('Cache-Control', 'public, max-age=300');
-  res.json({ dias: diasParaExibir(), texto: textoPrazoLeitura() });
+  // ?livro=<id> (checkout): a frase só promete PDF se a obra tem PDF. Sem o parâmetro (loja), a frase do PDF.
+  const livro = typeof req.query.livro === 'string' && /^[a-zA-Z0-9_-]+$/.test(req.query.livro) ? req.query.livro : undefined;
+  res.json({ dias: diasParaExibir(), texto: textoPrazoLeitura(livro) });
 });
 
 app.get('/api/livros', (req, res) => {

@@ -27,12 +27,14 @@ const { verificarAcesso, motivoNegacaoAcesso } = require('../lib/acessoLivros');
 const { buscarLivro } = require('../lib/catalogoLivros');
 const audiolivroStorage = require('../lib/audiolivroStorage');
 const { lerLivroComPatch } = require('../lib/leitorMobile');
+const { resolverPdf, urlDownloadPdf } = require('../lib/pdfLivro');
 
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
 const CONTEUDO_LIVROS_DIR = path.join(__dirname, '..', '..', 'private', 'livros');
 const PAGINA_ACESSO_EXPIRADO = path.join(PUBLIC_DIR, 'livros', '_acesso-expirado.html');
 
 const PAGINA_ACESSO_REVOGADO = path.join(PUBLIC_DIR, 'livros', '_acesso-revogado.html');
+const PAGINA_ACESSO_NEGADO = path.join(PUBLIC_DIR, 'livros', '_acesso-negado.html');
 
 const LIVRO_ID_VALIDO = /^[a-zA-Z0-9_-]+$/;
 
@@ -47,7 +49,8 @@ router.use('/loja', express.static(path.join(PUBLIC_DIR, 'loja')));
 // acessos_livros (uma 'livro', uma 'audiolivro'), cada uma abrindo sua
 // própria rota; a rota de audiolivro aceita também o token 'livro' porque
 // esse é o token único de quem comprou o combo.
-function exigirAcesso(tiposPermitidos) {
+// opcoes.ignorarPrazo: só a rota do PDF para guardar — o prazo vencido não bloqueia, o reembolso (revogado_em) sempre bloqueia.
+function exigirAcesso(tiposPermitidos, opcoes = {}) {
   return async function (req, res, next) {
     const { livroId } = req.params;
     const token = req.query.token;
@@ -57,11 +60,13 @@ function exigirAcesso(tiposPermitidos) {
     }
 
     try {
-      const acesso = await verificarAcesso(token, livroId, tiposPermitidos);
+      const acesso = await verificarAcesso(token, livroId, tiposPermitidos, opcoes);
 
       if (!acesso) {
+        // revogado: reembolso; expirado: prazo de leitura vencido (o PDF segue disponível); sem motivo: token desconhecido.
         const motivo = await motivoNegacaoAcesso(token, livroId);
-        return res.status(403).sendFile(motivo === 'revogado' ? PAGINA_ACESSO_REVOGADO : PAGINA_ACESSO_EXPIRADO);
+        const pagina = motivo === 'revogado' ? PAGINA_ACESSO_REVOGADO : (motivo === 'expirado' ? PAGINA_ACESSO_EXPIRADO : PAGINA_ACESSO_NEGADO);
+        return res.status(403).sendFile(pagina);
       }
 
       req.acessoLivro = acesso;
@@ -72,6 +77,22 @@ function exigirAcesso(tiposPermitidos) {
     }
   };
 }
+
+// PDF para guardar: vale mesmo depois do prazo de leitura (só o reembolso bloqueia). Entrega por redirecionamento a uma
+// URL assinada de curta duração (5 min) com Content-Disposition: attachment e o nome amigável do arquivo. Escolhido em
+// vez de streaming porque o arquivo passa de 10 MB: não ocupa memória nem banda do servidor e o token nunca vai ao Storage.
+router.get('/livros/:livroId/pdf', exigirAcesso(['livro'], { ignorarPrazo: true }), async (req, res) => {
+  const { livroId } = req.params;
+  if (!resolverPdf(livroId)) return res.status(404).send('Este livro não tem PDF disponível.');
+  try {
+    const url = await urlDownloadPdf(livroId);
+    res.set('Cache-Control', 'no-store');
+    return res.redirect(302, url);
+  } catch (err) {
+    console.error(`[PDF_LIVRO_FALHOU] livroId=${livroId} erro=${err.message}`);
+    return res.status(503).send('Não foi possível preparar o PDF agora. Tente de novo em instantes ou fale com a gente pelo WhatsApp.');
+  }
+});
 
 // Leitura na tela (HTML do livro, só leitura no site)
 router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {

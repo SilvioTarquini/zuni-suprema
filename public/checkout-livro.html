@@ -257,7 +257,7 @@
       <p class="cupom-status" id="cupom-status"></p>
     </div>
     <p class="etiqueta-digital">Edição Interativa digital · sem envio físico</p>
-    <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span> Após a confirmação do pagamento, você recebe acesso para ler no site, no computador ou no celular.</p>
+    <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span></p>
     <p class="prazo-leitura" id="prazo-leitura" hidden></p>
     <label for="name">Nome completo</label>
     <input type="text" id="name" autocomplete="name" placeholder="Ex: Maria da Silva" />
@@ -594,7 +594,7 @@
 <script>
   // Prazo de leitura no site (vem do servidor, mesma configuração do acesso; sem resposta, nada é exibido).
   // Script separado: aparece mesmo que o restante da página falhe ao carregar.
-  fetch('/api/config/prazo-acesso')
+  fetch('/api/config/prazo-acesso' + (new URLSearchParams(location.search).get('livro') ? '?livro=' + encodeURIComponent(new URLSearchParams(location.search).get('livro')) : ''))
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
       const el = document.getElementById('prazo-leitura');

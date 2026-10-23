@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Acesso expirado — ZUNI Suprema</title>
+<title>Leitura no site encerrada — ZUNI Suprema</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Pinterest: tag de rastreamento -->
 <style>
@@ -24,7 +24,7 @@
   a.whatsapp { color: #d9c68f; text-decoration: underline; text-underline-offset: 3px; }
   a.botao {
     display: inline-block;
-    margin-top: 20px;
+    margin: 20px 6px 0;
     padding: 12px 28px;
     background: #B8963E;
     color: #0f0f0f;
@@ -33,13 +33,27 @@
     font-weight: bold;
     letter-spacing: 0.5px;
   }
+  a.botao.secundario { background: none; color: #d9c68f; border: 1px solid #6b5533; }
+  [hidden] { display: none !important; }
 </style>
 </head>
 <body>
   <div class="caixa">
     <h1>O prazo de acesso a este livro expirou</h1>
-    <p>O período de leitura deste livro no site terminou. Se precisar de ajuda, fale com a gente pelo <a class="whatsapp" href="https://wa.me/5515996088895" target="_blank" rel="noopener">WhatsApp</a>.</p>
-    <a class="botao" href="/loja">Voltar à loja</a>
+    <p>O período de leitura deste livro no site terminou. O seu PDF continua disponível para baixar e guardar. Se precisar de ajuda, fale com a gente pelo <a class="whatsapp" href="https://wa.me/5515996088895" target="_blank" rel="noopener">WhatsApp</a>.</p>
+    <a class="botao" id="baixar-pdf" href="#" hidden>Baixar PDF</a>
+    <a class="botao secundario" href="/loja">Voltar à loja</a>
   </div>
+  <script>
+    // O link do PDF usa o mesmo token da URL desta página (/livros/<id>?token=…); sem token, o botão nem aparece.
+    (function () {
+      var t = new URLSearchParams(location.search).get('token');
+      var m = location.pathname.match(/^\/livros\/([A-Za-z0-9_-]+)\/?$/);
+      if (!t || !m) return;
+      var a = document.getElementById('baixar-pdf');
+      a.href = '/livros/' + m[1] + '/pdf?token=' + encodeURIComponent(t);
+      a.hidden = false;
+    })();
+  </script>
 </body>
 </html>

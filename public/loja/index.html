@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <title>Livros ZUNI Suprema</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Livros ZUNI Suprema — leia no site, no computador ou no celular, após a compra.">
+<meta name="description" content="Livros ZUNI Suprema — receba o PDF para guardar e leia no site após a compra.">
 <!-- Pinterest Tag -->
 <script>
   !function(e){if(!window.pintrk){window.pintrk = function () {
@@ -606,7 +606,7 @@
 <header class="topo">
   <span class="selo"></span>
   <h1>Livros ZUNI Suprema</h1>
-  <p id="prazo-loja">Após a confirmação do pagamento, cada livro fica disponível por um prazo determinado para leitura no site, no computador ou no celular.</p>
+  <p id="prazo-loja">Após a confirmação do pagamento, você recebe o livro em PDF para guardar e pode ler no site por um prazo determinado.</p>
   <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span> O acesso chega por link logo após a confirmação do pagamento.</p>
 </header>
 
@@ -856,7 +856,7 @@
     .then((d) => {
       const el = document.getElementById('prazo-loja');
       if (el && d && typeof d.texto === 'string' && d.texto) {
-        el.textContent = 'Após a confirmação do pagamento, cada livro fica disponível para leitura no site, no computador ou no celular. ' + d.texto;
+        el.textContent = d.texto;
       }
     })
     .catch(() => {});

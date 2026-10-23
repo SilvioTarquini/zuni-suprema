@@ -84,9 +84,11 @@ async function criarAcesso({ livroId, email, paymentId }) {
  * @param {string} token
  * @param {string} livroId
  * @param {string[]} [tiposPermitidos=['livro']] - tipo_produto aceitos ('livro', 'audiolivro')
+ * @param {Object} [opcoes]
+ * @param {boolean} [opcoes.ignorarPrazo=false] - só o PDF para guardar: o prazo vencido não bloqueia (reembolso bloqueia sempre)
  * @returns {Promise<Object|null>}
  */
-async function verificarAcesso(token, livroId, tiposPermitidos = ['livro']) {
+async function verificarAcesso(token, livroId, tiposPermitidos = ['livro'], opcoes = {}) {
   if (!token) return null;
   const supabaseClient = assertSupabase();
 
@@ -104,7 +106,7 @@ async function verificarAcesso(token, livroId, tiposPermitidos = ['livro']) {
   if (data.revogado_em) return null;
 
   const expirado = new Date(data.data_expiracao).getTime() < Date.now();
-  if (expirado) return null;
+  if (expirado && !opcoes.ignorarPrazo) return null;
 
   if (!tiposPermitidos.includes(data.tipo_produto)) return null;
 
