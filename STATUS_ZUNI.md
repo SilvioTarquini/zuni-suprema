@@ -1,6 +1,6 @@
 # STATUS ZUNI SUPREMA
 
-**Última atualização**: 20/10/2026, ~22h06 (horário de Brasília) — **produção na `main`, deploy `4c4789ca` SUCCESS (commit `270a02b`).** As 4 obras novas (Vender Bem Vender Sempre, Toda Mesa Tem Dois Lados, Da Terra ao Resultado, Toda Reunião Tem Duas Pautas) estão no ar: catálogo, capa, entrega e degustação funcionando. Novo Universo "Empreender e Crescer" (`/loja/empreender-e-crescer/`) também no ar, reunindo essas 4 obras (ver bloco "Empreender e Crescer" ao final do arquivo), com um bug de capa quebrada na `/loja/` encontrado e corrigido logo depois do deploy (lista `novasObras` em `public/loja/index.html` sem o id de Toda Reunião). Pendência remanescente: indexar o Livro-Vivo das 4 obras novas. Seções anteriores do mesmo dia: diagnóstico inicial e causa raiz do deploy parado (blocos "Checkpoint 20/10/2026" e "(continuação)"). Seção anterior a essas, datada de 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
+**Última atualização**: 22/10/2026, ~23h55 (horário de Brasília) — **produção na `main`, commit `8804d18` (Rodada 3A) no ar.** Rodadas 1, 2, 2.8/2.9, o ajuste "sem imprimir" e a Rodada 3A (PDF para guardar, botão "Baixar PDF", e-mail com link do PDF, capa do Toda Mesa corrigida) estão publicadas; os 4 PDFs estão no bucket privado `zuni-livros-pdf-private`; a leitura no site e o Livro-Vivo valem por **90 dias** (`LIVRO_ACESSO_DIAS=90` aplicado no Railway). **Faxina de projetos duplicados do Railway: pendente.** Detalhes no bloco "Checkpoint 22/10/2026" ao final do arquivo. Antes disso — 20/10/2026, ~22h06 — **produção na `main`, deploy `4c4789ca` SUCCESS (commit `270a02b`).** As 4 obras novas (Vender Bem Vender Sempre, Toda Mesa Tem Dois Lados, Da Terra ao Resultado, Toda Reunião Tem Duas Pautas) estão no ar: catálogo, capa, entrega e degustação funcionando. Novo Universo "Empreender e Crescer" (`/loja/empreender-e-crescer/`) também no ar, reunindo essas 4 obras (ver bloco "Empreender e Crescer" ao final do arquivo), com um bug de capa quebrada na `/loja/` encontrado e corrigido logo depois do deploy (lista `novasObras` em `public/loja/index.html` sem o id de Toda Reunião). Pendência remanescente: indexar o Livro-Vivo das 4 obras novas. Seções anteriores do mesmo dia: diagnóstico inicial e causa raiz do deploy parado (blocos "Checkpoint 20/10/2026" e "(continuação)"). Seção anterior a essas, datada de 05/10/2026 — checkpoint comercial (validação ponta a ponta de livros, Universo Feminino, Experimente v1, refund/revogação; ver bloco "Checkpoint comercial 05/10/2026" abaixo). Seções seguintes datadas de 30/09/2026, fim do dia (Stripe em produção e validado com compra real; Leva 1 do chat no ar; leitor de livros adaptado ao celular — 32 livros; estorno e disputa revogam o acesso, com 5 eventos no webhook; Leva 2 do ZUNI Direciona pendente).
 
 > Arquivo de estado vivo do projeto — só o que está no ar, aberto ou vigente agora.
 > É o único arquivo que o skill `zuni-continuidade` lê por padrão no início de cada
@@ -92,7 +92,7 @@ preferir a amostra da versão oficial (TTS só como fallback/acessibilidade quan
 Nova obra no Experimente = aprovação editorial do trecho + (se houver audiobook) corte aprovado da
 amostra, nunca texto/áudio integral.
 
-**5. Política de acesso.** Produção aplica `LIVRO_ACESSO_DIAS=30` → **acesso online efetivo de 30
+**5. Política de acesso.** **[SUPERADO em 22/10/2026: hoje 90 dias; o PDF para guardar não tem prazo — ver bloco "Checkpoint 22/10/2026".]** Produção aplicava `LIVRO_ACESSO_DIAS=30` → **acesso online efetivo de 30
 dias** (validado na compra real; o e-mail mostra a mesma data do banco). O código tem fallback de
 7 dias se a variável faltar/for inválida. **Dívida de robustez**: tornar a regra de 30 dias
 explícita/testada no código para evitar regressão silenciosa (não alterado).
@@ -106,7 +106,7 @@ validade do fluxo comercial, mas **deve ser confirmado antes/durante o início d
 (em produção). Dívidas conhecidas: alguns logs ainda podem conter e-mail; `?cupom=` na URL pode chegar
 ao Pinterest no `page`. Sanear oportunamente.
 
-**8. Download / cópia digital — NÃO implementado como política.** Hoje: leitura online funciona e a
+**8. Download / cópia digital — NÃO implementado como política.** **[SUPERADO em 22/10/2026: o PDF para guardar existe (rota `/livros/:id/pdf`) para as 4 obras do Empreender e Crescer; a leitura não tem mais botão de imprimir. As demais obras seguem como descrito abaixo.]** Hoje: leitura online funciona e a
 interface do leitor oferece ações de download/impressão. A política futura pretendida (cópia digital
 autorizada, permanente após download — conceito "Cópia Digital Certificada ZUNI Suprema", com Copy ID
 anônimo) é **proposta futura, ainda a formalizar e reconciliar tecnicamente**. Não prometer PDF nem
@@ -930,3 +930,60 @@ Rodado `node src/indexarLivro.js <livro_id> <txt>` contra o Supabase de produç�
 - Os 5 títulos "Próximo módulo" ficaram fora da indexação.
 - **Teste de busca** (`match_documents_livro`, `match_count=3`) retornou trechos dos 4 livros. Observação: em `da-terra-ao-resultado`, a pergunta "como melhorar o solo da horta?" trouxe o Cap. 9 (semeadora) em 1º e o Cap. 4 (conhecer o solo) só em 3º — recuperação funcional, mas com margem de ajuste de relevância; os outros 3 livros trouxeram os capítulos esperados no topo.
 - Pendência (iv) do checkpoint de 20/10 (indexar o Livro-Vivo das 4 obras) → **fechada**. Nenhum código alterado.
+
+---
+
+## Checkpoint 22/10/2026 — Rodadas 1 a 3A no ar, PDFs no bucket privado, prazo de 90 dias
+
+> Sem dados pessoais, tokens, UUIDs nem segredos. Estado do código em `origin/main` = `8804d18`.
+
+**No ar (confirmado em produção, 22/10/2026 ~23h52):** `/livros/da-terra-ao-resultado/pdf` com o token da compra de teste reembolsada responde **403 com a página "Acesso encerrado"**; `/`, `/loja/`, `/experimente` e `/checkout-livro.html?livro=vender-bem-vender-sempre` respondem 200. Nenhum rollback.
+
+**Commits desde 21/10 (todos em `main`):**
+| commit | o que é |
+|---|---|
+| `802a7f4` | docs: indexação do Livro-Vivo das 4 obras |
+| `19dc703` | Rodada 1: capas inteiras no /experimente e na loja, textos do hub, aviso por obra, e-mail pré-preenchido no Stripe, quadro digital neutro, "Olá, <nome>!" no e-mail |
+| `2166694` | Rodada 2: `scripts/auditar-flipbook.js`; Da Terra em rolagem no celular; Toda Mesa legível (5,6 → 16,5 px); Vender e Reunião sem corte com A+; página de acesso expirado sem promessa de renovação; prazo exibido antes da compra (`GET /api/config/prazo-acesso`) |
+| `7d3356d` | R2.8: página própria "Acesso encerrado" para reembolso (rota do livro e Livro-Vivo; só a mensagem, revogação e webhook intactos). R2.9: fonte padrão 1,1 em telas de até 380 px no Vender e na Reunião (11,3 → 12,5 px a 360×640) |
+| `97451da` | sem botão de imprimir nos 4 leitores; textos "ler no site, no computador ou no celular" |
+| `8804d18` | Rodada 3A (abaixo) |
+
+**Rodada 3A — PDF para guardar.**
+- **Rota** `GET /livros/:id/pdf?token=…`: redireciona a uma URL assinada de 5 minutos (`attachment`, nome amigável, ex.: `Da-Terra-ao-Resultado-ZUNI.pdf`). Token válido → entrega; **prazo vencido mas não revogado → entrega** (o PDF é do cliente); revogado (`revogado_em`) → página "Acesso encerrado"; token inexistente → 403; livro sem PDF → 404; falha ao assinar → 503. Escolhido redirecionamento (não streaming): arquivo > 10 MB, sem carregar o servidor e sem o token chegar ao Storage.
+- **Bucket `zuni-livros-pdf-private`** (criado em 22/10, privado, só `application/pdf`, até 50 MB; o bucket `zuni-audiobooks-private` só aceita áudio e não foi alterado). Caminhos: `pdf/<livro_id>.pdf`. Acesso direto sem assinatura → HTTP 400; URL assinada → 200 `application/pdf` attachment. Variáveis: `LIVRO_PDF_BUCKET` e `LIVRO_PDF_SIGNED_URL_TTL_SECONDS` (vazias = padrão, como está no Railway).
+- **PDFs enviados** (gerados do HTML servido, fora do repositório; nunca versionar PDF):
+| obra | páginas | MB | texto completo | sem texto |
+|---|---|---|---|---|
+| `da-terra-ao-resultado` | 65 (A4) | 8,5 | sim | só a capa |
+| `vender-bem-vender-sempre` | 193 | 5,2 | sim | só a capa |
+| `toda-mesa-tem-dois-lados` | 158 | 13,2 | sim | só a capa |
+| `toda-reuniao-tem-duas-pautas` | 201 | 4,1 | sim | só a capa |
+- **Leitores:** um único botão **"Baixar PDF"** nos 4; saíram "PDF/Imprimir", "Imprimir", "Baixar em PDF", o "Baixar" (.html) de Vender e Reunião e as chamadas a `window.print`. Quem quiser imprimir imprime o PDF. Toda Mesa é React: `onclick="texto"` dá o erro React #231; o botão usa o gancho original do componente.
+- **Textos:** frase única do prazo (`src/lib/prazoAcesso.js`): com PDF → "Você recebe o livro em PDF para guardar e pode ler no site por {N} dias."; obra sem PDF → "Leitura no site por {N} dias a partir da compra." (a página `/experimente` e o checkout seguem a obra; a loja, sem `?livro=`, usa a frase do PDF). **E-mail de entrega:** "Leia no site por {N} dias e baixe o PDF para guardar." + link "Baixar o livro em PDF" (só para obras com PDF). Páginas de acesso: prazo vencido oferece o PDF; token inexistente tem página própria ("Não encontramos este acesso"); reembolso → "Acesso encerrado".
+- **Capa do Toda Mesa:** o componente pedia `capa.png` por caminho relativo (nunca existiu no pacote; 400 em `/livros/capa.png`, capa quebrada na leitura). A capa pública da loja agora vai dentro do arquivo do livro, na hora de servir (`src/lib/leitorCapaMesa.js`); só esse componente muda.
+- **Auditoria:** `node scripts/auditar-flipbook.js <livro_id> --pdf` roda leitura + PDF (todas as letras presentes, só a capa sem texto, rota configurada). As 4 obras saem com código 0.
+
+**Política de acesso vigente.** Leitura no site e Livro-Vivo: **90 dias** (`LIVRO_ACESSO_DIAS=90` aplicado no Railway; o e-mail de 22/10 mostrou acesso até 21/01/2027). **PDF para guardar: sem prazo**, só reembolso bloqueia. O prazo é informado antes da compra (checkout, página da obra, loja).
+
+**Compras de teste.** 21/10: Da Terra (pagamento, e-mail e acesso ok); reembolso às 16h14, acesso revogado às 16h15. 22/10, pelo celular: o botão "PDF/Imprimir" abria a impressão do navegador e o "Salvar como PDF" do Android não baixava o livro — origem da Rodada 3A. **A rota do PDF ainda não foi exercitada em produção com um token válido.**
+
+**Armadilhas conhecidas deste ciclo.**
+- A impressão original do Toda Mesa sempre saía com 1 página (o contêiner de `#printPages` tem `height:100vh; overflow:hidden`); só o gerador de PDF contorna isso. Não reativar a impressão do livro.
+- Auditorias com navegador: **uma por vez, nunca em paralelo nem junto de outra tarefa pesada**. Com ~1 GB de RAM livre o sistema encerrou uma rodada em segundo plano; rodar quatro em paralelo fez o Toda Mesa não ser reconhecido.
+- `STATUS_ZUNI.md` e vários arquivos de `src/` e `public/` usam CRLF: edição por script precisa respeitar isso.
+- `scripts/auditar-impressao-flipbook.js` mede a impressão original, hoje removida dos 4 livros: obsoleto para eles.
+- **11 testes já falhavam antes e continuam assim** (mesmas contagens no HEAD limpo): `e2` 40/42, `e3b` 28/30, `e6a` 17/21, `e6b` 22/24, `f2b`, `f3c`, `p0`, `catalogo-publico-audiobook` 15/16, `checkout-livro-stripe`, `checkout-stripe`, `idempotencia-webhook-livro`.
+
+**Pendências, em ordem.**
+1. **Faxina do Railway (pendente).** Projeto OFICIAL: `zuni-suprema` (www.zunisuprema.com.br, `main`, deploy automático, "Wait for CI" desligado). Duplicatas do site: `considerate-dream`, `gleaming-mercy`, `scintillating-empathy`, `resplendent-benevolence`, `heroic-nurturing`, `humorous-insight`, `virtuous-commitment`, `app-zunisuprema`. Do zuni-intelligence: `beautiful-perception`, `carefree-abundance`, `easygoing-warmth`, `wholesome-beauty`, `energetic-victory`, mais o staging (**não apagar `pgvector-staging` antes da auditoria**). Primeiro desligar; dias depois apagar. Depois, a regra no `CLAUDE.md` e um token de projeto do Railway. **Nunca** `railway up`, `railway init` ou `railway link` (provável origem das duplicatas).
+2. **Nova compra de teste (Vender Bem)**: e-mail com o link "Baixar o livro em PDF", download no celular, leitura, e depois reembolso → página "Acesso encerrado" no site e no PDF. Regra: nada que toque na compra vai ao ar sem nova compra de teste.
+3. Stripe → Webhooks: confirmar a URL `www.zunisuprema.com.br/api/webhooks/stripe`.
+4. Supabase: impedir nova pausa por inatividade.
+5. Auditoria (`scripts/auditar-flipbook.js`) dos outros ~25 livros do mesmo motor.
+6. **Abrir a loja e divulgar** (trazer o estudo de estratégia de caixa).
+7. **Rodada 3B:** Livro-Vivo injetado na hora de servir, com rede de segurança invisível (por minuto e por dia) e alerta de custo mensal, sem contador na tela (frase "Converse com o Livro-Vivo durante a sua leitura."), acesso sempre pelo e-mail do comprador, prioridade para obras técnicas; degustação com trecho real de capítulo e MP3 na voz WaveNet; consertar os testes quebrados.
+8. Depois: inventário da loja e universos (inclui revisar os 3 commits sem assinatura do Claude — `754da89`, `2fb2e8b`, `e4f791f`, provavelmente do Codex, um deles criou a página universo-feminino); os 15 romances na loja (Romances e Histórias; Pais e Filhos só com acervo próprio); auditoria do zuni-intelligence (banco próprio, não toca o Supabase; 1 commit e 1.843 arquivos só nesta máquina); histórico do Codex.
+9. Reindexar o Livro-Vivo do Vender Bem quando existir o .docx final (hoje veio do PDF de 07/09).
+
+**Decisões pendentes do autor.** (a) Livro-Vivo também nos livros de contos (Toda Mesa, Toda Reunião) ou só nos técnicos? (b) Falsa Moralidade: a versão final é a "Com Imagens" (01/10)? (c) Máscara para o Controle: título confirmado? O "Epílogo" duplicado é erro? (d) O Último Baile do Moinho: o texto de 09/09 é o final? (e) A Tradutora: idade da mãe de Iara no romance de 1979 (afeta a faixa etária). (f) Autoria: padronizar "Zuni Suprema" e "Silvio Tarquini"? (g) Haverá renovação do acesso?
