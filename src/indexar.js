@@ -5,8 +5,9 @@ const crypto = require('crypto');
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config();
 
+const NOME_VAR_CHAVE = 'SUPABASE_KEY'; // so o NOME da variavel de ambiente da chave do Supabase, nunca o valor
 const SUPABASE_URL = process.env.SUPABASE_URL || null;
-const SUPABASE_KEY = process.env.SUPABASE_KEY || null;
+const SUPABASE_KEY = process.env[NOME_VAR_CHAVE] || null;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY || process.env.OPENAI_KEY || null;
 
 const supabase = SUPABASE_URL && SUPABASE_KEY ? createClient(SUPABASE_URL, SUPABASE_KEY) : null;
@@ -21,6 +22,32 @@ const CHUNK_DELAY_MS = 2000; // Delay de 2 segundos entre chunks
 const MAX_RETRIES = 5;
 const INITIAL_RETRY_DELAY_MS = 1000; // 1 segundo inicial
 const MAX_BATCH_EMBED_SIZE = 10; // Batch size para embeddings
+const FLAG_CONFIRMA_TUDO = '--confirmo-reindexar-tudo';
+
+// Arquivos que NAO devem ser reindexados por este script (comparados pelo NOME do arquivo, em qualquer subpasta).
+const ARQUIVOS_IGNORADOS = {
+  'cabala_astrologia_numerologia_integrativa_base_mentor.txt': 'ja indexado por indexarTema.js (tema cabala_astrologia_numerologia_integrativa); reindexar duplicaria',
+  'vertical_pais_adolescentes_completo_base_mentor.txt': 'ja indexado por indexarTema.js (tema educar_filhos); reindexar duplicaria',
+  'desenvolvimento_humano_adolescencia.txt': 'nao esta em documentos nem em documentos_quarentena (origem desconhecida); conteudo nao revisado - revisar posologia e escopo antes de indexar'
+};
+
+// Camada por conteudo: chunk com posologia nao entra, mesmo que o id nao esteja em documentos_quarentena.
+// (\b do JS e ASCII; os padroes abaixo so usam \b junto de digitos/letras ASCII.)
+const PADROES_POSOLOGIA = [
+  { nome: 'P1', re: /\b[0-9]+([.,][0-9]+)?\s*(mg|mcg|µg|ml|gotas|c[aá]psulas?|comprimidos?|UI)\b/i },
+  { nome: 'P2', re: /\b[0-9]+([.,][0-9]+)?(\s*(a|–|-)\s*[0-9]+([.,][0-9]+)?)?\s*(microgramas?|miligramas?|mililitros?|gramas?|g)\s*(\/|por|ao)\s*dia|\b(micrograma|miligrama)s?\b|\bdose\s*(usual|di[aá]ria|recomendada|orientativa|fisiol[oó]gica|suplementar|de refer[eê]ncia)?\s*:/i }
+];
+
+function acharPosologia(texto) {
+  for (const { nome, re } of PADROES_POSOLOGIA) {
+    const m = re.exec(texto);
+    if (m) {
+      const ini = Math.max(0, m.index - 40);
+      return { padrao: nome, trecho: texto.slice(ini, m.index + m[0].length + 40).replace(/\s+/g, ' ') };
+    }
+  }
+  return null;
+}
 
 function normalizeText(text) {
   return text
@@ -83,6 +110,26 @@ function assertOpenAI() {
     throw new Error('Fetch não está disponível no ambiente. Use Node 18+ ou adicione um polyfill.');
   }
   return fetch;
+}
+
+// Ids em public.documentos_quarentena (chunks retirados por conterem posologia).
+// Falha fechada: erro de leitura OU resultado vazio abortam a indexacao (RLS sem policy devolve vazio, sem erro).
+async function carregarIdsQuarentena() {
+  const client = assertSupabase();
+  console.log(`🔑 Lendo documentos_quarentena com a chave da variavel ${NOME_VAR_CHAVE}`);
+  const ids = new Set();
+  for (let offset = 0; ; offset += 1000) {
+    const { data, error } = await client.from('documentos_quarentena').select('id').range(offset, offset + 999);
+    if (error) {
+      throw new Error(`Nao foi possivel ler documentos_quarentena (${error.message}). Indexacao abortada por seguranca.`);
+    }
+    data.forEach(row => ids.add(row.id));
+    if (data.length < 1000) break;
+  }
+  if (ids.size === 0) {
+    throw new Error('documentos_quarentena retornou 0 ids — provável chave sem permissão (RLS sem policy devolve vazio, sem erro). Use a service role. Indexação abortada.');
+  }
+  return ids;
 }
 
 function sleep(ms) {
@@ -159,10 +206,23 @@ async function indexarDocumentos(options = {}) {
 
   console.log(`📄 Encontrados ${files.length} arquivo(s) para indexar\n`);
 
+  const idsQuarentena = await carregarIdsQuarentena();
+  console.log(`🔒 ${idsQuarentena.size} id(s) em documentos_quarentena serao ignorados\n`);
+
   const rows = [];
   let chunkCount = 0;
+  let ignoradosQuarentena = 0;
+  let ignoradosPosologia = 0;
+  let arquivosIgnorados = 0;
 
   for (const filePath of files) {
+    const caminhoRel = path.relative(sourceDir, filePath).replace(/\\/g, '/');
+    const nomeArquivo = path.basename(filePath);
+    if (Object.prototype.hasOwnProperty.call(ARQUIVOS_IGNORADOS, nomeArquivo)) {
+      console.log(`\n[INDEXAR_IGNORADO] ${caminhoRel} ${ARQUIVOS_IGNORADOS[nomeArquivo]}`);
+      arquivosIgnorados++;
+      continue;
+    }
     const rawText = await fs.readFile(filePath, 'utf8');
     const text = normalizeText(rawText);
     const chunks = chunkText(text, options.chunkSize || DEFAULT_CHUNK_SIZE, options.overlap || DEFAULT_OVERLAP);
@@ -173,20 +233,37 @@ async function indexarDocumentos(options = {}) {
     console.log(`\n📖 Processando: ${relativePath}`);
     console.log(`   Chunks: ${chunks.length}`);
 
+    // Mantem o indice original (o id depende dele) e tira os chunks barrados antes de gerar embedding.
+    const pendentes = [];
+    chunks.forEach((corpo, chunkIndex) => {
+      const id = createDocumentId(relativePath, chunkIndex);
+      if (idsQuarentena.has(id)) {
+        console.log(`   [INDEXAR_QUARENTENA] ${id} ${relativePath}`);
+        ignoradosQuarentena++;
+        return;
+      }
+      const achado = acharPosologia(corpo);
+      if (achado) {
+        console.log(`   [INDEXAR_POSOLOGIA] ${id} ${relativePath} (${achado.padrao}) ...${achado.trecho}...`);
+        ignoradosPosologia++;
+        return;
+      }
+      pendentes.push({ chunkIndex, corpo, id });
+    });
+
     // Processar chunks em batches
-    for (let batchStart = 0; batchStart < chunks.length; batchStart += MAX_BATCH_EMBED_SIZE) {
-      const batchEnd = Math.min(batchStart + MAX_BATCH_EMBED_SIZE, chunks.length);
-      const batchChunks = chunks.slice(batchStart, batchEnd);
+    for (let batchStart = 0; batchStart < pendentes.length; batchStart += MAX_BATCH_EMBED_SIZE) {
+      const batchEnd = Math.min(batchStart + MAX_BATCH_EMBED_SIZE, pendentes.length);
+      const batchItens = pendentes.slice(batchStart, batchEnd);
+      const batchChunks = batchItens.map(item => item.corpo);
       
       try {
         console.log(`   Gerando embeddings para chunks ${batchStart + 1}-${batchEnd}...`);
         const embeddings = await batchGetEmbeddings(batchChunks);
 
         for (let i = 0; i < batchChunks.length; i++) {
-          const chunkIndex = batchStart + i;
-          const corpo = batchChunks[i];
+          const { chunkIndex, corpo, id } = batchItens[i];
           const embedding = embeddings[i];
-          const id = createDocumentId(relativePath, chunkIndex);
 
           rows.push({
             id,
@@ -202,7 +279,7 @@ async function indexarDocumentos(options = {}) {
           console.log(`   ✓ Chunk ${chunkIndex + 1} pronto`);
 
           // Delay entre chunks
-          if (chunkIndex < chunks.length - 1) {
+          if (batchStart + i < pendentes.length - 1) {
             await sleep(CHUNK_DELAY_MS);
           }
         }
@@ -215,6 +292,10 @@ async function indexarDocumentos(options = {}) {
     }
   }
 
+  console.log('\n🔒 Resumo das travas:');
+  console.log(`   ignorados por quarentena (id): ${ignoradosQuarentena} chunk(s)`);
+  console.log(`   ignorados por posologia (conteudo): ${ignoradosPosologia} chunk(s)`);
+  console.log(`   arquivos ignorados (ARQUIVOS_IGNORADOS): ${arquivosIgnorados}`);
   console.log(`\n💾 Salvando ${rows.length} documento(s) no Supabase...`);
 
   const supabaseClient = assertSupabase();
@@ -239,7 +320,7 @@ async function indexarDocumentos(options = {}) {
   }
 
   console.log(`\n✨ Indexação concluída com sucesso!`);
-  return { indexed: rows.length, files: files.length, chunks: rows.length };
+  return { indexed: rows.length, files: files.length, chunks: rows.length, ignoradosQuarentena, ignoradosPosologia, arquivosIgnorados };
 }
 
 async function buscarDocumentos(pesquisa, limite = 5) {
@@ -262,6 +343,12 @@ async function buscarDocumentos(pesquisa, limite = 5) {
 }
 
 if (require.main === module) {
+  if (!process.argv.includes(FLAG_CONFIRMA_TUDO)) {
+    console.error('Indexacao abortada: este script reindexa TODOS os .txt de documentos-zuni (id deterministico + upsert).');
+    console.error('Isso regrava chunks removidos em limpezas anteriores e duplica arquivos ja indexados por indexarTema.js.');
+    console.error(`Para temas use: node src/indexarTema.js <tema> <arquivo>. Para reindexar tudo de proposito: node src/indexar.js ${FLAG_CONFIRMA_TUDO}`);
+    process.exit(1);
+  }
   indexarDocumentos()
     .then((result) => {
       console.log('Indexação concluída:', JSON.stringify(result, null, 2));
@@ -279,5 +366,8 @@ module.exports = {
   getEmbeddingWithRetry,
   batchGetEmbeddings,
   collectTextFiles,
-  chunkText
+  chunkText,
+  acharPosologia,
+  PADROES_POSOLOGIA,
+  ARQUIVOS_IGNORADOS
 };

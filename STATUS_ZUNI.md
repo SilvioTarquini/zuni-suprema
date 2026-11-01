@@ -1047,10 +1047,10 @@ Rodado `node src/indexarLivro.js <livro_id> <txt>` contra o Supabase de produç�
   só restavam os 5 do lote 2; o único outro acerto é o limite de sal da OMS em `consequencias_causa_efeito` (inofensivo).
 - **⚠ PROIBIDO rodar `node src/indexar.js` sem a trava.** O script usa id determinístico + upsert, reindexa
   todos os .txt de `documentos-zuni` e regravaria os 43 chunks da quarentena; também duplicaria como "sem tema"
-  `cabala_...` e `vertical_pais_adolescentes_...` (já indexados por `indexarTema.js`). Trava proposta
-  (flag `--confirmo-reindexar-tudo` + pular ids de `documentos_quarentena`): ainda **não aplicada**.
-- **Pendências:** (i) aplicar a trava no `indexar.js` (diff revisado em 01/11, ajustes pedidos); (ii) snapshot das
-  funções `buscar_documentos*`, `grupos_tema` e `documentos_quarentena` em `migrations/` (hoje existem só no banco);
+  `cabala_...` e `vertical_pais_adolescentes_...` (já indexados por `indexarTema.js`). Trava aplicada em 01/11
+  (flag `--confirmo-reindexar-tudo` + pular ids de `documentos_quarentena` + padrões P1/P2 + arquivos ignorados; ver pendência (i)).
+- **Pendências:** (i) feito: trava aplicada em src/indexar.js (flag --confirmo-reindexar-tudo, ids de documentos_quarentena, padrões P1/P2, ARQUIVOS_IGNORADOS por nome); simulação: 276 avaliados, 43 quarentena, 0 posologia, 233 regravados, 0 novos; (ii) feito: migrations/2026-11-01_funcoes_busca_snapshot.sql (6/6 md5 conferidos);
   (iii) `elegancia_charme_feminino` e demais temas: varridos em 01/11, limpos; (iv) `desenvolvimento_humano_adolescencia.txt`
   não está no banco nem na quarentena; (v) temas sem rota: `cabala_...`, `elegancia_presenca_masculina`,
-  `consequencias_causa_efeito`; (vi) documentos_quarentena sem PK — considerar PRIMARY KEY (id) numa migração futura.
+  `consequencias_causa_efeito`; (vi) documentos_quarentena sem PK — considerar PRIMARY KEY (id) numa migração futura;
+  (vii) indexarTema.js não tem trava de posologia — aplicar P1/P2 abortando a indexação inteira e listando os blocos que casarem.
