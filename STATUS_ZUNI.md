@@ -1049,8 +1049,28 @@ Rodado `node src/indexarLivro.js <livro_id> <txt>` contra o Supabase de produç�
   todos os .txt de `documentos-zuni` e regravaria os 43 chunks da quarentena; também duplicaria como "sem tema"
   `cabala_...` e `vertical_pais_adolescentes_...` (já indexados por `indexarTema.js`). Trava aplicada em 01/11
   (flag `--confirmo-reindexar-tudo` + pular ids de `documentos_quarentena` + padrões P1/P2 + arquivos ignorados; ver pendência (i)).
+- **Correções e entregas de 01/11:** nome da coleção corrigido na cópia de `negocios_relacoes_comerciais` antes de indexar;
+  trava do `indexar.js` revisada e aplicada (ARQUIVOS_IGNORADOS comparado por nome de arquivo, motivo novo para
+  `desenvolvimento_humano_adolescencia.txt`, constante `NOME_VAR_CHAVE` para o nome da variável de chave); snapshot
+  das funções de busca versionado com md5 6/6 conferidos; autor dos commits corrigido para
+  smateustarquini@gmail.com (`git config user.email` local do repo); push de 6b3c384 e 8b9f380 em `origin/main`,
+  home, loja e checkout respondendo 200 depois do push.
 - **Pendências:** (i) feito: trava aplicada em src/indexar.js (flag --confirmo-reindexar-tudo, ids de documentos_quarentena, padrões P1/P2, ARQUIVOS_IGNORADOS por nome); simulação: 276 avaliados, 43 quarentena, 0 posologia, 233 regravados, 0 novos; (ii) feito: migrations/2026-11-01_funcoes_busca_snapshot.sql (6/6 md5 conferidos);
   (iii) `elegancia_charme_feminino` e demais temas: varridos em 01/11, limpos; (iv) `desenvolvimento_humano_adolescencia.txt`
   não está no banco nem na quarentena; (v) temas sem rota: `cabala_...`, `elegancia_presenca_masculina`,
   `consequencias_causa_efeito`; (vi) documentos_quarentena sem PK — considerar PRIMARY KEY (id) numa migração futura;
-  (vii) indexarTema.js não tem trava de posologia — aplicar P1/P2 abortando a indexação inteira e listando os blocos que casarem.
+  (vii) indexarTema.js não tem trava de posologia — aplicar P1/P2 abortando a indexação inteira e listando os blocos que casarem;
+  (viii) teste ponta a ponta com sessão real (questionário → salvar-respostas → chat) conferindo o `[RAG_HIBRIDO]` nos logs do Railway;
+  (ix) testar `bullying` em primeira pessoa ("me zoam na escola todo dia"): o teste de 01/11 foi na voz do pai e só trouxe os Caps. 18 e 19 de reacoes;
+  (x) decisões de mapeamento adiadas: `compreensao_da_vida_base_mentor` (luto, solidao, perdao_familiar, autoestima, estresse,
+  separacao_divorcio), `depressao` (solidao, luto), `sentimentos_adolescencia` (bullying, vestibular_pressao_escolar),
+  `consequencias_causa_efeito` (longevidade, produtividade); continuam sem grupo `desempenho_fisico` e `saude_mental_cognitiva`;
+  (xi) `ragIndexado` do catálogo segue true só nos 7 questionários originais (cosmético: `/api/questionario/catalogo/rag-only` não é usado pelo front);
+  (xii) o snapshot das funções não cobre a tabela `documentos` (PK, índice vetorial), os GRANT EXECUTE por papel nem os dados de
+  `grupos_tema` e `documentos_quarentena`;
+  (xiii) a trava por id da quarentena perde efeito se um .txt de `documentos-zuni` for editado (as fronteiras dos chunks mudam);
+  só 2 dos 43 chunks (óleo de coco e valeriana) dependem apenas do id, os outros 41 também casam P1/P2;
+  (xiv) `rag_temas/` (textos-fonte, grupos_tema_insert.sql, snapshot_schema.csv, diffs) só existe localmente, fora do git por decisão:
+  definir backup; `trava_indexar_final.diff` é o vigente, `trava_indexar.diff` está desatualizado;
+  (xv) a varredura de posologia desta sessão cobriu depressao, obesidade, vida_madura_bem_estar, consequencias_causa_efeito e as linhas
+  de tema nulo; a dos demais temas (item iii) é do autor.
