@@ -69,6 +69,137 @@ const AMOSTRAS = Object.freeze({
       duracaoSegundos: 65
     })
   }),
+  // Código Feminino — Parte IV (Caps. 11 a 13): sexualidade, libido e desejo. A Introdução e o Cap. 1 ficam de fora porque citam suplementação.
+  // Trecho idêntico ao da obra, aprovado em 02/11/2026 (revisão do autor); amostra de áudio = corte do audiolivro oficial.
+  'codigo-feminino': Object.freeze({
+    livroId: 'codigo-feminino',
+    aprovada: true,
+    trecho: [
+      "A sexualidade feminina é uma dimensão complexa e multifacetada, que envolve aspectos físicos, emocionais, psicológicos e sociais ao mesmo tempo. Ela acompanha a mulher ao longo de toda a vida — da infância à adolescência, da vida adulta ao envelhecimento — e nunca se limita ao ato sexual em si. Envolve a percepção do próprio corpo, a expressão de sentimentos e desejos, e a forma como cada mulher se relaciona consigo mesma e com quem escolhe se aproximar.",
+      "Ao longo da história, a sexualidade feminina foi cercada de mitos e tabus que ainda hoje influenciam crenças pessoais e culturais. Muitos desses mitos alimentam sentimentos de culpa ou vergonha, e podem prejudicar profundamente a experiência do prazer. Reconhecer essas crenças — e ter a coragem de questioná-las — é um dos primeiros passos para uma vida sexual saudável e plena.",
+      "Fatores sociais como educação, religião, mídia e padrões de beleza também exercem uma influência enorme sobre como a mulher percebe seu próprio corpo e seus desejos. Entender essas influências, e a forma como elas moldaram silenciosamente crenças que talvez nunca tenham sido escolhidas conscientemente, é o primeiro passo para que a mulher retome, de fato, o controle sobre sua própria sexualidade.",
+      "A libido é o desejo sexual — e pode se manifestar de formas diferentes: de maneira espontânea, quando surge sem qualquer estímulo externo, ou de forma responsiva, quando nasce em resposta a estímulos físicos, emocionais ou de contexto. Essa distinção é fundamental, porque explica por que a experiência do desejo varia tanto de mulher para mulher — e por que nenhuma das duas formas é mais \"normal\" do que a outra.",
+      "Os fatores que influenciam a libido são múltiplos. Do lado hormonal, os níveis de estrogênio, progesterona e testosterona têm papel importante na excitação e no interesse sexual. Do lado neurológico e bioquímico, neurotransmissores como dopamina e serotonina modulam o prazer e a motivação. E do lado psicológico, autoestima, estresse, ansiedade e experiências passadas afetam a libido de forma tão significativa quanto qualquer hormônio. O equilíbrio entre corpo e mente é, por isso, essencial para que o desejo se manifeste de forma saudável e constante.",
+      "O desejo sexual nunca é só físico — está intimamente ligado à mente e às emoções. Sentimentos de bem-estar, autoestima e autoconfiança impactam diretamente a capacidade de sentir desejo e prazer. O estresse, por outro lado, tende a reduzir a libido: sob tensão, o corpo prioriza a sobrevivência, não o prazer.",
+      "A psicologia do desejo envolve reconhecer os próprios limites e vontades, compreender os próprios gatilhos e preferências, e aprender a lidar com frustrações ou expectativas que vêm de fora. A relação com o próprio corpo, a percepção da própria sensualidade e a consciência do próprio prazer são peças fundamentais para o desenvolvimento de uma vida sexual satisfatória. Exercícios de atenção plena e de conexão entre mente e corpo podem ajudar a ampliar essa consciência sexual, permitindo que a mulher explore sua sexualidade de forma mais profunda e integrada — não como algo separado do resto da vida emocional, mas como parte dela."
+    ].join('\n\n'),
+    tituloTrecho: "Sexualidade, libido e desejo",
+    chamada: "O que a medicina integrativa sabe sobre libido, desejo e prazer feminino — sem tabus e sem fórmulas.",
+    outrosCapitulos: Object.freeze([
+      "Fundamentos do Autocuidado Diário",
+      "A Importância dos Hormônios na Saúde Feminina",
+      "O Ritual do Sono e Renovação Celular",
+      "Higiene Íntima e Microbiota Vaginal",
+      "Autoestima e Imagem Corporal"
+    ]),
+    origemUniverso: 'universo-feminino',
+    avisoInformativo: true,
+    // Tem audiobook oficial: a demonstração é a amostra real, não a voz do navegador.
+    ttsDisponivel: false,
+    audioAmostra: Object.freeze({
+      aprovada: true,
+      arquivo: '/audio/amostras/codigo-feminino.mp3',
+      duracaoSegundos: 68
+    })
+  }),
+  // A Inteligência do Corpo Feminino — Capítulo 1 (7 primeiros parágrafos). A Introdução fica de fora porque usa a palavra "protocolo".
+  // Trecho idêntico ao da obra, aprovado em 02/11/2026 (revisão do autor); amostra de áudio = corte do audiolivro oficial.
+  'a-inteligencia-do-corpo-feminino': Object.freeze({
+    livroId: 'a-inteligencia-do-corpo-feminino',
+    aprovada: true,
+    trecho: [
+      "Se existisse um único fio conectando o inchaço abdominal, a dificuldade de emagrecer, a celulite resistente e a sensação de cansaço crônico, esse fio seria a inflamação. Não a inflamação que se vê — aquela de uma torção no tornozelo ou de uma garganta inflamada, com sinais evidentes e resposta rápida do corpo. A inflamação de que tratamos aqui é outra: crônica, discreta, de baixo grau. Ela não avisa com dor. Ela se instala devagar, e o corpo, adaptado à sua presença constante, deixa de reconhecê-la como uma anomalia.",
+      "A inflamação de baixo grau é, paradoxalmente, uma resposta de defesa que se tornou permanente. O sistema imunológico reage a agressões contínuas — açúcar em excesso, alimentos ultraprocessados, estresse crônico, sono insuficiente, poluentes ambientais — como se cada uma delas fosse uma pequena ameaça. Isoladamente, o corpo daria conta. Mas quando essas agressões se acumulam, dia após dia, sem pausa para reparo, o estado inflamatório deixa de ser uma resposta pontual e passa a ser o pano de fundo permanente do organismo.",
+      "É esse pano de fundo que explica por que duas mulheres com hábitos aparentemente semelhantes podem ter resultados tão diferentes na balança, na pele, na disposição. Não se trata apenas de quantas calorias se consome, mas de quanto o corpo está, nos bastidores, ocupado se defendendo — em vez de metabolizar, digerir e regenerar com eficiência.",
+      "Antes de qualquer diagnóstico formal, o corpo já está enviando sinais. Inchaço recorrente, sobretudo ao final do dia. Pele que perde viço mesmo com boa rotina de cuidados. Sensação de peso e lentidão após as refeições. Dificuldade de perder gordura localizada mesmo com dieta e exercício regulares. Alterações de humor que parecem desproporcionais ao que a vida está exigindo. Isoladamente, cada um desses sinais pode ter explicações pontuais. Juntos, e persistentes, eles compõem um padrão — o padrão de um corpo inflamado pedindo atenção.",
+      "Ignorar esses sinais não os faz desaparecer; apenas os empurra para adiante, onde tendem a se expressar de forma mais séria. É por isso que aprender a reconhecê-los cedo — não como imperfeições a esconder, mas como informação a decodificar — é o primeiro gesto de cuidado real com o próprio corpo.",
+      "Grande parte do processo inflamatório tem origem no que comemos, mas não da forma como o discurso da dieta costuma apresentar — como pecado e penitência. Alimentos ricos em açúcar refinado, farinhas processadas e gorduras de baixa qualidade funcionam como combustível para esse fogo interno: elevam picos de glicose no sangue, favorecem o acúmulo de gordura visceral e alimentam justamente o tipo de resposta imunológica que mantém a inflamação ativa.",
+      "Do outro lado, alimentos anti-inflamatórios — vegetais coloridos, boas fontes de gordura, especiarias como cúrcuma e gengibre, fibras de qualidade — não funcionam como restrição, mas como reabastecimento. A diferença entre \"cortar\" e \"nutrir\" é mais do que semântica: é a diferença entre um corpo em estado de escassez e um corpo em estado de reparo."
+    ].join('\n\n'),
+    tituloTrecho: "O fio que liga o inchaço, a celulite e o cansaço",
+    chamada: "A inflamação de baixo grau — o fio silencioso por trás do inchaço, da celulite e do cansaço que o sono não resolve.",
+    outrosCapitulos: Object.freeze([
+      "Intestino Preso, o Sabotador",
+      "Alimentos, Intolerâncias e a Saúde da Mucosa Digestiva",
+      "Celulite, Pochete e Gordura Localizada: a Leitura Completa",
+      "Exercício, Alongamento e Sistema Linfático",
+      "Um Tributo à Mulher que Habita Esse Corpo"
+    ]),
+    origemUniverso: 'universo-feminino',
+    avisoInformativo: true,
+    // Tem audiobook oficial: a demonstração é a amostra real, não a voz do navegador.
+    ttsDisponivel: false,
+    audioAmostra: Object.freeze({
+      aprovada: true,
+      arquivo: '/audio/amostras/a-inteligencia-do-corpo-feminino.mp3',
+      duracaoSegundos: 70
+    })
+  }),
+  // Inesquecível — Introdução + 1º parágrafo do Capítulo 1.
+  // Trecho idêntico ao da obra, aprovado em 02/11/2026 (revisão do autor); amostra de áudio = corte do audiolivro oficial.
+  'inesquecivel-charme-feminino': Object.freeze({
+    livroId: 'inesquecivel-charme-feminino',
+    aprovada: true,
+    trecho: [
+      "Durante muito tempo, fizeram muitas mulheres acreditarem que conquistar alguém dependia, sobretudo, de aparência, de aprovação externa, da capacidade de impressionar sem parar. Mas as conexões que realmente ficam raramente nascem disso. O que torna uma mulher inesquecível quase nunca é exagero ou perfeição estética. É, quase sempre, algo mais sutil — a forma como ela transmite presença. A tranquilidade no olhar. A leveza da energia. A maneira como faz alguém se sentir bem só por estar perto.",
+      "Existe um tipo de charme que não precisa disputar atenção — um magnetismo silencioso, que nasce da autoestima em equilíbrio e da segurança emocional. Mulheres emocionalmente maduras não vivem tentando provar valor a cada instante, nem correndo atrás de validação, nem transformando o amor num jogo. Elas entendem algo simples e poderoso: a atração de verdade nunca nasceu da ansiedade de ser escolhida. Nasce da capacidade de construir conexões reais.",
+      "Este livro não foi feito para ensinar manipulação, nem técnicas para controlar sentimentos alheios. O propósito aqui é bem mais sofisticado: ajudar você a desenvolver presença refinada, autoestima tranquila, inteligência emocional, um charme que nasce de dentro. Porque o verdadeiro encanto feminino nunca esteve em parecer perfeita. Está em transmitir verdade sem perder a delicadeza.",
+      "Ao longo destas páginas, você vai perceber que feminilidade nunca significou submissão. Que delicadeza nunca significou fragilidade. Que receptividade nunca significou carência. Que demonstrar interesse nunca significou perder valor. Existe uma diferença enorme entre buscar aprovação e criar conexão — muitas pessoas entram nos relacionamentos tentando, desesperadamente, ser aceitas. Mas as mulheres emocionalmente inteligentes aprendem outro caminho: não tentam convencer ninguém a gostar delas. Observam reciprocidade, respeito, verdade — e isso muda, por completo, a qualidade do que constroem.",
+      "O charme feminino saudável nunca dependeu só da beleza. A aparência pode chamar atenção — mas é a energia emocional que sustenta uma presença. A forma de conversar, de escutar, de sorrir, de acolher marca muito mais fundo do que qualquer frase decorada ou tentativa forçada de sedução. As pessoas raramente esquecem quem as fez se sentir bem consigo mesmas.",
+      "Por isso, esta obra não é sobre fazer alguém gostar de você. É sobre se tornar uma mulher emocionalmente forte, naturalmente encantadora, segura sem arrogância, leve sem superficialidade, feminina sem submissão. Porque o verdadeiro magnetismo nunca grita. Ele transmite. Não força — atrai, naturalmente. E quase sempre começa de um jeito simples: um olhar tranquilo, uma conversa leve, um sorriso sincero, e a serenidade silenciosa de uma mulher que já conhece o próprio valor.",
+      "Há uma diferença profunda — quase um abismo silencioso — entre querer compartilhar a vida com alguém e precisar desesperadamente de sua aprovação para se sentir inteira. Muitas mulheres passam anos acreditando que o amor se conquista pela beleza, pela aparência impecável, pela capacidade de despertar olhares. Com o tempo, porém, o coração aprende algo que a mente demora a aceitar: atenção não é conexão. Admiração superficial não é ser amada de verdade. E o interesse de um instante não constrói vínculo nenhum."
+    ].join('\n\n'),
+    tituloTrecho: "O charme que nasce de dentro",
+    chamada: "O magnetismo verdadeiro nunca nasceu da competição — nasce de verdade, de presença e de valor próprio.",
+    outrosCapitulos: Object.freeze([
+      "A Mulher que Não Precisa Implorar por Atenção",
+      "O Magnetismo da Presença Tranquila",
+      "Conversas Femininas que Encantam",
+      "Os Erros Emocionais que Afastam Conexões Saudáveis",
+      "O Brilho Silencioso da Mulher Emocionalmente Inteligente"
+    ]),
+    origemUniverso: 'universo-feminino',
+    avisoInformativo: false,
+    // Tem audiobook oficial: a demonstração é a amostra real, não a voz do navegador.
+    ttsDisponivel: false,
+    audioAmostra: Object.freeze({
+      aprovada: true,
+      arquivo: '/audio/amostras/inesquecivel-charme-feminino.mp3',
+      duracaoSegundos: 61
+    })
+  }),
+  // A Mulher que Permanece Inteira — Introdução + 2 primeiros parágrafos do Capítulo 1 (Parte I).
+  // Trecho idêntico ao da obra, aprovado em 02/11/2026 (revisão do autor); amostra de áudio = corte do audiolivro oficial.
+  'a-mulher-que-permanece-inteira': Object.freeze({
+    livroId: 'a-mulher-que-permanece-inteira',
+    aprovada: true,
+    trecho: [
+      "Vivemos em uma época curiosa. Nunca houve tantas formas de comunicação e, ao mesmo tempo, tantas dificuldades de conexão real nos relacionamentos. As pessoas conversam o dia inteiro, mas raramente se conectam de maneira profunda. Recebem atenção constante, mas sentem-se emocionalmente vazias; possuem centenas de contatos virtuais, mas pouca estabilidade afetiva concreta. Em meio a redes sociais, mensagens instantâneas, relações aceleradas e um excesso contínuo de estímulos, muitas mulheres começaram a vivenciar silenciosamente um profundo cansaço emocional. Trata-se do desgaste provocado por conexões superficiais, vínculos instáveis, jogos psicológicos, ansiedade afetiva e uma necessidade ininterrupta de validação.",
+      "Paralelamente a esse cenário, a mulher moderna enfrenta um conflito interno silencioso. Ela deseja amar, construir intimidade, viver relacionamentos saudáveis, expressar sua feminilidade e sentir-se verdadeiramente valorizada. No entanto, deseja tudo isso sem precisar abrir mão de sua identidade, abandonar sua autoestima, tornar-se dependente afetiva ou viver em permanente sofrimento. E é exatamente a partir dessa busca por equilíbrio que esta obra se desenvolve.",
+      "A Mulher que Permanece Inteira não foi concebido como um manual superficial de sedução, tampouco como um guia baseado em manipulação, jogos de poder ou estratégias para controlar terceiros. O livro nasce de uma proposta consideravelmente mais sofisticada: ajudar a mulher a desenvolver inteligência emocional aplicada à sua vida afetiva. Nesta jornada, a feminilidade não é tratada como vulnerabilidade ou fraqueza, a autoestima não é confundida com arrogância e os relacionamentos deixam de ser vistos como disputas de ego.",
+      "O objetivo central desta leitura não é moldar uma personagem perfeita ou ensinar técnicas de atuação social, mas promover uma consciência emocional genuína. Mulheres emocionalmente maduras não vivem tentando parecer extraordinárias o tempo todo; elas aprendem a reconhecer seu valor, proteger sua paz interior, cultivar autenticidade e construir laços saudáveis, amando o outro sem abandonar a si mesmas. Em uma sociedade que pressiona a mulher a performar, competir e sustentar imagens irreais, o verdadeiro luxo e a maior elegância residem no equilíbrio emocional. A presença consciente vale mais do que a performance, e o magnetismo duradouro nasce da mulher que cultiva uma vida interior sólida e coerente.",
+      "Existe uma diferença silenciosa, porém profunda, entre a mulher que busca desesperadamente ser valorizada pelo mundo e aquela que já reconheceu o próprio valor interior. A primeira vive emocionalmente refém das reações e do reconhecimento alheio, enquanto a segunda constrói uma presença sólida. Essa mudança de perspectiva transforma de maneira definitiva a qualidade das escolhas, a postura afetiva, a expressão da feminilidade e a preservação da paz interior.",
+      "Muitas mulheres foram educadas para mensurar o próprio valor com base em critérios externos, como aprovação estética, validação masculina, comparação social e quantidade de atenção recebida. Ao longo de anos, habituaram-se a tentar provar que eram interessantes, suficientes e dignas de afeto. No entanto, buscar incessantemente o merecimento de aprovação é um processo desgastante. Quando a mulher não reconhece seu valor intrínseco, torna-se vulnerável a qualquer oscilação ou ausência de validação externa."
+    ].join('\n\n'),
+    tituloTrecho: "Inteira, sem perder a própria essência",
+    chamada: "Como amar, construir intimidade e se sentir valorizada sem abrir mão de si mesma.",
+    outrosCapitulos: Object.freeze([
+      "Como Parar de Buscar Validação Masculina",
+      "A Cura da Carência Emocional",
+      "Feminilidade sem Dependência Afetiva",
+      "O Poder da Presença Feminina",
+      "Como Conversar no Whatsapp sem Ansiedade Emocional"
+    ]),
+    origemUniverso: 'universo-feminino',
+    avisoInformativo: false,
+    // Tem audiobook oficial: a demonstração é a amostra real, não a voz do navegador.
+    ttsDisponivel: false,
+    audioAmostra: Object.freeze({
+      aprovada: true,
+      arquivo: '/audio/amostras/a-mulher-que-permanece-inteira.mp3',
+      duracaoSegundos: 65
+    })
+  }),
   // Trechos originais aprovados para a degustação comercial das novas obras.
   // São amostras editoriais curtas, não capítulos integrais.
   'vender-bem-vender-sempre': Object.freeze({

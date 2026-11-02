@@ -102,7 +102,7 @@ function ffprobe() {
     assert.ok(h.includes('Leia um trecho da obra') && h.includes('Adquirir livro — R$ 34,90'));
   });
   await teste('404 / fail-closed da página preservados (mesma resposta para tudo que não é publicável)', async () => {
-    for (const id of ['inexistente', 'a-mulher-que-permanece-inteira', 'constructor', '../x', '']) assert.deepStrictEqual(render({ livroId: id }), { status: 404, html: PAGINA_INDISPONIVEL }, id);
+    for (const id of ['inexistente', 'a-arte-da-presenca-masculina', 'constructor', '../x', '']) assert.deepStrictEqual(render({ livroId: id }), { status: 404, html: PAGINA_INDISPONIVEL }, id);
     assert.strictEqual(render({}, { amostra: () => ({ ...amostra, aprovada: false }) }).status, 404);
   });
 
@@ -204,12 +204,13 @@ function ffprobe() {
     assert.ok(!/audiobookStorage|audiobookUrl|audiobookPartes|gerarUrlAssinada|audiolivroStorage/.test(fonte.replace(/\/\/.*$/gm, '')));
     assert.ok(!/fetch\(|XMLHttpRequest|sendBeacon/.test(template.replace(/\/\/.*$/gm, '')));
   });
-  await teste('nenhuma outra obra ganha áudio: só Ela tem audioAmostra; as demais do Universo Feminino seguem sem Experimente', async () => {
-    assert.deepStrictEqual(Object.keys(AMOSTRAS), ['ela-tem-classe']);
-    assert.deepStrictEqual(Object.entries(CATALOGO).filter(([, l]) => l.amostraDisponivel === true).map(([id]) => id), ['ela-tem-classe']);
+  await teste('amostra em áudio só nas cinco obras do Universo Feminino (todas com audiobook oficial); public/audio só contém as amostras curtas', async () => {
+    const UF = ['ela-tem-classe', 'a-inteligencia-do-corpo-feminino', 'codigo-feminino', 'a-mulher-que-permanece-inteira', 'inesquecivel-charme-feminino'].sort();
+    assert.deepStrictEqual(Object.keys(AMOSTRAS).filter((id) => AMOSTRAS[id].audioAmostra).sort(), UF);
+    assert.deepStrictEqual(Object.entries(CATALOGO).filter(([, l]) => l.departamento === 'Universo Feminino' && l.amostraDisponivel === true).map(([id]) => id).sort(), UF);
     const pub = path.join(raiz, 'public/audio'); const mp3 = [];
     (function varrer(d) { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) varrer(p); else mp3.push(path.relative(pub, p).replace(/\\/g, '/')); } })(pub);
-    assert.deepStrictEqual(mp3, ['amostras/ela-tem-classe.mp3'], 'public/audio só contém a amostra curta');
+    assert.deepStrictEqual(mp3.sort(), UF.map((id) => 'amostras/' + id + '.mp3').sort(), 'public/audio só contém as amostras curtas');
   });
   await teste('Pinterest/checkout intocados: a página ainda só tem load + page; nenhum evento por ouvir/clicar', async () => {
     assert.strictEqual((pagina.match(/pintrk\(/g) || []).length, 2);

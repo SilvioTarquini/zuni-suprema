@@ -134,7 +134,7 @@ const CATALOGO = {
     titulo: 'Código Feminino',
     preco: 44.90,
     // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
-    amostraDisponivel: false,
+    amostraDisponivel: true,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um guia completo de saúde integrativa feminina — do autocuidado diário ao equilíbrio hormonal, da sexualidade em todas as fases da vida à segurança e autonomia sobre o próprio corpo.',
@@ -148,7 +148,7 @@ const CATALOGO = {
     titulo: 'A Inteligência do Corpo Feminino',
     preco: 39.90,
     // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
-    amostraDisponivel: false,
+    amostraDisponivel: true,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Um mergulho no que o corpo tenta comunicar através de inchaço, celulite e cansaço — e os caminhos reais (alimentação, intestino, movimento, descanso) para restaurar o equilíbrio metabólico.',
@@ -162,7 +162,7 @@ const CATALOGO = {
     titulo: 'Inesquecível',
     preco: 49.90,
     // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
-    amostraDisponivel: false,
+    amostraDisponivel: true,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Como criar conexões memoráveis e saudáveis sem perder autenticidade — charme feminino construído sobre autoestima, presença e inteligência emocional, não sobre estratégia ou performance.',
@@ -176,7 +176,7 @@ const CATALOGO = {
     titulo: 'A Mulher que Permanece Inteira',
     preco: 49.90,
     // Experimente ZUNI (/experimente/<id>/): só vira true quando houver trecho aprovado em lib/amostrasExperimente.js
-    amostraDisponivel: false,
+    amostraDisponivel: true,
     categoria: 'principal',
     departamento: 'Universo Feminino',
     resumo: 'Mais do que um livro sobre relacionamentos: uma jornada de reconstrução emocional feminina — incluindo um raro capítulo sobre como reconhecer perfis emocionais masculinos.',

@@ -68,16 +68,18 @@ const srv = ler('src/server.js');
     assert.strictEqual(buscarLivro('ela-tem-classe').amostraDisponivel, true);
     assert.strictEqual(amostra.aprovada, true);
   });
-  await teste('B. as outras quatro obras do Universo Feminino continuam 404, com catálogo false e sem amostra', async () => {
+  await teste('B. as outras quatro obras do Universo Feminino têm Experimente aprovado em 02/11/2026 (catálogo true + trecho aprovado); fora delas, só as obras do Empreender e Crescer', async () => {
     for (const id of ['a-inteligencia-do-corpo-feminino', 'codigo-feminino', 'a-mulher-que-permanece-inteira', 'inesquecivel-charme-feminino']) {
       const r = renderizarExperimenteObra({ livroId: id });
-      assert.strictEqual(r.status, 404, id);
-      assert.strictEqual(r.html, PAGINA_INDISPONIVEL);
-      assert.strictEqual(CATALOGO[id].amostraDisponivel, false, id);
-      assert.strictEqual(obterAmostra(id), null, id);
+      assert.strictEqual(r.status, 200, id);
+      assert.strictEqual(CATALOGO[id].amostraDisponivel, true, id);
+      const a = obterAmostra(id);
+      assert.ok(a && a.aprovada === true && a.livroId === id && a.origemUniverso === 'universo-feminino', id);
+      assert.ok(a.trecho.split(/\s+/).length >= 400 && a.trecho.length <= 6000, id + ': trecho no molde do Ela (400–550 palavras, até 6.000 caracteres)');
     }
-    assert.deepStrictEqual(Object.keys(CATALOGO).filter((id) => CATALOGO[id].amostraDisponivel === true), ['ela-tem-classe']);
-    assert.deepStrictEqual(Object.keys(AMOSTRAS), ['ela-tem-classe']);
+    const feminino = Object.keys(CATALOGO).filter((id) => CATALOGO[id].departamento === 'Universo Feminino');
+    assert.deepStrictEqual(feminino.filter((id) => CATALOGO[id].amostraDisponivel === true).sort(), ['ela-tem-classe', 'a-inteligencia-do-corpo-feminino', 'codigo-feminino', 'a-mulher-que-permanece-inteira', 'inesquecivel-charme-feminino'].sort());
+    assert.deepStrictEqual(Object.keys(AMOSTRAS).filter((id) => AMOSTRAS[id].origemUniverso === 'universo-feminino').sort(), ['ela-tem-classe', 'a-inteligencia-do-corpo-feminino', 'codigo-feminino', 'a-mulher-que-permanece-inteira', 'inesquecivel-charme-feminino'].sort());
   });
 
   console.log('\nIntegridade do trecho');
@@ -241,14 +243,14 @@ const srv = ler('src/server.js');
 
   console.log('\nVitrine Universo Feminino');
   const vitrine = ler('public/loja/universo-feminino/index.html');
-  await teste('N. "Experimentar" só aparece para obras que o catálogo marca com amostra (hoje, só Ela Tem Classe); é secundário ao "Adquirir"', async () => {
+  await teste('N. "Experimentar" só aparece para obras que o catálogo marca com amostra (hoje, as cinco do Universo Feminino); é secundário ao "Adquirir"', async () => {
     assert.strictEqual((vitrine.match(/>Experimentar</g) || []).length, 1); // um único elemento, controlado por dado
     assert.ok(/id="det-experimentar" href="#" hidden>Experimentar<\/a>/.test(vitrine));
     assert.ok(/experimentar\.hidden = l\.amostraDisponivel !== true;/.test(vitrine));
     assert.ok(/<a class="btn btn-secundario" id="det-experimentar"/.test(vitrine) && /<a class="btn btn-primario" id="det-comprar"/.test(vitrine));
     assert.ok(vitrine.indexOf('id="det-experimentar"') < vitrine.indexOf('id="det-comprar"'), 'Adquirir fica por último (polegar)');
     const flags = Object.entries(CATALOGO).filter(([, l]) => l.departamento === 'Universo Feminino').map(([id, l]) => [id, l.amostraDisponivel === true]);
-    assert.deepStrictEqual(flags.filter(([, f]) => f).map(([id]) => id), ['ela-tem-classe']);
+    assert.deepStrictEqual(flags.filter(([, f]) => f).map(([id]) => id).sort(), ['ela-tem-classe', 'a-inteligencia-do-corpo-feminino', 'codigo-feminino', 'a-mulher-que-permanece-inteira', 'inesquecivel-charme-feminino'].sort()); // 02/11/2026: as cinco do Universo Feminino têm amostra aprovada
     assert.strictEqual(flags.length, 5);
     assert.ok(!/Futuro: quando o catálogo tiver amostra/.test(vitrine));
   });
