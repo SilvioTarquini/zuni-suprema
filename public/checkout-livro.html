@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Cupom/origem saem da URL antes da tag do Pinterest (ver /js/zuni-contexto-url.js) -->
+<script src="/js/zuni-contexto-url.js"></script>
 <!-- Pinterest Tag -->
 <script>
   // Guarda o e-mail do retorno do pagamento localmente (só em memória) e o tira
@@ -293,7 +295,7 @@
   let livroAtual = null;
   let audiolivroIncluido = false;
   // Origem validada pela whitelist (null se ausente/desconhecida). Só contexto de análise.
-  const origemCompra = ZuniCheckoutLivro.lerOrigem(window.location.search);
+  const origemCompra = ZuniCheckoutLivro.lerOrigem('?origem=' + encodeURIComponent(ZuniContexto.origem() || ''));
   // Estado de preço estruturado (livro + áudio + cupom validado pelo servidor).
   // O total exibido e o valor enviado ao Pinterest saem dele, nunca do texto da tela.
   const precoEstado = ZuniCheckoutLivro.criarEstadoPreco(async (codigo, id, audio) => {
@@ -356,7 +358,7 @@
         if (document.getElementById('audiolivro-checkbox').checked) await atualizarPrecoAudiolivro();
       }
 
-      const cupomDaUrl = params.get('cupom');
+      const cupomDaUrl = ZuniContexto.cupom();
       if (cupomDaUrl) {
         document.getElementById('cupom-input').value = cupomDaUrl;
         mostrarFormCupom();

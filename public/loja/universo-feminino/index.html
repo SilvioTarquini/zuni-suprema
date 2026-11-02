@@ -9,6 +9,8 @@
 <meta property="og:title" content="Universo Feminino — ZUNI Suprema">
 <meta property="og:description" content="Livros para diferentes momentos da vida de uma mulher. Conhecimento, reflexão e novas perspectivas.">
 <meta name="theme-color" content="#f7f2ea">
+<!-- Cupom/origem saem da URL antes da tag do Pinterest (ver /js/zuni-contexto-url.js) -->
+<script src="/js/zuni-contexto-url.js"></script>
 <!-- Pinterest Tag (mesma tag oficial da Loja e dos checkouts) -->
 <script>
   !function(e){if(!window.pintrk){window.pintrk = function () {
@@ -576,10 +578,10 @@
   const precoVigente = (l) => l.precoPromocional || l.preco;
   const urlCapa = (id) => '/loja/capas/' + encodeURIComponent(id) + '.jpg';
 
-  // Preserva ?cupom= da URL (como a Loja) e marca a origem para uso futuro (campanhas).
+  // Preserva o cupom (capturado da URL por zuni-contexto-url.js, como a Loja) e marca a origem para uso futuro (campanhas).
   function urlCheckout(id) {
     const q = new URLSearchParams({ livro: id, origem: ORIGEM });
-    const cupom = new URLSearchParams(window.location.search).get('cupom');
+    const cupom = ZuniContexto.cupom();
     if (cupom) q.set('cupom', cupom);
     return '/checkout-livro.html?' + q.toString();
   }
@@ -587,7 +589,7 @@
   // Experimente ZUNI (/experimente/<id>/): só existe para obras que o catálogo marca com amostraDisponivel.
   function urlExperimente(id) {
     const q = new URLSearchParams({ origem: ORIGEM });
-    const cupom = new URLSearchParams(window.location.search).get('cupom');
+    const cupom = ZuniContexto.cupom();
     if (cupom) q.set('cupom', cupom);
     return '/experimente/' + encodeURIComponent(id) + '/?' + q.toString();
   }

@@ -5,6 +5,8 @@
 <title>Livros ZUNI Suprema</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="description" content="Livros ZUNI Suprema — receba o PDF para guardar e leia no site após a compra.">
+<!-- Cupom/origem saem da URL antes da tag do Pinterest (ver /js/zuni-contexto-url.js) -->
+<script src="/js/zuni-contexto-url.js"></script>
 <!-- Pinterest Tag -->
 <script>
   !function(e){if(!window.pintrk){window.pintrk = function () {
@@ -771,7 +773,7 @@
   // Renderizar cards dos livros
   async function renderizarLivros() {
     const gradiLivros = document.getElementById('grade-livros');
-    const cupom = new URLSearchParams(window.location.search).get('cupom');
+    const cupom = ZuniContexto.cupom();
 
     try {
       const res = await fetch('/api/livros');
@@ -835,7 +837,7 @@
   // para obras que o catálogo confirma como disponíveis para degustação.
   (function () {
     try {
-      const cupom = new URLSearchParams(window.location.search).get('cupom');
+      const cupom = ZuniContexto.cupom();
       if (cupom) {
         document.getElementById('porta-universo-link').href = '/loja/universo-feminino/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-empreender-link').href = '/loja/empreender-e-crescer/?cupom=' + encodeURIComponent(cupom);

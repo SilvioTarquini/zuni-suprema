@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Conheça as experiências gratuitas e as degustações editoriais da ZUNI Suprema.">
 <meta name="theme-color" content="#0f0f0f">
+<!-- Cupom/origem saem da URL antes da tag do Pinterest (ver /js/zuni-contexto-url.js) -->
+<script src="/js/zuni-contexto-url.js"></script>
+<!-- Pinterest Tag (mesma tag oficial da Loja e dos checkouts) -->
+<script>
+  !function(e){if(!window.pintrk){window.pintrk = function () {
+  window.pintrk.queue.push(Array.prototype.slice.call(arguments))};var
+    n=window.pintrk;n.queue=[],n.version="3.0";var
+    t=document.createElement("script");t.async=!0,t.src=e;var
+    r=document.getElementsByTagName("script")[0];
+    r.parentNode.insertBefore(t,r)}}("https://s.pinimg.com/ct/core.js");
+  pintrk('load', '2612519382245');
+  pintrk('page');
+</script>
+<!-- end Pinterest Tag -->
 <title>Experimente ZUNI — ZUNI Suprema</title>
 <style>
   :root { --fundo:#0f0f0f; --carta:#171512; --tinta:#f2ead9; --suave:#b6ab93; --borda:#2a2620; --dourado:#b8963e; --dourado-suave:#d9c68f; --serif:Georgia,'Times New Roman',serif; --sans:Arial,sans-serif; }
@@ -81,9 +95,8 @@
   </div>
 <script>
   (function () {
-    var params = new URLSearchParams(window.location.search);
-    var cupom = params.get('cupom');
-    var origem = params.get('origem') === 'universo-feminino' ? 'universo-feminino' : null;
+    var cupom = ZuniContexto.cupom();
+    var origem = ZuniContexto.origem() === 'universo-feminino' ? 'universo-feminino' : null;
     var lista = document.getElementById('amostras');
 
     function urlExperimente(id) {

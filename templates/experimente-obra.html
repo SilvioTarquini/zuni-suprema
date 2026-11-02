@@ -293,6 +293,37 @@
 </script>
 <!--TTS-FIM-->
 
+<!-- Cupom e origem saem da URL antes da tag (a tag registra a URL da página). O HTML já vem do servidor com eles nos links;
+     eles ficam em history.state para que, numa recarga sem query, os links de compra e de volta os recuperem.
+     Script próprio e sem recursos externos: esta página não carrega scripts de terceiros além da tag. -->
+<script>
+  (function () {
+    try {
+      var u = new URL(window.location.href);
+      var estado = Object.assign({}, history.state);
+      var mudou = false;
+      ['cupom', 'origem'].forEach(function (nome) {
+        var v = u.searchParams.get(nome);
+        if (v !== null) {
+          v = v.trim();
+          if (v && v.length <= 64) estado['zuni_' + nome] = v;
+          u.searchParams.delete(nome);
+          mudou = true;
+        }
+      });
+      if (mudou) history.replaceState(estado, '', u.pathname + u.search + u.hash);
+      var links = document.querySelectorAll('a[href^="/checkout-livro.html"], a[href^="/loja"]');
+      for (var i = 0; i < links.length; i++) {
+        var l = new URL(links[i].getAttribute('href'), window.location.origin);
+        ['cupom', 'origem'].forEach(function (nome) {
+          if (estado['zuni_' + nome] && !l.searchParams.has(nome)) l.searchParams.set(nome, estado['zuni_' + nome]);
+        });
+        links[i].setAttribute('href', l.pathname + l.search + l.hash);
+      }
+    } catch (e) {}
+  })();
+</script>
+
 <!-- Pinterest Tag oficial (mesma tag da Loja, da vitrine e dos checkouts): só PageVisit (load + page).
      Carrega depois do conteúdo e de forma assíncrona; qualquer falha é engolida (a página não depende dela).
      Sem parâmetros de e-mail, sem eventos novos, sem texto da amostra. AddToCart e Purchase continuam só no checkout. -->

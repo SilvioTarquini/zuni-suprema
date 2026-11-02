@@ -254,7 +254,8 @@ const srv = ler('src/server.js');
   });
   await teste('O. o link do Experimente é /experimente/ela-tem-classe/?origem=universo-feminino (cupom repassado) e a rota o atende', async () => {
     const fn = vitrine.match(/function urlExperimente\(id\) \{[\s\S]*?\n  \}/)[0];
-    const montar = (search) => new Function('window', 'URLSearchParams', 'ORIGEM', fn + '; return urlExperimente;')({ location: { search } }, URLSearchParams, 'universo-feminino');
+    // O cupom da URL é capturado por /js/zuni-contexto-url.js (ZuniContexto); o teste injeta um equivalente que lê a mesma query.
+    const montar = (search) => new Function('window', 'URLSearchParams', 'ORIGEM', 'ZuniContexto', fn + '; return urlExperimente;')({ location: { search } }, URLSearchParams, 'universo-feminino', { cupom: () => new URLSearchParams(search).get('cupom') });
     assert.strictEqual(montar('')('ela-tem-classe'), '/experimente/ela-tem-classe/?origem=universo-feminino');
     assert.strictEqual(montar('?cupom=SMOKE30')('ela-tem-classe'), '/experimente/ela-tem-classe/?origem=universo-feminino&cupom=SMOKE30');
     assert.strictEqual(renderizarExperimenteObra({ livroId: 'ela-tem-classe', origem: 'universo-feminino', cupom: 'SMOKE30' }).status, 200);
