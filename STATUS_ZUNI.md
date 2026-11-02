@@ -98,14 +98,14 @@ dias** (validado na compra real; o e-mail mostra a mesma data do banco). O códi
 explícita/testada no código para evitar regressão silenciosa (não alterado).
 
 **6. Pinterest.** Tag instrumentada no funil: Experimente por obra (`/experimente/<id>/`) = PageVisit (`load`+`page`);
-o hub `/experimente` ganhou a tag na branch `fix/pinterest-url-limpa` (antes não tinha; **ainda não em produção até merge/push**); checkout = page /
+o hub `/experimente` ganhou a tag (antes não tinha; **em produção desde 02/11/2026 (deploy b0be00a3, commit 78904de); provado com core.js real do Pinterest: beacon sem cupom em /loja/universo-feminino/ e /experimente**); checkout = page /
 AddToCart conforme implementação; Purchase (`checkout`) preparado para disparar após `pago:true`.
 **`PINTEREST_PURCHASE = NOT_CONFIRMED`** — não confirmado diretamente na plataforma. Não bloqueia a
 validade do fluxo comercial, mas **deve ser confirmado antes/durante o início do tráfego pago**.
 
 **7. Privacidade.** A `return_url` do Stripe para livros não leva mais e-mail do comprador (em produção).
 `?cupom=`/`?origem=` saem da URL antes da tag (`/js/zuni-contexto-url.js`, commit `2db2517`, provado em Playwright local
-em 02/11/2026; cupom novo substitui o antigo na mesma aba; **ainda não em produção até merge/push**). Dívida restante: alguns logs ainda podem conter e-mail.
+em 02/11/2026; cupom novo substitui o antigo na mesma aba; **em produção desde 02/11/2026 (deploy b0be00a3, commit 78904de); provado com core.js real do Pinterest: beacon sem cupom em /loja/universo-feminino/ e /experimente**). Dívida restante: alguns logs ainda podem conter e-mail.
 **Autorização do relatório (02/11/2026):** `44a17e4` está em `origin/main`; `GET /api/relatorio/download/<id fictício>`
 sem token em produção responde HTTP 401. Fase B (escopo `dl`) é melhoria futura e não bloqueia o tráfego.
 
