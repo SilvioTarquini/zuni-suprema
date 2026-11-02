@@ -97,14 +97,17 @@ dias** (validado na compra real; o e-mail mostra a mesma data do banco). O códi
 7 dias se a variável faltar/for inválida. **Dívida de robustez**: tornar a regra de 30 dias
 explícita/testada no código para evitar regressão silenciosa (não alterado).
 
-**6. Pinterest.** Tag instrumentada no funil: Experimente = PageVisit (`load`+`page`); checkout = page /
+**6. Pinterest.** Tag instrumentada no funil: Experimente por obra (`/experimente/<id>/`) = PageVisit (`load`+`page`);
+o hub `/experimente` ganhou a tag na branch `fix/pinterest-url-limpa` (antes não tinha; **ainda não em produção até merge/push**); checkout = page /
 AddToCart conforme implementação; Purchase (`checkout`) preparado para disparar após `pago:true`.
 **`PINTEREST_PURCHASE = NOT_CONFIRMED`** — não confirmado diretamente na plataforma. Não bloqueia a
 validade do fluxo comercial, mas **deve ser confirmado antes/durante o início do tráfego pago**.
 
-**7. Privacidade.** A `return_url` do Stripe para livros não leva mais e-mail do comprador
-(em produção). Dívidas conhecidas: alguns logs ainda podem conter e-mail; `?cupom=` na URL pode chegar
-ao Pinterest no `page`. Sanear oportunamente.
+**7. Privacidade.** A `return_url` do Stripe para livros não leva mais e-mail do comprador (em produção).
+`?cupom=`/`?origem=` saem da URL antes da tag (`/js/zuni-contexto-url.js`, commit `2db2517`, provado em Playwright local
+em 02/11/2026; cupom novo substitui o antigo na mesma aba; **ainda não em produção até merge/push**). Dívida restante: alguns logs ainda podem conter e-mail.
+**Autorização do relatório (02/11/2026):** `44a17e4` está em `origin/main`; `GET /api/relatorio/download/<id fictício>`
+sem token em produção responde HTTP 401. Fase B (escopo `dl`) é melhoria futura e não bloqueia o tráfego.
 
 **8. Download / cópia digital — NÃO implementado como política.** **[SUPERADO em 22/10/2026: o PDF para guardar existe (rota `/livros/:id/pdf`) para as 4 obras do Empreender e Crescer; a leitura não tem mais botão de imprimir. As demais obras seguem como descrito abaixo.]** Hoje: leitura online funciona e a
 interface do leitor oferece ações de download/impressão. A política futura pretendida (cópia digital
