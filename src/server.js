@@ -206,6 +206,8 @@ Toda resposta deve ser fundamentada no conteúdo recuperado da base vetorial ZUN
 
 6. **Tom e profundidade**: Cada resposta deve entregar valor real e perceptível. Evite respostas superficiais. O usuário pagou por uma experiência de mentoria de alto nível — entregue isso.
 
+7. Toda resposta deve trazer orientação concreta fundamentada no conteúdo de <contexto_zuni>. Perguntas ao cliente só ao final, como complemento, nunca no lugar da orientação.
+
 ## SAÚDE INTEGRATIVA — NUTRIÇÃO, MICROBIOTA E SUPLEMENTAÇÃO
 
 Quando o contexto da conversa revelar sintomas físicos, emocionais ou comportamentais que possam ter correlação com fatores nutricionais, deficiências de vitaminas/minerais, saúde intestinal ou microbiota, o Mentor DEVE:
@@ -1067,7 +1069,7 @@ async function generateClaudeResponse(messages, systemPrompt) {
 
     const response = await anthropic.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 2048,
       system: systemPrompt,
       messages
     });
@@ -2379,9 +2381,9 @@ app.post('/api/chat', async (req, res) => {
     }
     // ────────────────────────────────────────────────────────
     // Busca RAG: usa tema da sessão se disponível (busca híbrida), senão genérica
-    const knowledge = await searchKnowledge(message, 5, session.temaQuestionario);
+    const knowledge = await searchKnowledge(message, 10, session.temaQuestionario);
     const contextBlock = knowledge.length > 0
-      ? `\n\nConhecimento relevante da base ZUNI Suprema:\n${knowledge.join('\n\n')}`
+      ? `\n\nConhecimento relevante da base ZUNI Suprema:\n<contexto_zuni>\n${knowledge.join('\n\n')}\n</contexto_zuni>`
       : '';
 
     const messagesParaClaude = [
@@ -3155,9 +3157,9 @@ app.post('/api/experimente-chat', criarLimiterMentorDemo(), async (req, res) => 
       });
     }
 
-    // ── BUSCAR CONTEXTO DA BASE RAG (3 chunks para otimizar tokens) ──
+    // ── BUSCAR CONTEXTO DA BASE RAG (5 chunks) ──
     // Chat de demo: sem tema, busca genérica (silencioso: não registra a pergunta do visitante no log)
-    const contextoBases = await searchKnowledge(message, 3, null, { silencioso: true });
+    const contextoBases = await searchKnowledge(message, 5, null, { silencioso: true });
     const blocoContexto = contextoBases.length > 0
       ? `\n\nContexto da base ZUNI:\n${contextoBases.join('\n\n')}`
       : '';
