@@ -149,6 +149,24 @@ async function sessionExists(sessionId) {
   return Boolean(await getSession(sessionId));
 }
 
+// Resposta A do questionário (abertura do Mentor): gerada em /api/questionario/salvar-respostas e guardada em
+// respostas_questionario.resposta_a_gerada. Só leitura; devolve null se não houver ou se a leitura falhar.
+async function buscarRespostaA(sessionId) {
+  try {
+    const { data, error } = await assertSupabase()
+      .from('respostas_questionario')
+      .select('resposta_a_gerada')
+      .eq('sessao_id', sessionId)
+      .order('criado_em', { ascending: false })
+      .limit(1);
+    if (error || !data || !data[0] || !String(data[0].resposta_a_gerada || '').trim()) return null;
+    return data[0].resposta_a_gerada;
+  } catch (err) {
+    console.error('[RESPOSTA_A] Erro ao buscar a Resposta A (a conversa segue sem ela):', err.message || err);
+    return null;
+  }
+}
+
 async function upsertSession(session) {
   const supabaseClient = assertSupabase();
   const payload = {
@@ -255,8 +273,7 @@ Termos que fazem parte do seu vocabulário: Linha de Condução, Arquitetura de 
 COMO CONDUZIR CADA MENSAGEM
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-PRIMEIRA MENSAGEM DA SESSÃO
-Acolha a pessoa com presença genuína e faça UMA única pergunta precisa sobre a queixa principal — o que a trouxe até aqui hoje. Nada além disso. É a única mensagem da sessão que pode ser predominantemente uma pergunta.
+PRIMEIRA MENSAGEM DA SESSÃO: Acolha a pessoa com presença genuína, nomeie o que ela está vivendo e entregue já nesta resposta pelo menos uma orientação concreta e aplicável, fundamentada em <contexto_zuni>: um passo possível, uma frase pronta para usar ou uma distinção que ajude a enxergar a situação. Feche com no máximo uma pergunta precisa para aprofundar. A pergunta complementa a orientação; nunca a substitui.
 
 DA SEGUNDA MENSAGEM EM DIANTE
 Você nunca mais apenas escuta. Toda resposta a partir daqui precisa ENTREGAR valor real, mesmo que a sessão ainda esteja no início. Em cada mensagem:
@@ -2386,7 +2403,12 @@ app.post('/api/chat', async (req, res) => {
       ? `\n\nConhecimento relevante da base ZUNI Suprema:\n<contexto_zuni>\n${knowledge.join('\n\n')}\n</contexto_zuni>`
       : '';
 
+    // Resposta A do questionário entra como 1ª fala do assistente SÓ na chamada ao modelo: não vai para
+    // session.history, então não duplica na tela (o navegador já a exibiu) nem no banco.
+    const respostaA = await buscarRespostaA(sessionId);
+
     const messagesParaClaude = [
+      ...(respostaA ? [{ role: 'assistant', content: respostaA }] : []),
       ...session.history.map(h => ({
         role: h.role === 'user' ? 'user' : 'assistant',
         content: h.message
