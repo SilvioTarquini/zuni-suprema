@@ -297,7 +297,7 @@ module.exports = {
     {
       tema: 'maternidade',
       categoria: 'familia',
-      titulo: 'Maternidade',
+      titulo: 'Maternidade: cuidar e educar os filhos',
       perguntas: [
         { id: 'q1', texto: 'O que mais pesa agora?', opcoes: ['Sensação de nunca fazer o suficiente', 'Perda da minha identidade fora do papel de mãe', 'Cansaço físico e mental constante', 'Cobrança externa sobre como devo ser mãe', 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso te acompanha?', opcoes: ['É recente', 'Já dura meses', 'Já dura mais de um ano', 'Desde que me tornei mãe'] },
@@ -309,7 +309,7 @@ module.exports = {
     {
       tema: 'paternidade',
       categoria: 'familia',
-      titulo: 'Paternidade',
+      titulo: 'Paternidade: cuidar e educar os filhos',
       perguntas: [
         { id: 'q1', texto: 'O que mais pesa agora?', opcoes: ['Medo de não estar presente o suficiente', 'Insegurança sobre como educar', 'Pressão de ser o provedor', 'Dificuldade em equilibrar trabalho e família', 'Outro'] },
         { id: 'q2', texto: 'Há quanto tempo isso te acompanha?', opcoes: ['É recente', 'Já dura meses', 'Já dura mais de um ano', 'Desde que me tornei pai'] },
