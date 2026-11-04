@@ -19,7 +19,24 @@ const LIVROS_DIR = path.join(__dirname, '..', 'private', 'livros');
 const WIDGET_SOURCE_PATH = path.join(__dirname, '..', 'templates', 'chat-livro-widget.html');
 const MARCADOR_INICIO = '<!-- ZUNI-CHAT-WIDGET-START -->';
 const MARCADOR_FIM = '<!-- ZUNI-CHAT-WIDGET-END -->';
-const PASTAS_IGNORADAS = new Set(['_template']);
+
+// LISTA EXPLÍCITA de obras que recebem o widget do Livro-Vivo. Nenhuma outra pasta é lida nem alterada.
+// Para ligar outra obra: indexar (src/indexarLivro.js), ligar chatDisponivel no catálogo e só então
+// acrescentar o livro_id aqui, por ordem do autor. O livro_id é o nome da pasta e a chave do catálogo.
+const OBRAS_COM_LIVRO_VIVO = [
+  // Universo Feminino (ainda sem indexação em 04/11/2026 — não rodar o script antes de indexar)
+  'ela-tem-classe',
+  'codigo-feminino',
+  'a-inteligencia-do-corpo-feminino',
+  'inesquecivel-charme-feminino',
+  'a-mulher-que-permanece-inteira',
+  // Já com chatDisponivel: true
+  'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal',
+  'os-bastidores-da-mente-2-o-antidoto',
+  'os-bastidores-da-mente-3-a-bussola-humana',
+  'os-bastidores-da-mente-4-a-travessia',
+  'tempo-para-viver'
+];
 
 function removerInjecaoAnterior(html) {
   const inicio = html.indexOf(MARCADOR_INICIO);
@@ -53,11 +70,10 @@ function injetarChatLivros() {
 
   const widgetFonte = fs.readFileSync(WIDGET_SOURCE_PATH, 'utf8').trim();
 
-  const pastas = fs.readdirSync(LIVROS_DIR, { withFileTypes: true })
-    .filter(entrada => entrada.isDirectory() && !PASTAS_IGNORADAS.has(entrada.name));
+  const pastas = OBRAS_COM_LIVRO_VIVO.map(livroId => ({ name: livroId }));
 
   if (!pastas.length) {
-    console.log('Nenhuma pasta de livro encontrada em', LIVROS_DIR);
+    console.log('Lista de obras vazia.');
     return [];
   }
 
@@ -68,7 +84,7 @@ function injetarChatLivros() {
     const indexPath = path.join(LIVROS_DIR, livroId, 'index.html');
 
     if (!fs.existsSync(indexPath)) {
-      console.warn(`Ignorado (sem index.html): ${livroId}`);
+      console.warn(`Ignorado (obra da lista sem index.html): ${livroId}`);
       continue;
     }
 
@@ -94,4 +110,4 @@ if (require.main === module) {
   }
 }
 
-module.exports = { injetarChatLivros, removerInjecaoAnterior, injetarWidget };
+module.exports = { OBRAS_COM_LIVRO_VIVO, injetarChatLivros, removerInjecaoAnterior, injetarWidget };

@@ -148,6 +148,7 @@ const av = (message, history) => S.avaliarSeguranca({ message, history });
     if (request === '@anthropic-ai/sdk') return { default: class { constructor() { this.messages = { create: async (args) => { capturas.push(args); return { content: [{ text: respostaModelo.texto }] }; } }; } } };
     if (request === '@supabase/supabase-js') return { createClient: () => ({ rpc: async () => ({ data: [], error: null }) }) };
     if (/lib\/acessoLivros$/.test(request)) return { verificarAcesso: async () => ({ ok: true }) };
+    if (/lib\/limiteLivroVivo$/.test(request)) return { permitirPergunta: () => true }; // várias perguntas com o mesmo token; o limite por minuto tem teste próprio
     if (/lib\/usoChatLivro$/.test(request)) return { verificarLimiteDiario: async () => ({ perguntasFeitas: 0, limiteAtingido: false }), incrementarUsoDiario: async () => 5 };
     return loadOriginal.apply(this, arguments);
   };

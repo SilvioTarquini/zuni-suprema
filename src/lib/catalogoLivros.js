@@ -128,7 +128,8 @@ const CATALOGO = {
     // audiobookUrl (legacy, mantido como fallback/rollback: remover a linha abaixo volta ao legacy).
     audiobookStorage: { bucket: 'zuni-audiobooks-private', path: 'audio/aae9792a-9b95-46b2-b10d-c348d8d211f6.mp3' },
     audiobookDisponivel: true,
-    precoAudiobook: 19.90
+    precoAudiobook: 19.90,
+    chatDisponivel: true
   },
   'codigo-feminino': {
     titulo: 'Código Feminino',
@@ -142,7 +143,8 @@ const CATALOGO = {
     indicadoPara: 'Para a mulher que quer um mapa completo do próprio corpo — hormônios, ciclo, sono, pele, sexualidade, menopausa — em linguagem integrativa.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/codigo-feminino/codigo-feminino.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 24.90,
+    chatDisponivel: true
   },
   'a-inteligencia-do-corpo-feminino': {
     titulo: 'A Inteligência do Corpo Feminino',
@@ -156,7 +158,8 @@ const CATALOGO = {
     indicadoPara: 'Para a mulher com inchaço, retenção, celulite resistente ou cansaço que o sono não resolve, e que já ouviu que é "falta de disciplina".',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/inteligencia-corpo-feminino/inteligencia-corpo-feminino.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 24.90,
+    chatDisponivel: true
   },
   'inesquecivel-charme-feminino': {
     titulo: 'Inesquecível',
@@ -170,7 +173,8 @@ const CATALOGO = {
     indicadoPara: 'Para a mulher que quer se conectar com leveza e valor próprio, sem competir nem representar um papel.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/inesquecivel/inesquecivel.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 24.90,
+    chatDisponivel: true
   },
   'a-mulher-que-permanece-inteira': {
     titulo: 'A Mulher que Permanece Inteira',
@@ -184,7 +188,8 @@ const CATALOGO = {
     indicadoPara: 'Para a mulher que sai de um vínculo desgastante, ou entra em um novo com receio de se perder de novo. Inclui reconhecimento de padrões emocionais masculinos.',
     audiobookUrl: 'https://yirxjunmjfnajotcnywc.supabase.co/storage/v1/object/public/audiolivros/a-mulher-que-permanece-inteira/a-mulher-que-permanece-inteira.mp3',
     audiobookDisponivel: true,
-    precoAudiobook: 24.90
+    precoAudiobook: 24.90,
+    chatDisponivel: true
   },
   'a-arte-da-presenca-masculina': {
     titulo: 'A Arte da Presença Masculina',

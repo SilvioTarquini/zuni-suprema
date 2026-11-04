@@ -11,9 +11,9 @@
 // Contrato:
 //   POST /api/livro-chat
 //   body: { token, livro_id, pergunta, historico: [{role, content}] }
-//   sucesso (200): { resposta, restantes_hoje }
+//   sucesso (200): { resposta }   (sem contador: a rede de segurança é invisível ao leitor)
 //   erros: 400 payload inválido · 401 token inválido/sem acesso à obra ·
-//          429 limite diário atingido · 500 falha interna
+//          429 ritmo por minuto ou limite diário (campo `codigo`: 'ritmo' | 'dia') · 500 falha interna
 //
 // A pergunta do usuário nunca é interpolada no system prompt — ela só entra
 // como mensagem de usuário para a Claude API. O system prompt é composto só
@@ -25,6 +25,8 @@ const { createClient } = require('@supabase/supabase-js');
 const { verificarAcesso, motivoNegacaoAcesso } = require('../lib/acessoLivros');
 const { verificarLimiteDiario, incrementarUsoDiario } = require('../lib/usoChatLivro');
 const { buscarLivro } = require('../lib/catalogoLivros');
+const { permitirPergunta } = require('../lib/limiteLivroVivo');
+const { verificarCustoMensal } = require('../lib/alertaCustoLivroVivo');
 
 const router = express.Router();
 router.use(express.json());
@@ -109,7 +111,9 @@ function montarSystemPrompt(titulo, trechos) {
 
 REGRA CRÍTICA CONTRA INVENÇÃO DE NOMES: cada trecho abaixo vem rotulado com o nome real da sua seção, entre colchetes. Ao citar o nome de uma seção/capítulo, use exatamente esse rótulo, palavra por palavra — nunca crie, parafraseie ou "estilize" um nome novo. Nunca adote um termo usado na pergunta do usuário (ex.: uma palavra ou metáfora que a pessoa mencionou) como se fosse terminologia oficial da obra, a menos que esse termo apareça literalmente no texto do trecho fornecido. Se nenhum trecho tiver um rótulo claramente relevante à pergunta, não cite nome de seção nenhum — descreva o conteúdo sem inventar um título para ele.
 
-REGRA CRÍTICA SOBRE EMERGÊNCIA MÉDICA, SINAIS DE ALERTA E AVISOS DE CONFLITO DE INTERESSES: se algum trecho recuperado contiver orientação de emergência médica (por exemplo, sinais de AVC e o número do SAMU, 192), lista de sinais de alerta clínico, ou aviso de conflito de interesses, não reescreva, resuma nem parafraseie esse trecho. Informe ao leitor o capítulo e a seção onde ele está na obra, usando o rótulo exato entre colchetes, e peça que leia exatamente como está escrito ali. Nunca diga que a obra não trata do assunto quando o trecho estiver presente no contexto — a instrução é encaminhar ao texto original, não negar sua existência. Esta regra tem precedência sobre a instrução de concisão (2–4 parágrafos).`;
+REGRA CRÍTICA SOBRE EMERGÊNCIA MÉDICA, SINAIS DE ALERTA E AVISOS DE CONFLITO DE INTERESSES: se algum trecho recuperado contiver orientação de emergência médica (por exemplo, sinais de AVC e o número do SAMU, 192), lista de sinais de alerta clínico, ou aviso de conflito de interesses, não reescreva, resuma nem parafraseie esse trecho. Informe ao leitor o capítulo e a seção onde ele está na obra, usando o rótulo exato entre colchetes, e peça que leia exatamente como está escrito ali. Nunca diga que a obra não trata do assunto quando o trecho estiver presente no contexto — a instrução é encaminhar ao texto original, não negar sua existência. Esta regra tem precedência sobre a instrução de concisão (2–4 parágrafos).
+
+REGRA CRÍTICA SOBRE DOSES: Nunca informe doses, quantidades ou posologia de suplementos, vitaminas, fitoterápicos ou medicamentos, mesmo que estejam no livro. Se a leitora perguntar, explique o papel do nutriente conforme o livro, indique o capítulo onde o assunto é tratado e oriente que a dose deve ser definida com um profissional de saúde.`;
 
   const contexto = trechos.length > 0
     ? `\n\nTrechos da obra recuperados para esta pergunta:\n${trechos.map(t => `[Seção: "${t.titulo || 'sem título'}"]\n${t.corpo}`).join('\n\n')}`
@@ -162,9 +166,15 @@ router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
       return res.status(401).json({ error: 'Token inválido ou sem acesso a esta obra.' });
     }
 
+    // Rede de segurança invisível: o leitor comum nunca chega perto destes limites, e a tela não mostra
+    // contador nem "perguntas restantes". Só quem automatiza chamadas recebe estas mensagens neutras.
+    if (!permitirPergunta(token, livro_id)) {
+      return res.status(429).json({ error: 'Você está perguntando rápido demais. Aguarde um instante e tente de novo.', codigo: 'ritmo' });
+    }
+
     const { perguntasFeitas, limiteAtingido } = await verificarLimiteDiario(token, livro_id);
     if (limiteAtingido) {
-      return res.status(429).json({ error: 'Limite diário de perguntas atingido para este livro.' });
+      return res.status(429).json({ error: 'Por hoje já conversamos bastante sobre este livro. Volte amanhã para continuar.', codigo: 'dia' });
     }
 
     const historicoSanitizado = sanitizarHistorico(historico);
@@ -178,9 +188,10 @@ router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
     const messages = [...historicoSanitizado, { role: 'user', content: perguntaSanitizada }];
     const resposta = await gerarRespostaClaude(systemPrompt, messages);
 
-    const restantesHoje = await incrementarUsoDiario(token, livro_id, perguntasFeitas);
+    await incrementarUsoDiario(token, livro_id, perguntasFeitas);
+    verificarCustoMensal(); // só observa (log/e-mail); nunca atrasa nem altera a resposta
 
-    return res.json({ resposta, restantes_hoje: restantesHoje });
+    return res.json({ resposta });
   } catch (error) {
     console.error('Erro em /api/livro-chat:', error.message);
     return res.status(500).json({ error: 'Erro ao processar a pergunta.' });

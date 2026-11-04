@@ -717,11 +717,14 @@
   // { data_expiracao }, ela pode ser buscada aqui via fetch() e o valor
   // formatado inserido no elemento #data-expiracao.
 </script>
+<!-- Leitor de voz com Web Speech API (gratuito, nativo do navegador) -->
+<script src="/leitor-voz.js"></script>
+
 <!-- ZUNI-CHAT-WIDGET-START -->
 <!--
-  Widget de chat de leitura â€” arquivo-fonte Ãºnico.
+  Widget de chat de leitura — arquivo-fonte único.
 
-  NÃ£o editar o HTML de nenhum livro diretamente para adicionar/atualizar
+  Não editar o HTML de nenhum livro diretamente para adicionar/atualizar
   este widget. Em vez disso, edite este arquivo e rode:
     node scripts/injetar-chat-livros.js
   O script injeta este bloco inteiro (idempotente, delimitado pelos
@@ -729,30 +732,28 @@
   cada private/livros/(id-do-livro)/index.html, substituindo o
   placeholder de livro_id abaixo pelo nome real de cada pasta.
 
-  O token de acesso Ã© lido da query string da prÃ³pria pÃ¡gina de leitura
-  (?token=...), que jÃ¡ foi validada pelo servidor (exigirAcesso) antes de
-  a pÃ¡gina ser servida â€” o widget nÃ£o precisa validar nada, sÃ³ usar.
+  O token de acesso é lido da query string da própria página de leitura
+  (?token=...), que já foi validada pelo servidor (exigirAcesso) antes de
+  a página ser servida — o widget não precisa validar nada, só usar.
 -->
 <div id="zuni-chat-widget" data-livro-id="os-bastidores-da-mente-4-a-travessia">
   <button id="zuni-chat-toggle" type="button" aria-expanded="false" aria-controls="zuni-chat-painel">
-    ðŸ’¬ Conversar com o livro
+    💬 Livro-Vivo
   </button>
 
   <div id="zuni-chat-painel" role="dialog" aria-modal="true" aria-labelledby="zuni-chat-titulo">
     <div class="zuni-chat-cabecalho">
       <div class="zuni-chat-cabecalho-texto">
-        <h2 id="zuni-chat-titulo">Converse com o livro</h2>
-        <p class="zuni-chat-aviso">Este Ã© um assistente de leitura baseado em IA, treinado exclusivamente no conteÃºdo deste livro.</p>
+        <h2 id="zuni-chat-titulo">Converse com o Livro-Vivo durante a sua leitura</h2>
+        <p class="zuni-chat-aviso">Este é um assistente de leitura baseado em IA, treinado exclusivamente no conteúdo deste livro.</p>
       </div>
       <button id="zuni-chat-fechar" type="button" aria-label="Fechar chat">&times;</button>
     </div>
 
-    <div id="zuni-chat-contador" class="zuni-chat-contador" hidden></div>
-
     <div id="zuni-chat-mensagens" class="zuni-chat-mensagens">
       <div id="zuni-chat-sugestoes" class="zuni-chat-sugestoes">
-        <button type="button" class="zuni-chat-sugestao" data-pergunta="Resuma o capÃ­tulo que estou lendo">Resuma o capÃ­tulo que estou lendo</button>
-        <button type="button" class="zuni-chat-sugestao" data-pergunta="DÃª um exemplo prÃ¡tico">DÃª um exemplo prÃ¡tico</button>
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Resuma o capítulo que estou lendo">Resuma o capítulo que estou lendo</button>
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Dê um exemplo prático">Dê um exemplo prático</button>
         <button type="button" class="zuni-chat-sugestao" data-pergunta="Como aplico isso no meu dia?">Como aplico isso no meu dia?</button>
       </div>
     </div>
@@ -880,15 +881,6 @@
   #zuni-chat-fechar:hover {
     border-color: var(--zc-dourado);
     color: var(--zc-dourado-suave);
-  }
-
-  .zuni-chat-contador {
-    padding: 8px 20px;
-    font-family: Arial, sans-serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.3px;
-    color: var(--zc-texto-suave);
-    border-bottom: 1px solid var(--zc-borda);
   }
 
   .zuni-chat-mensagens {
@@ -1033,7 +1025,6 @@
   var fechar = document.getElementById('zuni-chat-fechar');
   var mensagensEl = document.getElementById('zuni-chat-mensagens');
   var sugestoesEl = document.getElementById('zuni-chat-sugestoes');
-  var contadorEl = document.getElementById('zuni-chat-contador');
   var form = document.getElementById('zuni-chat-form');
   var input = document.getElementById('zuni-chat-input');
   var botaoEnviar = document.getElementById('zuni-chat-enviar');
@@ -1066,9 +1057,9 @@
       .replace(/>/g, '&gt;');
   }
 
-  // Conversor minimalista, sem dependÃªncias: escapa tudo primeiro (nunca
-  // insere HTML nÃ£o confiÃ¡vel) e sÃ³ entÃ£o reconhece **negrito**, tÃ­tulos
-  // markdown (#, ##, ...) e linhas divisÃ³rias (---), que Ã© o subconjunto
+  // Conversor minimalista, sem dependências: escapa tudo primeiro (nunca
+  // insere HTML não confiável) e só então reconhece **negrito**, títulos
+  // markdown (#, ##, ...) e linhas divisórias (---), que é o subconjunto
   // que a Claude API costuma usar nas respostas do chat.
   function formatarRespostaAssistente(texto) {
     var escapado = escaparHtml(texto);
@@ -1094,19 +1085,11 @@
     return bolha;
   }
 
-  function atualizarContador(restantes) {
-    if (typeof restantes !== 'number') return;
-    contadorEl.hidden = false;
-    contadorEl.textContent = restantes > 0
-      ? 'Perguntas restantes hoje: ' + restantes
-      : 'Limite de perguntas de hoje atingido para este livro.';
-  }
-
   function mensagemDeErro(status) {
-    if (status === 401) return 'Seu acesso a este chat expirou ou Ã© invÃ¡lido. Recarregue a pÃ¡gina a partir do link de acesso original.';
-    if (status === 429) return 'VocÃª atingiu o limite de perguntas de hoje para este livro. Volte amanhÃ£ para continuar.';
-    if (status === 400) return 'NÃ£o consegui entender a pergunta. Tente reformular.';
-    return 'NÃ£o foi possÃ­vel responder agora. Tente novamente em instantes.';
+    if (status === 401) return 'Seu acesso a este chat expirou ou é inválido. Recarregue a página a partir do link de acesso original.';
+    if (status === 429) return 'Vamos com calma: aguarde um instante e tente de novo.';
+    if (status === 400) return 'Não consegui entender a pergunta. Tente reformular.';
+    return 'Não foi possível responder agora. Tente novamente em instantes.';
   }
 
   async function enviarPergunta(pergunta) {
@@ -1137,7 +1120,6 @@
       adicionarMensagem(dados.resposta, 'assistente');
       historico.push({ role: 'user', content: pergunta });
       historico.push({ role: 'assistant', content: dados.resposta });
-      atualizarContador(dados.restantes_hoje);
     } catch (erro) {
       carregando.remove();
       adicionarMensagem(mensagemDeErro(null), 'erro');
@@ -1172,8 +1154,5 @@
 })();
 </script>
 <!-- ZUNI-CHAT-WIDGET-END -->
-<!-- Leitor de voz com Web Speech API (gratuito, nativo do navegador) -->
-<script src="/leitor-voz.js"></script>
-
 </body>
 </html>

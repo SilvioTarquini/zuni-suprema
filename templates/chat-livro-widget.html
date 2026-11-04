@@ -16,19 +16,17 @@
 -->
 <div id="zuni-chat-widget" data-livro-id="__ZUNI_LIVRO_ID__">
   <button id="zuni-chat-toggle" type="button" aria-expanded="false" aria-controls="zuni-chat-painel">
-    💬 Conversar com o livro
+    💬 Livro-Vivo
   </button>
 
   <div id="zuni-chat-painel" role="dialog" aria-modal="true" aria-labelledby="zuni-chat-titulo">
     <div class="zuni-chat-cabecalho">
       <div class="zuni-chat-cabecalho-texto">
-        <h2 id="zuni-chat-titulo">Converse com o livro</h2>
+        <h2 id="zuni-chat-titulo">Converse com o Livro-Vivo durante a sua leitura</h2>
         <p class="zuni-chat-aviso">Este é um assistente de leitura baseado em IA, treinado exclusivamente no conteúdo deste livro.</p>
       </div>
       <button id="zuni-chat-fechar" type="button" aria-label="Fechar chat">&times;</button>
     </div>
-
-    <div id="zuni-chat-contador" class="zuni-chat-contador" hidden></div>
 
     <div id="zuni-chat-mensagens" class="zuni-chat-mensagens">
       <div id="zuni-chat-sugestoes" class="zuni-chat-sugestoes">
@@ -161,15 +159,6 @@
   #zuni-chat-fechar:hover {
     border-color: var(--zc-dourado);
     color: var(--zc-dourado-suave);
-  }
-
-  .zuni-chat-contador {
-    padding: 8px 20px;
-    font-family: Arial, sans-serif;
-    font-size: 0.72rem;
-    letter-spacing: 0.3px;
-    color: var(--zc-texto-suave);
-    border-bottom: 1px solid var(--zc-borda);
   }
 
   .zuni-chat-mensagens {
@@ -314,7 +303,6 @@
   var fechar = document.getElementById('zuni-chat-fechar');
   var mensagensEl = document.getElementById('zuni-chat-mensagens');
   var sugestoesEl = document.getElementById('zuni-chat-sugestoes');
-  var contadorEl = document.getElementById('zuni-chat-contador');
   var form = document.getElementById('zuni-chat-form');
   var input = document.getElementById('zuni-chat-input');
   var botaoEnviar = document.getElementById('zuni-chat-enviar');
@@ -375,17 +363,9 @@
     return bolha;
   }
 
-  function atualizarContador(restantes) {
-    if (typeof restantes !== 'number') return;
-    contadorEl.hidden = false;
-    contadorEl.textContent = restantes > 0
-      ? 'Perguntas restantes hoje: ' + restantes
-      : 'Limite de perguntas de hoje atingido para este livro.';
-  }
-
   function mensagemDeErro(status) {
     if (status === 401) return 'Seu acesso a este chat expirou ou é inválido. Recarregue a página a partir do link de acesso original.';
-    if (status === 429) return 'Você atingiu o limite de perguntas de hoje para este livro. Volte amanhã para continuar.';
+    if (status === 429) return 'Vamos com calma: aguarde um instante e tente de novo.';
     if (status === 400) return 'Não consegui entender a pergunta. Tente reformular.';
     return 'Não foi possível responder agora. Tente novamente em instantes.';
   }
@@ -418,7 +398,6 @@
       adicionarMensagem(dados.resposta, 'assistente');
       historico.push({ role: 'user', content: pergunta });
       historico.push({ role: 'assistant', content: dados.resposta });
-      atualizarContador(dados.restantes_hoje);
     } catch (erro) {
       carregando.remove();
       adicionarMensagem(mensagemDeErro(null), 'erro');

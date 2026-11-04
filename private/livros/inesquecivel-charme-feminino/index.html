@@ -388,5 +388,439 @@ document.addEventListener('DOMContentLoaded', async function() {
   <script type="__bundler/template">
 "<!DOCTYPE html>\n<html><head>\n<meta charset=\"utf-8\">\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\n<script src=\"c130b121-8d97-4144-8b06-1241dc39373f\"><\u002Fscript>\n\n\n<\u002Fhead>\n<body>\n<x-dc>\n<helmet>\n  <link rel=\"preconnect\" href=\"https://fonts.googleapis.com\">\n  <style>/* cyrillic-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"e54003b1-0cf1-4e1b-be8c-4028f5b6f45f\") format('woff2');\n  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"eaab6f1a-dc43-4932-bd32-ee5c7b7272c2\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* greek-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"bbfa594c-80f5-4b78-bd5b-8462dd14e416\") format('woff2');\n  unicode-range: U+1F00-1FFF;\n}\n/* greek */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"f1317495-7b38-445c-a5dd-f6b21fe074dd\") format('woff2');\n  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"0f04e448-76d5-4758-a257-f2a8ef8f503d\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"9350921c-184a-4f2c-95a5-d852d50f496b\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"ef4ef2e8-e3ba-483f-9546-063cf1373aac\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"e54003b1-0cf1-4e1b-be8c-4028f5b6f45f\") format('woff2');\n  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"eaab6f1a-dc43-4932-bd32-ee5c7b7272c2\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* greek-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"bbfa594c-80f5-4b78-bd5b-8462dd14e416\") format('woff2');\n  unicode-range: U+1F00-1FFF;\n}\n/* greek */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"f1317495-7b38-445c-a5dd-f6b21fe074dd\") format('woff2');\n  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"0f04e448-76d5-4758-a257-f2a8ef8f503d\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"9350921c-184a-4f2c-95a5-d852d50f496b\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: italic;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"ef4ef2e8-e3ba-483f-9546-063cf1373aac\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"de85ceff-7eb7-46a4-ba0a-abf15597a438\") format('woff2');\n  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"e7764e7d-9396-496c-8c02-12288522b15f\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* greek-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"674da779-49ec-422e-925f-b5988022dc99\") format('woff2');\n  unicode-range: U+1F00-1FFF;\n}\n/* greek */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"925c41ab-7cb8-41fa-b965-351c0869193b\") format('woff2');\n  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"0c67868a-990d-4fab-bebd-e28991991137\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"496ea39b-b41c-4c00-99b3-9056e26c4eeb\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 400;\n  font-display: swap;\n  src: url(\"79cbc73c-046b-4d16-acce-555e846e565a\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"de85ceff-7eb7-46a4-ba0a-abf15597a438\") format('woff2');\n  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"e7764e7d-9396-496c-8c02-12288522b15f\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* greek-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"674da779-49ec-422e-925f-b5988022dc99\") format('woff2');\n  unicode-range: U+1F00-1FFF;\n}\n/* greek */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"925c41ab-7cb8-41fa-b965-351c0869193b\") format('woff2');\n  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"0c67868a-990d-4fab-bebd-e28991991137\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"496ea39b-b41c-4c00-99b3-9056e26c4eeb\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"79cbc73c-046b-4d16-acce-555e846e565a\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"de85ceff-7eb7-46a4-ba0a-abf15597a438\") format('woff2');\n  unicode-range: U+0460-052F, U+1C80-1C8A, U+20B4, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"e7764e7d-9396-496c-8c02-12288522b15f\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* greek-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"674da779-49ec-422e-925f-b5988022dc99\") format('woff2');\n  unicode-range: U+1F00-1FFF;\n}\n/* greek */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"925c41ab-7cb8-41fa-b965-351c0869193b\") format('woff2');\n  unicode-range: U+0370-0377, U+037A-037F, U+0384-038A, U+038C, U+038E-03A1, U+03A3-03FF;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"0c67868a-990d-4fab-bebd-e28991991137\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"496ea39b-b41c-4c00-99b3-9056e26c4eeb\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'EB Garamond';\n  font-style: normal;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"79cbc73c-046b-4d16-acce-555e846e565a\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: italic;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"f72c6769-b76f-455f-8786-c275f9f436be\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: italic;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"4f98dbe4-6632-4882-a18b-cdfbc2842a7b\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: italic;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"cb5304ab-3bfe-4750-b0e4-59adf1ed74c8\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: italic;\n  font-weight: 600;\n  font-display: swap;\n  src: url(\"9cfe785d-d688-4238-989e-42c9329126a8\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"3c4795f5-b2d9-4376-bea6-ed3fbc607968\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"e165c45f-70e2-461d-bb04-b4f03db09127\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"4fcc00bd-87a9-44ab-9592-96146a63219d\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 500;\n  font-display: swap;\n  src: url(\"358d18bf-e61c-4451-8602-338a6a2213bf\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 700;\n  font-display: swap;\n  src: url(\"3c4795f5-b2d9-4376-bea6-ed3fbc607968\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 700;\n  font-display: swap;\n  src: url(\"e165c45f-70e2-461d-bb04-b4f03db09127\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 700;\n  font-display: swap;\n  src: url(\"4fcc00bd-87a9-44ab-9592-96146a63219d\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 700;\n  font-display: swap;\n  src: url(\"358d18bf-e61c-4451-8602-338a6a2213bf\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n/* cyrillic */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 900;\n  font-display: swap;\n  src: url(\"3c4795f5-b2d9-4376-bea6-ed3fbc607968\") format('woff2');\n  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;\n}\n/* vietnamese */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 900;\n  font-display: swap;\n  src: url(\"e165c45f-70e2-461d-bb04-b4f03db09127\") format('woff2');\n  unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB;\n}\n/* latin-ext */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 900;\n  font-display: swap;\n  src: url(\"4fcc00bd-87a9-44ab-9592-96146a63219d\") format('woff2');\n  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;\n}\n/* latin */\n@font-face {\n  font-family: 'Playfair Display';\n  font-style: normal;\n  font-weight: 900;\n  font-display: swap;\n  src: url(\"358d18bf-e61c-4451-8602-338a6a2213bf\") format('woff2');\n  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;\n}\n<\u002Fstyle>\n  <style>\n    body { margin: 0; background: #170b11; }\n    .zs-btn { cursor: pointer; }\n    .zs-btn:hover { opacity: 0.85; }\n    @keyframes zs-fade { from { opacity: 0; transform: scale(1.02); } to { opacity: 1; transform: scale(1); } }\n  <\u002Fstyle>\n<\u002Fhelmet>\n\n<sc-if value=\"{{ ready }}\" hint-placeholder-val=\"{{ false }}\">\n  <div style=\"width: 100%; min-height: 100vh; background: #170b11; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 30px 12px; font-family: 'EB Garamond', serif; gap: 22px;\">\n\n    <sc-if value=\"{{ !opened }}\" hint-placeholder-val=\"{{ true }}\">\n      <div style=\"display: flex; flex-direction: column; align-items: center; gap: 30px; animation: zs-fade 0.5s ease;\">\n        <div style=\"box-shadow: 0 40px 90px rgba(0,0,0,0.6); border-radius: 6px; overflow: hidden; max-width: min(85vw, 680px); max-height: calc(100dvh - 150px);\">\n          <img src=\"92785619-508f-469f-9d59-2998184d09e1\" alt=\"Capa — Inesquecível\" style=\"display: block; width: auto; height: 100%; max-width: 100%; max-height: calc(100dvh - 150px); object-fit: contain;\">\n        <\u002Fdiv>\n        <div style=\"display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center;\">\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ openBook }}\" style=\"background: transparent; border: 1px solid #8a6414; color: #e8cf8e; font-family: 'Playfair Display', serif; letter-spacing: 2px; font-size: 15px; padding: 14px 34px; border-radius: 2px;\">ABRIR O LIVRO ❱<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ doPrint }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; font-family: 'Playfair Display', serif; letter-spacing: 1px; font-size: 14px; padding: 13px 22px; border-radius: 2px;\">⬇ BAIXAR<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ doPrint }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; font-family: 'Playfair Display', serif; letter-spacing: 1px; font-size: 14px; padding: 13px 22px; border-radius: 2px;\">🖶 IMPRIMIR<\u002Fbutton>\n        <\u002Fdiv>\n      <\u002Fdiv>\n    <\u002Fsc-if>\n\n    <sc-if value=\"{{ opened }}\" hint-placeholder-val=\"{{ false }}\">\n      <div ref=\"{{ readerRef }}\" style=\"display: flex; flex-direction: column; align-items: center; gap: 16px; width: 100%; max-width: 940px; background: #170b11; padding: 10px;\">\n        <div style=\"display: flex; height: min(74dvh, 720px); max-width: 100%; aspect-ratio: 3 / 2; background: #efe6d8; box-shadow: 0 30px 70px rgba(0,0,0,0.55); border-radius: 3px; overflow: hidden;\">\n          <div style=\"flex: 1; border-right: 1px solid rgba(138,100,20,0.35); box-shadow: inset -14px 0 24px -18px rgba(0,0,0,0.5);\">\n            <dc-import name=\"BookPage\" page=\"{{ leftPage }}\" book=\"{{ bookMeta }}\" page-number=\"{{ leftPageNumber }}\" hint-size=\"100%,100%\" style=\"width: 100%; height: 100%; display: block; font-size: {{ fontPx }}px;\"><\u002Fdc-import>\n          <\u002Fdiv>\n          <div style=\"flex: 1; box-shadow: inset 14px 0 24px -18px rgba(0,0,0,0.5);\">\n            <dc-import name=\"BookPage\" page=\"{{ rightPage }}\" book=\"{{ bookMeta }}\" page-number=\"{{ rightPageNumber }}\" hint-size=\"100%,100%\" style=\"width: 100%; height: 100%; display: block; font-size: {{ fontPx }}px;\"><\u002Fdc-import>\n          <\u002Fdiv>\n        <\u002Fdiv>\n\n        <div style=\"display: flex; align-items: center; gap: 14px; color: #e8cf8e;\">\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ goPrev }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; width: 38px; height: 38px; border-radius: 50%; font-size: 16px;\">❮<\u002Fbutton>\n          <div style=\"font-family: 'Playfair Display', serif; font-size: 13px; letter-spacing: 1px; min-width: 90px; text-align: center;\">{{ pageLabel }}<\u002Fdiv>\n          <input type=\"range\" min=\"0\" max=\"{{ maxSpread }}\" value=\"{{ spreadIndex }}\" sc-camel-on-change=\"{{ onSlide }}\" style=\"width: 180px; accent-color: #b8923f;\">\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ goNext }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; width: 38px; height: 38px; border-radius: 50%; font-size: 16px;\">❯<\u002Fbutton>\n          <div style=\"width: 1px; height: 24px; background: #5c4222; margin: 0 6px;\"><\u002Fdiv>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ goCover }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; padding: 8px 12px; border-radius: 6px; font-size: 13px;\">📖<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ toggleToc }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; padding: 8px 12px; border-radius: 6px; font-size: 13px; letter-spacing: 1px;\">SUMÁRIO<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ decFont }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; padding: 8px 12px; border-radius: 6px; font-size: 13px;\">A−<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ incFont }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; padding: 8px 12px; border-radius: 6px; font-size: 13px;\">A+<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ doPrint }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; padding: 8px 12px; border-radius: 6px; font-size: 13px;\">🖶<\u002Fbutton>\n          <button class=\"zs-btn\" sc-camel-on-click=\"{{ toggleFullscreen }}\" style=\"background: transparent; border: 1px solid #5c4222; color: #e8cf8e; padding: 8px 12px; border-radius: 6px; font-size: 13px;\">✥<\u002Fbutton>\n        <\u002Fdiv>\n      <\u002Fdiv>\n    <\u002Fsc-if>\n\n    <sc-if value=\"{{ tocOpen }}\" hint-placeholder-val=\"{{ false }}\">\n      <div style=\"position: fixed; inset: 0; background: rgba(10,5,7,0.75); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px;\" sc-camel-on-click=\"{{ toggleToc }}\">\n        <div style=\"background: #fffdfb; width: 100%; max-width: 520px; max-height: 82vh; overflow: auto; border-radius: 6px; padding: 34px 36px;\" sc-camel-on-click=\"{{ stop }}\">\n          <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;\">\n            <div style=\"font-family: 'Playfair Display', serif; font-weight: 700; font-size: 22px; color: #241a13;\">Sumário<\u002Fdiv>\n            <button class=\"zs-btn\" sc-camel-on-click=\"{{ toggleToc }}\" style=\"background: transparent; border: none; color: #8a6414; font-size: 20px;\">✕<\u002Fbutton>\n          <\u002Fdiv>\n          <div class=\"zs-btn\" sc-camel-on-click=\"{{ jumpApresentacao }}\" style=\"padding: 6px 0; font-size: 15px; color: #4a3c2f; border-bottom: 1px solid #eee2d2;\">Apresentação da Obra<\u002Fdiv>\n          <div class=\"zs-btn\" sc-camel-on-click=\"{{ jumpIntroducao }}\" style=\"padding: 6px 0; font-size: 15px; color: #4a3c2f; border-bottom: 1px solid #eee2d2;\">Introdução — O Verdadeiro Charme Feminino<\u002Fdiv>\n          <sc-for list=\"{{ tocParts }}\" as=\"part\" hint-placeholder-count=\"4\">\n            <div style=\"font-family: 'Playfair Display', serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; color: #8a6414; text-transform: uppercase; margin: 14px 0 4px;\">Parte {{ part.numeral }} — {{ part.title }}<\u002Fdiv>\n            <sc-for list=\"{{ part.chapters }}\" as=\"chapter\" hint-placeholder-count=\"5\">\n              <div class=\"zs-btn\" sc-camel-on-click=\"{{ chapter.jump }}\" style=\"padding: 6px 0 6px 10px; font-size: 15px; color: #4a3c2f; border-bottom: 1px solid #eee2d2;\">Capítulo {{ chapter.num }} — {{ chapter.title }}<\u002Fdiv>\n            <\u002Fsc-for>\n          <\u002Fsc-for>\n          <div class=\"zs-btn\" sc-camel-on-click=\"{{ jumpEpilogo }}\" style=\"padding: 12px 0 6px; font-size: 15px; color: #4a3c2f; border-bottom: 1px solid #eee2d2;\">{{ epilogoTitle }}<\u002Fdiv>\n          <div class=\"zs-btn\" sc-camel-on-click=\"{{ jumpAppendix }}\" style=\"padding: 12px 0 6px; font-family: 'Playfair Display', serif; font-weight: 700; font-size: 13px; letter-spacing: 1px; color: #8a6414; text-transform: uppercase;\">Apêndice — {{ appendixTitle }}<\u002Fdiv>\n        <\u002Fdiv>\n      <\u002Fdiv>\n    <\u002Fsc-if>\n\n  <\u002Fdiv>\n<\u002Fsc-if>\n<\u002Fx-dc>\n<script type=\"text/x-dc\" data-dc-script=\"\">\nclass Component extends DCLogic {\n  state = { ready: false, data: null, opened: false, spreadIndex: 0, fontScale: 1, tocOpen: false };\n  readerRef = React.createRef();\n\n  componentDidMount() {\n    const src = (window.__resources && window.__resources.pagesModule) || './pages.js';\n    import(src).then(m => this.setState({ ready: true, data: m.default }));\n  }\n\n  clampSpread(i, max) { return Math.max(0, Math.min(max, i)); }\n\n  renderVals() {\n    const d = this.state.data;\n    if (!d) return { ready: false };\n    const pages = d.pages;\n    const totalPages = pages.length;\n    const maxSpread = Math.floor(totalPages / 2) - 1;\n    const idx = this.clampSpread(this.state.spreadIndex, maxSpread);\n\n    const bookMeta = {\n      title: d.title, brand: d.brand, tagline: d.tagline, description: d.description,\n      epigraph: d.epigraph, runningHeader: d.runningHeader,\n      toc: {\n        apresentacaoP: d.toc.apresentacaoIdx + 1,\n        introducaoP: d.toc.introducaoIdx + 1,\n        epilogoTitle: d.toc.epilogoTitle,\n        epilogoP: d.toc.epilogoIdx + 1,\n        appendixTitle: d.toc.appendixTitle,\n        appendixP: d.toc.appendixPartIdx + 1,\n        parts: d.toc.parts.map(p => ({\n          numeral: p.numeral, title: p.title, pageNum: p.pageIndex + 1,\n          chapters: p.chapters.map(c => ({ num: c.num, title: c.title, pageNum: c.pageIndex + 1 }))\n        }))\n      }\n    };\n\n    const jumpTo = (i) => () => this.setState({ spreadIndex: this.clampSpread(Math.floor(i / 2), maxSpread), tocOpen: false });\n\n    const tocParts = d.toc.parts.map(p => ({\n      numeral: p.numeral, title: p.title,\n      chapters: p.chapters.map(c => ({ num: c.num, title: c.title, jump: jumpTo(c.pageIndex) }))\n    }));\n\n    return {\n      ready: true,\n      opened: this.state.opened,\n      openBook: () => this.setState({ opened: true }),\n      goCover: () => this.setState({ opened: false, spreadIndex: 0 }),\n      readerRef: this.readerRef,\n      doPrint: () => window.print(),\n      toggleFullscreen: () => {\n        if (document.fullscreenElement) document.exitFullscreen();\n        else if (this.readerRef.current) this.readerRef.current.requestFullscreen();\n      },\n      tocOpen: this.state.tocOpen,\n      toggleToc: () => this.setState(s => ({ tocOpen: !s.tocOpen })),\n      stop: (e) => e.stopPropagation(),\n      leftPage: pages[idx * 2],\n      rightPage: pages[idx * 2 + 1],\n      leftPageNumber: idx * 2 + 1,\n      rightPageNumber: idx * 2 + 2,\n      bookMeta,\n      pageLabel: `${idx * 2 + 1}\\u2013${idx * 2 + 2} / ${totalPages}`,\n      spreadIndex: idx,\n      maxSpread,\n      fontPx: Math.round(23 * this.state.fontScale),\n      goPrev: () => this.setState({ spreadIndex: this.clampSpread(idx - 1, maxSpread) }),\n      goNext: () => this.setState({ spreadIndex: this.clampSpread(idx + 1, maxSpread) }),\n      onSlide: (e) => this.setState({ spreadIndex: this.clampSpread(parseInt(e.target.value, 10), maxSpread) }),\n      incFont: () => this.setState(s => ({ fontScale: Math.min(1.3, s.fontScale + 0.1) })),\n      decFont: () => this.setState(s => ({ fontScale: Math.max(0.8, s.fontScale - 0.1) })),\n      tocParts,\n      epilogoTitle: d.toc.epilogoTitle,\n      appendixTitle: d.toc.appendixTitle,\n      jumpApresentacao: jumpTo(d.toc.apresentacaoIdx),\n      jumpIntroducao: jumpTo(d.toc.introducaoIdx),\n      jumpEpilogo: jumpTo(d.toc.epilogoIdx),\n      jumpAppendix: jumpTo(d.toc.appendixPartIdx)\n    };\n  }\n}\n<\u002Fscript>\n\n\n<\u002Fbody><\u002Fhtml>"
   </script>
+<!-- ZUNI-CHAT-WIDGET-START -->
+<!--
+  Widget de chat de leitura — arquivo-fonte único.
+
+  Não editar o HTML de nenhum livro diretamente para adicionar/atualizar
+  este widget. Em vez disso, edite este arquivo e rode:
+    node scripts/injetar-chat-livros.js
+  O script injeta este bloco inteiro (idempotente, delimitado pelos
+  marcadores ZUNI-CHAT-WIDGET-START/END) antes do fechamento de body de
+  cada private/livros/(id-do-livro)/index.html, substituindo o
+  placeholder de livro_id abaixo pelo nome real de cada pasta.
+
+  O token de acesso é lido da query string da própria página de leitura
+  (?token=...), que já foi validada pelo servidor (exigirAcesso) antes de
+  a página ser servida — o widget não precisa validar nada, só usar.
+-->
+<div id="zuni-chat-widget" data-livro-id="inesquecivel-charme-feminino">
+  <button id="zuni-chat-toggle" type="button" aria-expanded="false" aria-controls="zuni-chat-painel">
+    💬 Livro-Vivo
+  </button>
+
+  <div id="zuni-chat-painel" role="dialog" aria-modal="true" aria-labelledby="zuni-chat-titulo">
+    <div class="zuni-chat-cabecalho">
+      <div class="zuni-chat-cabecalho-texto">
+        <h2 id="zuni-chat-titulo">Converse com o Livro-Vivo durante a sua leitura</h2>
+        <p class="zuni-chat-aviso">Este é um assistente de leitura baseado em IA, treinado exclusivamente no conteúdo deste livro.</p>
+      </div>
+      <button id="zuni-chat-fechar" type="button" aria-label="Fechar chat">&times;</button>
+    </div>
+
+    <div id="zuni-chat-mensagens" class="zuni-chat-mensagens">
+      <div id="zuni-chat-sugestoes" class="zuni-chat-sugestoes">
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Resuma o capítulo que estou lendo">Resuma o capítulo que estou lendo</button>
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Dê um exemplo prático">Dê um exemplo prático</button>
+        <button type="button" class="zuni-chat-sugestao" data-pergunta="Como aplico isso no meu dia?">Como aplico isso no meu dia?</button>
+      </div>
+    </div>
+
+    <form id="zuni-chat-form" class="zuni-chat-form">
+      <textarea id="zuni-chat-input" class="zuni-chat-input" placeholder="Pergunte algo sobre o livro..." maxlength="1000" rows="1" required></textarea>
+      <button type="submit" id="zuni-chat-enviar" class="zuni-chat-enviar" aria-label="Enviar pergunta">Enviar</button>
+    </form>
+  </div>
+
+  <div id="zuni-chat-overlay"></div>
+</div>
+
+<style>
+  #zuni-chat-widget {
+    --zc-fundo: #0f0f0f;
+    --zc-fundo-carta: #171512;
+    --zc-dourado: #B8963E;
+    --zc-dourado-suave: #d9c68f;
+    --zc-texto: #f2ead9;
+    --zc-texto-suave: #b6ab93;
+    --zc-borda: #2a2620;
+    --zc-erro: #c96b5a;
+    all: initial;
+    font-family: Georgia, 'Times New Roman', serif;
+  }
+  #zuni-chat-widget * { box-sizing: border-box; }
+
+  #zuni-chat-toggle {
+    position: fixed;
+    right: 22px;
+    bottom: 22px;
+    z-index: 999998;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    background: var(--zc-dourado);
+    color: var(--zc-fundo);
+    border: none;
+    border-radius: 999px;
+    font-family: Arial, sans-serif;
+    font-size: 0.88rem;
+    font-weight: bold;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  #zuni-chat-toggle:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 26px rgba(0,0,0,0.55);
+  }
+  #zuni-chat-widget.zuni-chat-aberto #zuni-chat-toggle { display: none; }
+
+  #zuni-chat-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 999997;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  #zuni-chat-widget.zuni-chat-aberto #zuni-chat-overlay {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  #zuni-chat-painel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(420px, 100vw);
+    background: var(--zc-fundo-carta);
+    border-left: 1px solid var(--zc-borda);
+    box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+    z-index: 999999;
+    display: flex;
+    flex-direction: column;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+  }
+  #zuni-chat-widget.zuni-chat-aberto #zuni-chat-painel {
+    transform: translateX(0);
+  }
+  @media (max-width: 640px) {
+    #zuni-chat-painel { width: 100vw; }
+  }
+
+  .zuni-chat-cabecalho {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 20px 20px 16px;
+    border-bottom: 1px solid var(--zc-borda);
+  }
+  .zuni-chat-cabecalho-texto h2 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+    font-weight: normal;
+    color: var(--zc-dourado-suave);
+  }
+  .zuni-chat-aviso {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--zc-texto-suave);
+  }
+  #zuni-chat-fechar {
+    flex-shrink: 0;
+    background: transparent;
+    border: 1px solid var(--zc-borda);
+    color: var(--zc-texto-suave);
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    font-size: 1.1rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+  #zuni-chat-fechar:hover {
+    border-color: var(--zc-dourado);
+    color: var(--zc-dourado-suave);
+  }
+
+  .zuni-chat-mensagens {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .zuni-chat-sugestoes {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .zuni-chat-sugestao {
+    text-align: left;
+    background: transparent;
+    border: 1px solid var(--zc-borda);
+    color: var(--zc-texto-suave);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: border-color 0.2s ease, color 0.2s ease;
+  }
+  .zuni-chat-sugestao:hover {
+    border-color: var(--zc-dourado);
+    color: var(--zc-dourado-suave);
+  }
+
+  .zuni-chat-msg {
+    max-width: 88%;
+    padding: 10px 14px;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+  }
+  .zuni-chat-msg-usuario {
+    align-self: flex-end;
+    background: var(--zc-dourado);
+    color: var(--zc-fundo);
+    border-bottom-right-radius: 2px;
+  }
+  .zuni-chat-msg-assistente {
+    align-self: flex-start;
+    background: var(--zc-fundo);
+    border: 1px solid var(--zc-borda);
+    color: var(--zc-texto);
+    border-bottom-left-radius: 2px;
+  }
+  .zuni-chat-msg-erro {
+    align-self: flex-start;
+    background: transparent;
+    border: 1px solid var(--zc-erro);
+    color: var(--zc-erro);
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+  }
+  .zuni-chat-msg-carregando {
+    align-self: flex-start;
+    color: var(--zc-texto-suave);
+    font-style: italic;
+    font-size: 0.85rem;
+  }
+
+  .zuni-chat-form {
+    display: flex;
+    gap: 10px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--zc-borda);
+  }
+  .zuni-chat-input {
+    flex: 1;
+    resize: none;
+    max-height: 100px;
+    padding: 10px 12px;
+    background: var(--zc-fundo);
+    border: 1px solid var(--zc-borda);
+    border-radius: 6px;
+    color: var(--zc-texto);
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 0.9rem;
+  }
+  .zuni-chat-input:focus {
+    outline: none;
+    border-color: var(--zc-dourado);
+  }
+  .zuni-chat-enviar {
+    flex-shrink: 0;
+    padding: 0 18px;
+    background: var(--zc-dourado);
+    color: var(--zc-fundo);
+    border: none;
+    border-radius: 6px;
+    font-family: Arial, sans-serif;
+    font-size: 0.82rem;
+    font-weight: bold;
+    letter-spacing: 0.3px;
+    cursor: pointer;
+  }
+  .zuni-chat-enviar:hover { background: var(--zc-dourado-suave); }
+  .zuni-chat-enviar:disabled,
+  .zuni-chat-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  @media print {
+    #zuni-chat-widget { display: none !important; }
+  }
+</style>
+
+<script>
+(function () {
+  var LIVRO_ID_INJETADO = 'inesquecivel-charme-feminino';
+
+  function obterLivroId() {
+    if (LIVRO_ID_INJETADO && LIVRO_ID_INJETADO.indexOf('ZUNI_LIVRO_ID') === -1) {
+      return LIVRO_ID_INJETADO;
+    }
+    var segmentos = window.location.pathname.split('/').filter(Boolean);
+    return segmentos[segmentos.length - 1] || null;
+  }
+
+  function obterToken() {
+    return new URLSearchParams(window.location.search).get('token');
+  }
+
+  var livroId = obterLivroId();
+  var token = obterToken();
+
+  var widget = document.getElementById('zuni-chat-widget');
+  if (!widget || !livroId || !token) {
+    if (widget) widget.style.display = 'none';
+    return;
+  }
+
+  var toggle = document.getElementById('zuni-chat-toggle');
+  var painel = document.getElementById('zuni-chat-painel');
+  var overlay = document.getElementById('zuni-chat-overlay');
+  var fechar = document.getElementById('zuni-chat-fechar');
+  var mensagensEl = document.getElementById('zuni-chat-mensagens');
+  var sugestoesEl = document.getElementById('zuni-chat-sugestoes');
+  var form = document.getElementById('zuni-chat-form');
+  var input = document.getElementById('zuni-chat-input');
+  var botaoEnviar = document.getElementById('zuni-chat-enviar');
+
+  var historico = [];
+  var enviando = false;
+
+  function abrirChat() {
+    widget.classList.add('zuni-chat-aberto');
+    toggle.setAttribute('aria-expanded', 'true');
+    input.focus();
+  }
+
+  function fecharChat() {
+    widget.classList.remove('zuni-chat-aberto');
+    toggle.setAttribute('aria-expanded', 'false');
+  }
+
+  toggle.addEventListener('click', abrirChat);
+  fechar.addEventListener('click', fecharChat);
+  overlay.addEventListener('click', fecharChat);
+  document.addEventListener('keydown', function (evento) {
+    if (evento.key === 'Escape' && widget.classList.contains('zuni-chat-aberto')) fecharChat();
+  });
+
+  function escaparHtml(texto) {
+    return texto
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // Conversor minimalista, sem dependências: escapa tudo primeiro (nunca
+  // insere HTML não confiável) e só então reconhece **negrito**, títulos
+  // markdown (#, ##, ...) e linhas divisórias (---), que é o subconjunto
+  // que a Claude API costuma usar nas respostas do chat.
+  function formatarRespostaAssistente(texto) {
+    var escapado = escaparHtml(texto);
+    var linhas = escapado.split('\n').map(function (linha) {
+      if (/^-{3,}$/.test(linha.trim())) return '';
+      return linha.replace(/^#{1,6}\s*/, '');
+    });
+    return linhas.join('\n')
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/\n{3,}/g, '\n\n');
+  }
+
+  function adicionarMensagem(texto, tipo) {
+    var bolha = document.createElement('div');
+    bolha.className = 'zuni-chat-msg zuni-chat-msg-' + tipo;
+    if (tipo === 'assistente') {
+      bolha.innerHTML = formatarRespostaAssistente(texto);
+    } else {
+      bolha.textContent = texto;
+    }
+    mensagensEl.appendChild(bolha);
+    mensagensEl.scrollTop = mensagensEl.scrollHeight;
+    return bolha;
+  }
+
+  function mensagemDeErro(status) {
+    if (status === 401) return 'Seu acesso a este chat expirou ou é inválido. Recarregue a página a partir do link de acesso original.';
+    if (status === 429) return 'Vamos com calma: aguarde um instante e tente de novo.';
+    if (status === 400) return 'Não consegui entender a pergunta. Tente reformular.';
+    return 'Não foi possível responder agora. Tente novamente em instantes.';
+  }
+
+  async function enviarPergunta(pergunta) {
+    if (enviando) return;
+    enviando = true;
+    input.disabled = true;
+    botaoEnviar.disabled = true;
+    if (sugestoesEl) sugestoesEl.remove();
+
+    adicionarMensagem(pergunta, 'usuario');
+    var carregando = adicionarMensagem('Pensando...', 'carregando');
+
+    try {
+      var resposta = await fetch('/api/livro-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: token, livro_id: livroId, pergunta: pergunta, historico: historico })
+      });
+
+      var dados = await resposta.json().catch(function () { return {}; });
+      carregando.remove();
+
+      if (!resposta.ok) {
+        adicionarMensagem(dados.error || mensagemDeErro(resposta.status), 'erro');
+        return;
+      }
+
+      adicionarMensagem(dados.resposta, 'assistente');
+      historico.push({ role: 'user', content: pergunta });
+      historico.push({ role: 'assistant', content: dados.resposta });
+    } catch (erro) {
+      carregando.remove();
+      adicionarMensagem(mensagemDeErro(null), 'erro');
+    } finally {
+      enviando = false;
+      input.disabled = false;
+      botaoEnviar.disabled = false;
+      input.focus();
+    }
+  }
+
+  form.addEventListener('submit', function (evento) {
+    evento.preventDefault();
+    var pergunta = input.value.trim();
+    if (!pergunta) return;
+    input.value = '';
+    enviarPergunta(pergunta);
+  });
+
+  input.addEventListener('keydown', function (evento) {
+    if (evento.key === 'Enter' && !evento.shiftKey) {
+      evento.preventDefault();
+      form.requestSubmit();
+    }
+  });
+
+  Array.prototype.forEach.call(document.querySelectorAll('.zuni-chat-sugestao'), function (botao) {
+    botao.addEventListener('click', function () {
+      enviarPergunta(botao.getAttribute('data-pergunta'));
+    });
+  });
+})();
+</script>
+<!-- ZUNI-CHAT-WIDGET-END -->
 </body>
 </html>
