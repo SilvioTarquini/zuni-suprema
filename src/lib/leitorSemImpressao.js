@@ -40,7 +40,52 @@ function tirarImpressaoDaTerra(html) {
 }
 
 // Template do bundle (Vender Bem, Toda Reunião e Toda Mesa).
+// Os três livros à venda cujos leitores têm âncoras exatas conhecidas usam o caminho estrito (comportamento de sempre,
+// coberto por scripts/testar-sem-impressao.js). Qualquer outro leitor do mesmo motor usa o caminho tolerante abaixo.
+const LIVROS_COM_CAMINHO_ESTRITO = new Set(['toda-mesa-tem-dois-lados', 'vender-bem-vender-sempre', 'toda-reuniao-tem-duas-pautas']);
+
+const ICONE_DOWNLOAD = '<svg sc-camel-view-box="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"></path></svg>';
+const BOTAO_PDF = `<button class="cover-ghost" id="btnPdf" title="Baixar o livro em PDF">${ICONE_DOWNLOAD}Baixar PDF</button>`;
+// Ouvinte delegado: não depende do nome do método que monta os botões nem de o botão existir quando o leitor liga os eventos.
+const OUVINTE_PDF = `document.addEventListener('click', function(e){ var b = e.target && e.target.closest && e.target.closest('#btnPdf'); if(b){ ${JS_IR_PARA_PDF} } });`;
+
+// Versão tolerante: cada passo é independente e a falta de uma âncora NÃO derruba o patch (só deixa de fazer aquele passo).
+//  1. tira os botões de imprimir, o antigo "Baixar PDF" que na verdade imprimia, o "Baixar (.html)" e o "PDF" embutido;
+//  2. tira os ouvintes desses botões e toda chamada window.print();
+//  3. coloca UM botão "Baixar PDF" (no lugar do primeiro botão removido; se não houver, depois do botão de abrir o livro)
+//     que navega para /livros/<id>/pdf?token=… . Se o leitor não tiver método bind() para receber o ouvinte, não põe botão.
+function tirarImpressaoTemplateTolerante(template) {
+  const reBotao = /\n?[ \t]*<button[^>]*id="(?:btnPrint|btnDownloadPdf)"[^>]*>[\s\S]*?<\/button>/;
+  const reBotoesRemover = [
+    /\n?[ \t]*<button[^>]*id="(?:btnPrint|btnDownloadPdf)"[^>]*>[\s\S]*?<\/button>/g,
+    /\n?[ \t]*<button[^>]*id="btnDownload"[^>]*title="[^"]*(?:\.html|HTML|em PDF)[^"]*"[^>]*>[\s\S]*?<\/button>/g
+  ];
+  const temBind = /\bbind\s*\(\)\s*\{/.test(template);
+  let t = template;
+  let colocado = !temBind || /id="btnPdf"/.test(t);
+
+  if (!colocado) {
+    const m = t.match(/\n?[ \t]*<button[^>]*id="(?:btnPrint|btnDownloadPdf|btnDownload)"[^>]*>[\s\S]*?<\/button>/);
+    if (m) { t = t.replace(m[0], () => '\n      ' + BOTAO_PDF); colocado = true; }
+  }
+  for (const re of reBotoesRemover) t = t.replace(re, '');
+  if (!colocado) {
+    const abrir = t.match(/<button[^>]*id="openBtn"[^>]*>[\s\S]*?<\/button>/);
+    if (abrir) { t = t.replace(abrir[0], () => abrir[0] + '\n      ' + BOTAO_PDF); colocado = true; }
+  }
+  void reBotao;
+
+  t = t.replace(/(?:this\.)?\$\('(?:btnPrint|btnDownloadPdf|btnDownload)'\)\.addEventListener\('click',\s*\(\)\s*=>\s*this\.(?:doPrint|download)\(\)\);?/g, '');
+  t = t.replace(/window\.print\(\)/g, 'void 0');
+
+  if (colocado && temBind && /id="btnPdf"/.test(t) && !t.includes(OUVINTE_PDF)) {
+    t = t.replace(/\bbind\s*\(\)\s*\{/, (m) => m + ' ' + OUVINTE_PDF);
+  }
+  return t;
+}
+
 function tirarImpressaoTemplate(livroId, template) {
+  if (!LIVROS_COM_CAMINHO_ESTRITO.has(livroId)) return tirarImpressaoTemplateTolerante(template);
   if (livroId === 'toda-mesa-tem-dois-lados') {
     // Leitor em React: onclick="texto" não funciona (erro React #231). Mantém o gancho original do componente
     // (doPrintClick → doPrint); só o rótulo muda, e doPrint() passa a navegar para a rota do PDF em vez de imprimir.
@@ -60,4 +105,4 @@ function tirarImpressaoTemplate(livroId, template) {
   return tirarUma(t, '  doPrint(){ this.buildPrint(); setTimeout(()=>window.print(), 60); }', '  doPrint(){}');
 }
 
-module.exports = { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoTemplate, JS_IR_PARA_PDF };
+module.exports = { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoTemplate, tirarImpressaoTemplateTolerante, JS_IR_PARA_PDF };

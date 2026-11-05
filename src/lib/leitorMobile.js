@@ -34,17 +34,38 @@ const MOTIVO_SEM_BUNDLE = 'html sem bundle do leitor';
 const MARCADOR_TEMPLATE = '<script type="__bundler/template">';
 
 // Âncoras: todas precisam existir no template, senão o patch é abortado.
-const ANCORA_LAYOUT = /\n  layout\(\)\{\n    const availW = window\.innerWidth - 40;\n    const availH = window\.innerHeight - 92 - 30;\n    const scale = Math\.min\(availW\/\(this\.PW\*2\), availH\/this\.PH, 1\.15\);\n    this\.scaler\.style\.transform = 'scale\('\+scale\+'\)';\n  \}/;
-const ANCORA_LIMITE_FONTE = 'Math.min(1.35, Math.max(0.8';
-const ANCORA_INIT = '    this.bind();\n    this.layout();';
-const ANCORA_METODO_ESC = '\n  esc(s){';
+// layout() do leitor de "dois folhetos" (escala os dois folhetos pela largura da tela). Tolerante a espaço e a quebra de
+// linha: os leitores gerados em épocas diferentes dizem a mesma coisa com formatações diferentes.
+const ANCORA_LAYOUT = /\n[ \t]*layout\s*\(\)\s*\{[\s\S]{0,400}?this\.scaler\.style\.transform\s*=\s*['"]scale\('\s*\+\s*scale\s*\+\s*'\)['"]\s*;?\s*\}/;
+// Leitores que JÁ têm modo de página única no celular (não precisam de patch).
+const LAYOUT_NATIVO = /wantSingle|applyMode|configureGeometry|\bsingle\b/;
+const MOTIVO_NATIVO = 'leitor já tem modo celular';
+
+// Classifica o template pelo que o layout() FAZ, não por como está escrito: 'nativo' | 'dois-folhetos' | 'desconhecido'.
+function classificarLayout(template) {
+  const i = template.search(/\blayout\s*\(\)\s*\{/);
+  if (i < 0) return 'desconhecido';
+  if (LAYOUT_NATIVO.test(template.slice(i, i + 900))) return 'nativo';
+  return ANCORA_LAYOUT.test(template) ? 'dois-folhetos' : 'desconhecido';
+}
+// Limite do A+ (opcional: sem a âncora o patch segue com o limite original).
+const ANCORA_LIMITE_FONTE = /Math\.min\(\s*1\.35\s*,\s*Math\.max\(\s*0\.8/;
+// Depois do bind() o leitor chama layout() (motor mais antigo) ou init() (motor mais novo, assíncrono): o zsInstall entra no meio.
+const ANCORA_INIT = /this\.bind\(\);(\s*)this\.(layout|init)\(\);/;
 const ANCORA_FIM_HELMET = '</helmet>';
-const ANCORAS_EXIGIDAS = [
-  'id="leafLeft"', 'id="leafRight"', 'id="controls"', 'id="stageWrap"', 'id="scaler"',
-  'id="book"', 'id="spine"', 'id="reader"', 'id="folioLabel"', 'id="progress"',
-  'updateControls(){', 'setFont(delta){', 'jumpTo(pageIdx){', 'renderStatic(){',
-  '  next(){', '  prev(){'
-];
+// Obrigatórias: elementos e métodos que o patch usa. Nomes de parâmetro e espaçamento não importam.
+const ANCORAS_IDS = ['leafLeft', 'leafRight', 'controls', 'stageWrap', 'scaler', 'book', 'spine', 'reader', 'folioLabel', 'progress'];
+const ANCORAS_METODOS = [/updateControls\s*\(\)\s*\{/, /setFont\s*\(\w*\)\s*\{/, /jumpTo\s*\(\w*\)\s*\{/, /renderStatic\s*\(\)\s*\{/, /\bnext\s*\(\)\s*\{/, /\bprev\s*\(\)\s*\{/];
+
+// Lista (vazia = tudo certo) do que falta para aplicar o patch de dois folhetos.
+function ancorasAusentes(template) {
+  const falta = [];
+  for (const id of ANCORAS_IDS) if (!template.includes('id="' + id + '"')) falta.push('id="' + id + '"');
+  for (const re of ANCORAS_METODOS) if (!re.test(template)) falta.push(String(re));
+  if (!ANCORA_INIT.test(template)) falta.push('bind() seguido de layout()/init()');
+  if (!template.includes(ANCORA_FIM_HELMET)) falta.push(ANCORA_FIM_HELMET);
+  return falta;
+}
 
 const CSS_PATCH = String.raw`<style id="zs-leitor-mobile">
 @keyframes zsIn{ from{ opacity:0 } to{ opacity:1 } }
@@ -192,7 +213,7 @@ const NOVO_LAYOUT = String.raw`
 function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
   try {
     // Sem impressão nos 4 livros à venda; a auditoria pede { semImpressao: false } só para medir as folhas de impressão.
-    const semImpressao = opcoes.semImpressao !== false && ehLivroSemImpressao(opcoes.livroId);
+    const semImpressao = opcoes.semImpressao === true || (opcoes.semImpressao !== false && ehLivroSemImpressao(opcoes.livroId));
 
     const iMarcador = htmlOriginal.lastIndexOf(MARCADOR_TEMPLATE);
     if (iMarcador < 0) {
@@ -215,15 +236,21 @@ function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
     let template = JSON.parse(htmlOriginal.slice(iLinha, iFim));
     if (typeof template !== 'string') return { ok: false, motivo: 'template não é string' };
 
-    if (ANCORA_LAYOUT.test(template)) {
-      for (const a of [ANCORA_LIMITE_FONTE, ANCORA_INIT, ANCORA_METODO_ESC, ANCORA_FIM_HELMET, ...ANCORAS_EXIGIDAS]) {
-        if (!template.includes(a)) return { ok: false, motivo: `âncora não encontrada: ${a.trim().slice(0, 40)}` };
-      }
+    // Os motores B–E (Toda Mesa e afins) têm detecção própria: só vale "nativo" para quem não é um deles.
+    const classeBruta = classificarLayout(template);
+    const ehMotorConhecido = ehMotorB(template) || ehMotorC(template) || ehMotorD(template) || ehMotorE(template);
+    const classe = classeBruta === 'nativo' && ehMotorConhecido ? 'desconhecido' : classeBruta;
+    if (classe === 'nativo') {
+      // Já tem página única no celular: nada a remendar. Só segue adiante se for preciso tirar a impressão.
+      if (!semImpressao) return { ok: false, motivo: MOTIVO_NATIVO };
+    } else if (classe === 'dois-folhetos') {
+      const falta = ancorasAusentes(template);
+      if (falta.length) return { ok: false, motivo: `âncora não encontrada: ${falta[0].slice(0, 40)}` };
 
       template = template
         .replace(ANCORA_LAYOUT, () => NOVO_LAYOUT)
         .replace(ANCORA_LIMITE_FONTE, () => 'Math.min(1.6, Math.max(0.8')
-        .replace(ANCORA_INIT, () => '    this.bind();\n    this.zsInstall();\n    this.layout();')
+        .replace(ANCORA_INIT, (m, espaco, proximo) => 'this.bind();' + espaco + 'this.zsInstall();' + espaco + 'this.' + proximo + '();')
         .replace(ANCORA_FIM_HELMET, () => CSS_PATCH + ANCORA_FIM_HELMET);
 
       // Correção do paginador (texto cortado com A+ e blocos maiores que a página): só nos livros auditados.
@@ -273,7 +300,7 @@ async function lerLivroComPatch(livroId, htmlPath, opcoes = {}) {
   const resultado = aplicarPatchLeitor(original, { livroId, semImpressao: opcoes.semImpressao });
   if (resultado.ok) {
     html = resultado.html;
-  } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE) {
+  } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE && resultado.motivo !== MOTIVO_NATIVO) {
     console.error(`[LEITOR_PATCH_FALHOU] livroId=${livroId} motivo=${resultado.motivo} — entregando o livro original.`);
   }
 
@@ -282,4 +309,4 @@ async function lerLivroComPatch(livroId, htmlPath, opcoes = {}) {
   return html;
 }
 
-module.exports = { aplicarPatchLeitor, lerLivroComPatch };
+module.exports = { aplicarPatchLeitor, lerLivroComPatch, classificarLayout, MOTIVO_SEM_BUNDLE, MOTIVO_NATIVO };

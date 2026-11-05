@@ -28,6 +28,11 @@ const { buscarLivro } = require('../lib/catalogoLivros');
 const audiolivroStorage = require('../lib/audiolivroStorage');
 const { lerLivroComPatch } = require('../lib/leitorMobile');
 const { resolverPdf, urlDownloadPdf } = require('../lib/pdfLivro');
+const { lerLivroDoBucket, LivroNaoEncontradoNoBucket } = require('../lib/htmlLivroStorage');
+
+async function existeNoDisco(caminho) {
+  try { await fs.access(caminho); return true; } catch (_) { return false; }
+}
 
 const PUBLIC_DIR = path.join(__dirname, '..', '..', 'public');
 const CONTEUDO_LIVROS_DIR = path.join(__dirname, '..', '..', 'private', 'livros');
@@ -105,7 +110,21 @@ router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {
     // Ler o arquivo HTML, já com o patch do leitor para celular. Se o patch
     // não puder ser aplicado, devolve o original (ver lib/leitorMobile.js).
     const htmlPath = path.join(CONTEUDO_LIVROS_DIR, livroId, 'index.html');
-    let html = await lerLivroComPatch(livroId, htmlPath);
+    // Obras atuais: arquivo no disco, como sempre. Obra sem arquivo no disco: HTML do bucket privado (mesma checagem de
+    // token já feita por exigirAcesso; só a origem muda). Nem disco nem bucket: 404.
+    let html;
+    if (await existeNoDisco(htmlPath)) {
+      html = await lerLivroComPatch(livroId, htmlPath);
+    } else {
+      try {
+        html = await lerLivroDoBucket(livroId);
+      } catch (err) {
+        if (err instanceof LivroNaoEncontradoNoBucket) {
+          return res.status(404).send('Este livro não está disponível no momento.');
+        }
+        throw err;
+      }
+    }
 
     // Se o livro tiver textoFonteParaLeitura e ainda não tiver o script de leitura em voz alta
     if (livro && livro.textoFonteParaLeitura && !html.includes('window.livroLeituraPorVoz')) {
