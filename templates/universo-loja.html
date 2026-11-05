@@ -2,14 +2,15 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Empreender e Crescer — ZUNI Suprema</title>
+<title>{{TITULO}} — ZUNI Suprema</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria. Livro digital — Loja ZUNI Suprema.">
+<meta name="description" content="{{DESCRICAO}}">
 <meta property="og:type" content="website">
-<meta property="og:title" content="Empreender e Crescer — ZUNI Suprema">
-<meta property="og:description" content="Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria.">
-<meta name="theme-color" content="#f2f1ea">
+<meta property="og:title" content="{{TITULO}} — ZUNI Suprema">
+<meta property="og:description" content="{{DESCRICAO_OG}}">
+<meta name="theme-color" content="{{THEME_COLOR}}">
 <!-- Cupom/origem saem da URL antes da tag do Pinterest (ver /js/zuni-contexto-url.js) -->
+{{CONFIG_SCRIPT}}
 <script src="/js/zuni-contexto-url.js"></script>
 <!-- Pinterest Tag (mesma tag oficial da Loja e dos checkouts) -->
 <script>
@@ -25,13 +26,7 @@
 <!-- end Pinterest Tag -->
 <style>
   :root {
-    --fundo: #f2f1ea;
-    --carta: #fffdf9;
-    --tinta: #1c211d;
-    --suave: #545c50;
-    --borda: #dde0d4;
-    --acento: #2d5a40;
-    --acento-escuro: #1e3d2b;
+{{TEMA_VARS}}
     --dourado: #b8963e;
     --serif: Georgia, 'Times New Roman', serif;
     --sans: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
@@ -205,9 +200,9 @@
     height: auto;
     aspect-ratio: 2 / 3;
     object-fit: contain;
-    background: #e9e6da;
+    background: var(--capa-fundo);
     border-radius: 4px;
-    box-shadow: 0 1px 3px rgba(28, 33, 29, 0.18);
+    box-shadow: 0 1px 3px rgba(var(--tinta-rgb), 0.18);
   }
 
   .obra-texto { display: flex; flex-direction: column; min-width: 0; }
@@ -249,7 +244,7 @@
     padding: 3px 9px;
     border: 1px solid var(--borda);
     border-radius: 999px;
-    background: #f7f6ee;
+    background: var(--carta-clara);
     font-size: 0.8125rem;
     color: var(--tinta);
   }
@@ -289,7 +284,7 @@
   .btn-primario { background: var(--acento); color: #fff; }
   .btn-primario:hover { background: var(--acento-escuro); }
   .btn-secundario { background: transparent; color: var(--acento); }
-  .btn-secundario:hover { background: rgba(45, 90, 64, 0.07); }
+  .btn-secundario:hover { background: rgba(var(--acento-rgb), 0.07); }
 
   .obra .btn { flex: 1 1 140px; }
 
@@ -383,7 +378,7 @@
     overflow: hidden;
   }
   dialog.detalhe[open] { display: flex; flex-direction: column; }
-  dialog.detalhe::backdrop { background: rgba(28, 33, 29, 0.6); }
+  dialog.detalhe::backdrop { background: rgba(var(--tinta-rgb), 0.6); }
 
   .detalhe-topo {
     display: flex;
@@ -402,7 +397,7 @@
     line-height: 1;
     cursor: pointer;
   }
-  .detalhe-fechar:hover { background: rgba(28, 33, 29, 0.07); }
+  .detalhe-fechar:hover { background: rgba(var(--tinta-rgb), 0.07); }
 
   .detalhe-corpo {
     overflow-y: auto;
@@ -417,9 +412,9 @@
     aspect-ratio: 2 / 3;
     object-fit: contain;
     margin: 0 auto 14px;
-    background: #e9e6da;
+    background: var(--capa-fundo);
     border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(28, 33, 29, 0.22);
+    box-shadow: 0 2px 6px rgba(var(--tinta-rgb), 0.22);
   }
 
   .detalhe h2 {
@@ -506,10 +501,10 @@
   </div>
 
   <header class="abertura">
-    <p class="sobretitulo">Empreender e Crescer</p>
-    <h1>Livros de apoio para quem empreende e administra o que é seu.</h1>
-    <p class="intro">Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria.</p>
-    <p class="fecho">Comece pela obra que fala com o momento do seu negócio.</p>
+    <p class="sobretitulo">{{SOBRETITULO}}</p>
+    <h1>{{H1}}</h1>
+    <p class="intro">{{INTRO}}</p>
+    <p class="fecho">{{FECHO}}</p>
   </header>
 
   <main id="vitrine" aria-live="polite">
@@ -517,16 +512,11 @@
     <noscript><p class="estado">Para ver as obras, ative o JavaScript ou acesse a <a href="/loja/">Loja ZUNI completa</a>.</p></noscript>
   </main>
 
-  <section class="diagnostico" aria-labelledby="diagnostico-titulo">
-    <span class="selo-em-breve">Em breve</span>
-    <h2 id="diagnostico-titulo">Diagnóstico Empresarial</h2>
-    <p>Uma avaliação guiada para identificar os pontos que mais travam o crescimento do seu negócio hoje. Em preparação — o conteúdo final ainda será definido.</p>
-  </section>
-
+{{BLOCO_EXTRA}}
   <section class="direciona" aria-labelledby="direciona-titulo">
-    <h2 id="direciona-titulo">Há uma situação específica acontecendo no seu negócio?</h2>
-    <p>Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para ajudá-lo a compreender melhor sua situação antes de decidir.</p>
-    <a class="btn btn-secundario" href="/checkout?origem=empreender-e-crescer">Conhecer o ZUNI Direciona</a>
+    <h2 id="direciona-titulo">{{DIRECIONA_TITULO}}</h2>
+    <p>{{DIRECIONA_TEXTO}}</p>
+    <a class="btn btn-secundario" href="{{DIRECIONA_HREF}}">Conhecer o ZUNI Direciona</a>
   </section>
 
   <div class="loja-completa">
@@ -559,59 +549,22 @@
 <script>
   // Fonte única dos dados comerciais: GET /api/livros (preço, formatos, textos). Nada de preço aqui.
   // A configuração abaixo é só editorial (agrupamento e frase de cada território).
-  // Agrupamento por campo `universo` no catálogo (não por `departamento`, que já tem outro uso —
-  // classificação temática reaproveitada no acervo do Mentor — e não por lista fixa de ids: obra
-  // futura do mesmo universo só precisa do campo no catálogo para aparecer aqui).
-  const UNIVERSO = 'empreender-e-crescer';
-  const SECOES = [
-    {
-      id: 'para-empreender',
-      titulo: 'Para empreender e crescer',
-      frase: 'Guias práticos para decidir, negociar, vender e produzir melhor — da primeira venda à grande empresa, do campo à indústria.',
-      ids: ['vender-bem-vender-sempre', 'toda-mesa-tem-dois-lados', 'toda-reuniao-tem-duas-pautas', 'da-terra-ao-resultado']
-    }
-  ];
-  const ORIGEM = 'empreender-e-crescer';
-
-  // Apresentação comercial condensada, SOMENTE texto (nada de preço, formato ou link).
-  // Cada frase é rastreável ao resumo/descrição públicos da obra em /api/livros; linguagem informativa,
-  // sem causalidade médica, diagnóstico ou promessa terapêutica. Obra fora deste mapa cai no resumo do catálogo.
+  // Configuração do universo injetada pelo servidor (lib/universosConfig.js): textos, seções e apresentação de cada obra.
+  // O mesmo modelo serve a todos os universos; o endereço /loja/<slug>/ escolhe a configuração.
+  const U = window.__UNIVERSO__;
+  const SECOES = U.secoes;
+  const ORIGEM = U.origem;
   // aviso: texto do aviso exibido no detalhe da obra (por obra; sem o campo, nenhum aviso).
-  const EDITORIAL = {
-    'vender-bem-vender-sempre': {
-      chamada: 'Método prático para vender com ética, clareza e previsibilidade — da primeira conversa ao pós-venda.',
-      sobre: [
-        'Um manual com o passo a passo completo para os primeiros 30 dias, rotina comercial, organização de contatos, proposta de valor, WhatsApp, PIX e acompanhamento de resultados.',
-        'Pensado para quem vende em casa, na loja ou pelo celular — vendedoras, revendedoras, consultoras e líderes de equipe que querem método, não truques.'
-      ]
-    },
-    'toda-mesa-tem-dois-lados': {
-      chamada: 'Os mecanismos ocultos por trás de cada preço, prazo e recusa.',
-      sobre: [
-        'Uma leitura sobre os bastidores dos negócios e da negociação humana: interesses, expectativas, preço, prazo, poder de decisão e acordos difíceis.',
-        'Ajuda a enxergar as engrenagens que movem margens, parcerias e sociedades antes que o impasse se torne ruptura.'
-      ]
-    },
-    'toda-reuniao-tem-duas-pautas': {
-      chamada: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor.',
-      sobre: [
-        'Volume 2 da Coleção Além das Aparências e dos Sentimentos. Contos sobre os bastidores do ambiente de trabalho — a pauta que está na folha e a que ninguém leu em voz alta.',
-        'Cada conto mostra a cena, revisita o que cada lado protegia e termina com uma nota de Davi, mediador de conflitos.'
-      ]
-    },
-    'da-terra-ao-resultado': {
-      chamada: 'Estratégias verificáveis para fazer a produção render e proteger a margem.',
-      aviso: 'Conteúdo de caráter informativo. Doses, defensivos, medicamentos veterinários, projetos de irrigação e financiamentos devem ser definidos com um responsável técnico habilitado.',
-      sobre: [
-        'Um manual para pequenos e médios produtores sobre mercado, solo, água, adubação segura, custos, manejo e comercialização.',
-        'A proposta é produzir melhor, proteger a margem e cuidar da terra com atenção aos limites e à realidade de cada propriedade.'
-      ]
-    }
-  };
+  const EDITORIAL = U.editorial;
+
+  // `universo` do catálogo aceita um texto ou uma lista; a obra também entra pelo departamento, se o universo o definir.
+  const universosDaObra = (l) => (Array.isArray(l.universo) ? l.universo : (l.universo ? [l.universo] : []));
+  const pertence = (l) => universosDaObra(l).includes(U.slug) || (!!U.criterio.departamento && l.departamento === U.criterio.departamento);
 
   const brl = (n) => 'R$ ' + Number(n).toFixed(2).replace('.', ',');
   const precoVigente = (l) => l.precoPromocional || l.preco;
-  const urlCapa = (id) => '/loja/capas/' + encodeURIComponent(id) + '.jpg';
+  // A capa vem do catálogo (campo `capa` de /api/livros); o .jpg é só o fallback de uma resposta antiga.
+  const urlCapa = (id, l) => (l && l.capa) || '/loja/capas/' + encodeURIComponent(id) + '.jpg';
 
   // Preserva o cupom (capturado da URL por zuni-contexto-url.js, como a Loja) e marca a origem para uso futuro (campanhas).
   function urlCheckout(id) {
@@ -662,7 +615,7 @@
   function abrirDetalhe(id, l) {
     const titulo = l.tituloPublico || l.titulo;
     const capa = document.getElementById('det-capa');
-    capa.src = urlCapa(id);
+    capa.src = urlCapa(id, l);
     capa.alt = 'Capa de ' + titulo;
     document.getElementById('det-titulo').textContent = titulo;
     const fm = document.getElementById('det-formatos');
@@ -676,7 +629,7 @@
     const nota = document.getElementById('det-nota-audio');
     if (l.audiobookDisponivel && l.precoAudiobook) {
       nota.hidden = false;
-      nota.textContent = 'Audiobook disponível: você pode adicioná-lo na finalização da compra por + ' + brl(l.precoAudiobook).replace(' ', ' ') + '.';
+      nota.textContent = 'Audiobook disponível: você pode adicioná-lo na finalização da compra por + ' + brl(l.precoAudiobook).replace(' ', ' ') + '.';
     } else {
       nota.hidden = true;
     }
@@ -696,7 +649,7 @@
   // ── Card ──
   function criarCard(id, l, primeiro) {
     const titulo = l.tituloPublico || l.titulo;
-    const img = el('img', { src: urlCapa(id), width: '500', height: '750', alt: 'Capa de ' + titulo, decoding: 'async' });
+    const img = el('img', { src: urlCapa(id, l), width: '500', height: '750', alt: 'Capa de ' + titulo, decoding: 'async' });
     if (primeiro) img.setAttribute('fetchpriority', 'high'); else img.setAttribute('loading', 'lazy');
     const capa = el('button', { class: 'capa', type: 'button', tabindex: '-1', 'aria-hidden': 'true' }, [img]);
 
@@ -739,7 +692,7 @@
 
     // Só obras do universo; as quatro imagens são as únicas criadas no DOM.
     const doUniverso = catalogo
-      .filter((livro) => livro.universo === UNIVERSO)
+      .filter(pertence)
       .map((livro) => [livro.livroId, livro]);
     const porId = new Map(doUniverso);
     const usados = new Set();
@@ -763,7 +716,7 @@
 
     // Obras futuras do mesmo universo ainda sem seção editorial não ficam escondidas.
     const restantes = doUniverso.filter(([id]) => !usados.has(id));
-    montarSecao({ id: 'mais', titulo: 'Mais de Empreender e Crescer', frase: 'Outras obras deste universo.' }, restantes);
+    montarSecao({ id: 'mais', titulo: U.restantes.titulo, frase: U.restantes.frase }, restantes);
 
     if (!fragmento.childNodes.length) {
       document.getElementById('estado').innerHTML = 'Nenhuma obra disponível agora. Veja a <a href="/loja/">Loja ZUNI completa</a>.';

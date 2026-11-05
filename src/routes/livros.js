@@ -29,6 +29,7 @@ const audiolivroStorage = require('../lib/audiolivroStorage');
 const { lerLivroComPatch } = require('../lib/leitorMobile');
 const { resolverPdf, urlDownloadPdf } = require('../lib/pdfLivro');
 const { lerLivroDoBucket, LivroNaoEncontradoNoBucket } = require('../lib/htmlLivroStorage');
+const { renderizarPagina: renderizarPaginaUniverso, listarUniversos, configPublica: configPublicaUniverso } = require('../lib/universos');
 
 async function existeNoDisco(caminho) {
   try { await fs.access(caminho); return true; } catch (_) { return false; }
@@ -42,6 +43,25 @@ const PAGINA_ACESSO_REVOGADO = path.join(PUBLIC_DIR, 'livros', '_acesso-revogado
 const PAGINA_ACESSO_NEGADO = path.join(PUBLIC_DIR, 'livros', '_acesso-negado.html');
 
 const LIVRO_ID_VALIDO = /^[a-zA-Z0-9_-]+$/;
+
+// Universos da Loja (/loja/<slug>/): uma página só, parametrizada (lib/universos.js). Registrada ANTES do static abaixo para
+// que /loja/universo-feminino/ e /loja/empreender-e-crescer/ continuem funcionando pelo endereço de sempre.
+router.get('/loja/:slug', (req, res, next) => {
+  const html = renderizarPaginaUniverso(req.params.slug);
+  if (!html) return next();
+  // Como o static fazia com diretórios: /loja/<slug> → /loja/<slug>/ (preserva ?cupom=…)
+  if (!req.path.endsWith('/')) {
+    const consulta = req.originalUrl.includes('?') ? req.originalUrl.slice(req.originalUrl.indexOf('?')) : '';
+    return res.redirect(301, `/loja/${encodeURIComponent(req.params.slug)}/${consulta}`);
+  }
+  res.set('Cache-Control', 'public, max-age=300');
+  return res.type('html').send(html);
+});
+router.get('/api/universos', (req, res) => res.json(listarUniversos()));
+router.get('/api/universos/:slug', (req, res) => {
+  const cfg = configPublicaUniverso(req.params.slug);
+  return cfg ? res.json(cfg) : res.status(404).json({ error: 'Universo não encontrado.' });
+});
 
 // Vitrine: pública, sem necessidade de token
 router.use('/loja', express.static(path.join(PUBLIC_DIR, 'loja')));
