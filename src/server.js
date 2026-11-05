@@ -1927,7 +1927,9 @@ app.get('/api/livros', (req, res) => {
   // indicadoPara (Mentor) e audiobookUrl/audiobookPartes (arquivos do audiolivro,
   // entregues só por /audiolivros/:livroId com token) nunca vão para a resposta
   // pública — removidos em serializarLivroPublico.
-  return res.json(listarLivrosPublicos());
+  // Cada obra sai com `capa` (URL em /loja/capas/, resolvida pelas pastas — ver lib/capasLoja.js): as páginas da loja não
+  // precisam mais de listas fixas para escolher .jpg ou .png.
+  return res.json(require('./lib/capasLoja').comCapas(listarLivrosPublicos()));
 });
 
 app.get('/api/livros/catalogo/:livroId', (req, res) => {
