@@ -21,7 +21,12 @@ const { universosDaObra, obraDoUniverso, obterUniverso } = require('../src/lib/u
 
 const RAIZ = path.join(__dirname, '..');
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.split('=').slice(1).join('=') : null; };
-const REF = arg('ref') || 'main';
+// As páginas ANTIGAS dos universos (HTML estático) foram removidas do repositório; sem --ref, o teste usa o commit imediatamente
+// anterior ao que removeu public/loja/universo-feminino/index.html (assim não depende de "main" apontar para o código antigo).
+const REF = arg('ref') || (() => {
+  const del = execFileSync('git', ['log', '--diff-filter=D', '-1', '--format=%H', '--', 'public/loja/universo-feminino/index.html'], { cwd: path.join(__dirname, '..'), encoding: 'utf8' }).trim();
+  return del ? del + '^' : 'main';
+})();
 const SAIDA = path.join(RAIZ, 'relatorios', 'capturas_estrutura');
 const UNIVERSOS = [
   { slug: 'universo-feminino', antigo: 'public/loja/universo-feminino/index.html' },
