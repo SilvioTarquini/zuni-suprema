@@ -10,6 +10,7 @@
 
 const { aplicarPatchLeitor, MOTIVO_SEM_BUNDLE, MOTIVO_NATIVO } = require('./leitorMobile');
 const { buscarLivro } = require('./catalogoLivros');
+const { corrigirLinkVazio } = require('./corrigirLeitor');
 const { injetarWidgetNoServico } = require('./widgetLivroVivo');
 
 const BUCKET_PADRAO = 'zuni-livros-html-private';
@@ -84,6 +85,10 @@ async function lerLivroDoBucket(livroId, opcoes = {}) {
   } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE && resultado.motivo !== MOTIVO_NATIVO) {
     console.error(`[LEITOR_PATCH_FALHOU] livroId=${livroId} origem=bucket motivo=${resultado.motivo} — entregando o livro original.`);
   }
+
+  // Defeito do leitor bookData (Herança/Máscara): href vazio virava link para a própria página (texto todo sublinhado). Ver lib/corrigirLeitor.js.
+  const c = corrigirLinkVazio(html);
+  if (c.aplicado) { html = c.html; console.log(`[LEITOR_LINK_VAZIO_CORRIGIDO] livroId=${livroId} origem=bucket`); }
 
   // Chat do Livro-Vivo (obra do bucket não é alterada no armazenamento): entra aqui, junto do patch, só se a ficha liga o chat.
   const w = injetarWidgetNoServico(html, livroId, buscarLivro(livroId));
