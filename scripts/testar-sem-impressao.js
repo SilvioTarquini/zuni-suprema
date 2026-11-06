@@ -13,11 +13,11 @@ const { ehLivroSemImpressao } = require('../src/lib/leitorSemImpressao');
 
 const RAIZ = path.join(__dirname, '..', 'private', 'livros');
 const arquivo = (id) => path.join(RAIZ, id, 'index.html');
-const QUATRO = ['da-terra-ao-resultado', 'vender-bem-vender-sempre', 'toda-mesa-tem-dois-lados', 'toda-reuniao-tem-duas-pautas'];
+// Da Terra deixou private/livros/ (lote-piloto: HTML novo vem do bucket; ver testar-lote-piloto-download.js). Aqui ficam os 3 do disco.
+const QUATRO = ['vender-bem-vender-sempre', 'toda-mesa-tem-dois-lados', 'toda-reuniao-tem-duas-pautas'];
 // Controles de imprimir/PDF, com e sem escape de JSON (o bundle guarda o HTML do leitor como string JSON).
 const CONTROLES = /btnPrint|printBtn|PDF\/Imprimir|>Imprimir|Baixar em PDF|window\.print/;
 const COM_CONTROLE = {
-  'da-terra-ao-resultado': /printBtn/,
   'vender-bem-vender-sempre': /btnPrint/,
   'toda-mesa-tem-dois-lados': /Baixar em PDF/,
   'toda-reuniao-tem-duas-pautas': /btnPrint/
@@ -34,7 +34,7 @@ async function teste(nome, fn) {
   const orig = console.error;
   console.error = (...a) => { msgs.push(a.join(' ')); };
 
-  await teste('a lista de livros sem impressão é exatamente os 4 à venda', async () => {
+  await teste('a lista de livros sem impressão é exatamente os 3 à venda em private/livros/', async () => {
     const todos = fs.readdirSync(RAIZ).filter((d) => !d.startsWith('_'));
     assert.deepStrictEqual(todos.filter(ehLivroSemImpressao).sort(), [...QUATRO].sort());
   });

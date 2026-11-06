@@ -14,7 +14,19 @@ const { chromium } = require('playwright');
 const { lerLivroComPatch } = require('../src/lib/leitorMobile');
 const { tirarImpressaoDaTerra } = require('../src/lib/leitorSemImpressao');
 
-const ARQUIVO = path.join(__dirname, '..', 'private', 'livros', 'da-terra-ao-resultado', 'index.html');
+// O HTML ANTIGO do Da Terra saiu de private/livros/ (lote-piloto); este teste cobre o código do leitor antigo, então o arquivo é
+// restaurado do histórico do git (commit anterior ao que o removeu) para uma pasta temporária.
+const REL = 'private/livros/da-terra-ao-resultado/index.html';
+const ARQUIVO = (() => {
+  const { execFileSync } = require('child_process');
+  const raiz = path.join(__dirname, '..');
+  const local = path.join(raiz, REL);
+  if (require('fs').existsSync(local)) return local;
+  const del = execFileSync('git', ['log', '--diff-filter=D', '-1', '--format=%H', '--', REL], { cwd: raiz, encoding: 'utf8' }).trim();
+  const tmp = path.join(require('os').tmpdir(), 'zuni-terra-antigo.html');
+  require('fs').writeFileSync(tmp, execFileSync('git', ['show', del + '^:' + REL], { cwd: raiz, maxBuffer: 64 * 1024 * 1024 }));
+  return tmp;
+})();
 let passaram = 0;
 const falhas = [];
 async function teste(nome, fn) {

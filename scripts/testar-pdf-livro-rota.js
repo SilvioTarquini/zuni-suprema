@@ -233,7 +233,7 @@ async function teste(nome, fn) {
   for (const [id, vp, abrir, rotuloEsperado] of [
     ['vender-bem-vender-sempre', { width: 1366, height: 768 }, nada, 'Baixar PDF'],
     ['toda-reuniao-tem-duas-pautas', { width: 1366, height: 768 }, nada, 'Baixar PDF'],
-    ['da-terra-ao-resultado', { width: 1366, height: 768 }, nada, 'Baixar PDF'],
+    // Da Terra: HTML novo vem do bucket; o clique é provado em testar-lote-piloto-download.js
     ['toda-mesa-tem-dois-lados', { width: 1366, height: 768 }, abrirMesa, 'Baixar PDF'],
     ['toda-mesa-tem-dois-lados', { width: 390, height: 844 }, nada, 'Baixar PDF']
   ]) {
