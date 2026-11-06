@@ -127,7 +127,8 @@ function executar(opcoes = {}) {
   await teste('M. AddToCart não foi antecipado para o Experimente (continua só ao montar o checkout Stripe)', async () => {
     assert.ok(!/addtocart/i.test(paginaSemComentarios));
     const chk = ler('public/checkout-livro.html');
-    assert.ok(/await montarEmbeddedCheckout\(data\.clientSecret\);\s*registrarInicioCheckoutPinterest\(data\.pedidoId\);/.test(chk));
+    // (o 2º argumento é a chave cupom+áudio com que a sessão foi criada; o evento continua só DEPOIS de montar o Stripe)
+    assert.ok(/await montarEmbeddedCheckout\(data\.clientSecret(, chaveEnviada)?\);\s*registrarInicioCheckoutPinterest\(data\.pedidoId\);/.test(chk));
     assert.ok(ler('public/js/checkout-livro-cliente.js').includes("pinTrack('addtocart', dados)"));
   });
   await teste('N. Purchase não existe no Experimente (continua só após pago:true no checkout)', async () => {

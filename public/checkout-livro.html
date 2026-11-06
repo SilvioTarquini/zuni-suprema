@@ -149,6 +149,8 @@
   }
   button.acao:disabled { opacity: 0.5; cursor: not-allowed; }
   .erro { color: #e0716a; font-size: 0.8rem; margin-top: 10px; display: none; }
+  .aviso-valores { color: var(--dourado-suave); font-size: 0.82rem; margin: 10px 0 0; text-align: center; }
+  .aviso-valores[hidden] { display: none; }
   .aguardando { display: none; text-align: center; margin-top: 20px; }
   .rodape { margin-top: 20px; font-size: 0.75rem; color: var(--texto-suave); }
   .prazo-leitura { margin: 0 0 12px; font-size: 0.8rem; line-height: 1.5; color: var(--texto-suave); text-align: center; }
@@ -274,6 +276,7 @@
     </div>
 
     <button class="acao" id="btn-continuar" onclick="continuar()">Comprar agora</button>
+    <p class="aviso-valores" id="aviso-valores" role="status" hidden>Valores atualizados — confirme para continuar.</p>
     <div id="stripe-checkout-container" style="display:none; margin-top:20px;"></div>
     <p class="ajuda-whatsapp">
       <a id="link-whatsapp" href="https://wa.me/5515996088895" target="_blank" rel="noopener">Problema no pagamento? Fale conosco pelo WhatsApp</a>
@@ -309,6 +312,42 @@
     return `R$ ${n.toFixed(2).replace('.', ',')}`;
   }
 
+  // Checkout embutido do Stripe em andamento. A sessão do Stripe é IMUTÁVEL: o valor e o audiolivro ficam fixados no servidor
+  // na hora em que ela é criada. Se o cupom ou o audiolivro mudarem depois, a caixa mostraria um valor diferente do da tela.
+  // Por isso guardamos a caixa e a "chave" (cupom + audiolivro) com que ela foi criada e a derrubamos se a chave mudar.
+  let checkoutAtual = null;
+  let chaveDaSessao = null;
+  let rotuloBotao = 'Comprar agora';
+
+  function chaveAtual() {
+    return JSON.stringify([precoEstado.estado.cupom || null, Boolean(precoEstado.estado.audio)]);
+  }
+
+  // Total zero (cupom de 100%): não há pagamento, o servidor libera o acesso direto (cupom100).
+  function rotuloPara(visao) {
+    return visao.precoFinal === 0 ? 'Receber meu acesso gratuito' : 'Comprar agora';
+  }
+
+  function mostrarAvisoValores(mostrar) {
+    document.getElementById('aviso-valores').hidden = !mostrar;
+  }
+
+  // Cupom ou audiolivro mudaram depois que o Stripe montou: remove a caixa (valor antigo), volta o botão e avisa.
+  function invalidarCheckoutSeDesatualizado() {
+    if (!checkoutAtual || chaveAtual() === chaveDaSessao) return;
+    try { checkoutAtual.destroy(); } catch (e) { /* já desmontado */ }
+    checkoutAtual = null;
+    chaveDaSessao = null;
+    const container = document.getElementById('stripe-checkout-container');
+    container.style.display = 'none';
+    container.innerHTML = '';
+    const btn = document.getElementById('btn-continuar');
+    btn.style.display = '';
+    btn.disabled = false;
+    btn.textContent = rotuloBotao;
+    mostrarAvisoValores(true);
+  }
+
   // Única função que escreve o preço na tela.
   function renderizarPreco(visao) {
     const original = document.getElementById('preco-original');
@@ -319,6 +358,9 @@
       original.style.display = 'none';
     }
     document.getElementById('preco-livro').textContent = formatarReais(visao.precoFinal);
+    rotuloBotao = rotuloPara(visao);
+    const btn = document.getElementById('btn-continuar');
+    if (!btn.disabled && btn.style.display !== 'none') btn.textContent = rotuloBotao;
   }
 
   function mostrarErro(msg) {
@@ -378,6 +420,7 @@
     const r = await precoEstado.definirAudio(audiolivroIncluido);
     if (r.descartada) return;
     renderizarPreco(r.visao);
+    invalidarCheckoutSeDesatualizado();
     if (r.visao.cupom) {
       statusEl.className = 'cupom-status valido';
       statusEl.textContent = `Cupom aplicado — você economiza ${formatarReais(r.visao.desconto)}.`;
@@ -400,6 +443,7 @@
     const r = await precoEstado.aplicarCupom(codigo);
     if (r.descartada) return;
     renderizarPreco(r.visao);
+    invalidarCheckoutSeDesatualizado();
     if (!r.ok) {
       statusEl.className = 'cupom-status invalido';
       statusEl.textContent = r.erro;
@@ -448,13 +492,16 @@
     setTimeout(function () { window.location.href = url; }, 300);
   }
 
-  async function montarEmbeddedCheckout(clientSecret) {
+  async function montarEmbeddedCheckout(clientSecret, chave) {
     const publicKey = await getStripePublicKey();
     const stripe = Stripe(publicKey);
     const checkout = await stripe.createEmbeddedCheckoutPage({
       fetchClientSecret: async () => clientSecret
     });
 
+    checkoutAtual = checkout;
+    chaveDaSessao = chave;
+    mostrarAvisoValores(false);
     document.getElementById('btn-continuar').style.display = 'none';
     document.getElementById('stripe-checkout-container').style.display = 'block';
     checkout.mount('#stripe-checkout-container');
@@ -468,6 +515,8 @@
     if (!name || !email) return mostrarErro('Preencha nome e email para continuar.');
 
     document.getElementById('erro').style.display = 'none';
+    mostrarAvisoValores(false);
+    const chaveEnviada = chaveAtual();
     btn.disabled = true;
     btn.textContent = 'Aguarde…';
 
@@ -489,12 +538,19 @@
           return;
         }
 
-        await montarEmbeddedCheckout(data.clientSecret);
+        // Cupom/audiolivro mudaram enquanto a sessão era criada: a sessão tem os valores antigos, não a monte.
+        if (chaveAtual() !== chaveEnviada) {
+          btn.disabled = false;
+          btn.textContent = rotuloBotao;
+          mostrarAvisoValores(true);
+          return;
+        }
+        await montarEmbeddedCheckout(data.clientSecret, chaveEnviada);
         registrarInicioCheckoutPinterest(data.pedidoId);
       }
     } catch (e) {
       btn.disabled = false;
-      btn.textContent = 'Comprar agora';
+      btn.textContent = rotuloBotao;
       mostrarErro(e.message || 'Erro ao processar. Tente novamente.');
     }
   }
