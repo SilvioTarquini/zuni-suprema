@@ -208,6 +208,181 @@ const UNIVERSOS = {
         ]
       }
     }
+  },
+  "pais-e-filhos": {
+    "slug": "pais-e-filhos",
+    "nome": "Pais e Filhos",
+    "sobretitulo": "Pais e Filhos",
+    "h1": "Livros para atravessar, em família, os anos da adolescência.",
+    "intro": "Compreensão, linguagem e atitudes para que pais e filhos continuem se entendendo quando a convivência aperta.",
+    "fecho": "Comece pela obra que fala com o momento da sua casa.",
+    "descricao": "Livros para atravessar, em família, os anos da adolescência. Livro digital — Loja ZUNI Suprema.",
+    "descricaoOg": "Compreensão, linguagem e atitudes para que pais e filhos continuem se entendendo quando a convivência aperta.",
+    "themeColor": "#eef2f1",
+    "tema": {
+      "fundo": "#eef2f1",
+      "carta": "#fbfdfc",
+      "tinta": "#1c2426",
+      "suave": "#4f5d60",
+      "borda": "#d5e0de",
+      "acento": "#2f5d6b",
+      "acentoEscuro": "#1f4450",
+      "capaFundo": "#e3ebe9",
+      "cartaClara": "#f4f8f7",
+      "tintaRgb": "28, 36, 38",
+      "acentoRgb": "47, 93, 107"
+    },
+    "criterio": {
+      "universo": "pais-e-filhos"
+    },
+    "origem": "pais-e-filhos",
+    "direciona": {
+      "titulo": "Há uma situação específica acontecendo na sua casa?",
+      "texto": "Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para compreender melhor a sua situação antes de decidir.",
+      "href": "/checkout?origem=pais-e-filhos"
+    },
+    "blocoExtra": null,
+    "secoes": [
+      {
+        "id": "para-comecar",
+        "titulo": "Para começar",
+        "frase": "Um guia para famílias reais que atravessam a adolescência.",
+        "ids": [
+          "a-bussola-do-adolescente"
+        ]
+      }
+    ],
+    "restantes": {
+      "id": "mais",
+      "titulo": "Mais de Pais e Filhos",
+      "frase": "Outras obras deste universo."
+    },
+    "editorial": {
+      "a-bussola-do-adolescente": {
+        "chamada": "Nem prisão, nem abandono: um modo mais equilibrado de conduzir a relação com um filho adolescente.",
+        "sobre": [
+          "Um guia para famílias reais, em que há amor, mas também cansaço, boa intenção e falhas de comunicação. Cada capítulo traz uma lente de compreensão, atitudes aplicáveis e frases que podem substituir reações automáticas.",
+          "Aparecem cenas concretas — a festa, a nota baixa, o celular de madrugada, a roupa, a mentira sobre onde estava — sempre no mesmo formato: o que costumamos dizer, o que seria melhor dizer e por quê."
+        ]
+      }
+    }
+  },
+  "relacoes-e-convivencia": {
+    "slug": "relacoes-e-convivencia",
+    "nome": "Relações e Convivência",
+    "sobretitulo": "Relações e Convivência",
+    "h1": "Livros de apoio para as situações comuns que se tornam difíceis de conduzir.",
+    "intro": "Companhia e discernimento para conversas, vínculos, escolhas e mudanças do dia a dia.",
+    "fecho": "Comece pelo capítulo que mais se aproxima do que você está vivendo.",
+    "descricao": "Livros de apoio para as situações comuns que se tornam difíceis de conduzir. Livro digital — Loja ZUNI Suprema.",
+    "descricaoOg": "Companhia e discernimento para conversas, vínculos, escolhas e mudanças do dia a dia.",
+    "themeColor": "#f6efe9",
+    "tema": {
+      "fundo": "#f6efe9",
+      "carta": "#fffcf9",
+      "tinta": "#2a1f1a",
+      "suave": "#6a574d",
+      "borda": "#e8d9cd",
+      "acento": "#8a4b2d",
+      "acentoEscuro": "#693820",
+      "capaFundo": "#eee1d4",
+      "cartaClara": "#fbf5ef",
+      "tintaRgb": "42, 31, 26",
+      "acentoRgb": "138, 75, 45"
+    },
+    "criterio": {
+      "universo": "relacoes-e-convivencia"
+    },
+    "origem": "relacoes-e-convivencia",
+    "direciona": {
+      "titulo": "Há uma situação específica acontecendo na sua vida?",
+      "texto": "Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para compreender melhor a sua situação antes de decidir.",
+      "href": "/checkout?origem=relacoes-e-convivencia"
+    },
+    "blocoExtra": null,
+    "secoes": [
+      {
+        "id": "para-comecar",
+        "titulo": "Para começar",
+        "frase": "Um livro de apoio para os momentos em que a vida aperta.",
+        "ids": [
+          "situacoes-da-vida-real"
+        ]
+      }
+    ],
+    "restantes": {
+      "id": "mais",
+      "titulo": "Mais de Relações e Convivência",
+      "frase": "Outras obras deste universo."
+    },
+    "editorial": {
+      "situacoes-da-vida-real": {
+        "chamada": "O que fazer e o que dizer quando a vida aperta — com cenas, linguagem e caminhos possíveis.",
+        "aviso": "Livro de informação e apoio à reflexão. Não substitui o acompanhamento de um profissional de saúde, de assistência social ou jurídico.",
+        "sobre": [
+          "Reúne situações da vida comum que podem se tornar difíceis de conduzir: pedir ajuda, educar um filho, enfrentar uma perda, lidar com dinheiro curto, reconhecer uma cobrança injusta, descansar sem culpa.",
+          "Cada capítulo abre com uma cena e oferece compreensão e sugestões de linguagem, sem receitas rígidas. Um índice por situações, no final, ajuda a encontrar o capítulo mais próximo do que você vive."
+        ]
+      }
+    }
+  },
+  "romances-e-historias": {
+    "slug": "romances-e-historias",
+    "nome": "Romances e Histórias",
+    "sobretitulo": "Romances e Histórias",
+    "h1": "Histórias para ler com calma — e para pensar depois.",
+    "intro": "Romances e narrativas da Zuni Suprema sobre memória, convivência e as escolhas que definem uma vida.",
+    "fecho": "Comece pela história que despertar a sua curiosidade.",
+    "descricao": "Romances e histórias da Zuni Suprema. Livro digital — Loja ZUNI Suprema.",
+    "descricaoOg": "Romances e narrativas sobre memória, convivência e as escolhas que definem uma vida.",
+    "themeColor": "#f1eff6",
+    "tema": {
+      "fundo": "#f1eff6",
+      "carta": "#fdfcff",
+      "tinta": "#201e2b",
+      "suave": "#58546b",
+      "borda": "#dcd8ea",
+      "acento": "#3d3a6b",
+      "acentoEscuro": "#2b294d",
+      "capaFundo": "#e6e3f0",
+      "cartaClara": "#f7f6fb",
+      "tintaRgb": "32, 30, 43",
+      "acentoRgb": "61, 58, 107"
+    },
+    "criterio": {
+      "universo": "romances-e-historias"
+    },
+    "origem": "romances-e-historias",
+    "direciona": {
+      "titulo": "Quer ajuda para escolher por onde começar?",
+      "texto": "Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para compreender melhor a sua situação antes de decidir.",
+      "href": "/checkout?origem=romances-e-historias"
+    },
+    "blocoExtra": null,
+    "secoes": [
+      {
+        "id": "para-comecar",
+        "titulo": "Para começar",
+        "frase": "Um romance de cartório, memória e coragem tardia.",
+        "ids": [
+          "heranca-de-papel"
+        ]
+      }
+    ],
+    "restantes": {
+      "id": "mais",
+      "titulo": "Mais de Romances e Histórias",
+      "frase": "Outras obras deste universo."
+    },
+    "editorial": {
+      "heranca-de-papel": {
+        "chamada": "Um romance sobre memória, culpa e coragem tardia, em que o crime nunca esteve na faca, e sim na caneta.",
+        "sobre": [
+          "Em São Bento do Taquaral, interior paulista, Nadir Camargo cuida do Registro de Imóveis e encontra, num livro de 1984, uma matrícula com a letra do pai e um sobrenome escrito errado. Investigar pode abrir caminho para a devolução de uma terra; não investigar é assinar embaixo.",
+          "Uma comédia de costumes com o motor de um thriller e o peso de um drama de reparação."
+        ]
+      }
+    }
   }
 };
 
