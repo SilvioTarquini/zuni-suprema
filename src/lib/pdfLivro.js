@@ -12,6 +12,10 @@ const { gerarUrlAssinada } = require('./audiolivroStorage');
 // Nome amigável que o cliente recebe no download.
 const NOMES_ARQUIVO = {
   'da-terra-ao-resultado': 'Da-Terra-ao-Resultado-ZUNI.pdf',
+  'fazenda-lucrativa': 'Fazenda-Lucrativa-ZUNI.pdf',
+  'a-bussola-do-adolescente': 'A-Bussola-do-Adolescente-ZUNI.pdf',
+  'situacoes-da-vida-real': 'Situacoes-da-Vida-Real-ZUNI.pdf',
+  'heranca-de-papel': 'Heranca-de-Papel-ZUNI.pdf',
   'vender-bem-vender-sempre': 'Vender-Bem-Vender-Sempre-ZUNI.pdf',
   'toda-mesa-tem-dois-lados': 'Toda-Mesa-Tem-Dois-Lados-ZUNI.pdf',
   'toda-reuniao-tem-duas-pautas': 'Toda-Reuniao-Tem-Duas-Pautas-ZUNI.pdf'

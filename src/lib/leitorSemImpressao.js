@@ -11,6 +11,11 @@
 
 const LIVROS_SEM_IMPRESSAO = new Set([
   'da-terra-ao-resultado',
+  // Lote-piloto (cópias de _staging já sem impressão; o servidor só acrescenta o "Baixar PDF"):
+  'fazenda-lucrativa',
+  'a-bussola-do-adolescente',
+  'situacoes-da-vida-real',
+  'heranca-de-papel',
   'vender-bem-vender-sempre',
   'toda-mesa-tem-dois-lados',
   'toda-reuniao-tem-duas-pautas'
@@ -84,6 +89,31 @@ function tirarImpressaoTemplateTolerante(template) {
   return t;
 }
 
+// Leitores SEM bundle (HTML inteiro com o livro em <script>/const): não têm template para editar. Duas coisas, ambas
+// tolerantes (falta de âncora nunca derruba a entrega do livro):
+//  1. se o leitor trouxer o botão "Baixar o livro (.html)" (A Bússola do Adolescente), ele vira "Baixar PDF" e passa a
+//     navegar para a rota do PDF — o download do HTML do livro, sem token, deixa de existir;
+//  2. em qualquer caso, um botão flutuante "Baixar PDF" (canto superior direito) leva à rota /livros/<id>/pdf?token=… .
+const CSS_BOTAO_PDF = '<style id="zs-pdf-css">#zs-baixar-pdf{position:fixed;top:10px;right:10px;z-index:2147483000;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:1px solid rgba(201,178,107,.7);border-radius:999px;background:rgba(20,20,20,.72);color:#f3e6bd;font:600 13px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}#zs-baixar-pdf:hover{background:rgba(20,20,20,.88)}@media print{#zs-baixar-pdf{display:none}}</style>';
+const BOTAO_PDF_FLUTUANTE = CSS_BOTAO_PDF + '<button type="button" id="zs-baixar-pdf" title="Baixar o livro em PDF">&#8681; Baixar PDF</button><script id="zs-pdf-js">document.getElementById("zs-baixar-pdf").addEventListener("click",function(){ ' + JS_IR_PARA_PDF + ' });</script>';
+
+function tirarImpressaoHtmlEstatico(html) {
+  let t = html;
+  // (1) "Baixar o livro (.html)" → "Baixar PDF" (só se TODAS as âncoras existirem; senão deixa como está e segue)
+  const reBotoes = /title="Baixar o livro \(\.html\)">Baixar<\/button>/g;
+  const reLigacao = /\[\s*'dlBtn'\s*,\s*'dlBtn2'\s*\]\.forEach\(\s*id\s*=>\s*document\.getElementById\(id\)\.onclick\s*=\s*baixar\s*\)/;
+  if (reBotoes.test(t) && reLigacao.test(t)) {
+    t = t.replace(reBotoes, 'title="Baixar o livro em PDF">Baixar PDF</button>');
+    t = t.replace(reLigacao, () => "['dlBtn','dlBtn2'].forEach(id=>document.getElementById(id).onclick = ()=>{ " + JS_IR_PARA_PDF + " })");
+  }
+  // (2) botão flutuante, uma vez só, logo antes de </body>
+  if (!t.includes('id="zs-baixar-pdf"')) {
+    const i = t.lastIndexOf('</body>');
+    t = i >= 0 ? t.slice(0, i) + BOTAO_PDF_FLUTUANTE + t.slice(i) : t + BOTAO_PDF_FLUTUANTE;
+  }
+  return t;
+}
+
 function tirarImpressaoTemplate(livroId, template) {
   if (!LIVROS_COM_CAMINHO_ESTRITO.has(livroId)) return tirarImpressaoTemplateTolerante(template);
   if (livroId === 'toda-mesa-tem-dois-lados') {
@@ -105,4 +135,4 @@ function tirarImpressaoTemplate(livroId, template) {
   return tirarUma(t, '  doPrint(){ this.buildPrint(); setTimeout(()=>window.print(), 60); }', '  doPrint(){}');
 }
 
-module.exports = { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoTemplate, tirarImpressaoTemplateTolerante, JS_IR_PARA_PDF };
+module.exports = { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoHtmlEstatico, tirarImpressaoTemplate, tirarImpressaoTemplateTolerante, JS_IR_PARA_PDF };

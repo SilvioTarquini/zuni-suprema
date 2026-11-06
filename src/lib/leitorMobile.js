@@ -22,7 +22,7 @@ const { patchMotorC, ehMotorC, patchMotorD, ehMotorD } = require('./leitorMobile
 const { patchDaTerra, ehLeitorDaTerra } = require('./leitorMobileTerra');
 const { patchMotorE, ehMotorE } = require('./leitorMobileMotorE');
 const { patchPaginador } = require('./leitorMobilePaginador');
-const { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoTemplate } = require('./leitorSemImpressao');
+const { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoHtmlEstatico, tirarImpressaoTemplate } = require('./leitorSemImpressao');
 const { precisaCorrigirCapa, corrigirCapaMesa } = require('./leitorCapaMesa');
 
 // Livros do motor A cujo paginador recebe a revalidação/divisão de blocos (ver leitorMobilePaginador.js).
@@ -222,6 +222,8 @@ function aplicarPatchLeitor(htmlOriginal, opcoes = {}) {
         const r = patchDaTerra(htmlOriginal);
         return r.ok && semImpressao ? { ok: true, html: tirarImpressaoDaTerra(r.html) } : r;
       }
+      // Obra à venda sem bundle (lote-piloto): só entra o "Baixar PDF"; o leitor em si já é responsivo.
+      if (semImpressao) return { ok: true, html: tirarImpressaoHtmlEstatico(htmlOriginal) };
       return { ok: false, motivo: MOTIVO_SEM_BUNDLE };
     }
 
