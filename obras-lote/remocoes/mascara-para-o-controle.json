@@ -1,0 +1,214 @@
+{
+  "slug": "mascara-para-o-controle",
+  "origem": "relatorios/preparacao_2026-11-05.md, seção 3.2 (leitura integral do livro em 05/11/2026); seção \"Epílogo:\" removida por decisão posterior (relatorios/classificacao_final_2026-11-05.md, item 24: 16 blocos de \"Desenvolvimento/Incorporação\")",
+  "regra": "cada item é um bloco INTEIRO (parágrafo) removido do texto; \"trecho\" é o texto literal; \"secoesRemovidas\" = seções removidas por inteiro, pelo título",
+  "secoesRemovidas": [
+    "Epílogo:"
+  ],
+  "remocoes": [
+    {
+      "secao": "Introdução",
+      "bloco": 7,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "1. A Cortesia Disfarçada"
+    },
+    {
+      "secao": "Introdução",
+      "bloco": 8,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "Contexto: Uma jovem mulher, recém-chegada a uma cidade grande, começa a trabalhar em um escritório onde todos são educados e aparentemente simpáticos. Ela logo se vê envolvida em um jogo de sedução velada com um colega de trabalho, um homem casado. Durante almoços de negócios, jantares corporativos e reuniões informais, as interações deles são carregadas de olhares furtivos, sorrisos enigmáticos e palavras aparentemente amigáveis, mas com intenções disfarçadas."
+    },
+    {
+      "secao": "Introdução",
+      "bloco": 9,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "Elementos Psicológicos:"
+    },
+    {
+      "secao": "Introdução",
+      "bloco": 10,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "Timidez e insegurança: A jovem sente-se atraída, mas hesita em demonstrar qualquer sinal de interesse. Ela se sente desamparada por sua inexperiência em relações complexas e em jogos de sedução."
+    },
+    {
+      "secao": "Introdução",
+      "bloco": 11,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "Desejo disfarçado de respeito e profissionalismo: O colega, que tenta esconder suas intenções por ser casado, constantemente faz elogios disfarçados de gentilezas profissionais, manipulando a situação para ganhar mais atenção dela sem revelar suas reais intenções."
+    },
+    {
+      "secao": "Introdução",
+      "bloco": 12,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "Ambiguidade nas palavras e gestos: Cada frase dita por ele pode ser interpretada de várias formas, deixando a mulher em dúvida sobre suas reais intenções."
+    },
+    {
+      "secao": "Introdução",
+      "bloco": 13,
+      "motivo": "roteiro/briefing de IA na Introdução",
+      "trecho": "Narrativa: A história se desenrola em torno das conversas entre os dois, onde os gestos, a linguagem corporal e as palavras escolhidas são analisadas a fundo. A autora de uma narrativa ao estilo Machado de Assis intercalaria comentários perspicazes, como os que Machado faz em \"Memórias Póstumas de Brás Cubas\", para esclarecer as intenções veladas por trás das interações e fazer o leitor entender o que está acontecendo além do que é dito."
+    },
+    {
+      "secao": "Capítulo 6: O Jogo da Aparência e da Verdade Oculta",
+      "bloco": 28,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar a explorar esse formato, aprofundando os desejos velados, as segundas intenções e as desconfianças que permeiam os relacionamentos. A insegurança será um dos motores que impulsionam as ações dos personagens, tornando cada interação mais intensa e cheia de subtextos. Aqui está o próximo capítulo, com mais diálogos e reflexões internas, onde os personagens medem suas forças e tentam compreender o que realmente está acontecendo em seus próprios sentimentos."
+    },
+    {
+      "secao": "Capítulo 7: A Discrição das Intenções",
+      "bloco": 32,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda ainda mais a psicologia dos personagens e os jogos emocionais que estão em andamento, especialmente as interações entre Clara, Rafael e Helena. A insegurança, a desconfiança e as segundas intenções permeiam cada diálogo, e os personagens começam a sentir que algo está sendo escondido, mas ainda não conseguem identificar o que é."
+    },
+    {
+      "secao": "Capítulo 8: A Chegada de Marcos – O Despertar do Ciúmes",
+      "bloco": 27,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Neste capítulo, introduzimos Marcos como um novo interesse para Clara, criando ciúmes e inseguranças em Rafael, o que acrescenta mais complexidade ao jogo de sedução e manipulação. Clara, por sua vez, começa a se sentir dividida, sem saber para onde seus sentimentos realmente estão indo. O conflito interno de cada personagem se intensifica, e as intenções começam a ficar mais evidentes, mesmo sem serem declaradas."
+    },
+    {
+      "secao": "Capítulo 8: A Chegada de Marcos – O Despertar do Ciúmes",
+      "bloco": 28,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos então focar nas interações atuais entre Clara, Rafael e Marcos, aprofundando suas emoções, inseguranças e desejos, sem a necessidade de introduzir novos personagens por enquanto. O objetivo será criar uma narrativa onde as tensões psicológicas e as dinâmicas de sedução, ciúmes e manipulação entre eles se tornem cada vez mais claras e intensas. Cada um tentará medir seus próprios sentimentos, suas forças e fraquezas, enquanto os jogos psicológicos entre eles ganham mais profundidade."
+    },
+    {
+      "secao": "Capítulo 9: A Incerteza e o Jogo do Poder",
+      "bloco": 36,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo se aprofunda nos dilemas internos de Clara, nas tensões entre ela, Rafael e Marcos, e como as inseguranças e os desejos não são expressos diretamente, mas disfarçados em palavras, olhares e atitudes. As desconfianças, ciúmes e os sentimentos conflitantes continuam a criar uma rede de complexidade entre os personagens."
+    },
+    {
+      "secao": "Capítulo 9: A Incerteza e o Jogo do Poder",
+      "bloco": 37,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar então, aprofundando ainda mais os conflitos, as inseguranças e os jogos psicológicos entre Clara, Rafael e Marcos. A ideia é que os personagens se tornem cada vez mais complexos e suas interações mais intensas, com cada um medindo os passos do outro, revelando suas fraquezas e desejos mais velados."
+    },
+    {
+      "secao": "Capítulo 10: O Custo do Desejo e a Culpa Silenciosa",
+      "bloco": 27,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda os conflitos internos de Clara e os jogos de manipulação de Rafael, enquanto Marcos oferece uma possibilidade de liberdade emocional para Clara, colocando-a em uma posição difícil. O jogo entre eles se intensifica, e as escolhas de Clara começam a se tornar mais evidentes."
+    },
+    {
+      "secao": "Capítulo 10: O Custo do Desejo e a Culpa Silenciosa",
+      "bloco": 28,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos seguir com o desenvolvimento, aprofundando ainda mais o jogo psicológico entre Clara, Rafael e Marcos. A tensão vai aumentar conforme as inseguranças e os desejos não ditos se intensificam. O próximo capítulo pode continuar a explorar as reações e dilemas dos personagens, criando mais momentos de introspecção e interações carregadas de subtextos."
+    },
+    {
+      "secao": "Capítulo 11: A Resposta de Rafael e as Consequências do Jogo",
+      "bloco": 27,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda ainda mais o conflito interno de Clara, a manipulação psicológica de Rafael, a sinceridade desconcertante de Marcos e o dilema crescente de Clara entre os dois mundos. Ela está começando a perceber que não há como sair ilesa desse jogo, mas ainda está incerta sobre como se posicionar."
+    },
+    {
+      "secao": "Capítulo 11: A Resposta de Rafael e as Consequências do Jogo",
+      "bloco": 28,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar explorando mais interações entre os personagens e, ao mesmo tempo, introduzir novos elementos no ambiente que possam gerar novas tensões, mudanças de rumo e dilemas, criando um cenário mais dinâmico e instigante."
+    },
+    {
+      "secao": "Capítulo 11: A Resposta de Rafael e as Consequências do Jogo",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Esses novos elementos podem ser tanto externos (como uma situação no trabalho, um evento social, ou um novo desafio no escritório) quanto internos, como uma revelação ou mudança na percepção de Clara sobre suas próprias emoções. Esses eventos irão agir como catalisadores, afetando o comportamento dos personagens e desafiando suas escolhas."
+    },
+    {
+      "secao": "Capítulo 12: O Jogo do Poder – Novas Possibilidades e Decisões",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda ainda mais as dinâmicas de poder e controle entre os três personagens, revelando as tensões que vão se intensificando, enquanto Clara se vê cada vez mais em uma encruzilhada emocional. A necessidade de fazer uma escolha começa a ser mais clara, mas os dilemas internos de Clara a mantêm insegura."
+    },
+    {
+      "secao": "Capítulo 12: O Jogo do Poder – Novas Possibilidades e Decisões",
+      "bloco": 30,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar com mais interações, aprofundando os conflitos, as inseguranças e as escolhas dos personagens. A tensão vai continuar crescendo, com Clara sendo pressionada por Rafael e Marcos, e suas emoções se tornando mais conflitantes. O jogo psicológico entre os três se intensifica à medida que novas revelações acontecem e novas dinâmicas se formam."
+    },
+    {
+      "secao": "Capítulo 13: O Peso das Palavras e os Ecos do Desejo",
+      "bloco": 27,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda ainda mais o jogo psicológico entre os personagens, com Clara finalmente se abrindo para Marcos, mas ainda presa na insegurança e na dúvida sobre sua escolha. Rafael, por sua vez, tenta manter o controle, mas o jogo entre eles está prestes a chegar a um ponto crítico."
+    },
+    {
+      "secao": "Capítulo 13: O Peso das Palavras e os Ecos do Desejo",
+      "bloco": 28,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar explorando mais interações, aprofundando as reações e escolhas de Clara. A ideia aqui é que, à medida que Clara se vê mais pressionada entre Rafael e Marcos, ela comece a perceber não apenas o jogo deles, mas também as próprias inseguranças e desejos que a mantêm dividida. O foco será mostrar a evolução de sua percepção sobre si mesma e suas reações, ao mesmo tempo em que as interações com Rafael e Marcos se tornam mais intensas e decisivas."
+    },
+    {
+      "secao": "Capítulo 14: A Decisão Entre a Verdade e o Jogo",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda as escolhas de Clara e sua interação com Marcos e Rafael. A decisão de Clara de se afastar do controle de Rafael e buscar algo mais genuíno com Marcos cria um ponto de virada importante na trama. O jogo psicológico entre os três continua a se intensificar, mas agora Clara começa a se libertar das manipulações."
+    },
+    {
+      "secao": "Capítulo 14: A Decisão Entre a Verdade e o Jogo",
+      "bloco": 30,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar! Agora que Clara começa a se libertar da manipulação de Rafael e está mais aberta a seus próprios sentimentos, podemos intensificar ainda mais as interações entre ela, Rafael e Marcos, explorando as reações deles e as novas dinâmicas. O jogo psicológico entre os personagens se tornará mais tenso e as escolhas de Clara ainda mais decisivas. Este capítulo irá aprofundar ainda mais os conflitos internos e externos que ela está enfrentando, com novas revelações e reações inesperadas."
+    },
+    {
+      "secao": "Capítulo 15: A Espiral da Escolha e da Liberdade",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo marca o ponto de virada decisivo para Clara, onde ela finalmente se liberta da manipulação de Rafael e escolhe se permitir ser quem realmente é, com o apoio de Marcos. A tensão entre os personagens se resolve, mas o caminho de Clara para a autodescoberta e a liberdade emocional está apenas começando."
+    },
+    {
+      "secao": "Capítulo 15: A Espiral da Escolha e da Liberdade",
+      "bloco": 30,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar então, aprofundando ainda mais as interações e os conflitos emocionais de Clara. Agora que ela tomou uma decisão crucial em relação a Rafael, é hora de explorar as consequências dessa escolha. As relações entre Clara, Rafael e Marcos vão se transformar, e novos dilemas podem surgir à medida que Clara busca um equilíbrio em sua vida, se permitindo ser mais verdadeira consigo mesma."
+    },
+    {
+      "secao": "Capítulo 16: O Novo Caminho – Consequências da Liberdade",
+      "bloco": 30,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo aprofunda ainda mais a libertação de Clara, sua decisão de se afastar de Rafael e a construção de algo mais genuíno com Marcos. A tensão entre os personagens continua a crescer, e a dinâmica entre Clara e Rafael se transforma, mas ainda há muita jornada pela frente."
+    },
+    {
+      "secao": "Capítulo 16: O Novo Caminho – Consequências da Liberdade",
+      "bloco": 31,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos aprofundar mais as escolhas de Clara agora que ela está mais consciente do jogo em que esteve envolvida. Ela começará a mostrar mais confiança em suas decisões, mantendo o controle sobre sua vida e preservando sua integridade emocional, física e psicológica. O foco será em como ela usa esse novo entendimento para interagir com Rafael e Marcos, ajustando suas respostas, mantendo a clareza e sabedoria em suas escolhas."
+    },
+    {
+      "secao": "Capítulo 17: O Poder da Escolha – A Transformação de Clara",
+      "bloco": 27,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo marca o ponto de ruptura final entre Clara e Rafael, enquanto ela se entrega à sua própria liberdade emocional, agora com mais confiança e clareza. O relacionamento com Marcos se torna uma possibilidade mais real, baseada na sinceridade, enquanto o jogo com Rafael chega ao fim."
+    },
+    {
+      "secao": "Capítulo 17: O Poder da Escolha – A Transformação de Clara",
+      "bloco": 28,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Vamos continuar explorando a dinâmica entre Clara e Marcos. Agora que Clara se libertou das manipulações de Rafael e tomou as rédeas de suas decisões, ela pode explorar com mais clareza o que sente por Marcos e como esse relacionamento pode evoluir. As inseguranças ainda podem estar presentes, mas ela agora tem mais confiança para lidar com elas de forma madura."
+    },
+    {
+      "secao": "Capítulo 17: O Poder da Escolha – A Transformação de Clara",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Neste capítulo, vamos aprofundar ainda mais o relacionamento deles, incluindo os desafios e as descobertas que surgem quando se começa a construir uma conexão mais verdadeira, sem os jogos psicológicos que marcaram o passado de Clara."
+    },
+    {
+      "secao": "Capítulo 18: O Desabrochar da Verdade – Clara e Marcos",
+      "bloco": 31,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo marca um grande avanço na jornada de Clara, que agora está completamente em controle de suas escolhas e de suas emoções. Ela se afasta definitivamente de Rafael, enquanto começa a construir algo genuíno com Marcos. A confiança de Clara é um reflexo de sua autodescoberta, e ela está pronta para seguir em frente, sem olhar para trás."
+    },
+    {
+      "secao": "Capítulo 19: O Desabrochar de uma Relação Sólida",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Este capítulo marca a consolidação de uma relação genuína e madura entre Clara e Marcos. Ela finalmente encontrou a liberdade emocional que sempre procurou, e ambos estão construindo algo real e sólido, sem os jogos psicológicos que dominaram seu passado."
+    },
+    {
+      "secao": "Capítulo 21: Entre as Sombras da Intenção – A Realidade por Trás dos Desejos",
+      "bloco": 29,
+      "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
+      "trecho": "Neste capítulo aprofundamos a maturidade emocional de Clara e Marcos, com foco em como a relação deles se solidifica com base na confiança, respeito e compreensão mútua. Rafael, por sua vez, enfrenta suas próprias falhas e inseguranças, levando a uma reflexão sobre o que ele perdeu no processo. A trama chega a um ponto de conclusão onde os personagens finalmente se libertam das amarras do passado e constroem um futuro mais saudável e genuíno."
+    }
+  ]
+}

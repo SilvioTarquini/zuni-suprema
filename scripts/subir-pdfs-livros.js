@@ -8,8 +8,13 @@
 // Por padrão NÃO escreve nada: mostra o plano (dry-run). Só envia com --enviar. Só cria o bucket com --criar-bucket
 // (privado, só application/pdf). Não altera as regras de nenhum bucket existente.
 //
-// Uso: node scripts/subir-pdfs-livros.js [--pasta=<pasta dos PDFs>] [--enviar] [--criar-bucket]
+// Uso: node scripts/subir-pdfs-livros.js [--pasta=<pasta dos PDFs>] [--so=<slug,slug>] [--manifesto=<pasta do manifesto>] [--enviar] [--criar-bucket]
 //   Pasta padrão: <temp do sistema>/zuni-pdfs (a mesma do gerador).
+//   --so: envia só essas obras (os demais nomes de NOMES_ARQUIVO são ignorados).
+//   Manifesto (lote-piloto, scripts/lote/manifesto.js): toda obra que consta no pdf-manifesto.json só é enviada se o hash do
+//   PDF, o hash do texto e as travas (resíduos, letras ausentes) baterem com o manifesto; senão o script ABORTA antes de
+//   escrever qualquer coisa. Obra que não consta no manifesto (PDFs antigos) segue como sempre — a menos que se passe
+//   --exigir-manifesto (aí a obra fora do manifesto também é recusada).
 
 require('dotenv').config();
 const fs = require('fs');
@@ -22,6 +27,10 @@ const arg = (nome) => { const a = process.argv.find((x) => x.startsWith(`--${nom
 const enviar = process.argv.includes('--enviar');
 const criarBucket = process.argv.includes('--criar-bucket');
 const pasta = arg('pasta') || path.join(os.tmpdir(), 'zuni-pdfs');
+const so = arg('so') ? arg('so').split(',').map((x) => x.trim()).filter(Boolean) : null;
+const pastaManifesto = arg('manifesto') || undefined;
+const exigirManifesto = process.argv.includes('--exigir-manifesto');
+const manifestos = require('./lote/manifesto');
 const bucket = obterBucket();
 
 async function status(url) {
@@ -32,11 +41,20 @@ async function status(url) {
   if (!process.env.SUPABASE_URL || !process.env.SUPABASE_KEY) throw new Error('SUPABASE_URL e SUPABASE_KEY são obrigatórios.');
   const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
 
-  const itens = Object.entries(NOMES_ARQUIVO).map(([livroId, nome]) => ({ livroId, arquivo: path.join(pasta, nome), destino: caminhoPdf(livroId) }));
+  const itens = Object.entries(NOMES_ARQUIVO).filter(([livroId]) => !so || so.includes(livroId)).map(([livroId, nome]) => ({ livroId, arquivo: path.join(pasta, nome), destino: caminhoPdf(livroId) }));
   for (const i of itens) {
     if (!fs.existsSync(i.arquivo)) throw new Error(`PDF não encontrado: ${i.arquivo} (rode scripts/gerar-pdf-livro.js ${i.livroId} --saida="${pasta}")`);
     i.bytes = fs.statSync(i.arquivo).size;
   }
+  if (so) { const falta = so.filter((x) => !NOMES_ARQUIVO[x]); if (falta.length) throw new Error('--so com obra sem nome de arquivo em NOMES_ARQUIVO: ' + falta.join(', ')); }
+  // Portão do manifesto: nada é escrito se algum PDF não bater.
+  const manifesto = manifestos.lerManifesto(pastaManifesto);
+  const problemas = [];
+  for (const i of itens) {
+    if (manifesto.obras[i.livroId] || exigirManifesto) problemas.push(...manifestos.conferirPdf(i.livroId, i.arquivo, pastaManifesto));
+  }
+  if (problemas.length) throw new Error(['manifesto recusou o envio:', ...problemas].join('\n  - '));
+  console.log('Manifesto: ' + itens.filter((i) => manifesto.obras[i.livroId]).map((i) => i.livroId).join(', ') + ' conferem (hash do PDF e do texto, resíduos 0, letras ausentes 0).');
 
   const { data: buckets, error: eBuckets } = await supabase.storage.listBuckets();
   if (eBuckets) throw new Error('listBuckets: ' + eBuckets.message);
