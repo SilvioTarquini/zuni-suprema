@@ -167,8 +167,16 @@ const UNIVERSOS = {
         "ids": [
           "vender-bem-vender-sempre",
           "toda-mesa-tem-dois-lados",
-          "toda-reuniao-tem-duas-pautas",
-          "da-terra-ao-resultado"
+          "toda-reuniao-tem-duas-pautas"
+        ]
+      },
+      {
+        "id": "do-campo",
+        "titulo": "Do campo à fazenda",
+        "frase": "Para quem produz na terra, da horta ao grande negócio rural: decidir melhor, medir melhor e proteger a margem.",
+        "ids": [
+          "da-terra-ao-resultado",
+          "fazenda-lucrativa"
         ]
       }
     ],
@@ -205,6 +213,14 @@ const UNIVERSOS = {
         "sobre": [
           "Um manual para pequenos e médios produtores sobre mercado, solo, água, adubação segura, custos, manejo e comercialização.",
           "A proposta é produzir melhor, proteger a margem e cuidar da terra com atenção aos limites e à realidade de cada propriedade."
+        ]
+      },
+      "fazenda-lucrativa": {
+        "chamada": "Um método para tratar a propriedade rural como uma empresa, da horta de mil metros quadrados à fazenda de mil hectares.",
+        "aviso": "Os números de exemplo são didáticos e não prometem ganho. Doses, defensivos e medicamentos dependem de diagnóstico e de profissional habilitado; taxas, regras fiscais e programas públicos mudam e precisam ser conferidos.",
+        "sobre": [
+          "Gestão financeira, solo e adubação, tecnologia, pecuária, agroindústria, venda direta com nota fiscal, cooperação, crédito, riscos e sucessão, num método para deixar de ser um \"tomador de preços\" e se tornar um gestor de ativos.",
+          "Fecha com um cronograma de 12 meses e um checklist de maturidade para saber em que nível está a sua fazenda."
         ]
       }
     }
@@ -244,11 +260,20 @@ const UNIVERSOS = {
     "blocoExtra": null,
     "secoes": [
       {
-        "id": "para-comecar",
-        "titulo": "Para começar",
-        "frase": "Um guia para famílias reais que atravessam a adolescência.",
+        "id": "para-os-pais",
+        "titulo": "Para pais e responsáveis",
+        "frase": "Obras dirigidas ao adulto que convive com um adolescente.",
         "ids": [
-          "a-bussola-do-adolescente"
+          "a-bussola-do-adolescente",
+          "alem-do-que-voce-ve"
+        ]
+      },
+      {
+        "id": "para-o-adolescente",
+        "titulo": "Para o adolescente",
+        "frase": "Uma obra dirigida ao próprio adolescente, que o adulto pode indicar como material para o filho.",
+        "ids": [
+          "alem-do-que-voce-sente"
         ]
       }
     ],
@@ -263,6 +288,20 @@ const UNIVERSOS = {
         "sobre": [
           "Um guia para famílias reais, em que há amor, mas também cansaço, boa intenção e falhas de comunicação. Cada capítulo traz uma lente de compreensão, atitudes aplicáveis e frases que podem substituir reações automáticas.",
           "Aparecem cenas concretas — a festa, a nota baixa, o celular de madrugada, a roupa, a mentira sobre onde estava — sempre no mesmo formato: o que costumamos dizer, o que seria melhor dizer e por quê."
+        ]
+      },
+      "alem-do-que-voce-ve": {
+        "chamada": "Portas batidas, silêncios e as conversas que ninguém ensinou a ter: o que acontece do outro lado.",
+        "sobre": [
+          "Para quem tem em casa alguém entre catorze e vinte e poucos anos e sente que está lidando com uma pessoa que não conhece mais. Não é um manual de disciplina: é algo mais básico, o que está acontecendo do outro lado.",
+          "Cada capítulo mostra o que se passou nas horas anteriores, às quais o adulto não teve acesso, para que cada lado entenda o que o outro está atravessando."
+        ]
+      },
+      "alem-do-que-voce-sente": {
+        "chamada": "Um mapa para o adolescente atravessar os anos em que tudo ferve.",
+        "sobre": [
+          "Dirigida ao próprio adolescente, entre catorze e vinte e poucos anos: um manual de instruções da própria mente, sobre emoções, amizades, namoro, limites e situações que ninguém explicou.",
+          "Trata com seriedade o cuidado versus o controle num namoro, o ciúme, a pressão por fotos íntimas e o direito de dizer não. Uma leitura do próprio adolescente, que o adulto pode indicar ao filho."
         ]
       }
     }

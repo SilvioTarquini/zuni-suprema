@@ -60,10 +60,12 @@ teste('A3 ela-tem-classe continua sem aviso; avisoInformativo:true mantém o tex
   assert.ok(h.includes('<p class="aviso">' + AVISO_SAUDE + '</p>'));
 });
 teste('A3 loja Empreender e Crescer: aviso por obra (só da-terra)', () => {
-  const emp = ler('public/loja/empreender-e-crescer/index.html');
-  assert.ok(emp.includes("aviso: '" + AVISO_TERRA + "'"));
-  assert.strictEqual((emp.match(/\baviso: '/g) || []).length, 1);
-  assert.ok(!/saude: true/.test(emp));
+  // Desde a fase de estrutura a página é gerada de lib/universosConfig.js: o aviso por obra mora em "editorial".
+  const ed = require('../src/lib/universosConfig').UNIVERSOS['empreender-e-crescer'].editorial;
+  assert.strictEqual(ed['da-terra-ao-resultado'].aviso, AVISO_TERRA);
+  // Lote-piloto: a Fazenda Lucrativa também tem aviso próprio (números didáticos, doses e regras fiscais); as demais não.
+  assert.deepStrictEqual(Object.keys(ed).filter((k) => ed[k].aviso).sort(), ['da-terra-ao-resultado', 'fazenda-lucrativa']);
+  assert.ok(!/saude: true/.test(JSON.stringify(ed)));
 });
 teste('A4 servidor: customer_email só com e-mail de formato válido, apenas na sessão de livros', () => {
   const srv = ler('src/server.js');

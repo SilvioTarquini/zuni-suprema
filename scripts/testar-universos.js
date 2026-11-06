@@ -25,7 +25,8 @@ const REF = arg('ref') || 'main';
 const SAIDA = path.join(RAIZ, 'relatorios', 'capturas_estrutura');
 const UNIVERSOS = [
   { slug: 'universo-feminino', antigo: 'public/loja/universo-feminino/index.html' },
-  { slug: 'empreender-e-crescer', antigo: 'public/loja/empreender-e-crescer/index.html' }
+  // extras: obras acrescentadas DEPOIS da página antiga (lote-piloto) — a paridade vale para as obras originais; as extras têm checagem própria.
+  { slug: 'empreender-e-crescer', antigo: 'public/loja/empreender-e-crescer/index.html', extras: ['Fazenda Lucrativa'], secaoNova: 'Do campo à fazenda' }
 ];
 
 let total = 0; const falhas = [];
@@ -135,18 +136,34 @@ async function coletar(page) {
     await pn.goto(`http://127.0.0.1:${porta}/loja/${u.slug}/`);
     await pa.goto(`http://127.0.0.1:${porta}/antigo/${u.slug}/`);
     const N = await coletar(pn), A = await coletar(pa);
-    ok(`${N.cards.length} obras na nova = ${A.cards.length} na antiga`, N.cards.length === A.cards.length && N.cards.length > 0);
+    const extras = u.extras || [];
+    const idxEx = N.cards.map((c, i) => (extras.includes(c.t) ? i : -1)).filter((i) => i >= 0);
+    const idxExA = A.cards.map((c, i) => (extras.includes(c.t) ? i : -1)).filter((i) => i >= 0);
+    const sem = (arr) => arr.filter((_, i) => !idxEx.includes(i));
+    const semA = (arr) => arr.filter((_, i) => !idxExA.includes(i));
+    const Ncards = sem(N.cards); const Acards = semA(A.cards);
+    if (extras.length) {
+      ok(`${N.cards.length} obras na nova = ${A.cards.length} na antiga (a antiga já listava a acrescentada em "Mais…"; comparo as originais, e ${extras.join(', ')} tem checagem própria)`, N.cards.length === A.cards.length && idxEx.length === extras.length && idxExA.length === extras.length);
+      const sec = N.secoes.find((x) => x[2].includes(extras[0]));
+      ok(`${extras[0]} está na seção própria "${u.secaoNova}", ao lado de Da Terra, e não em "Mais de…"`, !!sec && sec[0] === u.secaoNova && sec[2].includes('Da Terra ao Resultado') && !N.secoes.some((x) => /^Mais de/.test(x[0]) && x[2].includes(extras[0])), JSON.stringify(N.secoes));
+    } else {
+      ok(`${N.cards.length} obras na nova = ${A.cards.length} na antiga`, N.cards.length === A.cards.length && N.cards.length > 0);
+    }
     ok('título e metatags (description, og, theme-color) iguais', igual([N.titulo, N.desc, N.ogTitulo, N.ogDesc, N.tema], [A.titulo, A.desc, A.ogTitulo, A.ogDesc, A.tema]));
     ok('cores (variáveis CSS) iguais', igual(N.cores, A.cores), JSON.stringify(N.cores) + ' × ' + JSON.stringify(A.cores));
     ok('estilos calculados (h1, botão, seções, rodapé, corpo) iguais', igual(N.estilos, A.estilos));
     let dif = '';
     if (N.texto !== A.texto) { let i = 0; while (N.texto[i] === A.texto[i]) i++; dif = `1ª diferença em ${i}: nova «${N.texto.slice(Math.max(0, i - 25), i + 50)}» × antiga «${A.texto.slice(Math.max(0, i - 25), i + 50)}»`; }
-    ok('texto visível da página inteiro igual', N.texto === A.texto, dif);
-    ok('seções e ordem das obras iguais', igual(N.secoes, A.secoes));
-    ok('cartões (título, preço, chamada, capa, formatos) iguais', igual(N.cards, A.cards));
+    if (!extras.length) {
+      ok('texto visível da página inteiro igual', N.texto === A.texto, dif);
+      ok('seções e ordem das obras iguais', igual(N.secoes, A.secoes));
+    } else {
+      ok('as obras originais seguem na mesma ordem (a seção nova é a única diferença de estrutura)', igual(Ncards.map((c) => c.t), Acards.map((c) => c.t)));
+    }
+    ok('cartões (título, preço, chamada, capa, formatos) iguais', igual(Ncards, Acards));
     ok('bloco ZUNI Direciona e bloco extra iguais', igual(N.direciona, A.direciona) && N.diagnostico === A.diagnostico);
-    const dn = N.detalhes, da = A.detalhes;
-    const difs = dn.map((d, i) => (igual(d, da[i]) ? null : N.cards[i].t + ' [' + Object.keys(d).filter((k) => !igual(d[k], da[i][k])).map((k) => `${k}: nova ${JSON.stringify(d[k]).replace(/ /g, '<NBSP>')} × antiga ${JSON.stringify(da[i][k]).replace(/ /g, '<NBSP>')}`).join('; ') + ']')).filter(Boolean);
+    const dn = sem(N.detalhes), da = semA(A.detalhes);
+    const difs = dn.map((d, i) => (igual(d, da[i]) ? null : Ncards[i].t + ' [' + Object.keys(d).filter((k) => !igual(d[k], da[i][k])).map((k) => `${k}: nova ${JSON.stringify(d[k]).replace(/ /g, '<NBSP>')} × antiga ${JSON.stringify(da[i][k]).replace(/ /g, '<NBSP>')}`).join('; ') + ']')).filter(Boolean);
     ok(`detalhe de cada obra igual (${dn.length} obras: texto, avisos, links de compra e experimente)`, difs.length === 0, 'diferem: ' + difs.join(', '));
     ok('nenhum erro de JavaScript (nova e antiga)', errN.length === 0 && errA.length === 0, errN.concat(errA).join(' | '));
     await pn.screenshot({ path: path.join(SAIDA, `universo-${u.slug}-desktop.png`), fullPage: true });
