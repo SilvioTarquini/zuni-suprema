@@ -29,6 +29,7 @@ const audiolivroStorage = require('../lib/audiolivroStorage');
 const { lerLivroComPatch } = require('../lib/leitorMobile');
 const { resolverPdf, urlDownloadPdf } = require('../lib/pdfLivro');
 const { lerLivroDoBucket, LivroNaoEncontradoNoBucket } = require('../lib/htmlLivroStorage');
+const { injetarWidgetNoServico, ehBundler } = require('../lib/widgetLivroVivo');
 const { renderizarPagina: renderizarPaginaUniverso, listarUniversos, configPublica: configPublicaUniverso } = require('../lib/universos');
 
 async function existeNoDisco(caminho) {
@@ -135,6 +136,8 @@ router.get('/livros/:livroId', exigirAcesso(['livro']), async (req, res) => {
     let html;
     if (await existeNoDisco(htmlPath)) {
       html = await lerLivroComPatch(livroId, htmlPath);
+      // Livros "bundler" do disco: o leitor reescreve o documento e apaga o widget gravado no HTML externo; o chat entra no template.
+      if (ehBundler(html)) { const w = injetarWidgetNoServico(html, livroId, livro); if (w.injetado) html = w.html; }
     } else {
       try {
         html = await lerLivroDoBucket(livroId);

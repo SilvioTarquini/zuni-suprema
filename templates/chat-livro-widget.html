@@ -122,6 +122,10 @@
   @media (max-width: 640px) {
     #zuni-chat-painel { width: 100vw; }
   }
+  /* Celular: a barra de controles do leitor ocupa os ~70 px de baixo da tela; o botão fica ACIMA dela, nunca sobre ela. */
+  @media (max-width: 820px) {
+    #zuni-chat-toggle { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); padding: 10px 14px; font-size: 0.85rem; }
+  }
 
   .zuni-chat-cabecalho {
     display: flex;
