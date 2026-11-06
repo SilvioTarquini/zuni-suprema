@@ -99,6 +99,41 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
     assert.ok(semPdf >= 1, 'nenhuma página de obra SEM PDF foi conferida (era o caso do bug)');
   });
 
+  // Livro-Vivo no e-mail de acesso (só obras com chatDisponivel na ficha)
+  const FRASE = (data, comPdf) => `Na página do livro, converse com o Livro-Vivo durante a sua leitura. O recurso funciona no site até ${data}${comPdf ? ' e não acompanha o PDF' : ''}.`;
+  await teste('obra com chat e PDF (Fazenda Lucrativa): frase do Livro-Vivo com a data de expiração e "não acompanha o PDF"', async () => {
+    enviados.length = 0;
+    await enviarEmailAcessoLivro('c@x.com', 'fazenda-lucrativa', 'TOKF', expira, undefined, 'Ana');
+    const t = texto(enviados[0].html);
+    assert.ok(t.includes(FRASE(expira.toLocaleDateString('pt-BR'), true)), t);
+    assert.ok(t.includes('Baixar o livro em PDF') && t.includes('Acessar meu livro'), 'os links existentes sumiram');
+  });
+  await teste('as 5 obras do lote com PDF recebem a frase; a data é a de expiração do acesso', async () => {
+    for (const id of ['da-terra-ao-resultado', 'fazenda-lucrativa', 'a-bussola-do-adolescente', 'situacoes-da-vida-real', 'heranca-de-papel']) {
+      enviados.length = 0;
+      await enviarEmailAcessoLivro('c@x.com', id, 'T', expira, undefined, 'X');
+      assert.ok(texto(enviados[0].html).includes(FRASE(expira.toLocaleDateString('pt-BR'), true)), id);
+    }
+  });
+  await teste('obra com chat e SEM PDF (Ela Tem Classe): a frase sai sem a menção ao PDF', async () => {
+    enviados.length = 0;
+    await enviarEmailAcessoLivro('c@x.com', 'ela-tem-classe', 'TOKE', expira, undefined, '');
+    const t = texto(enviados[0].html);
+    assert.ok(t.includes(FRASE(expira.toLocaleDateString('pt-BR'), false)), t);
+    assert.ok(!/PDF/.test(t), 'prometeu PDF numa obra sem PDF');
+  });
+  await teste('obra SEM chat na ficha (Vender Bem): nenhuma menção ao Livro-Vivo', async () => {
+    enviados.length = 0;
+    await enviarEmailAcessoLivro('c@x.com', 'vender-bem-vender-sempre', 'TOKV', expira, undefined, 'X');
+    assert.ok(!/Livro-Vivo/.test(enviados[0].html));
+  });
+  await teste('textoEmailLivroVivo: vazio sem chat ou sem data; frase exata com chat', () => {
+    const { textoEmailLivroVivo } = require('../src/lib/prazoAcesso');
+    assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: false, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), '');
+    assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: true, temPdf: true, dataExpiracaoFormatada: '' }), '');
+    assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: true, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), 'Na página do livro, converse com o Livro-Vivo durante a sua leitura. O recurso funciona no site até 20/01/2027 e não acompanha o PDF.');
+  });
+
   console.log('\nTotal: ' + (passaram + falhas.length) + ' | Passaram: ' + passaram + ' | Falharam: ' + falhas.length);
   if (falhas.length) { console.log('Falhas: ' + falhas.join(' | ')); process.exitCode = 1; return; }
   console.log('OK — e-mail de entrega com PDF.');

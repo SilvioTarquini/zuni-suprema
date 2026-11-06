@@ -30,4 +30,11 @@ function textoEmailLeituraPdf() {
   return d ? `Leia no site por ${d} ${d === 1 ? 'dia' : 'dias'} e baixe o PDF para guardar.` : 'Leia no site e baixe o PDF para guardar.';
 }
 
-module.exports = { DIAS_DE_ACESSO, diasParaExibir, textoPrazoLeitura, textoEmailLeituraPdf };
+// Frase do e-mail de entrega das obras com chat (Livro-Vivo): o recurso vive no site, dentro do prazo de leitura, e não acompanha o PDF.
+// Só existe quando a ficha liga o chat (chatDisponivel). Sem PDF na obra, a menção ao PDF não faz sentido e sai.
+function textoEmailLivroVivo({ chatDisponivel, temPdf, dataExpiracaoFormatada }) {
+  if (chatDisponivel !== true || !dataExpiracaoFormatada) return '';
+  return `Na página do livro, converse com o Livro-Vivo durante a sua leitura. O recurso funciona no site até ${dataExpiracaoFormatada}${temPdf ? ' e não acompanha o PDF' : ''}.`;
+}
+
+module.exports = { DIAS_DE_ACESSO, diasParaExibir, textoPrazoLeitura, textoEmailLeituraPdf, textoEmailLivroVivo };
