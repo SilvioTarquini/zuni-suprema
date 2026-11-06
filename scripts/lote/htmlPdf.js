@@ -33,7 +33,7 @@ section.sec { break-before: page; }
 section.parte-sec { break-before: page; height: 150mm; display: flex; flex-direction: column; justify-content: center; text-align: center; }
 section.parte-sec .r { font-size: 9pt; letter-spacing: .3em; text-transform: uppercase; color: #8a7340; }
 section.parte-sec h2 { font-size: 22pt; margin: 4mm 0 8mm; }
-.cab { margin: 0 0 8mm; }
+.cab { margin: 0 0 8mm; break-after: avoid; }
 .cab .rot { font-size: 8.5pt; letter-spacing: .28em; text-transform: uppercase; color: #8a7340; margin: 0 0 2mm; }
 .cab h2 { font-size: 17pt; line-height: 1.2; margin: 0; font-weight: 700; break-after: avoid; }
 .cab .parte { font-size: 8pt; color: #888; margin: 2mm 0 0; letter-spacing: .05em; }
@@ -48,8 +48,8 @@ blockquote, .aside { margin: 4mm 6mm; padding-left: 4mm; border-left: 1.2pt soli
 .box p:last-child, .callout p:last-child { margin-bottom: 0; }
 ul, ol { margin: 1mm 0 3mm 5mm; padding-left: 3mm; }
 li { margin-bottom: 1.2mm; }
-.listlabel { margin: 3mm 0 1mm; font-weight: 700; }
-dl.def { margin: 0 0 3mm; } dl.def dt { font-weight: 700; margin-top: 1.5mm; } dl.def dd { margin: 0 0 1mm 4mm; }
+.listlabel { margin: 3mm 0 1mm; font-weight: 700; break-after: avoid; }
+dl.def { margin: 0 0 3mm; break-inside: avoid; } dl.def dt { font-weight: 700; margin-top: 1.5mm; } dl.def dd { margin: 0 0 1mm 4mm; }
 .ref { font-size: 8.5pt; line-height: 1.35; color: #444; margin: 0 0 1.5mm; padding-left: 4mm; text-indent: -4mm; }
 .check { list-style: none; margin-left: 0; padding-left: 0; } .check li::before { content: '\\2610\\00a0'; }
 .field { margin: 2mm 0; font-size: 9.5pt; color: #444; } .field span { display: inline-block; margin-right: 6mm; } .field span::after { content: '\\00a0____________'; color: #999; }
@@ -57,6 +57,13 @@ table { border-collapse: collapse; width: 100%; margin: 3mm 0 4mm; font-size: 8.
 th { background: #efe8d2; text-align: left; padding: 1.4mm 1.8mm; border: .4pt solid #c9bd96; }
 td { padding: 1.3mm 1.8mm; border: .4pt solid #d9d2b8; vertical-align: top; }
 tr { break-inside: avoid; }
+table { hyphens: manual; }
+thead { display: table-header-group; break-after: avoid; }
+tfoot { display: table-footer-group; }
+/* Medidos no Chromium antes de imprimir (gerar-pdf-lote.js): cabem numa página → não partem; maiores → partem com o cabeçalho repetido. */
+table.evita, ul.evita, ol.evita, blockquote.evita, .aside.evita { break-inside: avoid; }
+.listlabel + ul, .listlabel + ol { break-before: avoid; }
+h3.s, h4.s { break-inside: avoid; }
 .idx { display: flex; font-size: 9.5pt; margin: 0 0 1mm; } .idx .t { flex: 1; } .idx .r { color: #888; margin-left: 3mm; white-space: nowrap; }
 `;
 
@@ -82,9 +89,10 @@ function blocoHtml(b, ctx) {
     case 'check': return `<ul class="check">${b.itens.map((x) => `<li>${x.html}</li>`).join('')}</ul>`;
     case 'field': return `<div class="field">${b.labels.map((l) => `<span>${esc(l)}</span>`).join('')}</div>`;
     case 'tabela': {
+      const nT = ++ctx.nTabela;
       const larg = b.larguras && b.larguras.length === b.headers.length ? b.larguras : null;
       const cg = larg ? `<colgroup>${larg.map((w) => `<col style="width:${w}%">`).join('')}</colgroup>` : '';
-      return `<table>${cg}<thead><tr>${b.headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.linhas.map((l) => `<tr>${l.map((c) => `<td>${c.html}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+      return `<table data-t="${nT}">${cg}<thead><tr>${b.headers.map((h) => `<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${b.linhas.map((l) => `<tr>${l.map((c) => `<td>${c.html}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
     }
     case 'box': return `<div class="box">${b.titulo ? `<h4>${esc(b.titulo)}</h4>` : ''}${b.paragrafos.map((x) => `<p>${x.html}</p>`).join('')}</div>`;
     default: throw new Error(`htmlPdf: tipo de bloco ${b.t}`);
@@ -92,6 +100,7 @@ function blocoHtml(b, ctx) {
 }
 
 function montarHtmlPdf(modelo, capaJpgPath, { romance = false } = {}) {
+  const ctx = { romance, nTabela: 0 };
   const m = modelo.meta;
   const capa = capaJpgPath && fs.existsSync(capaJpgPath) ? `data:image/jpeg;base64,${fs.readFileSync(capaJpgPath).toString('base64')}` : '';
   const sumario = [];
@@ -102,10 +111,10 @@ function montarHtmlPdf(modelo, capaJpgPath, { romance = false } = {}) {
   });
   const corpo = modelo.secoes.map((s, i) => {
     if (s.tipo === 'parte') {
-      return `<section class="parte-sec" id="s${i}"><div class="r">${esc(s.rotulo)}</div><h2>${esc(s.titulo)}</h2>${s.blocos.map((b) => blocoHtml(b, { romance })).join('')}</section>`;
+      return `<section class="parte-sec" id="s${i}"><div class="r">${esc(s.rotulo)}</div><h2>${esc(s.titulo)}</h2>${s.blocos.map((b) => blocoHtml(b, ctx)).join('')}</section>`;
     }
     const cab = `<div class="cab">${s.rotulo ? `<div class="rot">${esc(s.rotulo)}</div>` : ''}<h2>${esc(s.titulo)}</h2>${s.parte && s.tipo === 'capitulo' ? `<div class="parte">${esc(s.parte)}</div>` : ''}</div>`;
-    return `<section class="sec" id="s${i}">${cab}${s.blocos.map((b) => blocoHtml(b, { romance })).join('')}</section>`;
+    return `<section class="sec" id="s${i}">${cab}${s.blocos.map((b) => blocoHtml(b, ctx)).join('')}</section>`;
   }).join('\n');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(m.titulo)}</title><style>${CSS}</style></head><body>
 ${capa ? `<div class="capa"><img src="${capa}" alt="Capa de ${esc(m.titulo)}"></div>` : ''}

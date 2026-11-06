@@ -75,7 +75,8 @@ if (require.main === module) {
       const r = preparar(slug, { fonte, saida });
       const anterior = manifesto.obras[slug];
       // Texto mudou → o PDF antigo deixa de valer (o hash do texto no PDF não bate mais).
-      manifesto.obras[slug] = { ...r, pdf: anterior && anterior.pdf && anterior.texto.sha256 === r.texto.sha256 ? anterior.pdf : undefined };
+      const mesmoTexto = anterior && anterior.texto.sha256 === r.texto.sha256;
+      manifesto.obras[slug] = { ...r, pdf: mesmoTexto ? anterior.pdf : undefined, livroVivo: mesmoTexto ? anterior.livroVivo : undefined };
       console.log(`ok  ${slug}: ${r.texto.secoes} seções, ${r.texto.palavras} palavras, cobertura ${r.cobertura.faltam === 0 ? 'completa' : 'FALTAM ' + r.cobertura.faltam}, remoções ${r.limpeza.remocoesAplicadas}, resíduos: bloqueios ${r.residuos.bloqueios} / avisos ${r.residuos.avisos.length}`);
       for (const a of r.residuos.avisos) console.log(`     aviso: ${a.regra} ×${a.ocorrencias} — "${a.contexto}"`);
     } catch (e) { falhou = true; console.error(`ERRO ${slug}: ${e.message}`); }
