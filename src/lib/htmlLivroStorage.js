@@ -9,6 +9,8 @@
 // por LIVRO_HTML_CACHE_SEGUNDOS (arquivos têm vários MB; o bucket não tem "mtime" barato para validar o cache).
 
 const { aplicarPatchLeitor, MOTIVO_SEM_BUNDLE, MOTIVO_NATIVO } = require('./leitorMobile');
+const { buscarLivro } = require('./catalogoLivros');
+const { injetarWidgetNoServico } = require('./widgetLivroVivo');
 
 const BUCKET_PADRAO = 'zuni-livros-html-private';
 const CACHE_PADRAO_SEGUNDOS = 600;
@@ -82,6 +84,10 @@ async function lerLivroDoBucket(livroId, opcoes = {}) {
   } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE && resultado.motivo !== MOTIVO_NATIVO) {
     console.error(`[LEITOR_PATCH_FALHOU] livroId=${livroId} origem=bucket motivo=${resultado.motivo} — entregando o livro original.`);
   }
+
+  // Chat do Livro-Vivo (obra do bucket não é alterada no armazenamento): entra aqui, junto do patch, só se a ficha liga o chat.
+  const w = injetarWidgetNoServico(html, livroId, buscarLivro(livroId));
+  if (w.injetado) { html = w.html; console.log(`[LIVRO_VIVO_WIDGET] livroId=${livroId} origem=bucket injetado=sim`); }
 
   cache.set(livroId, { em: agora, html });
   while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
