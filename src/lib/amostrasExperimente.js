@@ -244,8 +244,9 @@ const AMOSTRAS = Object.freeze({
     livroId: 'da-terra-ao-resultado',
     aprovada: true,
     trecho: [
-      'Quem trabalha na terra precisa fazer a produção render, pagar as contas e guardar forças e recursos para os períodos difíceis. Água, solo, trabalho e dinheiro precisam caminhar juntos. Colher mais pode ajudar, mas também pode aumentar perdas, endividamento e dependência de um comprador.',
-      'Este manual ajuda a descobrir onde está o problema, escolher uma solução que caiba na propriedade e verificar se ela deu resultado. A sequência proposta começa pelo mercado e pela viabilidade, passa pelo solo e pela água, entra no manejo vegetal e animal e termina na conservação, na venda e no financiamento, combinando a experiência diária do produtor com informações confiáveis para decidir com segurança.'
+      'Quem trabalha na terra precisa fazer a produção render, pagar as contas e guardar forças e recursos para os períodos difíceis. Água, solo, trabalho e dinheiro precisam caminhar juntos. Colher mais pode ajudar, mas também pode aumentar perdas, endividamento e dependência de um comprador. Este manual ajuda a descobrir onde está o problema, escolher uma solução que caiba na propriedade e verificar se ela deu resultado.',
+      'O conteúdo atende agricultores e pecuaristas de diferentes portes. O tamanho da terra não conta toda a história: uma pequena estufa pode exigir mais capital e gestão que uma extensa área de pastagem. Por isso, o livro considera quanto se produz, quem pode ajudar, quanta água existe, quem fará a manutenção e como a produção será vendida.',
+      'A sequência proposta começa pelo mercado e pela viabilidade, passa pelo solo e pela água, entra no manejo vegetal e animal e termina na conservação, na venda e no financiamento. Os casos internacionais apresentam a tecnologia, a natureza da evidência e as condições para adaptação. Os formulários finais ajudam a transformar leitura em decisões registradas.'
     ].join('\n\n'),
     tituloTrecho: 'Produzir bem começa por observar',
     chamada: 'Uma introdução à gestão que protege a terra, a produção e a margem.',
