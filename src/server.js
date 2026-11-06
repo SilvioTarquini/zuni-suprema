@@ -711,6 +711,10 @@ FECHAMENTO E ENCAMINHAMENTO
 - Em sinais de crise aguda ou risco à vida, oriente com cuidado a procurar ajuda imediata (no Brasil, CVV 188).`;
 
 const app = express();
+// Atrás do proxy da Railway (1 salto): req.ip = IP do cliente, não do proxy (limitadores por IP). Ver lib/trustProxy.js.
+const { configurarTrustProxy, diagnosticoUmaVez } = require('./lib/trustProxy');
+const saltosDeProxy = configurarTrustProxy(app);
+app.use(diagnosticoUmaVez(saltosDeProxy));
 app.use(cors());
 
 // Fulfillment do chat-mentor (Sessão ZUNI / Fase 1) — comportamento
