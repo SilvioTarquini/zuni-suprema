@@ -1,6 +1,6 @@
 {
   "slug": "mascara-para-o-controle",
-  "origem": "relatorios/preparacao_2026-11-05.md, seção 3.2 (leitura integral do livro em 05/11/2026); seção \"Epílogo:\" removida por decisão posterior (relatorios/classificacao_final_2026-11-05.md, item 24: 16 blocos de \"Desenvolvimento/Incorporação\")",
+  "origem": "relatorios/preparacao_2026-11-05.md, seção 3.2 (leitura integral do livro em 05/11/2026); seção \"Epílogo:\" removida por decisão posterior (relatorios/classificacao_final_2026-11-05.md, item 24: 16 blocos de \"Desenvolvimento/Incorporação\") | 11/11/2026: a cópia de _staging já saiu limpa (05/11); com jaAplicadoNoStaging a lista é conferida como \"nenhum destes trechos pode existir no texto final\", sem exigir que estejam no HTML",
   "regra": "cada item é um bloco INTEIRO (parágrafo) removido do texto; \"trecho\" é o texto literal; \"secoesRemovidas\" = seções removidas por inteiro, pelo título",
   "secoesRemovidas": [
     "Epílogo:"
@@ -210,5 +210,6 @@
       "motivo": "resposta do assistente / resumo do capítulo no fim do capítulo",
       "trecho": "Neste capítulo aprofundamos a maturidade emocional de Clara e Marcos, com foco em como a relação deles se solidifica com base na confiança, respeito e compreensão mútua. Rafael, por sua vez, enfrenta suas próprias falhas e inseguranças, levando a uma reflexão sobre o que ele perdeu no processo. A trama chega a um ponto de conclusão onde os personagens finalmente se libertam das amarras do passado e constroem um futuro mais saudável e genuíno."
     }
-  ]
+  ],
+  "jaAplicadoNoStaging": true
 }

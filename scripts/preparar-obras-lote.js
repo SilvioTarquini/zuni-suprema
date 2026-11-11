@@ -24,7 +24,13 @@ const { lerManifesto, gravarManifesto, sha256Arquivo, PASTA_PADRAO } = require('
 
 const FONTE_PADRAO = path.join(__dirname, '..', '..', '..', 'Prontas para subir à loja', '_staging');
 const OBRAS_DO_LOTE = ['da-terra-ao-resultado', 'fazenda-lucrativa', 'a-bussola-do-adolescente', 'situacoes-da-vida-real', 'heranca-de-papel'];
-const ROMANCES = new Set(['heranca-de-papel']);
+const OBRAS_LOTE2 = ['a-casa-da-neblina', 'a-segunda-margem', 'a-tradutora', 'almas-silenciadas', 'falsa-moralidade', 'guerra-de-compadre', 'mascara-para-o-controle',
+  'ninguem-avisou-que-ele-morreu', 'o-baile-dos-herdeiros-posticos', 'o-disfarce-da-alma', 'o-falecido-esta-a-mesa', 'o-lugar-a-mesa', 'o-ultimo-baile-do-moinho', 'onze-dias-de-sorte',
+  'toda-familia-tem-duas-historias', 'toda-briga-tem-dois-comecos', 'entre-o-encanto-e-a-escolha', 'senti-percebi-escolhi', 'ninguem-reage-do-nada'];
+// ficção (parágrafo com recuo no PDF): os 14 romances do lote 2 (a lista de decisão do Silvio inclui Máscara para o Controle) e Herança
+const ROMANCES = new Set(['heranca-de-papel', 'a-casa-da-neblina', 'a-segunda-margem', 'a-tradutora', 'almas-silenciadas', 'falsa-moralidade', 'guerra-de-compadre', 'mascara-para-o-controle',
+  'ninguem-avisou-que-ele-morreu', 'o-baile-dos-herdeiros-posticos', 'o-disfarce-da-alma', 'o-falecido-esta-a-mesa', 'o-lugar-a-mesa', 'o-ultimo-baile-do-moinho', 'onze-dias-de-sorte']);
+const slugsDoLote = (pedidos) => (pedidos.length ? pedidos : (process.argv.includes('--lote=2') ? OBRAS_LOTE2 : OBRAS_DO_LOTE));
 
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.slice(n.length + 3) : null; };
 
@@ -35,12 +41,12 @@ function preparar(slug, { fonte, saida }) {
 
   const bruto = extrair(html);
   const cobertura = conferirCobertura(html, bruto);
-  const { existe, remocoes, secoesRemovidas } = carregarRemocoes(slug);
-  const { modelo, removidos } = aplicarRemocoes(bruto, remocoes, secoesRemovidas);
+  const { existe, remocoes, secoesRemovidas, jaAplicadoNoStaging } = carregarRemocoes(slug);
+  const { modelo, removidos } = aplicarRemocoes(bruto, remocoes, secoesRemovidas, { tolerante: jaAplicadoNoStaging });
   if (removidos === 0 && cobertura.faltam !== 0) throw new Error(`${slug}: ${cobertura.faltam} letras do texto-fonte não chegaram ao modelo (${cobertura.exemplos.join(', ')})`);
 
   const texto = textoDoLivro(modelo);
-  const trava = varrer(texto, { rotulo: 'texto-loja' });
+  const trava = varrer(texto, { rotulo: 'texto-loja', slug });
   if (trava.bloqueios.length) throw new Error(`${slug}: resíduos BLOQUEANTES no texto: ${JSON.stringify(trava.bloqueios)}`);
 
   const pastaObra = path.join(saida, slug);
@@ -67,7 +73,7 @@ if (require.main === module) {
   const fonte = arg('fonte') || FONTE_PADRAO;
   const saida = arg('saida') || PASTA_PADRAO;
   const pedidos = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-  const slugs = pedidos.length ? pedidos : OBRAS_DO_LOTE;
+  const slugs = slugsDoLote(pedidos);
   const manifesto = lerManifesto(saida);
   let falhou = false;
   for (const slug of slugs) {
@@ -86,4 +92,4 @@ if (require.main === module) {
   process.exitCode = falhou ? 1 : 0;
 }
 
-module.exports = { preparar, OBRAS_DO_LOTE, FONTE_PADRAO };
+module.exports = { preparar, OBRAS_DO_LOTE, OBRAS_LOTE2, FONTE_PADRAO, slugsDoLote };

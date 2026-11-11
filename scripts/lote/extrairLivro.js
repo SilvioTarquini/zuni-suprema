@@ -221,7 +221,12 @@ function metaDe(m) {
 
 function extrair(htmlPath) {
   const h = fs.readFileSync(htmlPath, 'utf8');
-  const formato = detectarFormato(h);
+  let formato;
+  try { formato = detectarFormato(h); } catch (e) {
+    // formatos do lote 2 (módulo de dados com outro id, páginas em JSON, páginas estáticas): scripts/lote/extrairLote2.js
+    const r = require('./extrairLote2').extrairLote2(htmlPath);
+    return { ...r, fonteSha256: crypto.createHash('sha256').update(h).digest('hex') };
+  }
   let meta; let secoes;
   if (formato === 'dtr') {
     const d = jsonScript(h, 'dtrDataJson');
@@ -266,6 +271,7 @@ function textoDoBloco(b) {
   switch (b.t) {
     case 'p': case 'quote': case 'callout': case 'aside': case 'ref': return b.texto;
     case 'sec': case 'sub': case 'scene': return b.texto;
+    case 'orn': return '';
     case 'idx': return b.ref ? `${b.texto} (${b.ref})` : b.texto;
     case 'def': return `${b.termo}: ${b.texto}`;
     case 'list': return [b.label, ...b.itens.map((x, i) => (b.ordered ? `${i + 1}. ` : '- ') + x.texto)].filter(Boolean).join('\n');
@@ -321,7 +327,7 @@ function fonteCru(htmlPath) {
 }
 
 function conferirCobertura(htmlPath, modelo) {
-  const fonte = contar(letras(fonteCru(htmlPath)));
+  const fonte = contar(letras(modelo._fonte !== undefined ? modelo._fonte : fonteCru(htmlPath)));
   const modeloTexto = modelo.secoes.map((s) => `${tituloCompleto(s)}\n${textoDaSecao(s)}`).join('\n');
   const obtido = contar(letras(modeloTexto));
   let faltam = 0; const exemplos = [];
@@ -331,7 +337,7 @@ function conferirCobertura(htmlPath, modelo) {
 
 function contarPalavras(t) { return (String(t).match(/\S+/g) || []).length; }
 
-module.exports = { extrair, textoDoBloco, textoDaSecao, textoDoLivro, tituloCompleto, sha256, conferirCobertura, contarPalavras, esc, inline };
+module.exports = { converterBlocos, extrair, textoDoBloco, textoDaSecao, textoDoLivro, tituloCompleto, sha256, conferirCobertura, contarPalavras, esc, inline };
 
 // Texto como o PDF o desenha (cabeçalhos de tabela uma vez só; sem repetir o cabeçalho em cada linha). Usado só para
 // conferir "texto do modelo × texto extraído do PDF".

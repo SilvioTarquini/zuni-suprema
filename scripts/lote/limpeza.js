@@ -16,17 +16,19 @@ function carregarRemocoes(slug, pasta = PASTA_REMOCOES) {
   if (!fs.existsSync(arq)) return { existe: false, remocoes: [], secoesRemovidas: [] };
   const j = JSON.parse(fs.readFileSync(arq, 'utf8'));
   if (j.slug !== slug) throw new Error(`${arq}: slug do arquivo (${j.slug}) ≠ ${slug}`);
-  return { existe: true, remocoes: j.remocoes || [], secoesRemovidas: j.secoesRemovidas || [] };
+  return { existe: true, remocoes: j.remocoes || [], secoesRemovidas: j.secoesRemovidas || [], jaAplicadoNoStaging: !!j.jaAplicadoNoStaging };
 }
 
 // Devolve { modelo, removidos } sem alterar o modelo recebido. Lança se a lista não bater com o texto.
 // `secoesRemovidas`: títulos de seções removidas por inteiro (decisão editorial registrada no arquivo de remoções).
-function aplicarRemocoes(modelo, remocoes, secoesRemovidas = []) {
+// `tolerante` (jaAplicadoNoStaging): a cópia de _staging já foi limpa antes (Máscara para o Controle, 05/11); item ausente é aceito,
+// mas a segunda verificação continua valendo — nenhum trecho da lista pode existir no texto final.
+function aplicarRemocoes(modelo, remocoes, secoesRemovidas = [], { tolerante = false } = {}) {
   const copia = { ...modelo, secoes: modelo.secoes.map((s) => ({ ...s, blocos: [...s.blocos] })) };
   let removidos = 0;
   for (const titulo of secoesRemovidas) {
     const i = copia.secoes.findIndex((s) => s.titulo === titulo);
-    if (i < 0) throw new Error(`seção a remover não encontrada (lista desatualizada?): "${titulo}"`);
+    if (i < 0) { if (tolerante) continue; throw new Error(`seção a remover não encontrada (lista desatualizada?): "${titulo}"`); }
     removidos += copia.secoes[i].blocos.length;
     copia.secoes.splice(i, 1);
   }
@@ -37,7 +39,7 @@ function aplicarRemocoes(modelo, remocoes, secoesRemovidas = []) {
       const i = s.blocos.findIndex((b) => norm(textoDoBloco(b)) === alvo);
       if (i >= 0) { s.blocos.splice(i, 1); removidos++; achou = true; break; }
     }
-    if (!achou) throw new Error(`remoção não encontrada no texto (lista desatualizada?): "${r.trecho.slice(0, 70)}"`);
+    if (!achou && !tolerante) throw new Error(`remoção não encontrada no texto (lista desatualizada?): "${r.trecho.slice(0, 70)}"`);
   }
   for (const r of remocoes) {
     const alvo = norm(r.trecho);

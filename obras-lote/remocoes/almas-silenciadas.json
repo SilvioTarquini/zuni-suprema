@@ -1,0 +1,13 @@
+{
+  "slug": "almas-silenciadas",
+  "origem": "lote 2, 11/11/2026: trava automática de resíduos no texto extraído do HTML de _staging (nenhum bloqueio real); as ocorrências abaixo foram lidas no contexto e são texto do livro",
+  "regra": "lista vazia = nenhum bloco de bastidor removido; \"revisadosLegitimos\" = ocorrências que a trava automática barrou e que uma pessoa confirmou serem texto do livro (trecho literal do contexto)",
+  "remocoes": [],
+  "revisadosLegitimos": [
+    {
+      "regra": "oferta de assistente",
+      "trecho": "Alguém quer que eu continue",
+      "motivo": "fala de personagem, Capítulo 2 — O Quarto Trancado"
+    }
+  ]
+}

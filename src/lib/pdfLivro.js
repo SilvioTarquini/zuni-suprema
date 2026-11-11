@@ -18,7 +18,27 @@ const NOMES_ARQUIVO = {
   'heranca-de-papel': 'Heranca-de-Papel-ZUNI.pdf',
   'vender-bem-vender-sempre': 'Vender-Bem-Vender-Sempre-ZUNI.pdf',
   'toda-mesa-tem-dois-lados': 'Toda-Mesa-Tem-Dois-Lados-ZUNI.pdf',
-  'toda-reuniao-tem-duas-pautas': 'Toda-Reuniao-Tem-Duas-Pautas-ZUNI.pdf'
+  'toda-reuniao-tem-duas-pautas': 'Toda-Reuniao-Tem-Duas-Pautas-ZUNI.pdf',
+  // lote 2 (preparação local; só passam a valer na rota quando a obra for cadastrada)
+  'a-casa-da-neblina': 'A-Casa-da-Neblina-ZUNI.pdf',
+  'a-segunda-margem': 'A-Segunda-Margem-ZUNI.pdf',
+  'a-tradutora': 'A-Tradutora-ZUNI.pdf',
+  'almas-silenciadas': 'Almas-Silenciadas-ZUNI.pdf',
+  'entre-o-encanto-e-a-escolha': 'Entre-o-Encanto-e-a-Escolha-ZUNI.pdf',
+  'falsa-moralidade': 'Falsa-Moralidade-ZUNI.pdf',
+  'guerra-de-compadre': 'Guerra-de-Compadre-ZUNI.pdf',
+  'mascara-para-o-controle': 'Mascara-para-o-Controle-ZUNI.pdf',
+  'ninguem-avisou-que-ele-morreu': 'Ninguem-Avisou-Que-Ele-Morreu-ZUNI.pdf',
+  'ninguem-reage-do-nada': 'Ninguem-Reage-do-Nada-ZUNI.pdf',
+  'o-baile-dos-herdeiros-posticos': 'O-Baile-dos-Herdeiros-Posticos-ZUNI.pdf',
+  'o-disfarce-da-alma': 'O-Disfarce-da-Alma-ZUNI.pdf',
+  'o-falecido-esta-a-mesa': 'O-Falecido-Esta-a-Mesa-ZUNI.pdf',
+  'o-lugar-a-mesa': 'O-Lugar-a-Mesa-ZUNI.pdf',
+  'o-ultimo-baile-do-moinho': 'O-Ultimo-Baile-do-Moinho-ZUNI.pdf',
+  'onze-dias-de-sorte': 'Onze-Dias-de-Sorte-ZUNI.pdf',
+  'senti-percebi-escolhi': 'Senti-Percebi-Escolhi-ZUNI.pdf',
+  'toda-briga-tem-dois-comecos': 'Toda-Briga-Tem-Dois-Comecos-ZUNI.pdf',
+  'toda-familia-tem-duas-historias': 'Toda-Familia-Tem-Duas-Historias-ZUNI.pdf'
 };
 
 const BUCKET_PADRAO = 'zuni-livros-pdf-private';

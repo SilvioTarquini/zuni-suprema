@@ -23,7 +23,7 @@ const { textoDoBloco, tituloCompleto, contarPalavras, sha256 } = require('./lote
 const { PASTA_PADRAO, lerManifesto, gravarManifesto } = require('./lote/manifesto');
 const { expandirBlocosParaChunks } = require('../src/indexarTema');
 const { parseBlocos } = require('../src/indexarLivro');
-const { OBRAS_DO_LOTE } = require('./preparar-obras-lote');
+const { slugsDoLote } = require('./preparar-obras-lote');
 
 const MAX_PALAVRAS_POR_CHUNK = Number((fs.readFileSync(path.join(__dirname, '..', 'src', 'indexarTema.js'), 'utf8').match(/const MAX_PALAVRAS_POR_CHUNK = (\d+);/) || [])[1]);
 if (!MAX_PALAVRAS_POR_CHUNK) throw new Error('MAX_PALAVRAS_POR_CHUNK não encontrado em src/indexarTema.js');
@@ -94,7 +94,7 @@ function preparar(slug, saida) {
 if (require.main === module) {
   const saida = arg('saida') || PASTA_PADRAO;
   const pedidos = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-  const slugs = pedidos.length ? pedidos : OBRAS_DO_LOTE;
+  const slugs = slugsDoLote(pedidos);
   const manifesto = lerManifesto(saida);
   let falhou = false;
   console.log(`MAX_PALAVRAS_POR_CHUNK (src/indexarTema.js) = ${MAX_PALAVRAS_POR_CHUNK} | um bloco por seção até ${LIMITE_UM_BLOCO} palavras; acima disso, partes de ≈${ALVO_PALAVRAS}`);

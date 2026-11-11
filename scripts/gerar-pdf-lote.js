@@ -20,7 +20,7 @@ const { NOMES_ARQUIVO } = require('../src/lib/pdfLivro');
 const { textoVisivelDoLivro, letras, contar, sha256 } = require('./lote/extrairLivro');
 const { varrer } = require('./lote/residuos');
 const { lerManifesto, gravarManifesto, sha256Arquivo, PASTA_PADRAO } = require('./lote/manifesto');
-const { OBRAS_DO_LOTE } = require('./preparar-obras-lote');
+const { slugsDoLote } = require('./preparar-obras-lote');
 const { analisarTabelas } = require('./lote/analisePdf');
 
 // Altura útil da página A5 com as margens do gabarito: 210 − 17 − 19 = 174 mm ≈ 657 px (96 dpi); largura do texto 118 mm ≈ 446 px.
@@ -113,7 +113,7 @@ async function gerar(slug, saida, browser) {
   }
 
   const textoPdf = pdftotext(arqPdf);
-  const trava = varrer(textoPdf, { rotulo: 'pdf' });
+  const trava = varrer(textoPdf, { rotulo: 'pdf', slug });
   const esperado = contar(letras(textoVisivelDoLivro(modelo)));
   const obtido = contar(letras(textoPdf));
   let faltam = 0; const exemplos = [];
@@ -145,7 +145,7 @@ async function gerar(slug, saida, browser) {
 if (require.main === module) {
   const saida = arg('saida') || PASTA_PADRAO;
   const pedidos = process.argv.slice(2).filter((a) => !a.startsWith('--'));
-  const slugs = pedidos.length ? pedidos : OBRAS_DO_LOTE;
+  const slugs = slugsDoLote(pedidos);
   (async () => {
     const browser = await chromium.launch();
     let falhou = false;

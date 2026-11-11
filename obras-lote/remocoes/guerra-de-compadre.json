@@ -1,0 +1,18 @@
+{
+  "slug": "guerra-de-compadre",
+  "origem": "lote 2, 11/11/2026: trava automática de resíduos no texto extraído do HTML de _staging (nenhum bloqueio real); as ocorrências abaixo foram lidas no contexto e são texto do livro",
+  "regra": "lista vazia = nenhum bloco de bastidor removido; \"revisadosLegitimos\" = ocorrências que a trava automática barrou e que uma pessoa confirmou serem texto do livro (trecho literal do contexto)",
+  "remocoes": [],
+  "revisadosLegitimos": [
+    {
+      "regra": "\"Aqui está…\" de assistente",
+      "trecho": "aqui está a parte que eu acho genial",
+      "motivo": "voz do narrador, Capítulo 6"
+    },
+    {
+      "regra": "\"Aqui está…\" de assistente",
+      "trecho": "aqui está a parte que eu preciso de defender",
+      "motivo": "voz do narrador, Capítulo 9"
+    }
+  ]
+}

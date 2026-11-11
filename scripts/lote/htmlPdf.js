@@ -64,6 +64,10 @@ tfoot { display: table-footer-group; }
 table.evita, ul.evita, ol.evita, blockquote.evita, .aside.evita { break-inside: avoid; }
 .listlabel + ul, .listlabel + ol { break-before: avoid; }
 h3.s, h4.s { break-inside: avoid; }
+/* Títulos nunca hifenizam: a hifenização automática aparecia no título impresso e nos marcadores do painel lateral ("nasci-mento"). */
+h1, h2, h3, h4, .cab h2, .rosto h1, .rosto .sub, section.parte-sec h2, h2.toc-t, .toc a { hyphens: manual; -webkit-hyphens: manual; }
+/* O marcador do painel lateral é montado a partir das linhas do título: sem isto o espaço no fim da linha some e vira "onascimento". */
+h1, h2, h3, h4 { white-space: break-spaces; }
 .idx { display: flex; font-size: 9.5pt; margin: 0 0 1mm; } .idx .t { flex: 1; } .idx .r { color: #888; margin-left: 3mm; white-space: nowrap; }
 `;
 
@@ -76,6 +80,7 @@ function blocoHtml(b, ctx) {
     case 'sec': return `<h3 class="s">${esc(b.texto)}</h3>`;
     case 'sub': return `<h4 class="s">${esc(b.texto)}</h4>`;
     case 'scene': return `<div class="scene">${esc(b.texto)}</div>`;
+    case 'orn': return '<div class="scene">✦ ✦ ✦</div>';
     case 'quote': return `<blockquote>${b.html}</blockquote>`;
     case 'aside': return `<div class="aside">${b.html}</div>`;
     case 'callout': return `<div class="callout"><p>${b.html}</p></div>`;
@@ -99,6 +104,15 @@ function blocoHtml(b, ctx) {
   }
 }
 
+// Texto da linha de série da folha de rosto. Vem do campo "series" do próprio flipbook ("EDIÇÃO PREMIUM · FLIPBOOK");
+// "Flipbook" é o formato digital do site, não faz sentido num PDF: só no PDF a linha vira "Edição Premium" (o HTML da obra não é tocado).
+function serieDoPdf(serie) {
+  const t = String(serie || '').replace(/\s*[·•|]\s*flipbook\b.*$/i, '').replace(/\bflipbook\b/gi, '').replace(/\s+/g, ' ').trim();
+  if (!t) return '';
+  if (t === t.toUpperCase()) return t.toLowerCase().replace(/(^|\s)(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/ (De|Da|Do) /g, (w) => w.toLowerCase());
+  return t;
+}
+
 function montarHtmlPdf(modelo, capaJpgPath, { romance = false } = {}) {
   const ctx = { romance, nTabela: 0 };
   const m = modelo.meta;
@@ -118,11 +132,11 @@ function montarHtmlPdf(modelo, capaJpgPath, { romance = false } = {}) {
   }).join('\n');
   return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(m.titulo)}</title><style>${CSS}</style></head><body>
 ${capa ? `<div class="capa"><img src="${capa}" alt="Capa de ${esc(m.titulo)}"></div>` : ''}
-<div class="rosto"><div class="serie">${esc(m.serie || '')}</div><h1>${esc(m.titulo)}</h1>${m.subtitulo ? `<div class="sub">${esc(m.subtitulo)}</div>` : ''}<div class="autor">${esc(m.autor || 'Zuni Suprema')}</div></div>
+<div class="rosto"><div class="serie">${esc(serieDoPdf(m.serie))}</div><h1>${esc(m.titulo)}</h1>${m.subtitulo ? `<div class="sub">${esc(m.subtitulo)}</div>` : ''}<div class="autor">${esc(m.autor || 'Zuni Suprema')}</div></div>
 <div class="legal">${m.epigrafe ? `<p class="epigrafe">${esc(m.epigrafe)}</p>` : ''}${m.avisoLegal ? `<p>${esc(m.avisoLegal)}</p>` : ''}<p>${esc(m.copyright ? `© ${m.copyright}` : '© Zuni Suprema & Co.')}</p></div>
 <div class="toc"><h2 class="toc-t">Sumário</h2>${sumario.join('')}</div>
 ${corpo}
 </body></html>`;
 }
 
-module.exports = { montarHtmlPdf };
+module.exports = { montarHtmlPdf, serieDoPdf };

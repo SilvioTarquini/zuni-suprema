@@ -48,12 +48,23 @@ function carregarLiterais(pasta = PASTA_REMOCOES) {
   return out;
 }
 
+// Ocorrências JÁ REVISADAS por uma pessoa e confirmadas como texto legítimo do livro (fala de personagem, voz do narrador).
+// Ficam em obras-lote/remocoes/<slug>.json, em "revisadosLegitimos": [{ "regra", "trecho", "motivo" }]; "trecho" é um pedaço literal
+// do contexto da ocorrência. Só rebaixa a ocorrência de BLOQUEIO para AVISO quando regra e trecho batem; qualquer outra continua barrando.
+function carregarRevisados(slug, pasta = PASTA_REMOCOES) {
+  if (!slug) return [];
+  const arq = path.join(pasta, `${slug}.json`);
+  if (!fs.existsSync(arq)) return [];
+  const j = JSON.parse(fs.readFileSync(arq, 'utf8'));
+  return (j.revisadosLegitimos || []).map((r) => ({ regra: r.regra, norm: norm(r.trecho) }));
+}
+
 function contexto(texto, i, tam = 90) {
   return texto.slice(Math.max(0, i - 30), i + tam).replace(/\s+/g, ' ').trim();
 }
 
 // Varre UM texto. `rotulo` = onde está sendo procurado (ex.: "pdf", "html-loja").
-function varrer(texto, { literais = carregarLiterais(), rotulo = '' } = {}) {
+function varrer(texto, { literais = carregarLiterais(), rotulo = '', slug = '', revisados = carregarRevisados(slug) } = {}) {
   const bloqueios = [];
   const avisos = [];
   const t = String(texto);
@@ -72,8 +83,14 @@ function varrer(texto, { literais = carregarLiterais(), rotulo = '' } = {}) {
     }
   }
   for (const [nome, re] of PISTAS_BLOQUEIO) {
-    const m = re.exec(t);
-    if (m) bloqueios.push({ rotulo, regra: nome, contexto: contexto(t, m.index) });
+    const g = new RegExp(re.source, re.flags.replace('g', '') + 'g');
+    let m;
+    while ((m = g.exec(t))) {
+      const ctx = contexto(t, m.index);
+      if (revisados.some((r) => r.regra === nome && norm(ctx).includes(r.norm))) avisos.push({ rotulo, regra: `${nome} (revisado: texto legítimo do livro)`, ocorrencias: 1, contexto: ctx });
+      else bloqueios.push({ rotulo, regra: nome, contexto: ctx });
+      if (m[0].length === 0) g.lastIndex++;
+    }
   }
   // pistas de aviso: por parágrafo (a maioria é âncora de início de parágrafo)
   const paragrafos = t.split(/\n/);
@@ -85,4 +102,4 @@ function varrer(texto, { literais = carregarLiterais(), rotulo = '' } = {}) {
   return { bloqueios, avisos };
 }
 
-module.exports = { varrer, carregarLiterais, norm, PISTAS_BLOQUEIO, PISTAS_AVISO, PASTA_REMOCOES };
+module.exports = { varrer, carregarLiterais, carregarRevisados, norm, PISTAS_BLOQUEIO, PISTAS_AVISO, PASTA_REMOCOES };
