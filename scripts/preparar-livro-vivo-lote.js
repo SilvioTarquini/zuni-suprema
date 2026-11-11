@@ -31,6 +31,9 @@ const LIMITE_UM_BLOCO = 700;
 const ALVO_PALAVRAS = 450;
 
 const arg = (n) => { const a = process.argv.find((x) => x.startsWith(`--${n}=`)); return a ? a.slice(n.length + 3) : null; };
+// Obras em que a MESMA frase se repete em blocos diferentes porque o design a imprime em cada abertura (não é conteúdo novo):
+// só o primeiro bloco fica na base do Livro-Vivo. Decisão registrada no relatório; vale só para as obras listadas.
+const SEM_REPETICOES = { 'a-tradutora': 'epígrafe impressa na abertura de cada Parte (fica só a primeira)' };
 const limparTitulo = (t) => t.replace(/[\[\]\n]/g, ' ').replace(/\s+/g, ' ').trim();
 
 // Divide as unidades (blocos do texto) em n grupos de tamanho parecido, sem partir nenhuma unidade.
@@ -65,8 +68,13 @@ function preparar(slug, saida) {
   if (!fs.existsSync(arqModelo)) throw new Error(`${slug}: rode scripts/preparar-obras-lote.js antes (sem modelo.json)`);
   const modelo = JSON.parse(fs.readFileSync(arqModelo, 'utf8'));
   const base = blocosDaObra(modelo);
-  const chunks = expandirBlocosParaChunks(base, MAX_PALAVRAS_POR_CHUNK).map((c) => ({ tema: limparTitulo(c.titulo), corpo: c.corpo }));
-  const extra = chunks.length - base.length; // blocos que a trava de 2500 palavras precisou dividir
+  let chunks = expandirBlocosParaChunks(base, MAX_PALAVRAS_POR_CHUNK).map((c) => ({ tema: limparTitulo(c.titulo), corpo: c.corpo }));
+  const repetidos = [];
+  if (SEM_REPETICOES[slug]) {
+    const vistos = new Set();
+    chunks = chunks.filter((c) => { const k = c.corpo.trim(); if (vistos.has(k)) { repetidos.push(c.tema); return false; } vistos.add(k); return true; });
+  }
+  const extra = chunks.length + repetidos.length - base.length; // blocos que a trava de 2500 palavras precisou dividir
   for (const c of chunks) {
     if (/^={5,}$/m.test(c.corpo)) throw new Error(`${slug}: corpo com linha "=====" quebraria o parser`);
     if (contarPalavras(c.corpo) > MAX_PALAVRAS_POR_CHUNK) throw new Error(`${slug}: bloco acima do limite: ${c.tema}`);
@@ -85,7 +93,7 @@ function preparar(slug, saida) {
   const palavras = chunks.map((c) => contarPalavras(c.corpo));
   const origem = modelo.secoes.reduce((a, s) => a + s.blocos.map(textoDoBloco).reduce((x, t) => x + contarPalavras(t), 0), 0);
   return {
-    slug, arquivo: arq, blocos: chunks.length, divididosPelaTrava: extra,
+    slug, arquivo: arq, blocos: chunks.length, divididosPelaTrava: extra, removidosPorRepeticao: repetidos,
     palavrasMin: Math.min(...palavras), palavrasMax: Math.max(...palavras), palavrasMedia: Math.round(palavras.reduce((a, b) => a + b, 0) / palavras.length),
     palavrasTotal: palavras.reduce((a, b) => a + b, 0), palavrasNoTexto: origem, sha256: sha256(txt)
   };
@@ -101,7 +109,7 @@ if (require.main === module) {
   for (const slug of slugs) {
     try {
       const r = preparar(slug, saida);
-      if (manifesto.obras[slug]) manifesto.obras[slug].livroVivo = { arquivo: r.arquivo, sha256: r.sha256, blocos: r.blocos, textoSha256: manifesto.obras[slug].texto.sha256 };
+      if (manifesto.obras[slug]) manifesto.obras[slug].livroVivo = { arquivo: r.arquivo, sha256: r.sha256, blocos: r.blocos, removidosPorRepeticao: r.removidosPorRepeticao, textoSha256: manifesto.obras[slug].texto.sha256 };
       console.log(`ok  ${slug}: ${r.blocos} trechos (palavras por trecho: mín ${r.palavrasMin} / média ${r.palavrasMedia} / máx ${r.palavrasMax}; divididos pela trava de ${MAX_PALAVRAS_POR_CHUNK}: ${r.divididosPelaTrava}) — ${r.arquivo}`);
     } catch (e) { falhou = true; console.error(`ERRO ${slug}: ${e.message}`); }
   }

@@ -25,12 +25,31 @@ function inlineLocal(bruto) {
   return inline(bruto);
 }
 const semFlipbook = (s) => String(s || '').replace(/\s*[·•|-]\s*flipbook.*$/i, '').replace(/\bflipbook( de luxo)?( master)?\b/gi, '').trim();
+// Título que veio em MAIÚSCULAS do flipbook → caixa de título em português:
+//   - algarismos romanos ficam em maiúsculas (Parte II, Capítulo XX) quando vêm depois de "capítulo", "parte", "ato"…;
+//   - artigos e preposições ficam em minúsculas só no MEIO do título; a primeira palavra e a primeira depois de travessão ou
+//     dois-pontos têm maiúscula ("Capítulo I — A Arte do Velório");
+//   - palavra composta com hífen mantém a segunda parte em minúsculas ("Quinta-feira").
+// Título que já está em caixa mista não é tocado.
+const MENORES = new Set(['o', 'a', 'os', 'as', 'um', 'uma', 'uns', 'umas', 'de', 'da', 'do', 'das', 'dos', 'em', 'no', 'na', 'nos', 'nas', 'e', 'ou', 'com', 'por', 'para', 'ao', 'aos', 'à', 'às', 'sem', 'sobre', 'que', 'pelo', 'pela', 'pelos', 'pelas']);
+const ANTES_DE_ROMANO = new Set(['capítulo', 'capitulo', 'parte', 'ato', 'volume', 'livro', 'conto', 'seção', 'secao', 'tomo']);
+const ROMANO = /^(?=[ivxlcdm]+$)m{0,3}(cm|cd|d?c{0,3})(xc|xl|l?x{0,3})(ix|iv|v?i{0,3})$/;
 function capitalizar(s) {
   const t = String(s || '').trim();
-  if (t && t === t.toUpperCase() && /[A-ZÀ-Ý]/.test(t) && t.length > 3 && !/^[IVXLC]+$/.test(t)) {
-    return t.toLowerCase().replace(/(^|[\s—–:·-])(\p{L})/gu, (m, a, b) => a + b.toUpperCase()).replace(/\b(De|Da|Do|Das|Dos|E|Em|Que|Com|Para|Por|A|O|Os|As|No|Na|Nos|Nas|Ou)\b(?!\s*$)/g, (m, w, off) => (off === 0 ? w : w.toLowerCase()));
-  }
-  return t;
+  if (!(t && t === t.toUpperCase() && /[A-ZÀ-Ý]/.test(t) && t.length > 3 && !/^[IVXLC]+$/.test(t))) return t;
+  let inicio = true; let ant = '';
+  return t.toLowerCase().split(/(\s+)/).map((tok) => {
+    if (tok === '' || /^\s+$/.test(tok)) return tok;
+    if (/^[—–:·-]+$/.test(tok)) { inicio = true; return tok; }
+    const puro = tok.replace(/[^\p{L}]/gu, '');
+    let out;
+    if (ROMANO.test(tok.replace(/[.,;:]+$/, '')) && ANTES_DE_ROMANO.has(ant)) out = tok.toUpperCase();
+    else if (!inicio && MENORES.has(puro)) out = tok;
+    else out = tok.replace(/\p{L}/u, (c) => c.toUpperCase());
+    inicio = /[:—–]$/.test(tok);
+    ant = puro;
+    return out;
+  }).join('');
 }
 const BLOCOS_P = (txt) => ({ t: 'p', ...inlineLocal(txt) });
 
@@ -314,4 +333,4 @@ function extrairLote2(htmlPath) {
   return r;
 }
 
-module.exports = { extrairLote2, detectar, extrairModulo, extrairPaginasJson, extrairEstatico };
+module.exports = { extrairLote2, detectar, extrairModulo, extrairPaginasJson, extrairEstatico, capitalizar };

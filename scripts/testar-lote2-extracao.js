@@ -24,6 +24,15 @@ teste('o HTML do PDF não tem a palavra "flipbook" nem hifenização automática
   assert.ok(!/flipbook/i.test(html)); assert.ok(/h1, h2, h3, h4[^{]*\{[^}]*hyphens: manual/.test(html)); assert.ok(/white-space: break-spaces/.test(html)); assert.ok(html.includes('✦ ✦ ✦'));
 });
 
+console.log('Caixa de título (título em MAIÚSCULAS do flipbook)');
+teste('algarismos romanos em maiúsculas; artigos e preposições em minúsculas só no meio; maiúscula após travessão e dois-pontos', () => {
+  const { capitalizar } = require('./lote/extrairLote2');
+  const casos = [['CAPÍTULO II — O ALUGUEL DA DIGNIDADE', 'Capítulo II — O Aluguel da Dignidade'], ['PARTE II', 'Parte II'], ['PARTE III — A ESCALADA', 'Parte III — A Escalada'], ['CAPÍTULO XX — A PORTA E O VENTO', 'Capítulo XX — A Porta e o Vento'],
+    ['PRIMEIRO ATO — O REGRESSO DE UM MORTO', 'Primeiro Ato — O Regresso de um Morto'], ['CAPÍTULO I — A ARTE DO VELÓRIO SEM DEFUNTO', 'Capítulo I — A Arte do Velório sem Defunto'], ['CAPÍTULO IV: UMA NOITE SEM FIM', 'Capítulo IV: Uma Noite sem Fim'],
+    ['O BAILE DOS HERDEIROS POSTIÇOS', 'O Baile dos Herdeiros Postiços'], ['QUINTA-FEIRA', 'Quinta-feira'], ['Parte II — já em caixa mista', 'Parte II — já em caixa mista']];
+  casos.forEach(([entrada, esperado]) => assert.strictEqual(capitalizar(entrada), esperado));
+});
+
 console.log('Limpeza: cópia de _staging já limpa (Máscara para o Controle)');
 teste('sem "jaAplicadoNoStaging", item ausente é erro; com ele, é aceito e a verificação final continua', () => {
   const modelo = { secoes: [{ titulo: 'Cap', blocos: [{ t: 'p', texto: 'texto bom', html: 'texto bom' }] }] };
@@ -88,6 +97,9 @@ if (!fs.existsSync(staging)) { console.log(`\n_staging não encontrado (${stagin
       assert.ok(E.contarPalavras(t) > 10000, 'texto curto demais');
       assert.ok(!/flipbook|retrofit|Gold Plus/i.test(t), 'texto de design (flipbook/retrofit) entrou no corpo');
       assert.ok(!/\u0001|\u0002|\u0003|\u0004/.test(t), 'marcador de formatação vazou para o texto');
+      const titulos = m.secoes.flatMap((x) => [x.titulo, x.rotulo, x.parte].filter(Boolean));
+      const ruins = titulos.filter((x) => /(^|[\s—–-])(Ii|Iii|Iv|Vi|Vii|Viii|Ix|Xi|Xii|Xiii|Xiv|Xv|Xvi|Xvii|Xviii|Xix|Xx|Xxi)(\s|$|—|:)/.test(x) || (/^[A-ZÀ-Ú]/.test(x) && /— [a-zà-ú]/.test(x)));
+      assert.deepStrictEqual(ruins, [], 'título com romano ou artigo mal escrito: ' + ruins.slice(0, 2).join(' | '));
       const trava = varrer(t, { slug });
       assert.strictEqual(trava.bloqueios.length, 0, JSON.stringify(trava.bloqueios[0]));
     });
