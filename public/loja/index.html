@@ -528,6 +528,11 @@
   /* Porta editorial de Empreender e Crescer: mesma estrutura, acento diferente. */
   .porta-empreender .cartao { border-left-color: #2d5a40; }
 
+  /* Portas de Romances e Histórias, Relações e Convivência e Pais e Filhos: mesma estrutura, o acento de cada universo. */
+  .porta-romances .cartao { border-left-color: #3d3a6b; }
+  .porta-relacoes .cartao { border-left-color: #8a4b2d; }
+  .porta-pais .cartao { border-left-color: #2f5d6b; }
+
   /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
      O corpo (.info) reaproveita as mesmas classes/estilos do card antigo
      (resumo, descricao-expandida.ativa, rodape-card, preco, selo-audiobook, selo-chat,
@@ -639,6 +644,36 @@
       <p class="chamada">Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria.</p>
     </div>
     <a class="btn-universo" id="porta-empreender-link" href="/loja/empreender-e-crescer/">Explorar Empreender e Crescer</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-romances" aria-label="Romances e Histórias">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Romances e Histórias</p>
+      <p class="chamada">Histórias para ler com calma — e para pensar depois.</p>
+    </div>
+    <a class="btn-universo" id="porta-romances-link" href="/loja/romances-e-historias/">Explorar Romances e Histórias</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-relacoes" aria-label="Relações e Convivência">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Relações e Convivência</p>
+      <p class="chamada">Livros de apoio para as conversas, os vínculos e as situações que ficam difíceis de conduzir.</p>
+    </div>
+    <a class="btn-universo" id="porta-relacoes-link" href="/loja/relacoes-e-convivencia/">Explorar Relações e Convivência</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-pais" aria-label="Pais e Filhos">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Pais e Filhos</p>
+      <p class="chamada">Compreensão e linguagem para que pais e filhos continuem se entendendo quando a convivência aperta.</p>
+    </div>
+    <a class="btn-universo" id="porta-pais-link" href="/loja/pais-e-filhos/">Explorar Pais e Filhos</a>
   </div>
 </nav>
 
@@ -838,6 +873,9 @@
       if (cupom) {
         document.getElementById('porta-universo-link').href = '/loja/universo-feminino/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-empreender-link').href = '/loja/empreender-e-crescer/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-romances-link').href = '/loja/romances-e-historias/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-relacoes-link').href = '/loja/relacoes-e-convivencia/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-pais-link').href = '/loja/pais-e-filhos/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-experimente-link').href = '/experimente?cupom=' + encodeURIComponent(cupom);
       }
     } catch (e) {}

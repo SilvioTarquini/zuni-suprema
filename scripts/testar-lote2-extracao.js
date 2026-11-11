@@ -44,6 +44,32 @@ teste('a mesma frase só é rebaixada para a obra e o trecho revisados', () => {
   assert.ok(varrer('Quer que eu reescreva o capítulo 3?', { literais: [], slug: 'ninguem-avisou-que-ele-morreu' }).bloqueios.length >= 1, 'outra frase continua barrando');
 });
 
+console.log('Entrada da Loja e universos (lote 2)');
+teste('a entrada da Loja tem as 5 portas, com o cupom repassado nas 3 novas', () => {
+  const h = fs.readFileSync(path.join(__dirname, '..', 'public', 'loja', 'index.html'), 'utf8');
+  for (const [id, slug] of [['porta-romances-link', 'romances-e-historias'], ['porta-relacoes-link', 'relacoes-e-convivencia'], ['porta-pais-link', 'pais-e-filhos']]) {
+    assert.ok(h.includes(`id="${id}" href="/loja/${slug}/"`), id);
+    assert.ok(h.includes(`getElementById('${id}').href = '/loja/${slug}/?cupom='`), 'cupom em ' + id);
+  }
+  assert.strictEqual((h.match(/class="btn-universo"/g) || []).length, 5);
+});
+teste('Pais e Filhos: só a seção "Em família" é nova e nenhum romance entra', () => {
+  const { UNIVERSOS: U } = require('../src/lib/universosConfig');
+  const ids = U['pais-e-filhos'].secoes.flatMap((x) => x.ids);
+  assert.deepStrictEqual(ids.sort(), ['a-bussola-do-adolescente', 'alem-do-que-voce-sente', 'alem-do-que-voce-ve', 'toda-familia-tem-duas-historias']);
+  const { CATALOGO } = require('../src/lib/catalogoLivros');
+  assert.ok(!ids.some((i) => CATALOGO[i] && CATALOGO[i].departamento === 'Romances e Histórias'));
+});
+teste('as 19 estão em seções de universo, com editorial e sem duplicata; o aviso de Almas Silenciadas existe', () => {
+  const { UNIVERSOS: U } = require('../src/lib/universosConfig');
+  for (const u of ['romances-e-historias', 'relacoes-e-convivencia']) {
+    const ids = U[u].secoes.flatMap((x) => x.ids);
+    assert.strictEqual(new Set(ids).size, ids.length, 'duplicata em ' + u);
+    ids.forEach((i) => assert.ok(U[u].editorial[i], `${u}: sem editorial de ${i}`));
+  }
+  assert.ok(/violência contra mulheres, escravidão e internação forçada/.test(U['romances-e-historias'].editorial['almas-silenciadas'].aviso));
+});
+
 const staging = FONTE_PADRAO;
 if (!fs.existsSync(staging)) { console.log(`\n_staging não encontrado (${staging}): partes que leem os 19 HTML foram puladas`); } else {
   console.log(`\nExtração das ${OBRAS_LOTE2.length} obras do lote 2 (${staging})`);
