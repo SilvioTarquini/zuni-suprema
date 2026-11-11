@@ -139,6 +139,9 @@ async function coletar(page) {
     const pa = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     pn.on('pageerror', (e) => errN.push(e.message.slice(0, 90))); pa.on('pageerror', (e) => errA.push(e.message.slice(0, 90)));
     await pn.goto(`http://127.0.0.1:${porta}/loja/${u.slug}/`);
+    // A página ANTIGA só entende `universo` em texto: obras com lista (ex.: Mesa e Reunião, também em Relações e Convivência)
+    // chegam a ela com o primeiro universo da lista, como eram antes. A página NOVA recebe o catálogo como está.
+    await pa.route('**/api/livros', async (rt) => { const r = await rt.fetch(); const j = await r.json(); (Array.isArray(j) ? j : []).forEach((o) => { if (Array.isArray(o.universo)) o.universo = o.universo[0]; }); await rt.fulfill({ response: r, json: j }); });
     await pa.goto(`http://127.0.0.1:${porta}/antigo/${u.slug}/`);
     const N = await coletar(pn), A = await coletar(pa);
     const extras = u.extras || [];

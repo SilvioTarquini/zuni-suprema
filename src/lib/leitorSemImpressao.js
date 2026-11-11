@@ -18,7 +18,27 @@ const LIVROS_SEM_IMPRESSAO = new Set([
   'heranca-de-papel',
   'vender-bem-vender-sempre',
   'toda-mesa-tem-dois-lados',
-  'toda-reuniao-tem-duas-pautas'
+  'toda-reuniao-tem-duas-pautas',
+  // Lote 2 (cópias de _staging já sem impressão; o servidor só acrescenta o "Baixar PDF"):
+  'a-casa-da-neblina',
+  'a-segunda-margem',
+  'a-tradutora',
+  'almas-silenciadas',
+  'falsa-moralidade',
+  'guerra-de-compadre',
+  'mascara-para-o-controle',
+  'ninguem-avisou-que-ele-morreu',
+  'o-baile-dos-herdeiros-posticos',
+  'o-disfarce-da-alma',
+  'o-falecido-esta-a-mesa',
+  'o-lugar-a-mesa',
+  'o-ultimo-baile-do-moinho',
+  'onze-dias-de-sorte',
+  'toda-familia-tem-duas-historias',
+  'toda-briga-tem-dois-comecos',
+  'entre-o-encanto-e-a-escolha',
+  'senti-percebi-escolhi',
+  'ninguem-reage-do-nada'
 ]);
 
 function ehLivroSemImpressao(livroId) {

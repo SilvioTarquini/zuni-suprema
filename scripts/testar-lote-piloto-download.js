@@ -27,7 +27,8 @@ const STAGING = path.join(RAIZ, '..', '..', 'Prontas para subir à loja', '_stag
 const PDFS = path.join(RAIZ, '..', 'lote-piloto', 'pdf');
 const CAPTURAS = path.join(RAIZ, 'relatorios', 'capturas_lote');
 const { NOMES_ARQUIVO } = require('../src/lib/pdfLivro');
-const OBRAS = ['da-terra-ao-resultado', 'fazenda-lucrativa', 'a-bussola-do-adolescente', 'situacoes-da-vida-real', 'heranca-de-papel'];
+// --lote=2: as 19 obras do lote 2 (mesmos testes). Sem o argumento: as 5 do piloto.
+const OBRAS = process.argv.includes('--lote=2') ? require('./preparar-obras-lote').OBRAS_LOTE2 : ['da-terra-ao-resultado', 'fazenda-lucrativa', 'a-bussola-do-adolescente', 'situacoes-da-vida-real', 'heranca-de-papel'];
 
 // Estado "depois da substituição": o arquivo antigo de Da Terra no disco deixa de existir (ver plano da Parte 2).
 const fsPromises = require('fs').promises;
