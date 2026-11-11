@@ -682,7 +682,8 @@ const CATALOGO = {
     descricaoCurta: 'Clara Benevides volta a Santa Bruma para vender a casa que herdou do pai e descobre que ela guarda mais que objetos e cartas: guarda versões da verdade. Entre documentos, fotografias e testemunhos imperfeitos, precisa decidir quanto do passado ainda tem o direito de governar o presente. Um romance de mistério e realismo mágico sobre memória, identidade e o direito de seguir adiante.',
     resumo: 'Clara Benevides volta a Santa Bruma para vender a casa que herdou do pai e descobre que ela guarda mais que objetos e cartas: guarda versões da verdade. Entre documentos, fotografias e testemunhos imperfeitos, precisa decidir quanto do passado ainda tem o direito de governar o presente. Um romance de mistério e realismo mágico sobre memória, identidade e o direito de seguir adiante.',
     descricao: 'Clara Benevides volta a Santa Bruma para vender a casa que herdou do pai e descobre que ela guarda mais que objetos e cartas: guarda versões da verdade. Entre documentos, fotografias e testemunhos imperfeitos, precisa decidir quanto do passado ainda tem o direito de governar o presente. Um romance de mistério e realismo mágico sobre memória, identidade e o direito de seguir adiante.',
-    indicadoPara: 'Leitores de romance com mistério e realismo mágico, sobre herança, memória e identidade. Obra de ficção.'
+    indicadoPara: 'Leitores de romance com mistério e realismo mágico, sobre herança, memória e identidade. Obra de ficção.',
+    chatDisponivel: true
   },
   'a-segunda-margem': {
     titulo: 'A Segunda Margem',
@@ -701,7 +702,8 @@ const CATALOGO = {
     descricaoCurta: 'Na pior seca em sessenta anos, um lago recua e devolve à luz uma cidade que passou vinte e oito anos debaixo d\'água. A cartógrafa Mara Vilar volta ao vale para medir o que a água deixou à mostra e descobre que a escadaria de pedra está três metros e quarenta mais baixa do que o mapa oficial diz. Foi uma linha desenhada em 1998 que decidiu quem ganhou uma casa nova e quem ficou de fora.',
     resumo: 'Na pior seca em sessenta anos, um lago recua e devolve à luz uma cidade que passou vinte e oito anos debaixo d\'água. A cartógrafa Mara Vilar volta ao vale para medir o que a água deixou à mostra e descobre que a escadaria de pedra está três metros e quarenta mais baixa do que o mapa oficial diz. Foi uma linha desenhada em 1998 que decidiu quem ganhou uma casa nova e quem ficou de fora.',
     descricao: 'Na pior seca em sessenta anos, um lago recua e devolve à luz uma cidade que passou vinte e oito anos debaixo d\'água. A cartógrafa Mara Vilar volta ao vale para medir o que a água deixou à mostra e descobre que a escadaria de pedra está três metros e quarenta mais baixa do que o mapa oficial diz. Foi uma linha desenhada em 1998 que decidiu quem ganhou uma casa nova e quem ficou de fora.',
-    indicadoPara: 'Leitores de romance que gostam de segredos de uma cidade e de uma investigação sobre o passado. Obra de ficção.'
+    indicadoPara: 'Leitores de romance que gostam de segredos de uma cidade e de uma investigação sobre o passado. Obra de ficção.',
+    chatDisponivel: true
   },
   'a-tradutora': {
     titulo: 'A Tradutora',
@@ -720,7 +722,8 @@ const CATALOGO = {
     descricaoCurta: 'Iara Bastos, tradutora literária, aceita pelo dinheiro traduzir as memórias de um romancista octogenário, lendo cada capítulo em voz alta diante dele. No capítulo sete, reconhece a casa e a moça descrita com desprezo: é a mãe dela. Iara continua traduzindo e começa a alterar.',
     resumo: 'Iara Bastos, tradutora literária, aceita pelo dinheiro traduzir as memórias de um romancista octogenário, lendo cada capítulo em voz alta diante dele. No capítulo sete, reconhece a casa e a moça descrita com desprezo: é a mãe dela. Iara continua traduzindo e começa a alterar.',
     descricao: 'Iara Bastos, tradutora literária, aceita pelo dinheiro traduzir as memórias de um romancista octogenário, lendo cada capítulo em voz alta diante dele. No capítulo sete, reconhece a casa e a moça descrita com desprezo: é a mãe dela. Iara continua traduzindo e começa a alterar.',
-    indicadoPara: 'Leitores de romance literário sobre memória, família e o poder de traduzir (e alterar) uma história. Obra de ficção.'
+    indicadoPara: 'Leitores de romance literário sobre memória, família e o poder de traduzir (e alterar) uma história. Obra de ficção.',
+    chatDisponivel: true
   },
   'almas-silenciadas': {
     titulo: 'Almas Silenciadas',
@@ -739,7 +742,8 @@ const CATALOGO = {
     descricaoCurta: 'Em outubro de 1932, um professor de lógica desce de um trem numa vila mineira de diamantes e, na manhã seguinte, o homem mais poderoso do lugar amanhece morto num gabinete trancado por dentro, cercado de espelhos. O que começa como mistério se abre numa história sobre memória, silêncio e reparação. O livro trata de temas difíceis, como a violência contra mulheres, a escravidão e a internação forçada.',
     resumo: 'Em outubro de 1932, um professor de lógica desce de um trem numa vila mineira de diamantes e, na manhã seguinte, o homem mais poderoso do lugar amanhece morto num gabinete trancado por dentro, cercado de espelhos. O que começa como mistério se abre numa história sobre memória, silêncio e reparação. O livro trata de temas difíceis, como a violência contra mulheres, a escravidão e a internação forçada.',
     descricao: 'Em outubro de 1932, um professor de lógica desce de um trem numa vila mineira de diamantes e, na manhã seguinte, o homem mais poderoso do lugar amanhece morto num gabinete trancado por dentro, cercado de espelhos. O que começa como mistério se abre numa história sobre memória, silêncio e reparação. O livro trata de temas difíceis, como a violência contra mulheres, a escravidão e a internação forçada. Trata de violência contra mulheres, escravidão e internação forçada, sem transformá-las em espetáculo.',
-    indicadoPara: 'Leitores de romance histórico e de mistério ambientado em Minas Gerais, em 1932. Trata de violência contra mulheres, escravidão e internação forçada. Obra de ficção.'
+    indicadoPara: 'Leitores de romance histórico e de mistério ambientado em Minas Gerais, em 1932. Trata de violência contra mulheres, escravidão e internação forçada. Obra de ficção.',
+    chatDisponivel: true
   },
   'falsa-moralidade': {
     titulo: 'Falsa Moralidade',
@@ -758,7 +762,8 @@ const CATALOGO = {
     descricaoCurta: 'Para o público, Romão é um empresário de sucesso e pai de família; na vida privada, um déspota que prende esposa e filha em regras que ele mesmo não cumpre. A saga acompanha a queda do seu império, o confronto com as consequências e a reconstrução do caráter. Um romance sobre dupla moral, poder e redenção.',
     resumo: 'Para o público, Romão é um empresário de sucesso e pai de família; na vida privada, um déspota que prende esposa e filha em regras que ele mesmo não cumpre. A saga acompanha a queda do seu império, o confronto com as consequências e a reconstrução do caráter. Um romance sobre dupla moral, poder e redenção.',
     descricao: 'Para o público, Romão é um empresário de sucesso e pai de família; na vida privada, um déspota que prende esposa e filha em regras que ele mesmo não cumpre. A saga acompanha a queda do seu império, o confronto com as consequências e a reconstrução do caráter. Um romance sobre dupla moral, poder e redenção.',
-    indicadoPara: 'Leitores de romance sobre dupla moral, poder familiar e reconstrução do caráter. Obra de ficção.'
+    indicadoPara: 'Leitores de romance sobre dupla moral, poder familiar e reconstrução do caráter. Obra de ficção.',
+    chatDisponivel: true
   },
   'guerra-de-compadre': {
     titulo: 'Guerra de Compadre',
@@ -777,7 +782,8 @@ const CATALOGO = {
     descricaoCurta: 'Juvenal Furtado, vendeiro de oitenta e nove anos, conta do balcão onde estava quando começou e quando acabou a briga entre dois compadres que fez uma cidade inteira entrar na confusão. Uma história de orgulho, silêncio e outras teimosias, contada em linguagem de interior e com humor. Segura esse rojão!',
     resumo: 'Juvenal Furtado, vendeiro de oitenta e nove anos, conta do balcão onde estava quando começou e quando acabou a briga entre dois compadres que fez uma cidade inteira entrar na confusão. Uma história de orgulho, silêncio e outras teimosias, contada em linguagem de interior e com humor. Segura esse rojão!',
     descricao: 'Juvenal Furtado, vendeiro de oitenta e nove anos, conta do balcão onde estava quando começou e quando acabou a briga entre dois compadres que fez uma cidade inteira entrar na confusão. Uma história de orgulho, silêncio e outras teimosias, contada em linguagem de interior e com humor. Segura esse rojão!',
-    indicadoPara: 'Leitores que gostam de humor de interior, narrador de balcão e histórias de teimosia. Linguagem coloquial. Obra de ficção.'
+    indicadoPara: 'Leitores que gostam de humor de interior, narrador de balcão e histórias de teimosia. Linguagem coloquial. Obra de ficção.',
+    chatDisponivel: true
   },
   'mascara-para-o-controle': {
     titulo: 'Onde a Gentileza é uma Máscara para o Controle',
@@ -796,7 +802,8 @@ const CATALOGO = {
     descricaoCurta: 'Uma jovem, dois homens e escolhas que oscilam entre o medo e o desejo: Rafael, de sutileza calculada; Marcos, de sinceridade direta; Clara, de vulnerabilidade pulsante. Mais que um triângulo amoroso, a história mostra a dificuldade de distinguir afeto verdadeiro de manipulação. Um romance para olhar as próprias inseguranças e o jogo oculto das relações.',
     resumo: 'Uma jovem, dois homens e escolhas que oscilam entre o medo e o desejo: Rafael, de sutileza calculada; Marcos, de sinceridade direta; Clara, de vulnerabilidade pulsante. Mais que um triângulo amoroso, a história mostra a dificuldade de distinguir afeto verdadeiro de manipulação. Um romance para olhar as próprias inseguranças e o jogo oculto das relações.',
     descricao: 'Uma jovem, dois homens e escolhas que oscilam entre o medo e o desejo: Rafael, de sutileza calculada; Marcos, de sinceridade direta; Clara, de vulnerabilidade pulsante. Mais que um triângulo amoroso, a história mostra a dificuldade de distinguir afeto verdadeiro de manipulação. Um romance para olhar as próprias inseguranças e o jogo oculto das relações.',
-    indicadoPara: 'Leitoras e leitores que querem enxergar, em forma de romance, a diferença entre afeto e manipulação nas relações. Obra de ficção; não substitui acompanhamento profissional.'
+    indicadoPara: 'Leitoras e leitores que querem enxergar, em forma de romance, a diferença entre afeto e manipulação nas relações. Obra de ficção; não substitui acompanhamento profissional.',
+    chatDisponivel: true
   },
   'ninguem-avisou-que-ele-morreu': {
     titulo: 'Ninguém Avisou Que Ele Morreu',
@@ -815,7 +822,8 @@ const CATALOGO = {
     descricaoCurta: 'Nuno Salgueiro, porteiro noturno de hotel, é o único a saber da morte de um velho hóspede e de que uma cidade inteira espera há vinte e dois anos a volta de um homem rico. Em Ábrego, em vez de se esconder, é festejado por três primos que torciam pela morte do tio e agora precisam dele vivo. Uma comédia de impostores com quarenta dias de prazo.',
     resumo: 'Nuno Salgueiro, porteiro noturno de hotel, é o único a saber da morte de um velho hóspede e de que uma cidade inteira espera há vinte e dois anos a volta de um homem rico. Em Ábrego, em vez de se esconder, é festejado por três primos que torciam pela morte do tio e agora precisam dele vivo. Uma comédia de impostores com quarenta dias de prazo.',
     descricao: 'Nuno Salgueiro, porteiro noturno de hotel, é o único a saber da morte de um velho hóspede e de que uma cidade inteira espera há vinte e dois anos a volta de um homem rico. Em Ábrego, em vez de se esconder, é festejado por três primos que torciam pela morte do tio e agora precisam dele vivo. Uma comédia de impostores com quarenta dias de prazo.',
-    indicadoPara: 'Leitores de comédia de impostores e de cidade pequena. Obra de ficção.'
+    indicadoPara: 'Leitores de comédia de impostores e de cidade pequena. Obra de ficção.',
+    chatDisponivel: true
   },
   'o-baile-dos-herdeiros-posticos': {
     titulo: 'O Baile dos Herdeiros Postiços',
@@ -834,7 +842,8 @@ const CATALOGO = {
     descricaoCurta: 'Julian Vance, arquivista sem dinheiro, assume a identidade do barão que acaba de morrer e volta ao palácio da família decidido a vender algumas propriedades e desaparecer. O problema é que o barão não era tão rico quanto parecia, e Julian não é o único em Saint-Cloud-sur-Mer que vive de aparências. Um romance de impostura, ambição e segredos de família.',
     resumo: 'Julian Vance, arquivista sem dinheiro, assume a identidade do barão que acaba de morrer e volta ao palácio da família decidido a vender algumas propriedades e desaparecer. O problema é que o barão não era tão rico quanto parecia, e Julian não é o único em Saint-Cloud-sur-Mer que vive de aparências. Um romance de impostura, ambição e segredos de família.',
     descricao: 'Julian Vance, arquivista sem dinheiro, assume a identidade do barão que acaba de morrer e volta ao palácio da família decidido a vender algumas propriedades e desaparecer. O problema é que o barão não era tão rico quanto parecia, e Julian não é o único em Saint-Cloud-sur-Mer que vive de aparências. Um romance de impostura, ambição e segredos de família.',
-    indicadoPara: 'Leitores de romance de impostura, ambição e segredos de família, com humor. Obra de ficção.'
+    indicadoPara: 'Leitores de romance de impostura, ambição e segredos de família, com humor. Obra de ficção.',
+    chatDisponivel: true
   },
   'o-disfarce-da-alma': {
     titulo: 'O Disfarce da Alma',
@@ -853,7 +862,8 @@ const CATALOGO = {
     descricaoCurta: 'Dezessete histórias de pessoas comuns, numa cidade sem nome, sobre as necessidades que se escondem atrás de cada gesto de amor: o livro na mão de um rapaz tímido, a piada, o silêncio, o "te amo" dito cedo demais. Os personagens se cruzam numa livraria, num café, num coral. Não é manual de sedução nem tratado de psicologia: é um convite a olhar o que acontece por dentro.',
     resumo: 'Dezessete histórias de pessoas comuns, numa cidade sem nome, sobre as necessidades que se escondem atrás de cada gesto de amor: o livro na mão de um rapaz tímido, a piada, o silêncio, o "te amo" dito cedo demais. Os personagens se cruzam numa livraria, num café, num coral. Não é manual de sedução nem tratado de psicologia: é um convite a olhar o que acontece por dentro.',
     descricao: 'Dezessete histórias de pessoas comuns, numa cidade sem nome, sobre as necessidades que se escondem atrás de cada gesto de amor: o livro na mão de um rapaz tímido, a piada, o silêncio, o "te amo" dito cedo demais. Os personagens se cruzam numa livraria, num café, num coral. Não é manual de sedução nem tratado de psicologia: é um convite a olhar o que acontece por dentro.',
-    indicadoPara: 'Leitores adultos que gostam de histórias curtas sobre o que se esconde atrás dos gestos de amor. Obra de ficção; não é manual de sedução.'
+    indicadoPara: 'Leitores adultos que gostam de histórias curtas sobre o que se esconde atrás dos gestos de amor. Obra de ficção; não é manual de sedução.',
+    chatDisponivel: true
   },
   'o-falecido-esta-a-mesa': {
     titulo: 'O Falecido Está à Mesa',
@@ -872,7 +882,8 @@ const CATALOGO = {
     descricaoCurta: 'No Hotel Mirante, a elegância ainda é uma questão de princípio; a solvência, nem tanto. Quando chegam os irmãos Adriano e Julián Vale, e Julián conhece os gestos e os negócios de um homem rico que acaba de morrer, o plano parece simples. Mas o hotel está cheio de pessoas com interesses próprios: uma comédia de impostores, dívidas e aparências.',
     resumo: 'No Hotel Mirante, a elegância ainda é uma questão de princípio; a solvência, nem tanto. Quando chegam os irmãos Adriano e Julián Vale, e Julián conhece os gestos e os negócios de um homem rico que acaba de morrer, o plano parece simples. Mas o hotel está cheio de pessoas com interesses próprios: uma comédia de impostores, dívidas e aparências.',
     descricao: 'No Hotel Mirante, a elegância ainda é uma questão de princípio; a solvência, nem tanto. Quando chegam os irmãos Adriano e Julián Vale, e Julián conhece os gestos e os negócios de um homem rico que acaba de morrer, o plano parece simples. Mas o hotel está cheio de pessoas com interesses próprios: uma comédia de impostores, dívidas e aparências.',
-    indicadoPara: 'Leitores de comédia de impostores, dívidas e aparências. Obra de ficção.'
+    indicadoPara: 'Leitores de comédia de impostores, dívidas e aparências. Obra de ficção.',
+    chatDisponivel: true
   },
   'o-lugar-a-mesa': {
     titulo: 'O Lugar à Mesa',
@@ -891,7 +902,8 @@ const CATALOGO = {
     descricaoCurta: 'Lívia vive de transformar listas incompletas e pedidos incompatíveis em festas que parecem acontecer sem esforço. Quando volta a Santa Aurora para organizar o centenário do mercado onde cresceu, encontra uma proposta de compra, comerciantes com medo de perder o espaço e uma mãe que não aceita mais que o amor pela própria história decida todos os seus próximos anos. Um romance sobre pertencer, escolher onde ficar e quando partir.',
     resumo: 'Lívia vive de transformar listas incompletas e pedidos incompatíveis em festas que parecem acontecer sem esforço. Quando volta a Santa Aurora para organizar o centenário do mercado onde cresceu, encontra uma proposta de compra, comerciantes com medo de perder o espaço e uma mãe que não aceita mais que o amor pela própria história decida todos os seus próximos anos. Um romance sobre pertencer, escolher onde ficar e quando partir.',
     descricao: 'Lívia vive de transformar listas incompletas e pedidos incompatíveis em festas que parecem acontecer sem esforço. Quando volta a Santa Aurora para organizar o centenário do mercado onde cresceu, encontra uma proposta de compra, comerciantes com medo de perder o espaço e uma mãe que não aceita mais que o amor pela própria história decida todos os seus próximos anos. Um romance sobre pertencer, escolher onde ficar e quando partir.',
-    indicadoPara: 'Leitores de romance sobre pertencimento, família e o direito de escolher onde ficar. Obra de ficção.'
+    indicadoPara: 'Leitores de romance sobre pertencimento, família e o direito de escolher onde ficar. Obra de ficção.',
+    chatDisponivel: true
   },
   'o-ultimo-baile-do-moinho': {
     titulo: 'O Último Baile do Moinho',
@@ -910,7 +922,8 @@ const CATALOGO = {
     descricaoCurta: 'Helena, trinta e seis anos, um divórcio recente e um trabalho que consiste em salvar a memória de lugares esquecidos, volta ao moinho da infância, de roda-d\'água parada. Lá reencontra Bento Faria, de noventa anos, e o silêncio de um lugar que já foi de festas. Um romance entre amores, memórias e histórias que o tempo não levou.',
     resumo: 'Helena, trinta e seis anos, um divórcio recente e um trabalho que consiste em salvar a memória de lugares esquecidos, volta ao moinho da infância, de roda-d\'água parada. Lá reencontra Bento Faria, de noventa anos, e o silêncio de um lugar que já foi de festas. Um romance entre amores, memórias e histórias que o tempo não levou.',
     descricao: 'Helena, trinta e seis anos, um divórcio recente e um trabalho que consiste em salvar a memória de lugares esquecidos, volta ao moinho da infância, de roda-d\'água parada. Lá reencontra Bento Faria, de noventa anos, e o silêncio de um lugar que já foi de festas. Um romance entre amores, memórias e histórias que o tempo não levou.',
-    indicadoPara: 'Leitores que gostam de histórias de cidade pequena, de memória e de amores antigos. Obra de ficção.'
+    indicadoPara: 'Leitores que gostam de histórias de cidade pequena, de memória e de amores antigos. Obra de ficção.',
+    chatDisponivel: true
   },
   'onze-dias-de-sorte': {
     titulo: 'Onze Dias de Sorte',
@@ -929,7 +942,8 @@ const CATALOGO = {
     descricaoCurta: 'Bruna Tavares, atuária numa seguradora, roda pela primeira vez, com gente viva, o modelo de mortalidade que construiu escondida: a primeira linha traz o nome do chefe, com noventa e sete por cento de probabilidade e onze dias. Por culpa e por método, ela decide dar a ele os melhores onze dias que um homem daqueles pode ter. Uma comédia sobre o medo e sobre pais, filhos e irmãos que só sabem amar com planilha.',
     resumo: 'Bruna Tavares, atuária numa seguradora, roda pela primeira vez, com gente viva, o modelo de mortalidade que construiu escondida: a primeira linha traz o nome do chefe, com noventa e sete por cento de probabilidade e onze dias. Por culpa e por método, ela decide dar a ele os melhores onze dias que um homem daqueles pode ter. Uma comédia sobre o medo e sobre pais, filhos e irmãos que só sabem amar com planilha.',
     descricao: 'Bruna Tavares, atuária numa seguradora, roda pela primeira vez, com gente viva, o modelo de mortalidade que construiu escondida: a primeira linha traz o nome do chefe, com noventa e sete por cento de probabilidade e onze dias. Por culpa e por método, ela decide dar a ele os melhores onze dias que um homem daqueles pode ter. Uma comédia sobre o medo e sobre pais, filhos e irmãos que só sabem amar com planilha.',
-    indicadoPara: 'Leitores de comédia com romance familiar, em ambiente de escritório. Obra de ficção.'
+    indicadoPara: 'Leitores de comédia com romance familiar, em ambiente de escritório. Obra de ficção.',
+    chatDisponivel: true
   },
   'toda-familia-tem-duas-historias': {
     titulo: 'Toda Família Tem Duas Histórias',
@@ -949,7 +963,8 @@ const CATALOGO = {
     descricaoCurta: 'Histórias de família contadas por Davi, que aprendeu nas mediações que toda família tem duas: a que se conta nos almoços e a que está sentada à mesa sem ser convidada. É a segunda que decide como a primeira termina. Terceiro volume da Coleção Além das Aparências e dos Sentimentos.',
     resumo: 'Histórias de família contadas por Davi, que aprendeu nas mediações que toda família tem duas: a que se conta nos almoços e a que está sentada à mesa sem ser convidada. É a segunda que decide como a primeira termina. Terceiro volume da Coleção Além das Aparências e dos Sentimentos.',
     descricao: 'Histórias de família contadas por Davi, que aprendeu nas mediações que toda família tem duas: a que se conta nos almoços e a que está sentada à mesa sem ser convidada. É a segunda que decide como a primeira termina. Terceiro volume da Coleção Além das Aparências e dos Sentimentos. Livro de informação e apoio à reflexão. Não substitui o acompanhamento de um profissional de saúde, de assistência social ou jurídico.',
-    indicadoPara: 'Quem tem uma família difícil de conduzir (irmãos, sogras, pais idosos, herança) e quer enxergar os dois lados da mesa. Não substitui mediação ou acompanhamento profissional.'
+    indicadoPara: 'Quem tem uma família difícil de conduzir (irmãos, sogras, pais idosos, herança) e quer enxergar os dois lados da mesa. Não substitui mediação ou acompanhamento profissional.',
+    chatDisponivel: true
   },
   'toda-briga-tem-dois-comecos': {
     titulo: 'Toda Briga Tem Dois Começos',
@@ -969,7 +984,8 @@ const CATALOGO = {
     descricaoCurta: 'Uma vaga coberta numa garagem, um galho de mangueira por cima do muro, um retrovisor chutado num sinal fechado: cada lado começa a contar a briga no ponto em que se sentiu atingido, e esse ponto costuma ser a resposta do outro. Davi, o narrador, pede a cada um que escreva o dia em que tudo começou, e quase nunca as datas coincidem. Quarto volume da Coleção Além das Aparências e dos Sentimentos.',
     resumo: 'Uma vaga coberta numa garagem, um galho de mangueira por cima do muro, um retrovisor chutado num sinal fechado: cada lado começa a contar a briga no ponto em que se sentiu atingido, e esse ponto costuma ser a resposta do outro. Davi, o narrador, pede a cada um que escreva o dia em que tudo começou, e quase nunca as datas coincidem. Quarto volume da Coleção Além das Aparências e dos Sentimentos.',
     descricao: 'Uma vaga coberta numa garagem, um galho de mangueira por cima do muro, um retrovisor chutado num sinal fechado: cada lado começa a contar a briga no ponto em que se sentiu atingido, e esse ponto costuma ser a resposta do outro. Davi, o narrador, pede a cada um que escreva o dia em que tudo começou, e quase nunca as datas coincidem. Quarto volume da Coleção Além das Aparências e dos Sentimentos. Livro de informação e apoio à reflexão. Não substitui o acompanhamento de um profissional de saúde, de assistência social ou jurídico.',
-    indicadoPara: 'Quem está numa briga de vizinhança, de família ou de trânsito e quer entender por que cada lado conta um começo diferente. Não substitui orientação jurídica ou profissional.'
+    indicadoPara: 'Quem está numa briga de vizinhança, de família ou de trânsito e quer entender por que cada lado conta um começo diferente. Não substitui orientação jurídica ou profissional.',
+    chatDisponivel: true
   },
   'entre-o-encanto-e-a-escolha': {
     titulo: 'Entre o Encanto e a Escolha',
@@ -989,7 +1005,8 @@ const CATALOGO = {
     descricaoCurta: 'Histórias de casais, do primeiro encontro de aplicativo à toalha molhada em cima da cama, e, na segunda parte, de um único casal ao longo de quarenta anos. Davi pede a cada um que escreva três coisas que achou que estavam combinadas; quase nunca as listas coincidem. Quinto volume da Coleção Além das Aparências e dos Sentimentos.',
     resumo: 'Histórias de casais, do primeiro encontro de aplicativo à toalha molhada em cima da cama, e, na segunda parte, de um único casal ao longo de quarenta anos. Davi pede a cada um que escreva três coisas que achou que estavam combinadas; quase nunca as listas coincidem. Quinto volume da Coleção Além das Aparências e dos Sentimentos.',
     descricao: 'Histórias de casais, do primeiro encontro de aplicativo à toalha molhada em cima da cama, e, na segunda parte, de um único casal ao longo de quarenta anos. Davi pede a cada um que escreva três coisas que achou que estavam combinadas; quase nunca as listas coincidem. Quinto volume da Coleção Além das Aparências e dos Sentimentos. Livro de informação e apoio à reflexão. Não substitui o acompanhamento de um profissional de saúde, de assistência social ou jurídico.',
-    indicadoPara: 'Casais e pessoas em relacionamento que querem entender o que ficou "combinado" sem ser dito. Não substitui terapia de casal.'
+    indicadoPara: 'Casais e pessoas em relacionamento que querem entender o que ficou "combinado" sem ser dito. Não substitui terapia de casal.',
+    chatDisponivel: true
   },
   'senti-percebi-escolhi': {
     titulo: 'Senti, Percebi, Escolhi',
@@ -1009,7 +1026,8 @@ const CATALOGO = {
     descricaoCurta: 'Um livro de uma cadeira só: o que acontece dentro de nós entre sentir e agir, e quem está decidindo nesse intervalo. Em três partes, com os três verbos do título, aparecem o mecânico que trava o queixo antes de gritar com o cliente e a viúva que liga toda noite para ouvir a voz do marido na caixa postal. Sexto volume da Coleção Além das Aparências e dos Sentimentos.',
     resumo: 'Um livro de uma cadeira só: o que acontece dentro de nós entre sentir e agir, e quem está decidindo nesse intervalo. Em três partes, com os três verbos do título, aparecem o mecânico que trava o queixo antes de gritar com o cliente e a viúva que liga toda noite para ouvir a voz do marido na caixa postal. Sexto volume da Coleção Além das Aparências e dos Sentimentos.',
     descricao: 'Um livro de uma cadeira só: o que acontece dentro de nós entre sentir e agir, e quem está decidindo nesse intervalo. Em três partes, com os três verbos do título, aparecem o mecânico que trava o queixo antes de gritar com o cliente e a viúva que liga toda noite para ouvir a voz do marido na caixa postal. Sexto volume da Coleção Além das Aparências e dos Sentimentos. Livro de informação e apoio à reflexão. Não substitui o acompanhamento de um profissional de saúde, de assistência social ou jurídico.',
-    indicadoPara: 'Quem quer entender o intervalo entre sentir e agir, nas próprias reações. Não substitui acompanhamento psicológico.'
+    indicadoPara: 'Quem quer entender o intervalo entre sentir e agir, nas próprias reações. Não substitui acompanhamento psicológico.',
+    chatDisponivel: true
   },
   'ninguem-reage-do-nada': {
     titulo: 'Ninguém Reage do Nada',
@@ -1028,7 +1046,8 @@ const CATALOGO = {
     descricaoCurta: 'Por que a mesma frase faz uma pessoa rir e outra chorar? A resposta é simples de enunciar e longa de compreender: cada pessoa chega a cada encontro carregando tudo o que já sentiu, notou e interpretou na vida. O livro ajuda a entender as reações que nos ferem, as nossas e as dos outros, e a transformá-las em maturidade.',
     resumo: 'Por que a mesma frase faz uma pessoa rir e outra chorar? A resposta é simples de enunciar e longa de compreender: cada pessoa chega a cada encontro carregando tudo o que já sentiu, notou e interpretou na vida. O livro ajuda a entender as reações que nos ferem, as nossas e as dos outros, e a transformá-las em maturidade.',
     descricao: 'Por que a mesma frase faz uma pessoa rir e outra chorar? A resposta é simples de enunciar e longa de compreender: cada pessoa chega a cada encontro carregando tudo o que já sentiu, notou e interpretou na vida. O livro ajuda a entender as reações que nos ferem, as nossas e as dos outros, e a transformá-las em maturidade. Livro de informação e apoio à reflexão. Não substitui o acompanhamento de um profissional de saúde, de assistência social ou jurídico.',
-    indicadoPara: 'Quem quer compreender por que reage e por que os outros reagem como reagem, em casa, no trabalho e nos vínculos. Não substitui acompanhamento psicológico.'
+    indicadoPara: 'Quem quer compreender por que reage e por que os outros reagem como reagem, em casa, no trabalho e nos vínculos. Não substitui acompanhamento psicológico.',
+    chatDisponivel: true
   }
 };
 
