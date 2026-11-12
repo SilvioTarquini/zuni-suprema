@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { modeloWidgetPronto } = require('../src/lib/widgetLivroVivo');
 
 const LIVROS_DIR = path.join(__dirname, '..', 'private', 'livros');
 const WIDGET_SOURCE_PATH = path.join(__dirname, '..', 'templates', 'chat-livro-widget.html');
@@ -68,7 +69,7 @@ function injetarChatLivros() {
     throw new Error(`Arquivo-fonte do widget não encontrado: ${WIDGET_SOURCE_PATH}`);
   }
 
-  const widgetFonte = fs.readFileSync(WIDGET_SOURCE_PATH, 'utf8').trim();
+  const widgetFonte = modeloWidgetPronto(); // modelo com o código de templates/flutuantes.js no lugar do marcador
 
   const pastas = OBRAS_COM_LIVRO_VIVO.map(livroId => ({ name: livroId }));
 

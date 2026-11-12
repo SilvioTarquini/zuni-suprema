@@ -16,14 +16,17 @@
 
 const fs = require('fs');
 const path = require('path');
+const { jsFlutuantes } = require('./flutuantes');
 
 const MODELO = path.join(__dirname, '..', '..', 'templates', 'chat-livro-widget.html');
 const MARCA_WIDGET = 'id="zuni-chat-widget"';
+const MARCADOR_FLUTUANTES = '/*__ZUNI_FLUTUANTES__*/';
 const MARCADOR_TEMPLATE = '<script type="__bundler/template">';
 
 let modeloEmCache = null;
 function lerModelo() {
-  if (!modeloEmCache) modeloEmCache = fs.readFileSync(MODELO, 'utf8').replace(/\r\n/g, '\n').trim();
+  // O marcador é trocado pelo código de posição dos botões flutuantes (templates/flutuantes.js, fonte única).
+  if (!modeloEmCache) modeloEmCache = fs.readFileSync(MODELO, 'utf8').replace(/\r\n/g, '\n').trim().split(MARCADOR_FLUTUANTES).join(jsFlutuantes());
   return modeloEmCache;
 }
 
@@ -68,4 +71,4 @@ function injetarWidgetNoServico(html, livroId, ficha) {
   }
 }
 
-module.exports = { injetarWidgetNoServico, ehBundler, MARCA_WIDGET };
+module.exports = { injetarWidgetNoServico, ehBundler, MARCA_WIDGET, modeloWidgetPronto: lerModelo };

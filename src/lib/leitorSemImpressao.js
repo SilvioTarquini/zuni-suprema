@@ -9,6 +9,8 @@
 // Aplicado na hora de servir, junto do patch de celular (ver leitorMobile.js). Toda âncora é obrigatória e ocorre
 // exatamente uma vez; senão lança, e o patch inteiro é abandonado (livro original + [LEITOR_PATCH_FALHOU]).
 
+const { jsFlutuantes } = require('./flutuantes');
+
 const LIVROS_SEM_IMPRESSAO = new Set([
   'da-terra-ao-resultado',
   // Lote-piloto (cópias de _staging já sem impressão; o servidor só acrescenta o "Baixar PDF"):
@@ -115,7 +117,14 @@ function tirarImpressaoTemplateTolerante(template) {
 //     navegar para a rota do PDF — o download do HTML do livro, sem token, deixa de existir;
 //  2. em qualquer caso, um botão flutuante "Baixar PDF" (canto superior direito) leva à rota /livros/<id>/pdf?token=… .
 const CSS_BOTAO_PDF = '<style id="zs-pdf-css">#zs-baixar-pdf{position:fixed;top:10px;right:10px;z-index:999990;display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:1px solid rgba(201,178,107,.7);border-radius:999px;background:rgba(20,20,20,.72);color:#f3e6bd;font:600 13px/1 system-ui,-apple-system,"Segoe UI",sans-serif;letter-spacing:.02em;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}#zs-baixar-pdf:hover{background:rgba(20,20,20,.88)}@media print{#zs-baixar-pdf{display:none}}body:has(#zuni-chat-widget.zuni-chat-aberto) #zs-baixar-pdf{display:none}</style>';
-const BOTAO_PDF_FLUTUANTE = CSS_BOTAO_PDF + '<button type="button" id="zs-baixar-pdf" title="Baixar o livro em PDF">&#8681; Baixar PDF</button><script id="zs-pdf-js">document.getElementById("zs-baixar-pdf").addEventListener("click",function(){ ' + JS_IR_PARA_PDF + ' });</script>';
+// A posição de partida (canto superior direito) pode coincidir com os controles do leitor (A−/A+, busca…): o código compartilhado de
+// templates/flutuantes.js — o mesmo do botão do Livro-Vivo — o desloca para a posição livre mais próxima, a 16 px de qualquer
+// controle, de preferência longe do texto, e o trata junto do Livro-Vivo (um não cobre o outro).
+function botaoPdfFlutuante() {
+  return CSS_BOTAO_PDF + '<button type="button" id="zs-baixar-pdf" title="Baixar o livro em PDF">&#8681; Baixar PDF</button><script id="zs-pdf-js">'
+    + jsFlutuantes() + '\n(function(){ var b = document.getElementById("zs-baixar-pdf"); b.addEventListener("click",function(){ ' + JS_IR_PARA_PDF + ' });'
+    + ' window.ZuniFlutuantes.registrar(b, { ordem: 0, ativo: function(){ return getComputedStyle(b).display !== "none"; }, evitarTexto: function(){ return true; } }); })();</script>';
+}
 
 function tirarImpressaoHtmlEstatico(html) {
   let t = html;
@@ -129,7 +138,8 @@ function tirarImpressaoHtmlEstatico(html) {
   // (2) botão flutuante, uma vez só, logo antes de </body>
   if (!t.includes('id="zs-baixar-pdf"')) {
     const i = t.lastIndexOf('</body>');
-    t = i >= 0 ? t.slice(0, i) + BOTAO_PDF_FLUTUANTE + t.slice(i) : t + BOTAO_PDF_FLUTUANTE;
+    const botao = botaoPdfFlutuante();
+    t = i >= 0 ? t.slice(0, i) + botao + t.slice(i) : t + botao;
   }
   return t;
 }
