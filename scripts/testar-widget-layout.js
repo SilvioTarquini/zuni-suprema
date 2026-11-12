@@ -5,6 +5,7 @@
 // Rota real (src/routes/livros.js), Storage/tabela de acessos simulados (HTML do bucket = cópias de _staging); as obras de private/livros/
 // usam o widget gravado no arquivo (por isso a reinjeção com scripts/injetar-chat-livros.js entra no mesmo commit).
 // Capturas: relatorios/capturas_lote/c2-<obra>-390.png (leitura, botões) e c1-<obra>-1366-chat.png (chat aberto).
+// C3: botão redondo no celular, botão largo no computador, 0 sobreposições nos dois tamanhos e depois de redimensionar.
 // Uso: node scripts/testar-widget-layout.js [--obras=a,b]
 
 const assert = require('assert');
@@ -108,6 +109,51 @@ const intersecta = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.t
       await ctx.close();
       assert.ok(r.tituloLivre, 'algo cobre o título do chat'); assert.ok(!r.pillCobre, '"Baixar PDF" cobre o título');
       if (antes !== null) { assert.strictEqual(antes, true, '"Baixar PDF" deveria aparecer com o chat fechado'); assert.strictEqual(r.pillVisivel, false, '"Baixar PDF" continua visível com o chat aberto'); assert.strictEqual(depois, true, '"Baixar PDF" não voltou ao fechar o chat'); }
+    });
+  }
+
+  // Medida independente do widget: controles realmente visíveis (o elemento do topo no ponto central é ele mesmo) que o botão cobre.
+  const medir = () => {
+    const t = document.getElementById('zuni-chat-toggle'); if (!t) return { sem: true };
+    const rt = t.getBoundingClientRect(); const cs = getComputedStyle(t);
+    const ctrl = [...document.querySelectorAll('button, [role=button], input[type=range], a[href], select')].filter((e) => {
+      if (e.closest('#zuni-chat-widget') || e.id === 'zs-baixar-pdf') return false;
+      const r = e.getBoundingClientRect(); const c = getComputedStyle(e);
+      if (!(r.width > 4 && r.height > 4 && c.visibility !== 'hidden' && c.display !== 'none' && r.bottom > 0 && r.top < innerHeight && r.right > 0 && r.left < innerWidth)) return false;
+      const cx = Math.min(Math.max(r.left + r.width / 2, 1), innerWidth - 1); const cy = Math.min(Math.max(r.top + r.height / 2, 1), innerHeight - 1);
+      const topo = document.elementFromPoint(cx, cy); return !!topo && (topo === e || e.contains(topo) || !!topo.closest('#zuni-chat-widget, #zs-baixar-pdf'));
+    }).map((e) => { const r = e.getBoundingClientRect(); return { id: e.id || e.className.toString().slice(0, 20) || e.tagName, left: r.left, right: r.right, top: r.top, bottom: r.bottom }; });
+    const pdf = document.getElementById('zs-baixar-pdf'); const pr = pdf && getComputedStyle(pdf).display !== 'none' ? pdf.getBoundingClientRect() : null;
+    if (pr) ctrl.push({ id: 'zs-baixar-pdf', left: pr.left, right: pr.right, top: pr.top, bottom: pr.bottom });
+    return { toggle: { left: rt.left, right: rt.right, top: rt.top, bottom: rt.bottom, w: rt.width, h: rt.height }, rotuloVisivel: getComputedStyle(t.querySelector('.zuni-chat-rotulo')).display !== 'none', raio: cs.borderRadius, ctrl, vw: innerWidth, vh: innerHeight };
+  };
+  const sobrepostos = (r) => r.ctrl.filter((c) => intersecta(r.toggle, c)).map((c) => c.id);
+
+  console.log('C3 — formato e posição em 390 px e 1366 px, e depois de redimensionar a tela');
+  for (const id of OBRAS) {
+    await teste(`${id}: celular = botão redondo só com o ícone; computador = botão com rótulo; 0 sobreposições nos dois e depois de redimensionar`, async () => {
+      const { ctx, page } = await abrir(id, { width: 390, height: 844 }, true);
+      const m = await page.evaluate(medir);
+      assert.ok(!m.sem, 'sem botão');
+      assert.ok(Math.abs(m.toggle.w - m.toggle.h) < 1 && m.toggle.w <= 56, `no celular o botão deveria ser redondo (${Math.round(m.toggle.w)}×${Math.round(m.toggle.h)})`);
+      assert.strictEqual(m.rotuloVisivel, false, 'no celular o rótulo deveria estar escondido');
+      assert.deepStrictEqual(sobrepostos(m), [], 'cobre no celular: ' + sobrepostos(m).join(', '));
+      assert.ok(m.toggle.left >= 0 && m.toggle.right <= m.vw && m.toggle.top >= 0 && m.toggle.bottom <= m.vh, 'botão fora da tela (celular)');
+      // celular → computador (redimensionar): o widget reavalia sozinho
+      await page.setViewportSize({ width: 1366, height: 800 }); await page.waitForTimeout(1500);
+      const d = await page.evaluate(medir);
+      assert.strictEqual(d.rotuloVisivel, true, 'no computador o rótulo deveria aparecer');
+      assert.ok(d.toggle.w > 80, `no computador o botão deveria ser o botão largo (${Math.round(d.toggle.w)} px)`);
+      assert.deepStrictEqual(sobrepostos(d), [], 'cobre no computador (depois de redimensionar): ' + sobrepostos(d).join(', '));
+      // computador → celular
+      await page.setViewportSize({ width: 390, height: 844 }); await page.waitForTimeout(1500);
+      const c = await page.evaluate(medir);
+      assert.deepStrictEqual(sobrepostos(c), [], 'cobre no celular (depois de redimensionar de volta): ' + sobrepostos(c).join(', '));
+      await ctx.close();
+      const { ctx: ctx2, page: p2 } = await abrir(id, { width: 1366, height: 800 }, false);
+      const dd = await p2.evaluate(medir);
+      await ctx2.close();
+      assert.deepStrictEqual(sobrepostos(dd), [], 'cobre no computador: ' + sobrepostos(dd).join(', '));
     });
   }
 

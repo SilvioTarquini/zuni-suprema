@@ -15,8 +15,8 @@
   a página ser servida — o widget não precisa validar nada, só usar.
 -->
 <div id="zuni-chat-widget" data-livro-id="__ZUNI_LIVRO_ID__">
-  <button id="zuni-chat-toggle" type="button" aria-expanded="false" aria-controls="zuni-chat-painel">
-    💬 Livro-Vivo
+  <button id="zuni-chat-toggle" type="button" aria-expanded="false" aria-controls="zuni-chat-painel" aria-label="Livro-Vivo: conversar sobre este livro" title="Livro-Vivo">
+    <span class="zuni-chat-icone" aria-hidden="true">💬</span><span class="zuni-chat-rotulo">Livro-Vivo</span>
   </button>
 
   <div id="zuni-chat-painel" role="dialog" aria-modal="true" aria-labelledby="zuni-chat-titulo">
@@ -122,9 +122,11 @@
   @media (max-width: 640px) {
     #zuni-chat-painel { width: 100vw; }
   }
-  /* Celular: a barra de controles do leitor ocupa os ~70 px de baixo da tela; o botão fica ACIMA dela, nunca sobre ela. */
+  /* Celular (até 820 px): botão redondo, só com o ícone, em todos os leitores. A posição de partida fica ACIMA da barra de controles
+     (~70 px de baixo da tela); se ainda assim cobrir algum controle do leitor, o script do widget o desloca (ver reposicionar()). */
   @media (max-width: 820px) {
-    #zuni-chat-toggle { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); padding: 10px 14px; font-size: 0.85rem; }
+    #zuni-chat-toggle { right: 12px; bottom: calc(92px + env(safe-area-inset-bottom, 0px)); width: 48px; height: 48px; padding: 0; justify-content: center; gap: 0; font-size: 1.3rem; line-height: 1; }
+    #zuni-chat-toggle .zuni-chat-rotulo { display: none; }
   }
 
   .zuni-chat-cabecalho {
@@ -359,6 +361,81 @@
     widget.classList.remove('zuni-chat-aberto');
     toggle.setAttribute('aria-expanded', 'false');
   }
+
+  // ---- Posição do botão: nunca sobre os controles do leitor --------------------------------------------------------------------------
+  // Controles = botões, setas, links, campos e o "Baixar PDF" que estejam realmente visíveis (o elemento do topo no ponto central é ele
+  // mesmo). Vale para qualquer leitor e para qualquer largura: nada por obra. Se o botão, na posição de partida (a do CSS), sobrepõe
+  // algum controle, ele vai para a posição livre mais próxima da posição de partida; se não houver posição livre, fica onde está.
+  // Reavalia ao carregar, ao redimensionar/girar a tela e quando o leitor muda (abrir o livro, virar a página, mostrar ou esconder barras).
+  var MARGEM = 8; var FOLGA = 4; var agendamento = null; var observador = null;
+  function cobre(a, b) { return a.left < b.right + FOLGA && a.right > b.left - FOLGA && a.top < b.bottom + FOLGA && a.bottom > b.top - FOLGA; }
+  function controlesDoLeitor() {
+    var vw = window.innerWidth; var vh = window.innerHeight; var lista = [];
+    var els = document.querySelectorAll('button, [role=button], a[href], input, select, textarea, summary');
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i];
+      if (widget.contains(e)) continue;
+      var r = e.getBoundingClientRect();
+      if (r.width < 4 || r.height < 4 || r.right <= 0 || r.bottom <= 0 || r.left >= vw || r.top >= vh) continue;
+      if (r.width * r.height > 0.35 * vw * vh) continue; // área de clique do tamanho da tela: ignorar, senão não sobra lugar
+      var cs = window.getComputedStyle(e);
+      if (cs.visibility === 'hidden' || cs.display === 'none' || cs.pointerEvents === 'none' || parseFloat(cs.opacity) === 0) continue;
+      var cx = Math.min(Math.max(r.left + r.width / 2, 1), vw - 1); var cy = Math.min(Math.max(r.top + r.height / 2, 1), vh - 1);
+      var topo = document.elementFromPoint(cx, cy);
+      if (!topo || !(topo === e || e.contains(topo))) continue; // coberto por outra coisa: não está disponível ao toque
+      lista.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+    }
+    return lista;
+  }
+  function livreDeControles(ret, controles) {
+    for (var i = 0; i < controles.length; i++) if (cobre(ret, controles[i])) return false;
+    return true;
+  }
+  function posicaoLivreMaisProxima(pref, controles) {
+    var vw = window.innerWidth; var vh = window.innerHeight; var w = pref.width; var h = pref.height;
+    var melhor = null; var melhorD = Infinity;
+    for (var top = MARGEM; top <= vh - h - MARGEM; top += 8) {
+      for (var left = MARGEM; left <= vw - w - MARGEM; left += 8) {
+        var dx = left - pref.left; var dy = top - pref.top; var d = dx * dx + dy * dy;
+        if (d >= melhorD) continue;
+        if (livreDeControles({ left: left, top: top, right: left + w, bottom: top + h }, controles)) { melhor = { left: left, top: top }; melhorD = d; }
+      }
+    }
+    return melhor;
+  }
+  function observar(ligar) {
+    if (!observador) return;
+    if (ligar) observador.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
+    else observador.disconnect();
+  }
+  function reposicionar() {
+    try {
+      if (widget.classList.contains('zuni-chat-aberto')) return;
+      observar(false);
+      toggle.style.left = ''; toggle.style.top = ''; toggle.style.right = ''; toggle.style.bottom = '';
+      toggle.style.visibility = 'hidden';
+      var pref = toggle.getBoundingClientRect();
+      var controles = controlesDoLeitor();
+      toggle.style.visibility = '';
+      if (pref.width > 0 && !livreDeControles(pref, controles)) {
+        var p = posicaoLivreMaisProxima(pref, controles);
+        if (p) { toggle.style.right = 'auto'; toggle.style.bottom = 'auto'; toggle.style.left = p.left + 'px'; toggle.style.top = p.top + 'px'; }
+      }
+    } catch (e) { toggle.style.visibility = ''; } finally { observar(true); }
+  }
+  function agendar(ms) { if (agendamento) clearTimeout(agendamento); agendamento = setTimeout(reposicionar, ms); }
+  if (typeof MutationObserver === 'function') {
+    observador = new MutationObserver(function (registros) {
+      for (var i = 0; i < registros.length; i++) if (!widget.contains(registros[i].target)) { agendar(300); return; }
+    });
+    observar(true);
+  }
+  window.addEventListener('resize', function () { agendar(150); });
+  window.addEventListener('orientationchange', function () { agendar(400); });
+  window.addEventListener('load', function () { agendar(100); });
+  document.addEventListener('click', function () { agendar(450); }, true);
+  document.addEventListener('keyup', function () { agendar(450); }, true);
+  [60, 600, 1600, 3600].forEach(function (ms) { setTimeout(function () { agendar(0); }, ms); }); // leitores que montam a tela aos poucos
 
   toggle.addEventListener('click', abrirChat);
   fechar.addEventListener('click', fecharChat);

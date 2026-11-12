@@ -55,7 +55,8 @@ function blocosDaObra(modelo) {
     const unidades = s.blocos.map((b) => textoDoBloco(b)).filter(Boolean).map((t) => ({ texto: t, palavras: contarPalavras(t) }));
     if (!unidades.length) continue;
     const total = unidades.reduce((a, u) => a + u.palavras, 0);
-    const base = limparTitulo(tituloCompleto(s));
+    // rótulo igual ao título ("Apresentação" + "Apresentação") não se repete no título do trecho
+    const base = limparTitulo(s.rotulo && s.rotulo.trim().toLowerCase() === s.titulo.trim().toLowerCase() ? s.titulo : tituloCompleto(s));
     if (total <= LIMITE_UM_BLOCO) { blocos.push({ tema: base, corpo: unidades.map((u) => u.texto).join('\n\n') }); continue; }
     const grupos = agrupar(unidades, Math.ceil(total / ALVO_PALAVRAS));
     grupos.forEach((g, i) => blocos.push({ tema: grupos.length > 1 ? `${base} — parte ${i + 1}/${grupos.length}` : base, corpo: g.map((u) => u.texto).join('\n\n') }));

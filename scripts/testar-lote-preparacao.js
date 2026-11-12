@@ -165,8 +165,11 @@ for (const slug of ['pais-e-filhos', 'relacoes-e-convivencia', 'romances-e-histo
     assert.strictEqual((h.match(/\{\{[A-Z0-9_]+\}\}/g) || []).length, 0);
     assert.ok(U.listarUniversos().includes(slug));
   });
-  teste(`${slug}: NÃO aparece em public/loja/index.html (sem botão de entrada)`, () => {
-    assert.ok(!fs.readFileSync(path.join(__dirname, '..', 'public', 'loja', 'index.html'), 'utf8').includes(slug));
+  // Lote 2 (11/11/2026, decisão do Silvio): os três universos ganharam botão na entrada da Loja (antes do lote 2 não tinham).
+  teste(`${slug}: aparece em public/loja/index.html (botão de entrada, com o cupom repassado)`, () => {
+    const h = fs.readFileSync(path.join(__dirname, '..', 'public', 'loja', 'index.html'), 'utf8');
+    assert.ok(h.includes(`href="/loja/${slug}/"`));
+    assert.ok(h.includes(`'/loja/${slug}/?cupom='`));
   });
 }
 
