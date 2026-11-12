@@ -23,6 +23,7 @@ const { patchDaTerra, ehLeitorDaTerra } = require('./leitorMobileTerra');
 const { patchMotorE, ehMotorE } = require('./leitorMobileMotorE');
 const { patchPaginador } = require('./leitorMobilePaginador');
 const { ehLivroSemImpressao, tirarImpressaoDaTerra, tirarImpressaoHtmlEstatico, tirarImpressaoTemplate } = require('./leitorSemImpressao');
+const { removerDownloadHtml } = require('./leitorSemDownloadHtml');
 const { precisaCorrigirCapa, corrigirCapaMesa } = require('./leitorCapaMesa');
 
 // Livros do motor A cujo paginador recebe a revalidação/divisão de blocos (ver leitorMobilePaginador.js).
@@ -305,6 +306,8 @@ async function lerLivroComPatch(livroId, htmlPath, opcoes = {}) {
   } else if (resultado.motivo !== MOTIVO_SEM_BUNDLE && resultado.motivo !== MOTIVO_NATIVO) {
     console.error(`[LEITOR_PATCH_FALHOU] livroId=${livroId} motivo=${resultado.motivo} — entregando o livro original.`);
   }
+  // Obras antigas: o botão "Baixar" que entregava o livro como .html sai (independe de o patch de celular ter sido aplicado).
+  html = removerDownloadHtml(livroId, html).html;
 
   cache.set(chave, { mtimeMs, html });
   while (cache.size > CACHE_MAX) cache.delete(cache.keys().next().value);
