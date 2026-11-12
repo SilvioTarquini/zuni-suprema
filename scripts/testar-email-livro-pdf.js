@@ -96,7 +96,8 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
       promete ? comPdf++ : semPdf++;
     }
     assert.ok(comPdf >= 1, 'nenhuma página de obra com PDF foi conferida');
-    assert.ok(semPdf >= 1, 'nenhuma página de obra SEM PDF foi conferida (era o caso do bug)');
+    // desde 12/11/2026 todas as obras com amostra aprovada têm PDF; o caso "sem PDF" é coberto por textoPrazoLeitura('a-arquitetura-da-decisao-humana') acima e pelo e-mail de Tempo para Viver
+    void semPdf;
   });
 
   // Livro-Vivo no e-mail de acesso (só obras com chatDisponivel na ficha)
@@ -120,9 +121,9 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
       assert.ok(texto(enviados[0].html).includes(FRASE(expira.toLocaleDateString('pt-BR'), true)) && texto(enviados[0].html).includes(PRAZO_CHAT(expira.toLocaleDateString('pt-BR'), true)), id);
     }
   });
-  await teste('obra com chat e SEM PDF (Ela Tem Classe): a frase sai sem a menção ao PDF', async () => {
+  await teste('obra com chat e SEM PDF (Tempo para Viver): a frase sai sem a menção ao PDF', async () => {
     enviados.length = 0;
-    await enviarEmailAcessoLivro('c@x.com', 'ela-tem-classe', 'TOKE', expira, undefined, '');
+    await enviarEmailAcessoLivro('c@x.com', 'tempo-para-viver', 'TOKE', expira, undefined, '');
     const t = texto(enviados[0].html);
     assert.ok(t.includes(FRASE(expira.toLocaleDateString('pt-BR'), false)), t);
     assert.ok(t.includes(PRAZO_CHAT(expira.toLocaleDateString('pt-BR'), false)) && contar(t, expira.toLocaleDateString('pt-BR')) === 1, t);
