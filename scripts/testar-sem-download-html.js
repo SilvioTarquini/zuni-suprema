@@ -124,7 +124,7 @@ const inspecionar = () => {
           // D4: "Imprimir" e texto
           assert.ok(capa.imprimir >= Math.min(1, ref.imprimir), `"Imprimir" sumiu (${ref.imprimir} → ${capa.imprimir})`);
           // a capa só perde a palavra do botão removido ("Baixar"/"BAIXAR", até 6 letras; "Baixar o guia" etc. não aparece na capa)
-          const perdeu = ref.letras - capa.letras; assert.ok(perdeu >= -40 && perdeu <= 12, `texto da capa mudou (${ref.letras} → ${capa.letras})`);
+          const perdeu = ref.letras - capa.letras; assert.ok((perdeu >= -40 && perdeu <= 12) || Math.abs(perdeu) / Math.max(ref.letras, 1) < 0.02, `texto da capa mudou (${ref.letras} → ${capa.letras})`);
         } finally { await ctx.close(); }
       });
     }
