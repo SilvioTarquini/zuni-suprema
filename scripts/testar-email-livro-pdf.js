@@ -100,19 +100,24 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
   });
 
   // Livro-Vivo no e-mail de acesso (só obras com chatDisponivel na ficha)
-  const FRASE = (data, comPdf) => `Na página do livro, converse com o Livro-Vivo durante a sua leitura. O recurso funciona no site até ${data}${comPdf ? ' e não acompanha o PDF' : ''}.`;
+  const FRASE = (data, comPdf) => `Na página do livro, converse com o Livro-Vivo durante a sua leitura.`;
+  const PRAZO_CHAT = (data, comPdf) => `A leitura no site e o Livro-Vivo ficam disponíveis até ${data}.${comPdf ? ' O PDF é seu para guardar.' : ''}`;
+  const contar = (texto, trecho) => texto.split(trecho).length - 1;
   await teste('obra com chat e PDF (Fazenda Lucrativa): frase do Livro-Vivo com a data de expiração e "não acompanha o PDF"', async () => {
     enviados.length = 0;
     await enviarEmailAcessoLivro('c@x.com', 'fazenda-lucrativa', 'TOKF', expira, undefined, 'Ana');
     const t = texto(enviados[0].html);
     assert.ok(t.includes(FRASE(expira.toLocaleDateString('pt-BR'), true)), t);
+    assert.ok(t.includes(PRAZO_CHAT(expira.toLocaleDateString('pt-BR'), true)), 'linha única de prazo: ' + t);
+    assert.strictEqual(contar(t, expira.toLocaleDateString('pt-BR')), 1, 'a data deve aparecer UMA vez só: ' + t);
+    assert.ok(!/funciona no site até|não acompanha o PDF|fica disponível até/.test(t), 'sobrou a linha de data antiga: ' + t);
     assert.ok(t.includes('Baixar o livro em PDF') && t.includes('Acessar meu livro'), 'os links existentes sumiram');
   });
   await teste('as 5 obras do lote com PDF recebem a frase; a data é a de expiração do acesso', async () => {
     for (const id of ['da-terra-ao-resultado', 'fazenda-lucrativa', 'a-bussola-do-adolescente', 'situacoes-da-vida-real', 'heranca-de-papel']) {
       enviados.length = 0;
       await enviarEmailAcessoLivro('c@x.com', id, 'T', expira, undefined, 'X');
-      assert.ok(texto(enviados[0].html).includes(FRASE(expira.toLocaleDateString('pt-BR'), true)), id);
+      assert.ok(texto(enviados[0].html).includes(FRASE(expira.toLocaleDateString('pt-BR'), true)) && texto(enviados[0].html).includes(PRAZO_CHAT(expira.toLocaleDateString('pt-BR'), true)), id);
     }
   });
   await teste('obra com chat e SEM PDF (Ela Tem Classe): a frase sai sem a menção ao PDF', async () => {
@@ -120,18 +125,25 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
     await enviarEmailAcessoLivro('c@x.com', 'ela-tem-classe', 'TOKE', expira, undefined, '');
     const t = texto(enviados[0].html);
     assert.ok(t.includes(FRASE(expira.toLocaleDateString('pt-BR'), false)), t);
+    assert.ok(t.includes(PRAZO_CHAT(expira.toLocaleDateString('pt-BR'), false)) && contar(t, expira.toLocaleDateString('pt-BR')) === 1, t);
     assert.ok(!/PDF/.test(t), 'prometeu PDF numa obra sem PDF');
   });
   await teste('obra SEM chat na ficha (Vender Bem): nenhuma menção ao Livro-Vivo', async () => {
     enviados.length = 0;
     await enviarEmailAcessoLivro('c@x.com', 'vender-bem-vender-sempre', 'TOKV', expira, undefined, 'X');
     assert.ok(!/Livro-Vivo/.test(enviados[0].html));
+    const t = texto(enviados[0].html); assert.ok(t.includes(`A leitura no site fica disponível até ${expira.toLocaleDateString('pt-BR')}. O PDF é seu para guardar.`), 'obra sem chat mudou: ' + t);
   });
   await teste('textoEmailLivroVivo: vazio sem chat ou sem data; frase exata com chat', () => {
     const { textoEmailLivroVivo } = require('../src/lib/prazoAcesso');
     assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: false, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), '');
     assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: true, temPdf: true, dataExpiracaoFormatada: '' }), '');
-    assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: true, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), 'Na página do livro, converse com o Livro-Vivo durante a sua leitura. O recurso funciona no site até 20/01/2027 e não acompanha o PDF.');
+    assert.strictEqual(textoEmailLivroVivo({ chatDisponivel: true, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), 'Na página do livro, converse com o Livro-Vivo durante a sua leitura.');
+    const { textoEmailPrazoAcesso } = require('../src/lib/prazoAcesso');
+    assert.strictEqual(textoEmailPrazoAcesso({ chatDisponivel: true, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), 'A leitura no site e o Livro-Vivo ficam disponíveis até 20/01/2027. O PDF é seu para guardar.');
+    assert.strictEqual(textoEmailPrazoAcesso({ chatDisponivel: true, temPdf: false, dataExpiracaoFormatada: '20/01/2027' }), 'A leitura no site e o Livro-Vivo ficam disponíveis até 20/01/2027.');
+    assert.strictEqual(textoEmailPrazoAcesso({ chatDisponivel: false, temPdf: true, dataExpiracaoFormatada: '20/01/2027' }), 'A leitura no site fica disponível até 20/01/2027. O PDF é seu para guardar.');
+    assert.strictEqual(textoEmailPrazoAcesso({ chatDisponivel: false, temPdf: false, dataExpiracaoFormatada: '20/01/2027' }), 'O acesso fica disponível até 20/01/2027.');
   });
 
   console.log('\nTotal: ' + (passaram + falhas.length) + ' | Passaram: ' + passaram + ' | Falharam: ' + falhas.length);

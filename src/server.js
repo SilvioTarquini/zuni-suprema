@@ -1877,7 +1877,7 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
   const tipo = 'acesso-livro';
   try {
     const { enviarEmail } = require('./lib/email');
-    const { textoEmailLeituraPdf, textoEmailLivroVivo } = require('./lib/prazoAcesso');
+    const { textoEmailLeituraPdf, textoEmailLivroVivo, textoEmailPrazoAcesso } = require('./lib/prazoAcesso');
 
     const linkAcesso = `https://www.zunisuprema.com.br/livros/${encodeURIComponent(livroId)}?token=${encodeURIComponent(token)}`;
     const expiraFormatado = expiraEm.toLocaleDateString('pt-BR');
@@ -1889,7 +1889,9 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
 
     // Obras com chat (Livro-Vivo): avisa que ele vive no site, até a data de expiração, e não acompanha o PDF.
     const fichaLivro = require('./lib/catalogoLivros').buscarLivro(livroId);
-    const textoLivroVivo = textoEmailLivroVivo({ chatDisponivel: Boolean(fichaLivro && fichaLivro.chatDisponivel), temPdf, dataExpiracaoFormatada: expiraFormatado });
+    const comChat = Boolean(fichaLivro && fichaLivro.chatDisponivel);
+    const textoLivroVivo = textoEmailLivroVivo({ chatDisponivel: comChat, dataExpiracaoFormatada: expiraFormatado });
+    const textoPrazo = textoEmailPrazoAcesso({ chatDisponivel: comChat, temPdf, dataExpiracaoFormatada: expiraFormatado });
 
     let linkAudiolivro = '';
     if (tokenAudiolivro) {
@@ -1905,7 +1907,7 @@ async function enviarEmailAcessoLivro(email, livroId, token, expiraEm, tokenAudi
           ${linkPdf ? `<p><a href="${linkPdf}" style="color:#B8963E;font-weight:bold;">Baixar o livro em PDF</a></p>` : ''}
           ${linkAudiolivro ? `<p><a href="${linkAudiolivro}" style="color:#B8963E;font-weight:bold;">▶️ Ouvir audiolivro</a></p>` : ''}
           ${textoLivroVivo ? `<p style="color:#b6ab93;font-size:0.85rem;">${textoLivroVivo}</p>` : ''}
-          <p style="color:#b6ab93;font-size:0.85rem;">${temPdf ? `A leitura no site fica disponível até ${expiraFormatado}. O PDF é seu para guardar.` : `O acesso fica disponível até ${expiraFormatado}.`}</p>
+          <p style="color:#b6ab93;font-size:0.85rem;">${textoPrazo}</p>
 
           <p style="color:#b6ab93;font-size:0.8rem;margin-top:24px;">ZUNI Suprema — A ciência da excelência humana<br>www.zunisuprema.com.br</p>
         </div>

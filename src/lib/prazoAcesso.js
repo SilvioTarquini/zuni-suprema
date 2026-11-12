@@ -30,11 +30,20 @@ function textoEmailLeituraPdf() {
   return d ? `Leia no site por ${d} ${d === 1 ? 'dia' : 'dias'} e baixe o PDF para guardar.` : 'Leia no site e baixe o PDF para guardar.';
 }
 
-// Frase do e-mail de entrega das obras com chat (Livro-Vivo): o recurso vive no site, dentro do prazo de leitura, e não acompanha o PDF.
-// Só existe quando a ficha liga o chat (chatDisponivel). Sem PDF na obra, a menção ao PDF não faz sentido e sai.
-function textoEmailLivroVivo({ chatDisponivel, temPdf, dataExpiracaoFormatada }) {
+// Frase do e-mail de entrega das obras com chat (Livro-Vivo): onde ele está. Só existe quando a ficha liga o chat (chatDisponivel).
+// A DATA não aparece aqui: ela vem uma vez só, na linha de prazo (textoEmailPrazoAcesso).
+function textoEmailLivroVivo({ chatDisponivel, dataExpiracaoFormatada }) {
   if (chatDisponivel !== true || !dataExpiracaoFormatada) return '';
-  return `Na página do livro, converse com o Livro-Vivo durante a sua leitura. O recurso funciona no site até ${dataExpiracaoFormatada}${temPdf ? ' e não acompanha o PDF' : ''}.`;
+  return 'Na página do livro, converse com o Livro-Vivo durante a sua leitura.';
 }
 
-module.exports = { DIAS_DE_ACESSO, diasParaExibir, textoPrazoLeitura, textoEmailLeituraPdf, textoEmailLivroVivo };
+// Linha de prazo do e-mail de entrega — UMA só, com a data de expiração do acesso:
+//   obra com chat: "A leitura no site e o Livro-Vivo ficam disponíveis até DD/MM/AAAA." (+ "O PDF é seu para guardar." se a obra tem PDF)
+//   obra sem chat: "A leitura no site fica disponível até …. O PDF é seu para guardar."  /  "O acesso fica disponível até …."
+function textoEmailPrazoAcesso({ chatDisponivel, temPdf, dataExpiracaoFormatada }) {
+  const d = dataExpiracaoFormatada;
+  if (chatDisponivel === true) return `A leitura no site e o Livro-Vivo ficam disponíveis até ${d}.${temPdf ? ' O PDF é seu para guardar.' : ''}`;
+  return temPdf ? `A leitura no site fica disponível até ${d}. O PDF é seu para guardar.` : `O acesso fica disponível até ${d}.`;
+}
+
+module.exports = { DIAS_DE_ACESSO, diasParaExibir, textoPrazoLeitura, textoEmailLeituraPdf, textoEmailLivroVivo, textoEmailPrazoAcesso };
