@@ -29,6 +29,7 @@ const { permitirPergunta } = require('../lib/limiteLivroVivo');
 const { verificarCustoMensal } = require('../lib/alertaCustoLivroVivo');
 const { carregarIndiceCapitulos, buscarTrechosDoCapitulo, detectarReferenciaCapitulo, sanitizarCapituloAberto } = require('../lib/capituloLivro');
 const { carregarVocabulario, sugerirTermos } = require('../lib/termosSemelhantes');
+const { encerrarEmFraseCompleta } = require('../lib/fraseCompleta');
 
 const router = express.Router();
 router.use(express.json());
@@ -36,6 +37,9 @@ router.use(express.json());
 const PERGUNTA_MAX_CHARS = 1000;
 const HISTORICO_MAX_TROCAS = 6;
 const CLAUDE_MODEL = 'claude-sonnet-4-6';
+// Resposta normal: 2–4 parágrafos. Modo capítulo: resumo de ~400 palavras (~800 tokens em português) com folga para não bater no teto.
+const MAX_TOKENS_NORMAL = 700; // inalterado
+const MAX_TOKENS_CAPITULO = 2000;
 
 const CONTROL_CHARS_REGEX = new RegExp('[\\x00-\\x1F\\x7F]', 'g');
 
@@ -126,7 +130,7 @@ REGRA DE LINGUAGEM NEUTRA: nunca presuma o gênero de quem pergunta. Não use "a
   // Blocos montados SÓ com dados do livro e números inteiros validados (nunca com texto digitado pela pessoa).
   const blocos = [];
   if (extras.capitulo) {
-    blocos.push(`MODO CAPÍTULO: os trechos abaixo são o capítulo inteiro "${extras.capitulo.base}", completos e na ordem em que aparecem no livro${extras.capitulo.cortado ? ' (o final foi omitido por tamanho)' : ''}. Aqui você PODE resumir o capítulo, explicar o que acontece e interpretar o sentido dele, sempre com base apenas nesses trechos. Pode usar até 5 parágrafos; a instrução de concisão de 2–4 parágrafos não vale neste modo.`);
+    blocos.push(`MODO CAPÍTULO: os trechos abaixo são o capítulo inteiro "${extras.capitulo.base}", completos e na ordem em que aparecem no livro${extras.capitulo.cortado ? ' (o final foi omitido por tamanho)' : ''}. Aqui você PODE resumir o capítulo, explicar o que acontece e interpretar o sentido dele, sempre com base apenas nesses trechos. Quando a pessoa pedir um resumo, escreva cerca de 400 palavras (entre 350 e 450), em até 5 parágrafos, cobrindo o capítulo do começo ao fim, e termine SEMPRE com uma frase completa. A instrução de concisão de 2–4 parágrafos não vale neste modo.`);
   }
   if (extras.inexistente) {
     blocos.push(`CAPÍTULO INEXISTENTE: a pessoa pediu um capítulo que não existe neste livro; a obra tem capítulos numerados de 1 a ${extras.inexistente.maior}. Diga isso com gentileza e ofereça ajuda com um dos capítulos existentes.`);
@@ -142,21 +146,28 @@ const { avaliarSeguranca, adicionarDiretivaAoSistema, aplicarRodapeSeguranca } =
 
 // Salvaguarda determinística de crise: avalia a pergunta atual e o histórico do usuário (nunca o RAG), reforça o prompt
 // e garante o rodapé de emergência por código. Não é triagem clínica.
-async function gerarRespostaClaude(systemPromptBase, messages) {
+async function gerarRespostaClaude(systemPromptBase, messages, opcoes = {}) {
   const ultima = messages[messages.length - 1];
   const seguranca = avaliarSeguranca({ message: ultima && ultima.content, history: messages.slice(0, -1) });
   const systemPrompt = adicionarDiretivaAoSistema(systemPromptBase, seguranca);
+  const maxTokens = opcoes.modo === 'capitulo' ? MAX_TOKENS_CAPITULO : MAX_TOKENS_NORMAL;
   const Anthropic = require('@anthropic-ai/sdk');
   const anthropic = new Anthropic.default({ apiKey: process.env.ANTHROPIC_API_KEY });
 
   const response = await anthropic.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 700,
+    max_tokens: maxTokens,
     system: systemPrompt,
     messages
   });
 
-  return aplicarRodapeSeguranca(response.content[0].text, seguranca);
+  // Registro de por que a resposta terminou ("end_turn" = normal; "max_tokens" = bateu no teto e foi aparada na última frase completa).
+  const motivoFim = response.stop_reason || 'desconhecido';
+  const { texto, aparada } = encerrarEmFraseCompleta(response.content[0].text, motivoFim === 'max_tokens');
+  const saida = response.usage && response.usage.output_tokens != null ? response.usage.output_tokens : 'n/d';
+  console.log(`[LIVRO_CHAT] livroId=${opcoes.livroId || '?'} modo=${opcoes.modo || 'normal'} stop_reason=${motivoFim} max_tokens=${maxTokens} tokens_saida=${saida}${aparada ? ' aparada=sim' : ''}`);
+
+  return aplicarRodapeSeguranca(texto, seguranca);
 }
 
 router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
@@ -236,7 +247,7 @@ router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
     const systemPrompt = montarSystemPrompt(titulo, trechos, extras);
 
     const messages = [...historicoSanitizado, { role: 'user', content: perguntaSanitizada }];
-    const resposta = await gerarRespostaClaude(systemPrompt, messages);
+    const resposta = await gerarRespostaClaude(systemPrompt, messages, { livroId: livro_id, modo: extras.capitulo ? 'capitulo' : 'normal' });
 
     await incrementarUsoDiario(token, livro_id, perguntasFeitas);
     verificarCustoMensal(); // só observa (log/e-mail); nunca atrasa nem altera a resposta

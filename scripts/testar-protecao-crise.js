@@ -136,7 +136,7 @@ const av = (message, history) => S.avaliarSeguranca({ message, history });
   for (const rota of ['src/routes/livroChat.js', 'src/routes/experimenteLivroChat.js']) {
     await teste(`estático: ${rota} protege gerarRespostaClaude`, async () => {
       const s = lerLF(rota);
-      assert.ok(/avaliarSeguranca\(\{ message: ultima && ultima\.content, history: messages\.slice\(0, -1\) \}\)/.test(s) && /adicionarDiretivaAoSistema\(systemPromptBase, seguranca\)/.test(s) && /aplicarRodapeSeguranca\(response\.content\[0\]\.text, seguranca\)/.test(s));
+      assert.ok(/avaliarSeguranca\(\{ message: ultima && ultima\.content, history: messages\.slice\(0, -1\) \}\)/.test(s) && /adicionarDiretivaAoSistema\(systemPromptBase, seguranca\)/.test(s) && /aplicarRodapeSeguranca\((?:response\.content\[0\]\.text|texto), seguranca\)/.test(s));
     });
   }
 
