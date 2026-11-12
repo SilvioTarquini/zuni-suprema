@@ -51,6 +51,7 @@ const inspecionar = () => {
   const els = [...document.querySelectorAll('button, a, [role=button]')].filter((e) => !e.closest('#zuni-chat-widget'));
   for (const e of els) {
     const t = (e.textContent || '').replace(/\s+/g, ' ').trim(); const ti = e.getAttribute('title') || ''; const id = e.id || '';
+    if (/baixar pdf/i.test(t) || id === 'btnPdf' || id === 'zs-baixar-pdf') continue; // "Baixar PDF" protegido é o botão certo
     if (/\bbaixar\b/i.test(t) || /\bbaixar\b.*\.html|\(\.html\)/i.test(ti) || id === 'btnDownload' || id === 'link-baixar' || e.hasAttribute('download') || e.getAttribute('data-cact') === 'down') achados.push(`${e.tagName}#${id}[${t.slice(0, 20)}]`);
   }
   const imprimir = els.filter((e) => /imprimir|print/i.test(`${e.textContent} ${e.id} ${e.getAttribute('title') || ''}`)).length;
@@ -122,7 +123,7 @@ const inspecionar = () => {
           // D2: erros novos
           const novos = erros.filter((e) => !(o.erros || []).includes(e)); assert.deepStrictEqual(novos, [], 'erros de JavaScript novos: ' + novos.join(' | '));
           // D4: "Imprimir" e texto
-          assert.ok(capa.imprimir >= Math.min(1, ref.imprimir), `"Imprimir" sumiu (${ref.imprimir} → ${capa.imprimir})`);
+          if (ehLivroSemImpressao(id)) assert.strictEqual(capa.imprimir, 0, '"Imprimir" deveria ter saído (PDF protegido existe)'); else assert.ok(capa.imprimir >= Math.min(1, ref.imprimir), `"Imprimir" sumiu (${ref.imprimir} → ${capa.imprimir})`);
           // a capa só perde a palavra do botão removido ("Baixar"/"BAIXAR", até 6 letras; "Baixar o guia" etc. não aparece na capa)
           const perdeu = ref.letras - capa.letras; assert.ok((perdeu >= -40 && perdeu <= 12) || Math.abs(perdeu) / Math.max(ref.letras, 1) < 0.02, `texto da capa mudou (${ref.letras} → ${capa.letras})`);
         } finally { await ctx.close(); }

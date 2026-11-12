@@ -40,7 +40,13 @@ const LIVROS_SEM_IMPRESSAO = new Set([
   'toda-briga-tem-dois-comecos',
   'entre-o-encanto-e-a-escolha',
   'senti-percebi-escolhi',
-  'ninguem-reage-do-nada'
+  'ninguem-reage-do-nada',
+  // Obras antigas, grupo 1 (Universo Feminino): saem do "Imprimir" porque o PDF protegido já existe no bucket (12/11/2026):
+  'ela-tem-classe',
+  'codigo-feminino',
+  'a-inteligencia-do-corpo-feminino',
+  'inesquecivel-charme-feminino',
+  'a-mulher-que-permanece-inteira'
 ]);
 
 function ehLivroSemImpressao(livroId) {
@@ -144,7 +150,19 @@ function tirarImpressaoHtmlEstatico(html) {
   return t;
 }
 
+// Inesquecível Charme Feminino: três botões ligados ao mesmo doPrint ("⬇ BAIXAR" e "🖶 IMPRIMIR" na capa, "🖶" na barra do leitor), sem ids.
+// "⬇ BAIXAR" vira "⬇ BAIXAR PDF" e o doPrint passa a navegar para a rota protegida; os dois botões de imprimir saem. Passos independentes.
+function tirarImpressaoInesquecivel(template) {
+  let t = template;
+  t = t.replace(/\n?[ \t]*<button\b[^>]*sc-camel-on-click="\{\{ doPrint \}\}"[^>]*>🖶 IMPRIMIR<\/button>/, '');
+  t = t.replace(/\n?[ \t]*<button\b[^>]*sc-camel-on-click="\{\{ doPrint \}\}"[^>]*>🖶<\/button>/, '');
+  t = t.replace(/(<button\b[^>]*sc-camel-on-click="\{\{ doPrint \}\}"[^>]*>)⬇ BAIXAR(<\/button>)/, (_, a, b) => `${a}⬇ BAIXAR PDF${b}`);
+  t = t.replace('doPrint: () => window.print(),', () => `doPrint: () => { ${JS_IR_PARA_PDF} },`);
+  return t;
+}
+
 function tirarImpressaoTemplate(livroId, template) {
+  if (livroId === 'inesquecivel-charme-feminino') return tirarImpressaoInesquecivel(template);
   if (!LIVROS_COM_CAMINHO_ESTRITO.has(livroId)) return tirarImpressaoTemplateTolerante(template);
   if (livroId === 'toda-mesa-tem-dois-lados') {
     // Leitor em React: onclick="texto" não funciona (erro React #231). Mantém o gancho original do componente

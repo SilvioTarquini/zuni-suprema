@@ -34,9 +34,10 @@ async function teste(nome, fn) {
   const orig = console.error;
   console.error = (...a) => { msgs.push(a.join(' ')); };
 
-  await teste('a lista de livros sem impressão é exatamente os 3 à venda em private/livros/', async () => {
+  const FEMININO = ['ela-tem-classe', 'codigo-feminino', 'a-inteligencia-do-corpo-feminino', 'inesquecivel-charme-feminino', 'a-mulher-que-permanece-inteira']; // coberto por testar-sem-impressao-feminino.js
+  await teste('a lista de livros sem impressão em private/livros/ é exatamente os 3 à venda + as 5 do Universo Feminino (PDF protegido no bucket)', async () => {
     const todos = fs.readdirSync(RAIZ).filter((d) => !d.startsWith('_'));
-    assert.deepStrictEqual(todos.filter(ehLivroSemImpressao).sort(), [...QUATRO].sort());
+    assert.deepStrictEqual(todos.filter(ehLivroSemImpressao).sort(), [...QUATRO, ...FEMININO].sort());
   });
 
   for (const id of QUATRO) {
@@ -62,7 +63,7 @@ async function teste(nome, fn) {
   });
 
   await teste('outros livros: idênticos com e sem a opção (nada mais mudou)', async () => {
-    const outros = fs.readdirSync(RAIZ).filter((d) => !d.startsWith('_') && !QUATRO.includes(d) && fs.existsSync(arquivo(d)));
+    const outros = fs.readdirSync(RAIZ).filter((d) => !d.startsWith('_') && !QUATRO.includes(d) && !FEMININO.includes(d) && fs.existsSync(arquivo(d)));
     assert.ok(outros.length >= 30, 'poucos livros: ' + outros.length);
     for (const id of outros.slice(0, 6)) {
       const a = await lerLivroComPatch(id, arquivo(id));
