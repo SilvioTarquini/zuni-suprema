@@ -106,17 +106,16 @@ const PAGINA = "const {renderizarExperimenteObra}=require('./src/lib/experimente
     await page.waitForTimeout(800);
     assert.ok(await page.evaluate(() => document.getElementById('prazo-leitura').hidden));
   });
-  await teste('R2.6 loja: o trecho "prazo determinado" ganha o número; sem resposta, fica o texto genérico', async () => {
+  await teste('R2.6 loja: a frase de abertura ganha o número de dias do servidor; sem resposta, fica a frase sem número', async () => {
     respostaPrazo = { status: 200, json: { dias: 90, texto: 'Você recebe o livro em PDF para guardar e pode ler no site por 90 dias.' } };
     await page.goto('http://teste.local/loja/');
     await page.waitForTimeout(800);
     const com = await page.evaluate(() => document.getElementById('prazo-loja').textContent);
-    assert.ok(com.endsWith('Você recebe o livro em PDF para guardar e pode ler no site por 90 dias.'), com);
-    assert.ok(!com.includes('prazo determinado'));
+    assert.strictEqual(com, 'Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site e conversar com ele no Livro-Vivo por até 90 dias. E também poderá baixar o livro para ler quando quiser.');
     respostaPrazo = { status: 500, json: {} };
     await page.goto('http://teste.local/loja/');
     await page.waitForTimeout(800);
-    assert.ok((await page.evaluate(() => document.getElementById('prazo-loja').textContent)).includes('prazo determinado'));
+    const sem = await page.evaluate(() => document.getElementById('prazo-loja').textContent); assert.ok(sem.includes('durante o prazo do seu acesso') && !/\d/.test(sem), sem);
   });
   await browser.close();
 

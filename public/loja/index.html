@@ -619,8 +619,8 @@
 <header class="topo">
   <span class="selo"></span>
   <h1>Livros ZUNI Suprema</h1>
-  <p id="prazo-loja">Após a confirmação do pagamento, você recebe o livro em PDF para guardar e pode ler no site por um prazo determinado.</p>
-  <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span> O acesso chega por link logo após a confirmação do pagamento.</p>
+  <p id="prazo-loja">Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site e conversar com ele no Livro-Vivo durante o prazo do seu acesso. E também poderá baixar o livro para ler quando quiser.</p>
+  <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span></p>
 </header>
 
 <div class="faixa-mentor">
@@ -628,7 +628,7 @@
     <p>Conheça as experiências gratuitas da ZUNI: degustações editoriais de obras selecionadas e a experiência interativa de "Os Bastidores da Mente — Volume I".</p>
     <div class="acoes">
       <a class="btn-mentor" id="porta-experimente-link" href="/experimente">Conheça o Experimente ZUNI</a>
-      <a class="btn-mentor btn-mentor-secundario" href="/checkout.html">Conheça o Mentor ZUNI</a>
+      <a class="btn-mentor btn-mentor-secundario" href="/checkout.html">Conheça o ZUNI Direciona</a>
     </div>
   </div>
 </div>
@@ -667,7 +667,7 @@
   <div class="cartao">
     <div class="texto">
       <p class="sobretitulo">Saúde e Longevidade</p>
-      <p class="chamada">Saúde integrativa, energia, sono, metabolismo e longevidade, com base científica.</p>
+      <p class="chamada">Saúde integrativa, energia, sono, metabolismo e longevidade, com informação responsável.</p>
     </div>
     <a class="btn-universo" id="porta-saude-link" href="/loja/saude-e-longevidade/">Explorar Saúde e Longevidade</a>
   </div>
@@ -926,13 +926,13 @@
     renderizarLivros();
   });
 
-  // Prazo de leitura no site: o número vem do servidor (mesma configuração do acesso). Sem resposta, fica o texto genérico.
+  // Prazo de acesso: o número de dias vem SEMPRE do servidor (LIVRO_ACESSO_DIAS) — nunca escrito no HTML. Sem resposta, fica a frase sem número.
   fetch('/api/config/prazo-acesso')
     .then((r) => (r.ok ? r.json() : null))
     .then((d) => {
       const el = document.getElementById('prazo-loja');
-      if (el && d && typeof d.texto === 'string' && d.texto) {
-        el.textContent = d.texto;
+      if (el && d && Number.isInteger(d.dias) && d.dias > 0) {
+        el.textContent = 'Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site e conversar com ele no Livro-Vivo por até ' + d.dias + (d.dias === 1 ? ' dia' : ' dias') + '. E também poderá baixar o livro para ler quando quiser.';
       }
     })
     .catch(() => {});
