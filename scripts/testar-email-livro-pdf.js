@@ -35,7 +35,8 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
 (async () => {
   await teste('livro com PDF: "Leia no site por 90 dias e baixe o PDF para guardar." + link do PDF com o token', async () => {
     enviados.length = 0;
-    await enviarEmailAcessoLivro('c@x.com', 'vender-bem-vender-sempre', 'TOK123', expira, undefined, 'Silvio Tarquini');
+    const ficha = require('../src/lib/catalogoLivros').CATALOGO['vender-bem-vender-sempre']; const chatOriginal = ficha.chatDisponivel; ficha.chatDisponivel = false; // desde 12/11/2026 Vender Bem tem chat; aqui a ficha é simulada SEM chat (só em memória)
+    try { await enviarEmailAcessoLivro('c@x.com', 'vender-bem-vender-sempre', 'TOK123', expira, undefined, 'Silvio Tarquini'); } finally { ficha.chatDisponivel = chatOriginal; }
     assert.strictEqual(enviados.length, 1);
     const { html, to, subject } = enviados[0];
     assert.strictEqual(to, 'c@x.com');
@@ -131,7 +132,8 @@ const texto = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
   });
   await teste('obra SEM chat na ficha (Vender Bem): nenhuma menção ao Livro-Vivo', async () => {
     enviados.length = 0;
-    await enviarEmailAcessoLivro('c@x.com', 'vender-bem-vender-sempre', 'TOKV', expira, undefined, 'X');
+    const fichaV = require('../src/lib/catalogoLivros').CATALOGO['vender-bem-vender-sempre']; const chatV = fichaV.chatDisponivel; fichaV.chatDisponivel = false; // ficha simulada sem chat (só em memória)
+    try { await enviarEmailAcessoLivro('c@x.com', 'vender-bem-vender-sempre', 'TOKV', expira, undefined, 'X'); } finally { fichaV.chatDisponivel = chatV; }
     assert.ok(!/Livro-Vivo/.test(enviados[0].html));
     const t = texto(enviados[0].html); assert.ok(t.includes(`A leitura no site fica disponível até ${expira.toLocaleDateString('pt-BR')}. O PDF é seu para guardar.`), 'obra sem chat mudou: ' + t);
   });
