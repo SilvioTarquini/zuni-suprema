@@ -534,6 +534,10 @@
   .porta-romances .cartao { border-left-color: #3d3a6b; }
   .porta-relacoes .cartao { border-left-color: #8a4b2d; }
   .porta-pais .cartao { border-left-color: #2f5d6b; }
+  /* Portas de Universo Masculino, Desenvolvimento Humano e Saúde e Longevidade (12/11/2026). */
+  .porta-masculino .cartao { border-left-color: #26344f; }
+  .porta-dh .cartao { border-left-color: #55592a; }
+  .porta-saude .cartao { border-left-color: #1f6b5c; }
 
   /* Painel de detalhe (aberto ao tocar num card da grade "Livros").
      O corpo (.info) reaproveita as mesmas classes/estilos do card antigo
@@ -639,23 +643,33 @@
   </div>
 </nav>
 
-<nav class="porta-universo porta-empreender" aria-label="Empreender e Crescer">
+<nav class="porta-universo porta-masculino" aria-label="Universo Masculino">
   <div class="cartao">
     <div class="texto">
-      <p class="sobretitulo">Empreender e Crescer</p>
-      <p class="chamada">Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria.</p>
+      <p class="sobretitulo">Universo Masculino</p>
+      <p class="chamada">Presença, elegância, saúde e performance para o homem contemporâneo.</p>
     </div>
-    <a class="btn-universo" id="porta-empreender-link" href="/loja/empreender-e-crescer/">Explorar Empreender e Crescer</a>
+    <a class="btn-universo" id="porta-masculino-link" href="/loja/universo-masculino/">Explorar o Universo Masculino</a>
   </div>
 </nav>
 
-<nav class="porta-universo porta-romances" aria-label="Romances e Histórias">
+<nav class="porta-universo porta-dh" aria-label="Desenvolvimento Humano">
   <div class="cartao">
     <div class="texto">
-      <p class="sobretitulo">Romances e Histórias</p>
-      <p class="chamada">Histórias para ler com calma — e para pensar depois.</p>
+      <p class="sobretitulo">Desenvolvimento Humano</p>
+      <p class="chamada">Autoconhecimento, consciência e decisões — para compreender a mente e o próprio caminho.</p>
     </div>
-    <a class="btn-universo" id="porta-romances-link" href="/loja/romances-e-historias/">Explorar Romances e Histórias</a>
+    <a class="btn-universo" id="porta-dh-link" href="/loja/desenvolvimento-humano/">Explorar Desenvolvimento Humano</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-saude" aria-label="Saúde e Longevidade">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Saúde e Longevidade</p>
+      <p class="chamada">Saúde integrativa, energia, sono, metabolismo e longevidade, com base científica.</p>
+    </div>
+    <a class="btn-universo" id="porta-saude-link" href="/loja/saude-e-longevidade/">Explorar Saúde e Longevidade</a>
   </div>
 </nav>
 
@@ -676,6 +690,26 @@
       <p class="chamada">Compreensão e linguagem para que pais e filhos continuem se entendendo quando a convivência aperta.</p>
     </div>
     <a class="btn-universo" id="porta-pais-link" href="/loja/pais-e-filhos/">Explorar Pais e Filhos</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-romances" aria-label="Romances e Histórias">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Romances e Histórias</p>
+      <p class="chamada">Histórias para ler com calma — e para pensar depois.</p>
+    </div>
+    <a class="btn-universo" id="porta-romances-link" href="/loja/romances-e-historias/">Explorar Romances e Histórias</a>
+  </div>
+</nav>
+
+<nav class="porta-universo porta-empreender" aria-label="Empreender e Crescer">
+  <div class="cartao">
+    <div class="texto">
+      <p class="sobretitulo">Empreender e Crescer</p>
+      <p class="chamada">Para administrar melhor o que é seu — da primeira venda à grande empresa, do campo à indústria.</p>
+    </div>
+    <a class="btn-universo" id="porta-empreender-link" href="/loja/empreender-e-crescer/">Explorar Empreender e Crescer</a>
   </div>
 </nav>
 
@@ -877,6 +911,9 @@
         document.getElementById('porta-empreender-link').href = '/loja/empreender-e-crescer/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-romances-link').href = '/loja/romances-e-historias/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-relacoes-link').href = '/loja/relacoes-e-convivencia/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-masculino-link').href = '/loja/universo-masculino/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-dh-link').href = '/loja/desenvolvimento-humano/?cupom=' + encodeURIComponent(cupom);
+        document.getElementById('porta-saude-link').href = '/loja/saude-e-longevidade/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-pais-link').href = '/loja/pais-e-filhos/?cupom=' + encodeURIComponent(cupom);
         document.getElementById('porta-experimente-link').href = '/experimente?cupom=' + encodeURIComponent(cupom);
       }

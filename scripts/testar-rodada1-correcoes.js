@@ -64,7 +64,7 @@ teste('A3 loja Empreender e Crescer: aviso por obra (só da-terra)', () => {
   const ed = require('../src/lib/universosConfig').UNIVERSOS['empreender-e-crescer'].editorial;
   assert.strictEqual(ed['da-terra-ao-resultado'].aviso, AVISO_TERRA);
   // Lote-piloto: a Fazenda Lucrativa também tem aviso próprio (números didáticos, doses e regras fiscais); as demais não.
-  assert.deepStrictEqual(Object.keys(ed).filter((k) => ed[k].aviso).sort(), ['da-terra-ao-resultado', 'fazenda-lucrativa']);
+  assert.deepStrictEqual(Object.keys(ed).filter((k) => ed[k].aviso).sort(), ['da-terra-ao-resultado', 'executive-black-standalone', 'fazenda-lucrativa', 'protocolo-90s-executive-black']); // 12/11/2026: as duas Executive Black (suplementação e protocolos) entraram com aviso de conteúdo informativo
   assert.ok(!/saude: true/.test(JSON.stringify(ed)));
 });
 teste('A4 servidor: customer_email só com e-mail de formato válido, apenas na sessão de livros', () => {

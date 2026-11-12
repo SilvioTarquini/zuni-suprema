@@ -308,6 +308,22 @@
     max-width: 38em;
   }
 
+  /* ── Link para outro universo (ex.: Empreender e Crescer → Universo Masculino): logo abaixo da abertura, bem visível ── */
+  .relacionado {
+    margin: 0 0 26px;
+    padding: 16px;
+    border: 1px solid var(--acento);
+    border-radius: 10px;
+    background: var(--carta);
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 18px;
+  }
+  .relacionado .texto { flex: 1 1 260px; min-width: 0; }
+  .relacionado h2 { margin: 0 0 4px; font-size: 1.05rem; font-weight: normal; }
+  .relacionado p { margin: 0; font-size: 0.95rem; color: var(--suave); }
+
   /* ── Diagnóstico Empresarial: espaço reservado, conteúdo final pendente de definição ── */
   .diagnostico {
     margin-top: 22px;
@@ -507,6 +523,7 @@
     <p class="fecho">{{FECHO}}</p>
   </header>
 
+{{LINK_RELACIONADO}}
   <main id="vitrine" aria-live="polite">
     <p class="estado" id="estado">Carregando as obras…</p>
     <noscript><p class="estado">Para ver as obras, ative o JavaScript ou acesse a <a href="/loja/">Loja ZUNI completa</a>.</p></noscript>
@@ -622,7 +639,7 @@
     fm.replaceChildren(...chipsFormatos(l));
     const ed = EDITORIAL[id];
     document.getElementById('det-chamada').textContent = ed ? ed.chamada : (l.resumo || '');
-    document.getElementById('det-sobre').replaceChildren(...(ed ? ed.sobre : [l.descricao || '']).map((t) => el('p', { text: t })));
+    document.getElementById('det-sobre').replaceChildren(...((ed && ed.sobre) ? ed.sobre : [l.descricao || '']).map((t) => el('p', { text: t })));
     const notaAviso = document.getElementById('det-nota-saude');
     notaAviso.textContent = (ed && ed.aviso) || '';
     notaAviso.hidden = !(ed && ed.aviso);

@@ -54,13 +54,13 @@ teste('a mesma frase só é rebaixada para a obra e o trecho revisados', () => {
 });
 
 console.log('Entrada da Loja e universos (lote 2)');
-teste('a entrada da Loja tem as 5 portas, com o cupom repassado nas 3 novas', () => {
+teste('a entrada da Loja tem as 8 portas, com o cupom repassado nas 6 que não são as duas primeiras', () => {
   const h = fs.readFileSync(path.join(__dirname, '..', 'public', 'loja', 'index.html'), 'utf8');
-  for (const [id, slug] of [['porta-romances-link', 'romances-e-historias'], ['porta-relacoes-link', 'relacoes-e-convivencia'], ['porta-pais-link', 'pais-e-filhos']]) {
+  for (const [id, slug] of [['porta-romances-link', 'romances-e-historias'], ['porta-relacoes-link', 'relacoes-e-convivencia'], ['porta-pais-link', 'pais-e-filhos'], ['porta-masculino-link', 'universo-masculino'], ['porta-dh-link', 'desenvolvimento-humano'], ['porta-saude-link', 'saude-e-longevidade']]) {
     assert.ok(h.includes(`id="${id}" href="/loja/${slug}/"`), id);
     assert.ok(h.includes(`getElementById('${id}').href = '/loja/${slug}/?cupom='`), 'cupom em ' + id);
   }
-  assert.strictEqual((h.match(/class="btn-universo"/g) || []).length, 5);
+  assert.strictEqual((h.match(/class="btn-universo"/g) || []).length, 8);
 });
 teste('Pais e Filhos: só a seção "Em família" é nova e nenhum romance entra', () => {
   const { UNIVERSOS: U } = require('../src/lib/universosConfig');

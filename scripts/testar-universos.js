@@ -31,7 +31,7 @@ const SAIDA = path.join(RAIZ, 'relatorios', 'capturas_estrutura');
 const UNIVERSOS = [
   { slug: 'universo-feminino', antigo: 'public/loja/universo-feminino/index.html' },
   // extras: obras acrescentadas DEPOIS da página antiga (lote-piloto) — a paridade vale para as obras originais; as extras têm checagem própria.
-  { slug: 'empreender-e-crescer', antigo: 'public/loja/empreender-e-crescer/index.html', extras: ['Fazenda Lucrativa'], secaoNova: 'Do campo à fazenda' }
+  { slug: 'empreender-e-crescer', antigo: 'public/loja/empreender-e-crescer/index.html', extras: ['Fazenda Lucrativa', 'Inteligência Artificial — Volume 1', 'Empresas Inteligentes — Volume 2', "Protocolo 90's Executive Black", 'Executive Black — Standalone'], secaoNova: 'Do campo à fazenda' }
 ];
 
 let total = 0; const falhas = [];
@@ -145,21 +145,25 @@ async function coletar(page) {
     await pa.goto(`http://127.0.0.1:${porta}/antigo/${u.slug}/`);
     const N = await coletar(pn), A = await coletar(pa);
     const extras = u.extras || [];
+    // As duas Executive Black estão em [universo-masculino, empreender-e-crescer]: a página ANTIGA só lê o 1º universo da lista e não as vê em Empreender e Crescer.
+    const SO_NA_NOVA = extras.filter((t) => /Executive Black/.test(t)).length;
     const idxEx = N.cards.map((c, i) => (extras.includes(c.t) ? i : -1)).filter((i) => i >= 0);
     const idxExA = A.cards.map((c, i) => (extras.includes(c.t) ? i : -1)).filter((i) => i >= 0);
     const sem = (arr) => arr.filter((_, i) => !idxEx.includes(i));
     const semA = (arr) => arr.filter((_, i) => !idxExA.includes(i));
     const Ncards = sem(N.cards); const Acards = semA(A.cards);
     if (extras.length) {
-      ok(`${N.cards.length} obras na nova = ${A.cards.length} na antiga (a antiga já listava a acrescentada em "Mais…"; comparo as originais, e ${extras.join(', ')} tem checagem própria)`, N.cards.length === A.cards.length && idxEx.length === extras.length && idxExA.length === extras.length);
+      ok(`${N.cards.length} obras na nova = ${A.cards.length} na antiga (a antiga já listava a acrescentada em "Mais…"; comparo as originais, e ${extras.join(', ')} tem checagem própria)`, N.cards.length === A.cards.length + SO_NA_NOVA && idxEx.length === extras.length && idxExA.length === extras.length - SO_NA_NOVA);
       const sec = N.secoes.find((x) => x[2].includes(extras[0]));
       ok(`${extras[0]} está na seção própria "${u.secaoNova}", ao lado de Da Terra, e não em "Mais de…"`, !!sec && sec[0] === u.secaoNova && sec[2].includes('Da Terra ao Resultado') && !N.secoes.some((x) => /^Mais de/.test(x[0]) && x[2].includes(extras[0])), JSON.stringify(N.secoes));
     } else {
       ok(`${N.cards.length} obras na nova = ${A.cards.length} na antiga`, N.cards.length === A.cards.length && N.cards.length > 0);
     }
-    ok('título e metatags (description, og, theme-color) iguais', igual([N.titulo, N.desc, N.ogTitulo, N.ogDesc, N.tema], [A.titulo, A.desc, A.ogTitulo, A.ogDesc, A.tema]));
-    ok('cores (variáveis CSS) iguais', igual(N.cores, A.cores), JSON.stringify(N.cores) + ' × ' + JSON.stringify(A.cores));
-    ok('estilos calculados (h1, botão, seções, rodapé, corpo) iguais', igual(N.estilos, A.estilos));
+    // theme-color não entra: a paleta Areia (12/11/2026) mudou o fundo de todos os universos de propósito
+    ok('título e metatags (description, og) iguais', igual([N.titulo, N.desc, N.ogTitulo, N.ogDesc], [A.titulo, A.desc, A.ogTitulo, A.ogDesc]));
+    // paleta Areia: fundo/carta/tinta/suave/borda mudaram de propósito; o ACENTO de cada universo (--acento, --acento-escuro) tem de ser o de antes
+    ok('acento do universo (variáveis CSS) igual', igual(N.cores.slice(5), A.cores.slice(5)), JSON.stringify(N.cores) + ' × ' + JSON.stringify(A.cores));
+    ok('estilo do botão primário (cor do acento) igual', igual(N.estilos[2], A.estilos[2]));
     let dif = '';
     if (N.texto !== A.texto) { let i = 0; while (N.texto[i] === A.texto[i]) i++; dif = `1ª diferença em ${i}: nova «${N.texto.slice(Math.max(0, i - 25), i + 50)}» × antiga «${A.texto.slice(Math.max(0, i - 25), i + 50)}»`; }
     if (!extras.length) {

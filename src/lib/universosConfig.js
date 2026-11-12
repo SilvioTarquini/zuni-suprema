@@ -651,6 +651,126 @@ const UNIVERSOS = {
 // Paleta "Areia" (12/11/2026): fundo claro e quente comum a TODOS os universos da Loja. Só o fundo, as cartas, as bordas e o texto esquentam;
 // o ACENTO de cada universo (acento, acentoEscuro, acentoRgb) continua o do próprio universo. Contrastes: texto/fundo 12,5:1; suave/fundo 5,7:1.
 const PALETA_AREIA = { fundo: '#efe5d1', carta: '#faf4e6', cartaClara: '#f6eedc', borda: '#d9c9a5', capaFundo: '#e6d9bd', tinta: '#2a2216', suave: '#645638', tintaRgb: '42, 34, 22' };
+// ---- Universos novos (12/11/2026): Desenvolvimento Humano, Saúde e Longevidade, Universo Masculino ---------------------------------------
+const AVISO_SAUDE = 'Conteúdo de caráter informativo, que não substitui o acompanhamento de um profissional de saúde.';
+const direciona = (href) => ({ titulo: 'Há uma situação específica acontecendo em sua vida?', texto: 'Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para ajudar a compreender melhor sua situação antes de decidir.', href });
+const comAviso = (obj) => Object.fromEntries(Object.entries(obj).map(([id, chamada]) => [id, { chamada, aviso: AVISO_SAUDE }]));
+const soChamada = (obj) => Object.fromEntries(Object.entries(obj).map(([id, chamada]) => [id, { chamada }]));
+
+UNIVERSOS['desenvolvimento-humano'] = {
+  slug: 'desenvolvimento-humano', nome: 'Desenvolvimento Humano', sobretitulo: 'Desenvolvimento Humano',
+  h1: 'Livros para compreender a mente, as escolhas e o sentido do próprio caminho.',
+  intro: 'Autoconhecimento, consciência e decisões — em obras para ler com calma e revisitar ao longo da vida.',
+  fecho: 'Comece pela obra que fala com a sua fase.',
+  descricao: 'Livros para compreender a mente, as escolhas e o sentido do próprio caminho. Livro digital — Loja ZUNI Suprema.',
+  descricaoOg: 'Autoconhecimento, consciência e decisões — em obras para ler com calma e revisitar ao longo da vida.',
+  themeColor: PALETA_AREIA.fundo,
+  tema: { ...PALETA_AREIA, acento: '#55592a', acentoEscuro: '#3b3e1d', acentoRgb: '85, 89, 42' },
+  criterio: { universo: 'desenvolvimento-humano' }, origem: 'desenvolvimento-humano', direciona: direciona('/checkout?origem=desenvolvimento-humano'), blocoExtra: null,
+  secoes: [
+    { id: 'autoconhecimento', titulo: 'Autoconhecimento e consciência', frase: 'Obras para olhar para dentro: a mente, as emoções e o despertar da consciência.', ids: ['a-jornada-interior', 'o-caminho-da-consciencia', 'a-arte-e-a-ciencia-de-viver'] },
+    { id: 'decisoes-clareza', titulo: 'Decisões e clareza', frase: 'Como escolhemos, o que captura a atenção e como recuperar lucidez antes de reagir.', ids: ['a-arquitetura-da-decisao-humana', 'o-retorno-da-clareza', 'consequencias-edicao-essencial', 'transforma-te-protocolos-90s'] },
+    { id: 'excelencia-maturidade', titulo: 'Excelência e maturidade', frase: 'Um modelo integrado de vida e o tempo de decidir bem na maturidade.', ids: ['excelencia-humana', 'tempo-para-viver'] },
+    { id: 'bastidores-da-mente', titulo: 'Os Bastidores da Mente', frase: 'Série em seis volumes sobre as forças que movem sentimentos, escolhas e propósito.', ids: ['os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal', 'os-bastidores-da-mente-2-o-antidoto', 'os-bastidores-da-mente-3-a-bussola-humana', 'os-bastidores-da-mente-4-a-travessia', 'os-bastidores-da-mente-5-a-escada', 'os-bastidores-da-mente-6-o-designio'] }
+  ],
+  restantes: { id: 'mais', titulo: 'Mais de Desenvolvimento Humano', frase: 'Outras obras deste universo.' },
+  editorial: soChamada({
+    'a-jornada-interior': 'Corpo, emoções, movimento e sono reunidos em um único mapa de autoconhecimento.',
+    'o-caminho-da-consciencia': 'Uma pausa no automatismo para compreender a si mesmo, os outros e a vida.',
+    'a-arte-e-a-ciencia-de-viver': 'Neurociência, psicologia, filosofia e espiritualidade em um só percurso.',
+    'a-arquitetura-da-decisao-humana': 'Neurociência e psicologia para navegar as escolhas com mais lucidez.',
+    'o-retorno-da-clareza': 'Da atenção capturada à reconstrução deliberada da clareza.',
+    'consequencias-edicao-essencial': 'Como reconhecer, a tempo, os pontos onde ainda é possível interromper a cascata de pequenas escolhas.',
+    'transforma-te-protocolos-90s': 'O método dos 90 segundos: criar espaço interno antes de reagir, com protocolos para situações do dia a dia.',
+    'excelencia-humana': 'Saúde, inteligência, equilíbrio emocional e propósito em um único modelo integrado.',
+    'tempo-para-viver': 'A maturidade como tempo de decisões, capacidades e propósito — não de perdas a administrar.',
+    'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal': 'Sentimentos, emoções e reações instintivas: as forças ocultas que nos levam à ação.',
+    'os-bastidores-da-mente-2-o-antidoto': 'A arte de atravessar embates sem se tornar aquilo que se combate.',
+    'os-bastidores-da-mente-3-a-bussola-humana': 'Navegar a diversidade humana: o que move as pessoas e o norte que guia a convivência.',
+    'os-bastidores-da-mente-4-a-travessia': 'O propósito maior por trás dos bastidores da mente.',
+    'os-bastidores-da-mente-5-a-escada': 'Da ancestralidade da consciência ao Plano Maior.',
+    'os-bastidores-da-mente-6-o-designio': 'O desfecho da série: da criação eterna ao despertar da alma.'
+  })
+};
+
+UNIVERSOS['saude-e-longevidade'] = {
+  slug: 'saude-e-longevidade', nome: 'Saúde e Longevidade', sobretitulo: 'Saúde e Longevidade',
+  h1: 'Livros para compreender o corpo como um sistema — e cuidar dele com informação.',
+  intro: 'Saúde integrativa, energia, sono, metabolismo e longevidade, em linguagem acessível e com informação responsável.',
+  fecho: 'Comece pelo assunto que mais pesa no seu dia.',
+  descricao: 'Livros de saúde integrativa, energia, metabolismo e longevidade. Livro digital — Loja ZUNI Suprema.',
+  descricaoOg: 'Saúde integrativa, energia, sono, metabolismo e longevidade, em linguagem acessível e com informação responsável.',
+  themeColor: PALETA_AREIA.fundo,
+  tema: { ...PALETA_AREIA, acento: '#1f6b5c', acentoEscuro: '#154d42', acentoRgb: '31, 107, 92' },
+  criterio: { universo: 'saude-e-longevidade' }, origem: 'saude-e-longevidade', direciona: direciona('/checkout?origem=saude-e-longevidade'), blocoExtra: null,
+  secoes: [
+    { id: 'visao-integrada', titulo: 'Visão integrada do organismo', frase: 'Cérebro, hormônios, metabolismo e imunidade compreendidos como uma só rede.', ids: ['a-inteligencia-da-vida', 'arquitetura-excelencia-humana-ii', 'medicina-natural-integrativa'] },
+    { id: 'energia-metabolismo', titulo: 'Energia, metabolismo e peso', frase: 'Por trás do cansaço e da dificuldade de emagrecer, mecanismos que a "força de vontade" não explica.', ids: ['o-elo-invisivel', 'a-visao-integrativa-da-obesidade'] },
+    { id: 'mente-emocoes', titulo: 'Mente e emoções', frase: 'Esgotamento, ansiedade e depressão vistos de forma sistêmica.', ids: ['mentes-esgotadas', 'a-neurobiologia-integrativa-da-depressao'] },
+    { id: 'longevidade', titulo: 'Longevidade', frase: 'Envelhecer com autonomia, vigor e propósito.', ids: ['rejuvenesca', 'tempo-para-viver'] }
+  ],
+  restantes: { id: 'mais', titulo: 'Mais de Saúde e Longevidade', frase: 'Outras obras deste universo.' },
+  editorial: comAviso({
+    'a-inteligencia-da-vida': 'O organismo como um sistema integrado: cérebro, hormônios, metabolismo, imunidade, intestino e emoções.',
+    'arquitetura-excelencia-humana-ii': 'A arquitetura biológica por trás da energia, da clareza mental e da longevidade.',
+    'medicina-natural-integrativa': 'Água, luz, sono, movimento, nutrição e regulação do estresse: os pilares de que o organismo precisa.',
+    'o-elo-invisivel': 'A teia que liga cansaço, névoa mental, inflamação, insulina e estresse emocional.',
+    'a-visao-integrativa-da-obesidade': 'Emagrecer não é apenas comer menos: uma visão sistêmica que desmonta mitos.',
+    'mentes-esgotadas': 'Burnout, ansiedade e vazio: como o cérebro funciona e um protocolo diário de proteção mental.',
+    'a-neurobiologia-integrativa-da-depressao': 'Uma visão sistêmica da depressão, além do mito do "desequilíbrio químico".',
+    'rejuvenesca': 'Idade cronológica e idade biológica: o que o estilo de vida muda no envelhecer.',
+    'tempo-para-viver': 'Capítulos para atravessar a maturidade com autonomia, capacidade e sentido.'
+  })
+};
+
+UNIVERSOS['universo-masculino'] = {
+  slug: 'universo-masculino', nome: 'Universo Masculino', sobretitulo: 'Universo Masculino',
+  h1: 'Livros sobre presença, saúde e refinamento para o homem contemporâneo.',
+  intro: 'Presença, elegância e cuidado com o corpo e a mente, com naturalidade e sem fórmulas prontas.',
+  fecho: 'Comece pela obra que conversa com o seu momento.',
+  descricao: 'Livros sobre presença, elegância, saúde e performance para o homem contemporâneo. Livro digital — Loja ZUNI Suprema.',
+  descricaoOg: 'Presença, elegância e cuidado com o corpo e a mente, com naturalidade e sem fórmulas prontas.',
+  themeColor: PALETA_AREIA.fundo,
+  tema: { ...PALETA_AREIA, acento: '#26344f', acentoEscuro: '#192338', acentoRgb: '38, 52, 79' },
+  criterio: { departamento: 'Universo Masculino', universo: 'universo-masculino' }, origem: 'universo-masculino',
+  direciona: { titulo: 'Há uma situação específica acontecendo em sua vida?', texto: 'Nem toda questão cabe em um livro. O ZUNI Direciona oferece orientação personalizada para ajudá-lo a compreender melhor sua situação antes de decidir.', href: '/checkout?origem=universo-masculino' }, blocoExtra: null,
+  secoes: [
+    { id: 'presenca-elegancia', titulo: 'Presença e elegância', frase: 'Magnetismo, segurança emocional e refinamento que se constroem na prática.', ids: ['a-arte-da-presenca-masculina', 'a-presenca-em-acao-apendice', 'a-arte-invisivel-elegancia-masculina'] },
+    { id: 'saude-beleza', titulo: 'Saúde e beleza', frase: 'Corpo, hormônios, longevidade e cuidados essenciais.', ids: ['guia-integral-saude-beleza-masculina'] },
+    { id: 'performance-pressao', titulo: 'Performance sob pressão', frase: 'Governança pessoal e protocolos para quem lidera em ritmo intenso.', ids: ['protocolo-90s-executive-black', 'executive-black-standalone'] }
+  ],
+  restantes: { id: 'mais', titulo: 'Mais do Universo Masculino', frase: 'Outras obras desta coleção.' },
+  editorial: {
+    ...soChamada({
+      'a-arte-da-presenca-masculina': 'Presença vale mais que performance: magnetismo e segurança emocional, sem personagens.',
+      'a-presenca-em-acao-apendice': 'Doze exercícios objetivos, um por capítulo, para transformar princípio em hábito.',
+      'a-arte-invisivel-elegancia-masculina': 'O refinamento que não se compra nem se veste, mas se percebe.'
+    }),
+    ...comAviso({
+      'guia-integral-saude-beleza-masculina': 'Corpo, hormônios, longevidade e presença, com protocolos para acompanhar com um profissional de saúde.',
+      'protocolo-90s-executive-black': 'Governança pessoal para quem lidera sob pressão, não apenas técnicas isoladas.',
+      'executive-black-standalone': 'Edição compacta, com protocolos de aplicação imediata para executivos.'
+    })
+  }
+};
+
+// Empreender e Crescer: IA e Executive Black entram; o Universo Masculino ganha um link claro no topo da página.
+{
+  const ec = UNIVERSOS['empreender-e-crescer'];
+  ec.secoes.push(
+    { id: 'ia-negocios', titulo: 'Inteligência artificial nos negócios', frase: 'Dos fundamentos da IA à implementação prática em empresas e profissões.', ids: ['inteligencia-artificial-volume-1', 'empresas-inteligentes-volume-2'] },
+    { id: 'lideranca-pressao', titulo: 'Liderança sob pressão', frase: 'Governança pessoal e protocolos para quem decide e lidera em ritmo intenso.', ids: ['protocolo-90s-executive-black', 'executive-black-standalone'] }
+  );
+  Object.assign(ec.editorial, comAviso({
+    'protocolo-90s-executive-black': 'Governança pessoal para quem lidera sob pressão, não apenas técnicas isoladas.',
+    'executive-black-standalone': 'Edição compacta, com protocolos de aplicação imediata para executivos.'
+  }), soChamada({
+    'inteligencia-artificial-volume-1': 'Fundamentos da revolução da IA e o que ela muda em negócios, profissões e produtividade.',
+    'empresas-inteligentes-volume-2': 'Guia prático para incorporar IA, com diagnósticos, exercícios e checklists.'
+  }));
+  ec.linkRelacionado = { titulo: 'Liderança, presença e saúde do homem', texto: 'O Universo Masculino reúne as obras de presença, elegância, saúde e performance — incluindo as duas edições do Executive Black.', rotulo: 'Conhecer o Universo Masculino', href: '/loja/universo-masculino/' };
+}
+
 for (const u of Object.values(UNIVERSOS)) { Object.assign(u.tema, PALETA_AREIA); u.themeColor = PALETA_AREIA.fundo; }
 
 module.exports = { UNIVERSOS, PALETA_AREIA };

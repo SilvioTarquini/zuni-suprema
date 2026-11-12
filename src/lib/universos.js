@@ -59,6 +59,19 @@ function blocoExtra(b) {
 `;
 }
 
+// Bloco de link para outro universo (opcional): { titulo, texto, rotulo, href } — href só pode ser /loja/<slug>/ de um universo existente.
+function linkRelacionado(l) {
+  if (!l || !/^\/loja\/[a-z0-9-]+\/$/.test(l.href || '')) return '';
+  return `  <aside class="relacionado" aria-labelledby="relacionado-titulo">
+    <div class="texto">
+      <h2 id="relacionado-titulo">${esc(l.titulo)}</h2>
+      <p>${esc(l.texto)}</p>
+    </div>
+    <a class="btn btn-primario" href="${esc(l.href)}">${esc(l.rotulo)}</a>
+  </aside>
+`;
+}
+
 let modeloEmCache = null;
 function lerModelo() {
   if (!modeloEmCache) modeloEmCache = fs.readFileSync(MODELO, 'utf8').replace(/\r\n/g, '\n');
@@ -72,7 +85,7 @@ function renderizarPagina(slug) {
   const valores = {
     TITULO: esc(u.nome), DESCRICAO: esc(u.descricao), DESCRICAO_OG: esc(u.descricaoOg), THEME_COLOR: esc(u.themeColor),
     TEMA_VARS: temaVars(u.tema), SOBRETITULO: esc(u.sobretitulo), H1: esc(u.h1), INTRO: esc(u.intro), FECHO: esc(u.fecho),
-    BLOCO_EXTRA: blocoExtra(u.blocoExtra), DIRECIONA_TITULO: esc(u.direciona.titulo), DIRECIONA_TEXTO: esc(u.direciona.texto),
+    BLOCO_EXTRA: blocoExtra(u.blocoExtra), LINK_RELACIONADO: linkRelacionado(u.linkRelacionado), DIRECIONA_TITULO: esc(u.direciona.titulo), DIRECIONA_TEXTO: esc(u.direciona.texto),
     DIRECIONA_HREF: esc(u.direciona.href),
     CONFIG_SCRIPT: `<script>window.__UNIVERSO__ = ${jsonSeguro({ slug: u.slug, origem: u.origem, criterio: u.criterio, secoes: u.secoes, restantes: u.restantes, editorial: u.editorial })};</script>`
   };

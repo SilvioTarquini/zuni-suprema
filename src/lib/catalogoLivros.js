@@ -25,6 +25,7 @@ function obterVozPadraoParaDepartamento(departamento) {
 
 const CATALOGO = {
   'os-bastidores-da-mente-1-a-origem-de-todo-bem-e-de-todo-mal': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Os Bastidores da Mente — Volume I: A Origem de Todo Bem e de Todo Mal',
     preco: 57.90,
     categoria: 'principal',
@@ -39,6 +40,7 @@ const CATALOGO = {
     chatDisponivel: true
   },
   'os-bastidores-da-mente-2-o-antidoto': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Os Bastidores da Mente — Volume II: O Antídoto',
     preco: 57.90,
     categoria: 'principal',
@@ -50,6 +52,7 @@ const CATALOGO = {
     chatDisponivel: true
   },
   'os-bastidores-da-mente-3-a-bussola-humana': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Os Bastidores da Mente — Volume III: A Bússola Humana',
     preco: 57.90,
     categoria: 'principal',
@@ -61,6 +64,7 @@ const CATALOGO = {
     chatDisponivel: true
   },
   'os-bastidores-da-mente-4-a-travessia': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Os Bastidores da Mente — Volume IV: A Travessia',
     preco: 57.90,
     categoria: 'principal',
@@ -72,6 +76,7 @@ const CATALOGO = {
     chatDisponivel: true
   },
   'os-bastidores-da-mente-5-a-escada': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Os Bastidores da Mente — Volume V: A Escada e o Plano',
     preco: 57.90,
     categoria: 'principal',
@@ -82,6 +87,7 @@ const CATALOGO = {
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt'
   },
   'os-bastidores-da-mente-6-o-designio': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Os Bastidores da Mente — Volume VI: O Grande Desígnio',
     preco: 57.90,
     categoria: 'principal',
@@ -92,6 +98,7 @@ const CATALOGO = {
     textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt'
   },
   'arquitetura-excelencia-humana-ii': {
+    universo: ['saude-e-longevidade'],
     titulo: 'A Arquitetura da Excelência Humana',
     volume: 2,
     preco: 57.90,
@@ -192,6 +199,7 @@ const CATALOGO = {
     chatDisponivel: true
   },
   'a-arte-da-presenca-masculina': {
+    universo: ['universo-masculino'],
     titulo: 'A Arte da Presença Masculina',
     preco: 67.00,
     precoOriginal: 97.00,
@@ -206,6 +214,7 @@ const CATALOGO = {
     precoAudiobook: 24.90
   },
   'a-presenca-em-acao-apendice': {
+    universo: ['universo-masculino'],
     titulo: 'A Presença em Ação',
     preco: 37.90,
     precoOriginal: 57.00,
@@ -220,6 +229,7 @@ const CATALOGO = {
     precoAudiobook: 14.90
   },
   'a-arte-invisivel-elegancia-masculina': {
+    universo: ['universo-masculino'],
     titulo: 'A Arte Invisível da Elegância Masculina',
     preco: 57.00,
     precoOriginal: 87.00,
@@ -234,6 +244,7 @@ const CATALOGO = {
     precoAudiobook: 14.90
   },
   'guia-integral-saude-beleza-masculina': {
+    universo: ['universo-masculino'],
     titulo: 'Guia Integral de Saúde e Beleza Masculina',
     preco: 97.00,
     precoOriginal: 147.00,
@@ -248,6 +259,7 @@ const CATALOGO = {
     precoAudiobook: 19.90
   },
   'protocolo-90s-executive-black': {
+    universo: ['universo-masculino', 'empreender-e-crescer'],
     titulo: 'Protocolo 90\'s Executive Black',
     precoOriginal: 147.90,
     precoPromocional: 97.90,
@@ -259,6 +271,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem lidera sob pressão e está pagando por isso em sono, saúde ou relações — e quer um sistema de governança pessoal, não técnicas soltas.'
   },
   'executive-black-standalone': {
+    universo: ['universo-masculino', 'empreender-e-crescer'],
     titulo: 'Executive Black — Standalone',
     precoOriginal: 77.90,
     precoPromocional: 47.90,
@@ -348,6 +361,7 @@ const CATALOGO = {
     indicadoPara: 'Pequenos e médios produtores rurais, agricultores familiares, pecuaristas e gestores de propriedades agrícolas.'
   },
   'a-arquitetura-da-decisao-humana': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'A Arquitetura da Decisão Humana',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -359,6 +373,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem trava diante de decisões, ou decide e se arrepende, e quer entender o mecanismo por trás da escolha.'
   },
   'a-arte-e-a-ciencia-de-viver': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'A Arte e a Ciência de Viver',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -370,6 +385,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem sente que a vida virou automatismo e consumo, e busca um percurso amplo — do biológico ao existencial.'
   },
   'a-inteligencia-da-vida': {
+    universo: ['saude-e-longevidade'],
     titulo: 'A Inteligência da Vida',
     precoOriginal: 97.90,
     precoPromocional: 67.90,
@@ -381,6 +397,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem não tem diagnóstico mas não se sente saudável, e quer ver o organismo como sistema integrado em vez de peças separadas.'
   },
   'a-jornada-interior': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'A Jornada Interior',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -392,6 +409,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem foi fragmentado entre especialistas — corpo com um, mente com outro — e quer reunir nutrição, emoção, sono e movimento em um mapa só.'
   },
   'excelencia-humana': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'Excelência Humana',
     precoOriginal: 97.90,
     precoPromocional: 67.90,
@@ -403,6 +421,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem quer um modelo integrado de saúde, foco, equilíbrio e propósito, sem partir de uma queixa clínica.'
   },
   'o-retorno-da-clareza': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'O Retorno da Clareza',
     precoOriginal: 77.90,
     precoPromocional: 47.90,
@@ -414,6 +433,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem perdeu a capacidade de sustentar atenção, não termina o que começa e vive em fragmentos de estímulo.'
   },
   'a-neurobiologia-integrativa-da-depressao': {
+    universo: ['saude-e-longevidade'],
     titulo: 'A Neurobiologia Integrativa da Depressão',
     precoOriginal: 97.90,
     precoPromocional: 67.90,
@@ -425,6 +445,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem convive com desânimo persistente e perda de interesse, e quer entender a depressão além do "desequilíbrio químico".'
   },
   'a-visao-integrativa-da-obesidade': {
+    universo: ['saude-e-longevidade'],
     titulo: 'A Visão Integrativa da Obesidade',
     precoOriginal: 97.90,
     precoPromocional: 67.90,
@@ -436,6 +457,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem já tentou várias dietas, recuperou o peso e quer entender por que "comer menos e mover mais" falhou.'
   },
   'medicina-natural-integrativa': {
+    universo: ['saude-e-longevidade'],
     titulo: 'Medicina Natural Integrativa',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -447,6 +469,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem quer começar pelos fundamentos — água, luz, sono, movimento, nutrição, estresse — antes de qualquer coisa mais complexa.'
   },
   'mentes-esgotadas': {
+    universo: ['saude-e-longevidade'],
     titulo: 'Mentes Esgotadas',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -458,6 +481,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem chega em burnout, ansiedade ou vazio, com a queixa entrando pelo lado mental e emocional.'
   },
   'o-elo-invisivel': {
+    universo: ['saude-e-longevidade'],
     titulo: 'O Elo Invisível',
     precoOriginal: 77.90,
     precoPromocional: 47.90,
@@ -469,6 +493,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem tem cansaço e névoa mental junto de sinal metabólico — peso, glicemia, intestino, inflamação.'
   },
   'rejuvenesca': {
+    universo: ['saude-e-longevidade'],
     titulo: 'Rejuvenesça',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -480,6 +505,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem sente o corpo mudando com a idade e quer agir sobre idade biológica em vez de aceitar o declínio como inevitável.'
   },
   'transforma-te-protocolos-90s': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'TRANSFORMA-TE — Protocolos 90s',
     precoOriginal: 77.90,
     precoPromocional: 47.90,
@@ -491,6 +517,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem reage no impulso e se arrepende — raiva, pânico, discussão — e quer uma ferramenta para os segundos anteriores à reação.'
   },
   'consequencias-edicao-essencial': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'CONSEQUÊNCIAS — Edição Essencial',
     subtitulo: 'Causa, Efeito e Escolhas de Vida',
     preco: 37.90,
@@ -539,6 +566,7 @@ const CATALOGO = {
     precoAudiobook: 29.90
   },
   'o-caminho-da-consciencia': {
+    universo: ['desenvolvimento-humano'],
     titulo: 'O Caminho da Consciência',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -550,6 +578,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem busca compreensão de si por uma via esotérica e reflexiva, e quer transformar dor em entendimento.'
   },
   'inteligencia-artificial-volume-1': {
+    universo: ['empreender-e-crescer'],
     titulo: 'Inteligência Artificial — Volume 1',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -561,6 +590,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem teme ficar para trás com a IA e quer entender os fundamentos antes de aplicar.'
   },
   'empresas-inteligentes-volume-2': {
+    universo: ['empreender-e-crescer'],
     titulo: 'Empresas Inteligentes — Volume 2',
     precoOriginal: 87.90,
     precoPromocional: 57.90,
@@ -572,6 +602,7 @@ const CATALOGO = {
     indicadoPara: 'Para quem já decidiu implementar IA no próprio negócio e quer o caminho prático: diagnóstico, processo, automação.'
   },
   'tempo-para-viver': {
+    universo: ['desenvolvimento-humano', 'saude-e-longevidade'],
     titulo: 'Tempo para Viver',
     preco: 67.00,
     precoOriginal: 97.00,
