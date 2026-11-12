@@ -648,4 +648,9 @@ const UNIVERSOS = {
   }
 };
 
-module.exports = { UNIVERSOS };
+// Paleta "Areia" (12/11/2026): fundo claro e quente comum a TODOS os universos da Loja. Só o fundo, as cartas, as bordas e o texto esquentam;
+// o ACENTO de cada universo (acento, acentoEscuro, acentoRgb) continua o do próprio universo. Contrastes: texto/fundo 12,5:1; suave/fundo 5,7:1.
+const PALETA_AREIA = { fundo: '#efe5d1', carta: '#faf4e6', cartaClara: '#f6eedc', borda: '#d9c9a5', capaFundo: '#e6d9bd', tinta: '#2a2216', suave: '#645638', tintaRgb: '42, 34, 22' };
+for (const u of Object.values(UNIVERSOS)) { Object.assign(u.tema, PALETA_AREIA); u.themeColor = PALETA_AREIA.fundo; }
+
+module.exports = { UNIVERSOS, PALETA_AREIA };

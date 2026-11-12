@@ -21,13 +21,14 @@
 <!-- end Pinterest Tag -->
 <style>
   :root {
-    --fundo: #0f0f0f;
-    --fundo-carta: #171512;
-    --dourado: #B8963E;
-    --dourado-suave: #d9c68f;
-    --texto: #f2ead9;
-    --texto-suave: #b6ab93;
-    --borda: #2a2620;
+    /* Paleta "Areia" (12/11/2026): fundo claro e quente; o dourado da marca fica, com um tom escuro para texto (--dourado-suave). */
+    --fundo: #efe5d1;
+    --fundo-carta: #faf4e6;
+    --dourado: #a8822b;
+    --dourado-suave: #7b5d14;
+    --texto: #2a2216;
+    --texto-suave: #645638;
+    --borda: #d9c9a5;
   }
 
   * { box-sizing: border-box; }
@@ -41,6 +42,7 @@
   }
 
   header.topo {
+    background: linear-gradient(180deg, #f6edd8, #efe5d1);
     padding: 64px 24px 40px;
     text-align: center;
     border-bottom: 1px solid var(--borda);
@@ -87,15 +89,15 @@
     max-width: 520px;
     margin: 10px auto 0;
     padding: 11px 12px;
-    border: 1px solid #D85A30;
+    border: 1px solid #b4532a;
     border-radius: 8px;
-    background: transparent;
+    background: #f8ecdc;
     text-align: left;
-    color: #F0997B;
+    color: #7f3516;
   }
 
   .aviso-digital-destaque {
-    color: #F5C4B3;
+    color: #541f0c;
   }
 
   main {
@@ -196,7 +198,7 @@
     top: 8px;
     left: 8px;
     background: rgba(15, 15, 15, 0.75);
-    color: var(--dourado-suave);
+    color: #f1deaa; /* sobre a capa escura */
     border: 1px solid var(--dourado);
     border-radius: 4px;
     padding: 2px 7px;
@@ -234,7 +236,7 @@
     bottom: 8px;
     left: 8px;
     background: rgba(15, 15, 15, 0.82);
-    color: var(--dourado-suave);
+    color: #f1deaa; /* sobre a capa escura */
     border: 1px solid var(--dourado);
     border-radius: 4px;
     padding: 3px 6px;
