@@ -33,17 +33,37 @@ const DOCS = [
   { id: 'd10', titulo: '4. Carbono', caminho: `${LIVRO}/tema-10`, corpo: 'O coxão mole e o patinho são cortes de carne. O carbono é um elemento. ' + 'palavra '.repeat(20) },
   { id: 'd1', titulo: 'Apresentação', caminho: `${LIVRO}/tema-1`, corpo: 'Apresentação do livro. ' + 'palavra '.repeat(20) }
 ];
-const consultas = { embeddings: 0, rpc: 0, selects: [] };
+// livro de contos: rótulos "Conto N — título" (como Entre o Encanto e a Escolha) e um livro com "Parte I" + "Capítulo N"
+const CONTOS = 'livro-de-contos-teste'; const PARTES = 'livro-com-partes-teste';
+const TC = (n, i) => `Conto ${n} parágrafo ${i}. ` + 'palavra '.repeat(30);
+DOCS.forEach((d) => { d.livro = LIVRO; });
+DOCS.push(
+  { id: 'c1', livro: CONTOS, titulo: 'Conto 1 — O Primeiro Encontro — parte 1/2', caminho: `${CONTOS}/tema-1`, corpo: TC(1, 1) + ' Mesa para dois, na orla, o cardápio chegou e ela procurou primeiro a coluna dos preços.' },
+  { id: 'c2', livro: CONTOS, titulo: 'Conto 1 — O Primeiro Encontro — parte 2/2', caminho: `${CONTOS}/tema-2`, corpo: TC(1, 2) + ' Queria casar, queria filhos, e queria descobrir isso antes da sobremesa.' },
+  { id: 'c3', livro: CONTOS, titulo: 'Conto 2 — A Toalha Molhada', caminho: `${CONTOS}/tema-3`, corpo: TC(2, 1) + ' Uma toalha em cima da cama e a pergunta que ninguém queria fazer em voz alta.' },
+  { id: 'c4', livro: CONTOS, titulo: 'Conto 3 — O Jantar de Domingo', caminho: `${CONTOS}/tema-4`, corpo: TC(3, 1) },
+  { id: 'c0', livro: CONTOS, titulo: 'Apresentação', caminho: `${CONTOS}/tema-0`, corpo: 'Apresentação do livro de contos. ' + 'palavra '.repeat(20) },
+  { id: 'p1', livro: PARTES, titulo: 'Parte I — A casa', caminho: `${PARTES}/tema-1`, corpo: 'Abertura da parte um. ' + 'palavra '.repeat(20) },
+  { id: 'p2', livro: PARTES, titulo: 'Capítulo 1 — A chave', caminho: `${PARTES}/tema-2`, corpo: 'Texto do capítulo um da casa. ' + 'palavra '.repeat(20) },
+  { id: 'p3', livro: PARTES, titulo: 'Capítulo V — O homem que veio buscar uma caixa', caminho: `${PARTES}/tema-3`, corpo: 'Texto do capítulo cinco. ' + 'palavra '.repeat(20) },
+  { id: 'p4', livro: PARTES, titulo: 'Parte II — A rua', caminho: `${PARTES}/tema-4`, corpo: 'Abertura da parte dois. ' + 'palavra '.repeat(20) }
+);
+const consultas = { embeddings: 0, rpc: 0, selects: [], ilikes: [] };
 function construtor(tabela) {
   const f = []; let sel = '';
   const b = {
     select(c) { sel = c || ''; return b; }, update() { return b; }, eq(c, v) { f.push(['eq', c, v]); return b; }, in(c, v) { f.push(['in', c, v]); return b; }, limit() { return b; },
-    single() { return Promise.resolve(tabela === 'acessos_livros' ? { data: { email: 'x@x', tipo_produto: 'livro', livro_id: LIVRO, token: 'tok', data_expiracao: new Date(Date.now() + 864e5).toISOString(), revogado_em: null }, error: null } : { data: null, error: null }); },
+    ilike(c, padrao) { f.push(['ilike', c, padrao]); consultas.ilikes.push(padrao); return b; },
+    single() { return Promise.resolve(tabela === 'acessos_livros' ? { data: { email: 'x@x', tipo_produto: 'livro', livro_id: (f.find((x) => x[1] === 'livro_id') || [])[2] || LIVRO, token: 'tok', data_expiracao: new Date(Date.now() + 864e5).toISOString(), revogado_em: null }, error: null } : { data: null, error: null }); },
     maybeSingle() { return b.single(); },
     then(res, rej) {
       let data = []; const error = null;
       if (tabela === 'documentos') {
-        data = DOCS.filter((d) => f.every(([op, c, v]) => (op === 'eq' ? (c === 'livro_id' ? true : d[c] === v) : v.includes(d[c]))));
+        data = DOCS.filter((d) => f.every(([op, c, v]) => {
+          if (op === 'eq') return c === 'livro_id' ? d.livro === v : d[c] === v;
+          if (op === 'ilike') { const lit = v.replace(/^%|%$/g, '').replace(/\\([\\%_])/g, '$1').toLowerCase(); return String(d[c]).toLowerCase().includes(lit); }
+          return v.includes(d[c]);
+        }));
         consultas.selects.push(sel);
       } else if (tabela === 'uso_chat_livro') data = [];
       return Promise.resolve({ data, error }).then(res, rej);
@@ -61,7 +81,9 @@ globalThis.fetch = async (url) => { if (String(url).includes('embeddings')) { co
 // o acesso é decidido por lib/acessoLivros (tabela simulada acima); o limite diário/por minuto não interessa aqui
 const uso = require.resolve('../src/lib/usoChatLivro'); require.cache[uso] = { id: uso, filename: uso, loaded: true, exports: { verificarLimiteDiario: async () => ({ perguntasFeitas: 0, limiteAtingido: false }), incrementarUsoDiario: async () => {} } };
 for (const [m, ex] of [['../src/lib/limiteLivroVivo', { permitirPergunta: () => true }], ['../src/lib/alertaCustoLivroVivo', { verificarCustoMensal: () => {} }]]) { const r = require.resolve(m); require.cache[r] = { id: r, filename: r, loaded: true, exports: ex }; }
-const catalogoPath = require.resolve('../src/lib/catalogoLivros'); const catalogo = require(catalogoPath); catalogo.CATALOGO[LIVRO] = { titulo: 'Livro de Teste', preco: 1, categoria: 'principal' };
+// o limite por IP da rota (30 / 15 min) não é o assunto aqui e estouraria com tantas perguntas de teste
+const rlPath = require.resolve('express-rate-limit'); require.cache[rlPath] = { id: rlPath, filename: rlPath, loaded: true, exports: () => (req, res, next) => next() };
+const catalogoPath = require.resolve('../src/lib/catalogoLivros'); const catalogo = require(catalogoPath); catalogo.CATALOGO[LIVRO] = { titulo: 'Livro de Teste', preco: 1, categoria: 'principal' }; catalogo.CATALOGO[CONTOS] = { titulo: 'Contos de Teste', preco: 1, categoria: 'principal' }; catalogo.CATALOGO[PARTES] = { titulo: 'Partes de Teste', preco: 1, categoria: 'principal' };
 
 const cap = require('../src/lib/capituloLivro'); const termos = require('../src/lib/termosSemelhantes');
 const app = express(); app.use('/', require('../src/routes/livroChat'));
@@ -72,7 +94,7 @@ async function teste(nome, fn) { total++; try { await fn(); console.log(`  ok   
 
 (async () => {
   const srv = await new Promise((r) => { const s = app.listen(0, '127.0.0.1', () => r(s)); }); const porta = srv.address().port;
-  const perguntar = async (pergunta, extra = {}) => { cap.limparCache(); termos.limparCache(); consultas.embeddings = 0; consultas.rpc = 0; ultimoSystem = null; const r = await post(porta, { token: 'tok', livro_id: LIVRO, pergunta, historico: [], ...extra }); assert.strictEqual(r.status, 200, r.corpo); return ultimoSystem; };
+  const perguntar = async (pergunta, extra = {}) => { cap.limparCache(); termos.limparCache(); consultas.embeddings = 0; consultas.rpc = 0; consultas.ilikes.length = 0; ultimoSystem = null; const r = await post(porta, { token: 'tok', livro_id: LIVRO, pergunta, historico: [], ...extra }); assert.strictEqual(r.status, 200, r.corpo); return ultimoSystem; };
   const ordemDosTrechos = (sys, n) => { const re = new RegExp(`Texto do capítulo ${n}, trecho (\\d)`, 'g'); return [...sys.matchAll(re)].map((m) => m[1]).join(''); };
 
   console.log('Detecção do capítulo (funções puras)');
@@ -86,7 +108,7 @@ async function teste(nome, fn) { total++; try { await fn(); console.log(`  ok   
     for (const q of ['qual o capital de giro?', 'a capa do livro', 'fale do capítulo', 'capítulo iiii', 'quem é Nadir?']) assert.strictEqual(cap.numeroCitado(q), null, q);
   });
   await teste('rótulos: "Capítulo 17 — …", "2. O balcão — parte 1/3"', () => {
-    assert.deepStrictEqual(cap.lerRotulo('Capítulo 17 — O ano da virada, cronograma — parte 2/3'), { numero: 17, base: 'Capítulo 17 — O ano da virada, cronograma', titulo: 'O ano da virada, cronograma' });
+    assert.deepStrictEqual(cap.lerRotulo('Capítulo 17 — O ano da virada, cronograma — parte 2/3'), { numero: 17, tipo: 'capitulo', base: 'Capítulo 17 — O ano da virada, cronograma', titulo: 'O ano da virada, cronograma' });
     assert.strictEqual(cap.lerRotulo('2. O balcão — parte 1/3').numero, 2); assert.strictEqual(cap.lerRotulo('Apresentação').numero, null);
   });
   await teste('sanitizarCapituloAberto aceita só número inteiro e título curto', () => {
@@ -123,6 +145,63 @@ async function teste(nome, fn) { total++; try { await fn(); console.log(`  ok   
     const sys = await perguntar('Resuma o capítulo 40'); assert.ok(sys.includes('CAPÍTULO INEXISTENTE') && sys.includes('de 1 a 4') && !sys.includes('MODO CAPÍTULO'));
   });
 
+  console.log('Contos, partes e título da seção (item 2 de 12/11)');
+  const perguntarLivro = (livro, pergunta, extra = {}) => perguntar(pergunta, { livro_id: livro, ...extra });
+  await teste('lerRotulo: "Conto N — título", "Parte I", "Capítulo V" (romano); índice adota a unidade mais frequente', () => {
+    assert.deepStrictEqual(cap.lerRotulo('Conto 18 — A Vitória que Custa Tudo — parte 5/6'), { numero: 18, tipo: 'conto', base: 'Conto 18 — A Vitória que Custa Tudo', titulo: 'A Vitória que Custa Tudo' });
+    assert.strictEqual(cap.lerRotulo('Capítulo V — O Homem').numero, 5); assert.strictEqual(cap.lerRotulo('Parte II — A rua').tipo, 'parte');
+    assert.strictEqual(cap.lerRotulo('Parte Introdução').numero, null); assert.strictEqual(cap.lerRotulo('Contos de verão').numero, null);
+    const idx = cap.montarIndice(DOCS.filter((d) => d.livro === PARTES)); assert.strictEqual(idx.tipo, 'capitulo'); assert.deepStrictEqual(idx.numeros, [1, 5]);
+    const idc = cap.montarIndice(DOCS.filter((d) => d.livro === CONTOS)); assert.strictEqual(idc.tipo, 'conto'); assert.deepStrictEqual(idc.numeros, [1, 2, 3]);
+  });
+  await teste('numeroCitado na unidade do livro: "conto 2", "segundo conto", "a segunda parte"; "parte 2" não vira capítulo', () => {
+    assert.strictEqual(cap.numeroCitado('resuma o conto 2', 'conto'), 2); assert.strictEqual(cap.numeroCitado('o segundo conto', 'conto'), 2);
+    assert.strictEqual(cap.numeroCitado('a segunda parte', 'parte'), 2); assert.strictEqual(cap.numeroCitado('parte II', 'parte'), 2);
+    assert.strictEqual(cap.numeroCitado('resuma a parte 2'), null, 'parte 2 virou capítulo 2'); assert.strictEqual(cap.numeroCitado('resuma o conto 2'), null);
+    assert.strictEqual(cap.numeroCitado('a décima primeira parte', 'parte'), 11); assert.strictEqual(cap.numeroCitado('o primeiro capítulo'), 1);
+  });
+  await teste('livro de contos: "resuma o conto 2" e "resuma o segundo conto" leem o conto inteiro (modo capítulo, sem busca vetorial)', async () => {
+    for (const q of ['Resuma o conto 2', 'resuma o segundo conto', 'me fale do conto II']) {
+      const sys = await perguntarLivro(CONTOS, q); assert.ok(sys.includes('MODO CAPÍTULO') && sys.includes('"Conto 2 — A Toalha Molhada"') && sys.includes('o texto completo do conto'), q); assert.strictEqual(consultas.embeddings, 0, q);
+    }
+    const dois = await perguntarLivro(CONTOS, 'resuma o conto 1'); assert.ok(dois.indexOf('Conto 1 parágrafo 1') < dois.indexOf('Conto 1 parágrafo 2'), 'partes do conto fora de ordem');
+    const nenhum = await perguntarLivro(CONTOS, 'resuma o conto 9'); assert.ok(nenhum.includes('CAPÍTULO INEXISTENTE') && nenhum.includes('de 1 a 3'));
+  });
+  await teste('livro de contos: pelo TÍTULO ("A Toalha Molhada", 3 palavras) e "este conto" com o rótulo visível na tela', async () => {
+    const a = await perguntarLivro(CONTOS, 'o que acontece em A Toalha Molhada?'); assert.ok(a.includes('"Conto 2 — A Toalha Molhada"'));
+    const b = await perguntarLivro(CONTOS, 'Resuma este conto', { capitulo_aberto: { numero: 3, tipo: 'conto', titulo: null } }); assert.ok(b.includes('"Conto 3 — O Jantar de Domingo"'));
+    const c = await perguntarLivro(CONTOS, 'Resuma o capítulo que estou lendo', { capitulo_aberto: { numero: 3, tipo: 'conto' } }); assert.ok(c.includes('Conto 3'), 'a sugestão do widget ("capítulo que estou lendo") precisa funcionar num livro de contos');
+  });
+  await teste('título da seção visível na tela ("O Primeiro Encontro") escolhe o conto, sem número nem busca', async () => {
+    const sys = await perguntarLivro(CONTOS, 'Resuma este conto', { capitulo_aberto: { numero: null, titulos: ['Sumário', 'O Primeiro Encontro'] } });
+    assert.ok(sys.includes('"Conto 1 — O Primeiro Encontro"') && sys.includes('MODO CAPÍTULO')); assert.strictEqual(consultas.ilikes.length, 0);
+    const naoBate = await perguntarLivro(CONTOS, 'Resuma este conto', { capitulo_aberto: { numero: null, titulos: ['Mesa para dois, na orla'] } }); assert.ok(!naoBate.includes('MODO CAPÍTULO'));
+  });
+  await teste('no MEIO do conto (sem cabeçalho na tela): o início dos parágrafos visíveis localiza o conto', async () => {
+    const sys = await perguntarLivro(CONTOS, 'Resuma este conto', { capitulo_aberto: { numero: null, trechos: ['Uma toalha em cima da cama e a pergunta que ninguém queria fazer'] } });
+    assert.ok(sys.includes('"Conto 2 — A Toalha Molhada"') && sys.includes('MODO CAPÍTULO'), 'não localizou'); assert.strictEqual(consultas.embeddings, 0);
+    const segunda = await perguntarLivro(CONTOS, 'resuma este conto', { capitulo_aberto: { trechos: ['Queria casar, queria filhos, e queria descobrir isso antes da sobremesa'] } }); assert.ok(segunda.includes('"Conto 1 — O Primeiro Encontro"'));
+    const semMatch = await perguntarLivro(CONTOS, 'resuma este conto', { capitulo_aberto: { trechos: ['Frase que não existe em nenhum conto deste livro de teste'] } }); assert.ok(!semMatch.includes('MODO CAPÍTULO'));
+    const curto = await perguntarLivro(CONTOS, 'resuma este conto', { capitulo_aberto: { trechos: ['curto demais'] } }); assert.strictEqual(consultas.ilikes.length, 0, 'trecho curto não deve consultar o banco');
+    const sempergunta = await perguntarLivro(CONTOS, 'Quem é o personagem do primeiro encontro?', { capitulo_aberto: { trechos: ['Uma toalha em cima da cama e a pergunta que ninguém queria fazer'] } }); assert.ok(!sempergunta.includes('MODO CAPÍTULO') && consultas.ilikes.length === 0, 'só consulta por trecho quando a pergunta é sobre "este capítulo/conto"');
+  });
+  await teste('trecho visível: curingas do LIKE (%, _, \\) são escapados e nada do trecho vai ao prompt', async () => {
+    const sys = await perguntarLivro(CONTOS, 'resuma este conto', { capitulo_aberto: { trechos: ['100% de toalha_molhada \\ cuidado com tudo isto aqui'] } });
+    assert.ok(consultas.ilikes[0].includes('100\\% de toalha\\_molhada \\\\ cuidado'), consultas.ilikes[0]); assert.ok(!sys.includes('toalha_molhada'), 'texto da tela entrou no prompt');
+  });
+  await teste('livro com "Parte I/II" e "Capítulo N": "parte 2" não vira capítulo; rótulo "Parte" do widget é ignorado, "Capítulo V" romano funciona', async () => {
+    const a = await perguntarLivro(PARTES, 'resuma a parte 2'); assert.ok(!a.includes('MODO CAPÍTULO'), '"parte 2" virou capítulo');
+    const b = await perguntarLivro(PARTES, 'resuma este capítulo', { capitulo_aberto: { numero: 1, tipo: 'parte' } }); assert.ok(!b.includes('MODO CAPÍTULO'), 'Parte I foi tomada como Capítulo 1');
+    const c = await perguntarLivro(PARTES, 'resuma o capítulo V'); assert.ok(c.includes('"Capítulo V — O homem que veio buscar uma caixa"'));
+    const d = await perguntarLivro(PARTES, 'resuma este capítulo', { capitulo_aberto: { numero: 1, tipo: 'capitulo' } }); assert.ok(d.includes('"Capítulo 1 — A chave"'));
+  });
+  await teste('sanitizarCapituloAberto: tipo/títulos/trechos limitados e sem caracteres de controle', () => {
+    const r = cap.sanitizarCapituloAberto({ numero: 2, tipo: 'conto', titulos: ['A\u0000B', 7, 'x'.repeat(500)], trechos: ['um dois\n\ntrês quatro cinco seis sete oito', 'b', 'c', 'd', 'e'] });
+    assert.strictEqual(r.tipo, 'conto'); assert.strictEqual(r.titulos[0], 'A B'); assert.strictEqual(r.titulos.length, 2); assert.strictEqual(r.titulos[1].length, 120);
+    assert.strictEqual(r.trechos.length, 3); assert.strictEqual(r.trechos[0], 'um dois três quatro cinco seis sete oito');
+    assert.strictEqual(cap.sanitizarCapituloAberto({ numero: 2, tipo: '__proto__' }).tipo, undefined); assert.strictEqual(cap.sanitizarCapituloAberto({ titulos: [], trechos: [] }), null);
+  });
+
   console.log('Rota: termo que não existe no texto');
   await teste('"colchão-mole" → aponta "coxão mole" (palavra do livro, com a seção); o texto digitado NÃO entra no system prompt', async () => {
     const sys = await perguntar('O livro fala do colchão-mole?');
@@ -156,6 +235,29 @@ async function teste(nome, fn) { total++; try { await fn(); console.log(`  ok   
         await p.goto('http://widget.test/livros/x?token=tok'); await p.click('#zuni-chat-toggle'); await p.fill('#zuni-chat-input', 'resuma este capítulo'); await p.click('#zuni-chat-enviar'); await p.waitForTimeout(800);
         assert.ok(corpo && corpo.capitulo_aberto && corpo.capitulo_aberto.numero === esperado, `${rotulo}: ${JSON.stringify(corpo && corpo.capitulo_aberto)}`); await ctx.close();
       }
+      // livros de contos/partes (item 2 de 12/11): rótulo "CONTO 2" na abertura, título da seção, e página no MEIO do conto (só parágrafos)
+      const lerEnvio = async (html, pergunta = 'resuma este conto') => {
+        const c2 = await b.newContext({ viewport: { width: 1200, height: 700 } }); const p2 = await c2.newPage(); let env = null;
+        await p2.route('**/*', (r) => { const u = r.request().url(); if (u.includes('/api/livro-chat')) { env = JSON.parse(r.request().postData()); return r.fulfill({ json: { resposta: 'ok' } }); } return r.fulfill({ contentType: 'text/html; charset=utf-8', body: html.replace('</body>', widget + '</body>') }); });
+        await p2.goto('http://widget.test/livros/x?token=tok'); await p2.click('#zuni-chat-toggle'); await p2.fill('#zuni-chat-input', pergunta); await p2.click('#zuni-chat-enviar'); await p2.waitForTimeout(700); await c2.close(); return env && env.capitulo_aberto;
+      };
+      const par = (t, top) => `<p class="bodyp" style="position:absolute;left:60px;top:${top}px;width:500px">${t}</p>`;
+      const aberturaConto = await lerEnvio(`<!doctype html><html><body><div class="kicker" style="position:absolute;left:700px;top:40px">CONTO 2</div><h1 class="opener-title" style="position:absolute;left:700px;top:80px">A Toalha Molhada</h1>${par('Uma toalha em cima da cama e a pergunta que ninguém queria fazer em voz alta, naquela noite.', 200)}</body></html>`);
+      assert.ok(aberturaConto && aberturaConto.numero === 2 && aberturaConto.tipo === 'conto', 'CONTO 2 não reconhecido: ' + JSON.stringify(aberturaConto));
+      assert.ok(aberturaConto.titulos.includes('A Toalha Molhada') && aberturaConto.trechos.length >= 1, JSON.stringify(aberturaConto));
+      const rotuloComTitulo = await lerEnvio('<!doctype html><html><body><div style="position:absolute;left:300px;top:40px">Conto 2 — A Toalha Molhada</div></body></html>');
+      assert.ok(rotuloComTitulo && rotuloComTitulo.numero === 2 && rotuloComTitulo.tipo === 'conto' && rotuloComTitulo.titulo === 'A Toalha Molhada', JSON.stringify(rotuloComTitulo));
+      const parteRomana = await lerEnvio('<!doctype html><html><body><div style="position:absolute;left:300px;top:40px">PARTE II</div></body></html>', 'resuma esta parte');
+      assert.ok(parteRomana && parteRomana.numero === 2 && parteRomana.tipo === 'parte', JSON.stringify(parteRomana));
+      const capVenceParte = await lerEnvio('<!doctype html><html><body><div style="position:absolute;left:100px;top:40px">Parte I</div><div style="position:absolute;left:400px;top:40px">Capítulo 3</div></body></html>', 'resuma este capítulo');
+      assert.ok(capVenceParte.numero === 3 && capVenceParte.tipo === 'capitulo', 'capítulo deve vencer parte: ' + JSON.stringify(capVenceParte));
+      const sumario = await lerEnvio('<!doctype html><html><body>' + [1, 2, 3].map((i) => `<div class="toc-source" style="position:absolute;left:700px;top:${100 + i * 40}px">Conto ${i} — Título ${i}</div>`).join('') + '</body></html>');
+      assert.ok(!sumario || sumario.numero === null, 'lista do Sumário foi tomada como conto aberto: ' + JSON.stringify(sumario));
+      const sumarioUm = await lerEnvio('<!doctype html><html><body><nav><div class="toc-source" style="position:absolute;left:700px;top:140px">Conto 2 — A Toalha Molhada</div></nav></body></html>');
+      assert.ok(!sumarioUm || sumarioUm.numero === null, 'item de sumário (nav/toc) foi tomado como conto aberto');
+      const meioDoConto = await lerEnvio(`<!doctype html><html><body><div class="status" style="position:absolute;left:10px;top:10px">21 / 315</div>${par('"A gente" era Rômulo e o sobrinho, Juan, de vinte e poucos anos, sentados na orla ao entardecer.', 120)}${par('O cardápio chegou. Ela procurou primeiro a coluna dos preços e só depois o nome dos pratos.', 260)}${par('Queria casar, queria filhos, e queria descobrir isso antes da sobremesa chegar à mesa.', 400)}</body></html>`);
+      assert.ok(meioDoConto && meioDoConto.numero === null && !meioDoConto.titulos, 'sem cabeçalho não deve inventar número: ' + JSON.stringify(meioDoConto));
+      assert.ok(meioDoConto.trechos.length === 3 && meioDoConto.trechos.every((x) => x.length >= 25 && x.length <= 70 && !/["“”]/.test(x)), JSON.stringify(meioDoConto.trechos));
       const ctx = await b.newContext({ viewport: { width: 1200, height: 700 } }); const p = await ctx.newPage(); let corpo = null;
       await p.route('**/*', (r) => { const u = r.request().url(); if (u.includes('/api/livro-chat')) { corpo = JSON.parse(r.request().postData()); return r.fulfill({ json: { resposta: 'ok' } }); } return r.fulfill({ contentType: 'text/html; charset=utf-8', body: `<!doctype html><html><body><p>sem cabeçalho</p>${widget}</body></html>` }); });
       await p.goto('http://widget.test/livros/x?token=tok'); await p.click('#zuni-chat-toggle'); await p.fill('#zuni-chat-input', 'oi'); await p.click('#zuni-chat-enviar'); await p.waitForTimeout(800);

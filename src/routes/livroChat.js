@@ -27,7 +27,7 @@ const { verificarLimiteDiario, incrementarUsoDiario } = require('../lib/usoChatL
 const { buscarLivro } = require('../lib/catalogoLivros');
 const { permitirPergunta } = require('../lib/limiteLivroVivo');
 const { verificarCustoMensal } = require('../lib/alertaCustoLivroVivo');
-const { carregarIndiceCapitulos, buscarTrechosDoCapitulo, detectarReferenciaCapitulo, sanitizarCapituloAberto } = require('../lib/capituloLivro');
+const { carregarIndiceCapitulos, buscarTrechosDoCapitulo, detectarReferenciaCapitulo, capituloPorTrechosVisiveis, ehPerguntaSobreCapituloAberto, sanitizarCapituloAberto, TIPOS } = require('../lib/capituloLivro');
 const { carregarVocabulario, sugerirTermos } = require('../lib/termosSemelhantes');
 const { encerrarEmFraseCompleta } = require('../lib/fraseCompleta');
 
@@ -130,7 +130,7 @@ REGRA DE LINGUAGEM NEUTRA: nunca presuma o gênero de quem pergunta. Não use "a
   // Blocos montados SÓ com dados do livro e números inteiros validados (nunca com texto digitado pela pessoa).
   const blocos = [];
   if (extras.capitulo) {
-    blocos.push(`MODO CAPÍTULO: os trechos abaixo são o capítulo inteiro "${extras.capitulo.base}", completos e na ordem em que aparecem no livro${extras.capitulo.cortado ? ' (o final foi omitido por tamanho)' : ''}. Aqui você PODE resumir o capítulo, explicar o que acontece e interpretar o sentido dele, sempre com base apenas nesses trechos. Quando a pessoa pedir um resumo, escreva cerca de 400 palavras (entre 350 e 450), em até 5 parágrafos, cobrindo o capítulo do começo ao fim, e termine SEMPRE com uma frase completa. A instrução de concisão de 2–4 parágrafos não vale neste modo.`);
+    blocos.push(`MODO CAPÍTULO: os trechos abaixo são ${extras.capitulo.de} "${extras.capitulo.base}", completos e na ordem em que aparecem no livro${extras.capitulo.cortado ? ' (o final foi omitido por tamanho)' : ''}. Aqui você PODE resumir o capítulo, explicar o que acontece e interpretar o sentido dele, sempre com base apenas nesses trechos. Quando a pessoa pedir um resumo, escreva cerca de 400 palavras (entre 350 e 450), em até 5 parágrafos, cobrindo o capítulo do começo ao fim, e termine SEMPRE com uma frase completa. A instrução de concisão de 2–4 parágrafos não vale neste modo.`);
   }
   if (extras.inexistente) {
     blocos.push(`CAPÍTULO INEXISTENTE: a pessoa pediu um capítulo que não existe neste livro; a obra tem capítulos numerados de 1 a ${extras.inexistente.maior}. Diga isso com gentileza e ofereça ajuda com um dos capítulos existentes.`);
@@ -216,11 +216,17 @@ router.post('/api/livro-chat', limiterPorIp, async (req, res) => {
     try {
       indice = await carregarIndiceCapitulos(supabaseLeitura, livro_id);
       referencia = indice.numeros.length ? detectarReferenciaCapitulo(perguntaSanitizada, indice, capituloAberto) : null;
+      // "este capítulo/conto" sem cabeçalho visível (leitor no meio do texto): localiza pelo início dos parágrafos que estão na tela
+      if (!referencia && indice.numeros.length && capituloAberto && capituloAberto.trechos && ehPerguntaSobreCapituloAberto(perguntaSanitizada)) {
+        const n = await capituloPorTrechosVisiveis(supabaseLeitura, livro_id, indice, capituloAberto.trechos);
+        if (n != null) referencia = { tipo: 'aberto-trecho', numero: n };
+      }
       if (referencia && referencia.tipo !== 'inexistente') {
         const r = await buscarTrechosDoCapitulo(supabaseLeitura, indice, referencia.numero);
         if (r.trechos.length) {
           trechos = r.trechos;
-          extras.capitulo = { base: r.capitulo.base, cortado: r.cortado };
+          const t = TIPOS[indice.tipo] || TIPOS.capitulo;
+          extras.capitulo = { base: r.capitulo.base, cortado: r.cortado, de: `o texto completo ${t.artigo === 'a' ? 'da' : 'do'} ${t.nome}` };
           console.log(`[LIVRO_CHAT] livroId=${livro_id} modo=capitulo capitulo=${referencia.numero} origem=${referencia.tipo} trechos=${r.trechos.length}${r.cortado ? ' cortado=sim' : ''}`);
         }
       } else if (referencia && referencia.tipo === 'inexistente') {

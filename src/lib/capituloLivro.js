@@ -43,19 +43,39 @@ function numeroDeToken(t) {
 }
 
 const NUM_TOKEN = '(?:\\d{1,3}|[ivxl]{1,6}|(?:vinte|trinta|quarenta|cinquenta)(?: e (?:um|dois|tres|quatro|cinco|seis|sete|oito|nove))?|um|uma|dois|duas|tres|quatro|cinco|seis|sete|oito|nove|dez|onze|doze|treze|catorze|quatorze|quinze|dezesseis|dezessete|dezoito|dezenove)';
-const RE_CAP_NUM = new RegExp(`\\bcap(?:itulo|itulos)?\\.?\\s*(?:n(?:o|umero)?\\.?\\s*)?(${NUM_TOKEN})\\b`, 'i');
-const RE_ORDINAL = /\b(decimo (?:primeiro|segundo|terceiro|quarto|quinto|sexto|setimo|oitavo|nono)|primeiro|segundo|terceiro|quarto|quinto|sexto|setimo|oitavo|nono|decimo|vigesimo)\s+capitulo\b/i;
 
-// Deíticos: a pergunta é sobre o capítulo que o leitor tem aberto.
-const RE_DEITICO = /\b(?:este|esse|esta|essa|neste|nesse|nesta|nessa|deste|desse|desta|dessa)\s+(?:capitulo|trecho|parte|secao)\b|\b(?:capitulo|trecho)\s+(?:atual|aberto)\b|\bcapitulo\s+que\s+(?:estou|to|ando)\s+lendo\b|\bo\s+que\s+(?:estou|to)\s+lendo\b/i;
+// Unidade em que a obra se divide. "capitulo" é o padrão; livros de contos usam "Conto N", outros "Parte N"/"Ato N".
+// O índice de cada livro adota UMA unidade (a mais frequente nos rótulos), e a pergunta só é entendida nessa unidade:
+// "parte 2" num livro de capítulos NÃO vira capítulo 2.
+const TIPOS = {
+  capitulo: { palavra: 'cap(?:itulo|itulos)?\\.?', ordinalSubst: 'capitulo', nome: 'capítulo', artigo: 'o' },
+  conto: { palavra: 'contos?', ordinalSubst: 'conto', nome: 'conto', artigo: 'o' },
+  parte: { palavra: 'partes?', ordinalSubst: 'parte', nome: 'parte', artigo: 'a' },
+  ato: { palavra: 'atos?', ordinalSubst: 'ato', nome: 'ato', artigo: 'o' }
+};
+const PREFERENCIA_TIPOS = ['capitulo', 'conto', 'ato', 'parte']; // desempate quando há o mesmo número de rótulos
 
-// Extrai o número do capítulo citado (ou null). `texto` é a pergunta crua.
-function numeroCitado(texto) {
+const ORD = '(?:decim[oa] (?:primeir|segund|terceir|quart|quint|sext|setim|oitav|non)[oa]|(?:primeir|segund|terceir|quart|quint|sext|setim|oitav|non|decim|vigesim)[oa])';
+const reCitacao = {}; const reOrdinal = {};
+for (const [tipo, t] of Object.entries(TIPOS)) {
+  reCitacao[tipo] = new RegExp(`\\b${t.palavra}\\s*(?:n(?:o|umero)?\\.?\\s*)?(${NUM_TOKEN})\\b`, 'i');
+  reOrdinal[tipo] = new RegExp(`\\b(${ORD})\\s+${t.ordinalSubst}\\b`, 'i');
+}
+const RE_CAP_NUM = reCitacao.capitulo;
+const RE_ORDINAL = reOrdinal.capitulo;
+// "primeira"/"segunda"… (feminino, para "a segunda parte") → mesmo número que o masculino
+const ordinalParaNumero = (o) => ORDINAIS[o.replace(/a(?=\s|$)/g, 'o')] || null;
+
+// Deíticos: a pergunta é sobre o capítulo/conto que a pessoa tem aberto.
+const RE_DEITICO = /\b(?:este|esse|esta|essa|neste|nesse|nesta|nessa|deste|desse|desta|dessa)\s+(?:capitulo|conto|historia|trecho|parte|secao|ato)\b|\b(?:capitulo|conto|historia|trecho)\s+(?:atual|aberto)\b|\b(?:capitulo|conto|historia|ato|trecho|texto)\s+que\s+(?:estou|to|ando)\s+lendo\b|\bo\s+que\s+(?:estou|to)\s+lendo\b/i;
+
+// Extrai o número citado (ou null). `texto` é a pergunta crua; `tipo` é a unidade do livro (padrão: capítulo).
+function numeroCitado(texto, tipo = 'capitulo') {
   const t = norm(texto);
-  let m = RE_CAP_NUM.exec(t);
+  let m = (reCitacao[tipo] || reCitacao.capitulo).exec(t);
   if (m) { const n = numeroDeToken(m[1]); if (n) return n; }
-  m = RE_ORDINAL.exec(t);
-  if (m && ORDINAIS[m[1]]) return ORDINAIS[m[1]];
+  m = (reOrdinal[tipo] || reOrdinal.capitulo).exec(t);
+  if (m) { const n = ordinalParaNumero(m[1].toLowerCase()); if (n) return n; }
   return null;
 }
 
@@ -64,29 +84,42 @@ function ehPerguntaSobreCapituloAberto(texto) { return RE_DEITICO.test(norm(text
 // ---- título do capítulo a partir do rótulo dos trechos em `documentos`
 // "Capítulo 17 — O ano da virada — parte 2/3" → { numero: 17, base: "Capítulo 17 — O ano da virada", titulo: "O ano da virada" }
 // "2. O balcão — parte 1/3" (Herança)         → { numero: 2,  base: "2. O balcão", titulo: "O balcão" }
+// "Conto 18 — A Vitória que Custa Tudo — parte 5/6" → { numero: 18, tipo: 'conto', base: "Conto 18 — A Vitória que Custa Tudo", titulo: "A Vitória que Custa Tudo" }
+// "Capítulo V — O homem que veio buscar uma caixa"  → { numero: 5, tipo: 'capitulo', … }   (algarismo romano)
 function lerRotulo(titulo) {
   const bruto = String(titulo || '').trim();
   const base = bruto.replace(/\s*[—–-]\s*parte\s+\d+\s*\/\s*\d+\s*$/i, '').replace(/\s*\(parte\s+\d+\s*\/\s*\d+\)\s*$/i, '').trim();
-  let m = /^cap[íi]tulo\s+(\d{1,3})\s*(?:[—–:.-]\s*)?(.*)$/i.exec(base);
-  if (!m) m = /^(\d{1,3})\.\s+(.*)$/.exec(base);
-  if (!m) return { numero: null, base, titulo: base };
-  return { numero: parseInt(m[1], 10), base, titulo: (m[2] || '').trim() || base };
+  let m = /^(cap[íi]tulo|conto|parte|ato)\s+(\d{1,3}|[ivxl]{1,6})(?![\p{L}\p{N}])\s*(?:[—–:.-]\s*)?(.*)$/iu.exec(base);
+  let tipo = null; let numero = null; let resto = '';
+  if (m) {
+    tipo = norm(m[1]);
+    numero = /^\d+$/.test(m[2]) ? parseInt(m[2], 10) : romanoParaNumero(m[2]);
+    resto = m[3];
+  } else {
+    m = /^(\d{1,3})\.\s+(.*)$/.exec(base);
+    if (m) { tipo = 'capitulo'; numero = parseInt(m[1], 10); resto = m[2]; }
+  }
+  if (!tipo || !numero) return { numero: null, base, titulo: base };
+  return { numero, tipo, base, titulo: (resto || '').trim() || base };
 }
 
 function numeroDoCaminho(caminho) { const m = /tema-(\d+)$/.exec(String(caminho || '')); return m ? parseInt(m[1], 10) : 0; }
 
-// rows: [{ id, titulo, caminho }] → { capitulos: Map(numero → {numero, base, titulo, ids:[...]}), porTitulo: [{chave, numero}], total }
+// rows: [{ id, titulo, caminho }] → { tipo, capitulos: Map(numero → {numero, base, titulo, ids:[...]}), porId: Map(id → numero), porTitulo, numeros, maior }
+// O índice adota UMA unidade: a mais frequente entre os rótulos (capítulo > conto > ato > parte no empate), para que "Parte I" de um livro
+// de capítulos não colida com "Capítulo 1".
 function montarIndice(rows) {
-  const capitulos = new Map();
-  [...rows].sort((a, b) => numeroDoCaminho(a.caminho) - numeroDoCaminho(b.caminho)).forEach((r) => {
-    const l = lerRotulo(r.titulo);
-    if (l.numero == null) return;
+  const lidos = [...rows].sort((a, b) => numeroDoCaminho(a.caminho) - numeroDoCaminho(b.caminho)).map((r) => ({ r, l: lerRotulo(r.titulo) })).filter((x) => x.l.numero != null);
+  const contagem = {}; lidos.forEach((x) => { contagem[x.l.tipo] = (contagem[x.l.tipo] || 0) + 1; });
+  const tipo = PREFERENCIA_TIPOS.slice().sort((a, b) => (contagem[b] || 0) - (contagem[a] || 0) || PREFERENCIA_TIPOS.indexOf(a) - PREFERENCIA_TIPOS.indexOf(b))[0];
+  const capitulos = new Map(); const porId = new Map();
+  lidos.filter((x) => x.l.tipo === tipo).forEach(({ r, l }) => {
     if (!capitulos.has(l.numero)) capitulos.set(l.numero, { numero: l.numero, base: l.base, titulo: l.titulo, ids: [] });
-    capitulos.get(l.numero).ids.push(r.id);
+    capitulos.get(l.numero).ids.push(r.id); porId.set(r.id, l.numero);
   });
   const porTitulo = [...capitulos.values()].map((c) => ({ chave: norm(c.titulo), numero: c.numero, palavras: norm(c.titulo).split(' ').filter(Boolean).length }));
   const numeros = [...capitulos.keys()].sort((a, b) => a - b);
-  return { capitulos, porTitulo, numeros, maior: numeros.length ? numeros[numeros.length - 1] : 0 };
+  return { tipo: capitulos.size ? tipo : 'capitulo', capitulos, porId, porTitulo, numeros, maior: numeros.length ? numeros[numeros.length - 1] : 0 };
 }
 
 // Título citado na pergunta. Título de 1–2 palavras só vale com pista ("capítulo X", aspas) para não confundir "carbono" (palavra
@@ -100,7 +133,7 @@ function numeroPorTitulo(texto, indice) {
     const i = t.indexOf(` ${c.chave} `);
     if (i < 0) continue;
     const antes = t.slice(Math.max(0, i - 40), i);
-    const pista = /\b(capitulo|cap|secao|trecho|parte|intitulado|chamado|titulo)\s*(?:de|do|da|o|a)?\s*$/.test(antes) || comAspas;
+    const pista = /\b(capitulo|cap|conto|historia|ato|secao|trecho|parte|intitulado|chamado|titulo)\s*(?:de|do|da|o|a)?\s*$/.test(antes) || comAspas;
     if (c.palavras >= 3 || pista) { if (!melhor || c.chave.length > melhor.chave.length) melhor = c; }
   }
   return melhor ? melhor.numero : null;
@@ -108,23 +141,69 @@ function numeroPorTitulo(texto, indice) {
 
 // Resultado: { tipo: 'numero'|'titulo'|'aberto', numero } | { tipo: 'inexistente', numero } | null
 function detectarReferenciaCapitulo(pergunta, indice, capituloAberto) {
-  const n = numeroCitado(pergunta);
+  const n = numeroCitado(pergunta, indice.tipo);
   if (n != null) return indice.capitulos.has(n) ? { tipo: 'numero', numero: n } : { tipo: 'inexistente', numero: n };
   const porTitulo = numeroPorTitulo(pergunta, indice);
   if (porTitulo != null) return { tipo: 'titulo', numero: porTitulo };
-  if (ehPerguntaSobreCapituloAberto(pergunta) && capituloAberto && Number.isInteger(capituloAberto.numero) && indice.capitulos.has(capituloAberto.numero)) {
-    return { tipo: 'aberto', numero: capituloAberto.numero };
+  if (ehPerguntaSobreCapituloAberto(pergunta)) {
+    const aberto = resolverCapituloAberto(capituloAberto, indice);
+    if (aberto != null) return { tipo: 'aberto', numero: aberto };
   }
   return null;
 }
 
-// Aceita só o que o widget manda de forma segura: { numero:int|null, titulo:string|null } (nunca vai ao prompt; só escolhe o capítulo).
+// Capítulo/conto aberto na tela, só pelo que o widget leu dos cabeçalhos (sem consultar o banco):
+//   1. rótulo visível ("Capítulo 3", "Conto 2", "Parte I") — vale só se for a MESMA unidade do índice do livro;
+//   2. título da seção visível (ex.: "A Toalha Molhada") — vale se bater, palavra por palavra, com o título de um capítulo do índice.
+function resolverCapituloAberto(capituloAberto, indice) {
+  if (!capituloAberto) return null;
+  if (Number.isInteger(capituloAberto.numero) && (!capituloAberto.tipo || capituloAberto.tipo === indice.tipo) && indice.capitulos.has(capituloAberto.numero)) return capituloAberto.numero;
+  const candidatos = [capituloAberto.titulo, ...(capituloAberto.titulos || [])].filter(Boolean).map(norm).filter((c) => c.length >= 4);
+  for (const c of candidatos) {
+    const achado = indice.porTitulo.find((p) => p.chave && p.chave === c);
+    if (achado) return achado.numero;
+  }
+  return null;
+}
+
+const MAX_CHARS_TRECHO_VISIVEL = 90;
+// "%" e "_" são curingas do LIKE; "\" é o escape. O texto vem da tela da própria pessoa e só serve para LOCALIZAR o capítulo (nunca vai ao prompt).
+const escaparLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+// Último recurso para "este capítulo/conto": o leitor está no MEIO do capítulo (sem cabeçalho na tela). O widget manda o início de
+// alguns parágrafos visíveis; procuramos qual capítulo do índice contém essa frase. Devolve o número do capítulo ou null.
+async function capituloPorTrechosVisiveis(supabase, livroId, indice, trechos) {
+  const votos = new Map();
+  for (const t of (trechos || []).slice(0, 3)) {
+    const frase = String(t || '').trim().slice(0, MAX_CHARS_TRECHO_VISIVEL);
+    if (frase.length < 25) continue;
+    const { data, error } = await supabase.from('documentos').select('id').eq('livro_id', livroId).ilike('corpo', `%${escaparLike(frase)}%`).limit(4);
+    if (error) throw new Error(`Falha ao localizar o capítulo pelo trecho visível: ${error.message}`);
+    for (const row of data || []) { const n = indice.porId.get(row.id); if (n != null) votos.set(n, (votos.get(n) || 0) + 1); }
+  }
+  let melhor = null; let max = 0;
+  for (const [n, v] of votos) if (v > max) { melhor = n; max = v; }
+  return melhor;
+}
+
+const limparTexto = (s, max, colapsar = false) => { const t = String(s).replace(/[\u0000-\u001f\u007f]/g, ' '); return (colapsar ? t.replace(/\s+/g, ' ') : t).trim().slice(0, max); };
+
+// Aceita só o que o widget manda de forma segura (nunca vai ao prompt; só ajuda a escolher o capítulo):
+//   { numero:int|null, titulo:string|null, tipo?:'capitulo'|'conto'|'parte'|'ato', titulos?:string[], trechos?:string[] }
 function sanitizarCapituloAberto(bruto) {
   if (!bruto || typeof bruto !== 'object') return null;
   const n = Number.isInteger(bruto.numero) ? bruto.numero : (typeof bruto.numero === 'string' && /^\d{1,3}$/.test(bruto.numero.trim()) ? parseInt(bruto.numero, 10) : null);
-  const titulo = typeof bruto.titulo === 'string' ? bruto.titulo.replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, 120) : null;
-  if (n == null || n < 1 || n > 200) return titulo ? { numero: null, titulo } : null;
-  return { numero: n, titulo: titulo || null };
+  const titulo = typeof bruto.titulo === 'string' ? limparTexto(bruto.titulo, 120) || null : null;
+  const lista = (v, max, cabem) => (Array.isArray(v) ? v.filter((x) => typeof x === 'string').map((x) => limparTexto(x, max, true)).filter(Boolean).slice(0, cabem) : []);
+  const titulos = lista(bruto.titulos, 120, 8); const trechos = lista(bruto.trechos, MAX_CHARS_TRECHO_VISIVEL, 3);
+  const tipo = typeof bruto.tipo === 'string' && Object.prototype.hasOwnProperty.call(TIPOS, bruto.tipo) ? bruto.tipo : null;
+  const numeroOk = n != null && n >= 1 && n <= 200;
+  if (!numeroOk && !titulo && !titulos.length && !trechos.length) return null;
+  const saida = { numero: numeroOk ? n : null, titulo };
+  if (numeroOk && tipo) saida.tipo = tipo;
+  if (titulos.length) saida.titulos = titulos;
+  if (trechos.length) saida.trechos = trechos;
+  return saida;
 }
 
 // ---- Supabase
@@ -161,4 +240,4 @@ async function buscarTrechosDoCapitulo(supabase, indice, numero) {
 
 function limparCache() { cache.clear(); }
 
-module.exports = { norm, romanoParaNumero, numeroDeToken, numeroCitado, ehPerguntaSobreCapituloAberto, lerRotulo, montarIndice, numeroPorTitulo, detectarReferenciaCapitulo, sanitizarCapituloAberto, carregarIndiceCapitulos, buscarTrechosDoCapitulo, limparCache, MAX_TRECHOS_CAPITULO };
+module.exports = { norm, romanoParaNumero, numeroDeToken, numeroCitado, ehPerguntaSobreCapituloAberto, lerRotulo, montarIndice, numeroPorTitulo, detectarReferenciaCapitulo, resolverCapituloAberto, capituloPorTrechosVisiveis, sanitizarCapituloAberto, TIPOS, carregarIndiceCapitulos, buscarTrechosDoCapitulo, limparCache, MAX_TRECHOS_CAPITULO };
