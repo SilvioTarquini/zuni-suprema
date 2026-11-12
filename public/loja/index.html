@@ -619,7 +619,7 @@
 <header class="topo">
   <span class="selo"></span>
   <h1>Livros ZUNI Suprema</h1>
-  <p id="prazo-loja">Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site e conversar com ele no Livro-Vivo durante o prazo do seu acesso. E também poderá baixar o livro para ler quando quiser.</p>
+  <p id="prazo-loja">Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site durante o prazo do seu acesso, e, nas obras com o ícone 💬, conversar com ele no Livro-Vivo. E também poderá baixar o livro para ler quando quiser.</p>
   <p class="aviso-digital"><span class="aviso-digital-destaque">Produto 100% digital — sem envio físico.</span></p>
 </header>
 
@@ -932,7 +932,7 @@
     .then((d) => {
       const el = document.getElementById('prazo-loja');
       if (el && d && Number.isInteger(d.dias) && d.dias > 0) {
-        el.textContent = 'Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site e conversar com ele no Livro-Vivo por até ' + d.dias + (d.dias === 1 ? ' dia' : ' dias') + '. E também poderá baixar o livro para ler quando quiser.';
+        el.textContent = 'Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site por até ' + d.dias + (d.dias === 1 ? ' dia' : ' dias') + ', e, nas obras com o ícone 💬, conversar com ele no Livro-Vivo. E também poderá baixar o livro para ler quando quiser.';
       }
     })
     .catch(() => {});

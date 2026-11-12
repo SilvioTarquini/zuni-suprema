@@ -111,7 +111,7 @@ const PAGINA = "const {renderizarExperimenteObra}=require('./src/lib/experimente
     await page.goto('http://teste.local/loja/');
     await page.waitForTimeout(800);
     const com = await page.evaluate(() => document.getElementById('prazo-loja').textContent);
-    assert.strictEqual(com, 'Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site e conversar com ele no Livro-Vivo por até 90 dias. E também poderá baixar o livro para ler quando quiser.');
+    assert.strictEqual(com, 'Após a compra, você recebe por e-mail o link para ler o seu livro aqui no site por até 90 dias, e, nas obras com o ícone 💬, conversar com ele no Livro-Vivo. E também poderá baixar o livro para ler quando quiser.');
     respostaPrazo = { status: 500, json: {} };
     await page.goto('http://teste.local/loja/');
     await page.waitForTimeout(800);
