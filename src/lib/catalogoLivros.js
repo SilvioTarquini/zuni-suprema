@@ -301,7 +301,8 @@ const CATALOGO = {
     descricaoCurta: 'Um manual prático e humanizado com o passo a passo completo para os primeiros 30 dias, rotinas de WhatsApp, PIX e inteligência comercial aplicada.',
     resumo: 'Um manual prático e humanizado com o passo a passo completo para os primeiros 30 dias, rotinas de WhatsApp, PIX e inteligência comercial aplicada.',
     descricao: 'Um método prático para estruturar vendas com ética, clareza e previsibilidade — da primeira conversa ao pós-venda. Reúne rotina comercial, organização de contatos, proposta de valor, WhatsApp, PIX e acompanhamento de resultados para quem vende em casa, na loja ou pelo celular.',
-    indicadoPara: 'Vendedoras, revendedoras, consultoras, líderes de equipe e profissionais que desejam estruturar vendas com ética, método e previsibilidade.'
+    indicadoPara: 'Vendedoras, revendedoras, consultoras, líderes de equipe e profissionais que desejam estruturar vendas com ética, método e previsibilidade.',
+    chatDisponivel: true
   },
   'toda-mesa-tem-dois-lados': {
     titulo: 'Toda Mesa Tem Dois Lados',
@@ -320,7 +321,8 @@ const CATALOGO = {
     descricaoCurta: 'Descubra os mecanismos ocultos por trás de cada preço, prazo e recusa. Aprenda a enxergar o motor e a engrenagem que decidem margens e sociedades.',
     resumo: 'Descubra os mecanismos ocultos por trás de cada preço, prazo e recusa. Aprenda a enxergar o motor e a engrenagem que decidem margens e sociedades.',
     descricao: 'Uma leitura sobre os bastidores dos negócios e da negociação humana: interesses, expectativas, preço, prazo, poder de decisão e acordos difíceis. A obra ajuda a enxergar as engrenagens que movem margens, parcerias e sociedades antes que o impasse se torne ruptura.',
-    indicadoPara: 'Empreendedores, gestores, negociadores e líderes que enfrentam impasses comerciais, acordos difíceis e desalinhamentos de expectativas.'
+    indicadoPara: 'Empreendedores, gestores, negociadores e líderes que enfrentam impasses comerciais, acordos difíceis e desalinhamentos de expectativas.',
+    chatDisponivel: true
   },
   'toda-reuniao-tem-duas-pautas': {
     titulo: 'Toda Reunião Tem Duas Pautas',
@@ -340,7 +342,8 @@ const CATALOGO = {
     descricaoCurta: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor — as forças que decidem quem fala, quem se cala e quem vai embora numa reunião.',
     resumo: 'Histórias de trabalho narradas por Davi: poder, plateia e corredor — as forças que decidem quem fala, quem se cala e quem vai embora numa reunião.',
     descricao: 'Volume 2 da Coleção Além das Aparências e dos Sentimentos. Contos sobre os bastidores do ambiente de trabalho — a pauta que está na folha e a que ninguém leu em voz alta. Cada conto mostra a cena, revisita o que cada lado protegia e termina com uma nota de Davi, mediador de conflitos.',
-    indicadoPara: 'Profissionais, gestores e líderes que enfrentam dinâmicas de poder, exposição e conflitos não ditos no ambiente de trabalho.'
+    indicadoPara: 'Profissionais, gestores e líderes que enfrentam dinâmicas de poder, exposição e conflitos não ditos no ambiente de trabalho.',
+    chatDisponivel: true
   },
   'da-terra-ao-resultado': {
     titulo: 'Da Terra ao Resultado',
