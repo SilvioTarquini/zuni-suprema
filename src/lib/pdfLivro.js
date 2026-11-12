@@ -38,7 +38,13 @@ const NOMES_ARQUIVO = {
   'onze-dias-de-sorte': 'Onze-Dias-de-Sorte-ZUNI.pdf',
   'senti-percebi-escolhi': 'Senti-Percebi-Escolhi-ZUNI.pdf',
   'toda-briga-tem-dois-comecos': 'Toda-Briga-Tem-Dois-Comecos-ZUNI.pdf',
-  'toda-familia-tem-duas-historias': 'Toda-Familia-Tem-Duas-Historias-ZUNI.pdf'
+  'toda-familia-tem-duas-historias': 'Toda-Familia-Tem-Duas-Historias-ZUNI.pdf',
+  // obras antigas, grupo 1 (Universo Feminino; PDF gerado de texto extraído, 12/11/2026)
+  'ela-tem-classe': 'Ela-Tem-Classe-ZUNI.pdf',
+  'codigo-feminino': 'Codigo-Feminino-ZUNI.pdf',
+  'a-inteligencia-do-corpo-feminino': 'A-Inteligencia-do-Corpo-Feminino-ZUNI.pdf',
+  'inesquecivel-charme-feminino': 'Inesquecivel-Charme-Feminino-ZUNI.pdf',
+  'a-mulher-que-permanece-inteira': 'A-Mulher-que-Permanece-Inteira-ZUNI.pdf'
 };
 
 const BUCKET_PADRAO = 'zuni-livros-pdf-private';
