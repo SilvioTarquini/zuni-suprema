@@ -320,16 +320,69 @@ function extrairEstatico(h) {
 
 function detectar(h) {
   if (h.includes('type="__bundler/manifest"') && dadosModulo(h)) return 'modulo';
+  if (h.includes('type="__bundler/manifest"') && dadosPaginasModulo(h)) return 'paginas-modulo';
   if (/[\s,;](?:const|var|let)?\s*pages\s*=\s*\[\s*\{\s*"kind"/.test(h.replace(/data:[a-z]+\/[a-z0-9.+-]+;base64,[A-Za-z0-9+/=]+/gi, 'D'))) return 'pagsjson';
   if (/<article class="page\b/.test(h)) return 'estatico';
   return null;
+}
+
+// ----------------------------------------------------------------------------- 4. páginas em módulo (const PAGES = {…, pages:[{kind,…}]}) — Inesquecível Charme Feminino
+
+function dadosPaginasModulo(h) {
+  const bloco = (tipo) => { const m = h.lastIndexOf(`type="__bundler/${tipo}"`); if (m < 0) return null; const a = h.indexOf('>', m) + 1; return h.slice(a, h.indexOf('</script>', a)); };
+  const man = bloco('manifest'); if (!man) return null;
+  for (const v of Object.values(JSON.parse(man))) {
+    if (!String(v.mime).includes('javascript')) continue;
+    let buf = Buffer.from(v.data, 'base64'); if (v.compressed) buf = zlib.gunzipSync(buf);
+    const t = buf.toString('utf8');
+    if (/^\s*const PAGES = \{/.test(t)) { try { const d = JSON.parse(t.slice(t.indexOf('{'), t.lastIndexOf('}') + 1)); if (Array.isArray(d.pages) && d.pages.some((p) => p.kind === 'text')) return d; } catch (e) { /* não é este módulo */ } }
+  }
+  return null;
+}
+
+// Páginas já paginadas: "text" com showHeader abre uma seção (rótulo "CAPÍTULO n" ou título avulso); "text" sem cabeçalho continua a seção;
+// "part" dá o nome da parte aos capítulos seguintes; "qa" (perguntas do apêndice) vira seção com lista numerada. title/epigraph/toc são
+// montados pelo PDF (folha de rosto, sumário). Nenhum parágrafo é unido nem alterado.
+function extrairPaginasModulo(h) {
+  const d = dadosPaginasModulo(h);
+  if (!d) throw new Error('módulo de páginas não encontrado no bundle');
+  const meta = { titulo: capitalizar(d.title), subtitulo: d.description || '', autor: capitalizar(d.brand), tagline: capitalizar(d.tagline), epigrafe: d.epigraph || '', avisoLegal: '', copyright: '', serie: '' };
+  const secoes = []; const fonte = []; let parte = ''; let viuParte = false; let ultimoCapitulo = false;
+  for (const pg of d.pages) {
+    if (pg.kind === 'part') { parte = pg.isAppendix ? capitalizar(pg.title) : [pg.numeral ? `Parte ${pg.numeral}` : '', capitalizar(pg.title)].filter(Boolean).join(' — '); viuParte = true; continue; }
+    if (pg.kind === 'text') {
+      if (pg.showHeader) {
+        const rotulo = pg.label ? capitalizar(pg.label) : '';
+        const tipo = pg.label ? 'capitulo' : (viuParte ? 'back' : 'front');
+        if (pg.label) ultimoCapitulo = true;
+        secoes.push({ tipo, rotulo, titulo: pg.title || '', parte: pg.label ? parte : '', tituloOriginal: pg.title || '', blocos: [] });
+        if (rotulo) fonte.push(rotulo); fonte.push(pg.title || '');
+      }
+      const atual = secoes[secoes.length - 1]; if (!atual) throw new Error('página de texto antes de qualquer seção');
+      (pg.paragraphs || []).forEach((t) => { atual.blocos.push(BLOCOS_P(t)); fonte.push(t); });
+      continue;
+    }
+    if (pg.kind === 'qa') {
+      const itens = (pg.questions || []).map((q) => inlineLocal(q.text));
+      // página de continuação (sem título nem introdução: as perguntas 7 a 10 da mesma lista) segue a lista da seção anterior
+      const anterior = secoes[secoes.length - 1];
+      if (!pg.title && !pg.intro && anterior && anterior.blocos.length && anterior.blocos[anterior.blocos.length - 1].t === 'list') {
+        anterior.blocos[anterior.blocos.length - 1].itens.push(...itens); (pg.questions || []).forEach((q) => fonte.push(q.text)); continue;
+      }
+      const blocos = []; if (pg.intro) { blocos.push(BLOCOS_P(pg.intro)); fonte.push(pg.intro); }
+      blocos.push({ t: 'list', label: '', ordered: true, itens }); (pg.questions || []).forEach((q) => fonte.push(q.text));
+      secoes.push({ tipo: 'back', rotulo: '', titulo: pg.title || '', parte: '', tituloOriginal: pg.title || '', blocos }); fonte.push(pg.title || '');
+    }
+  }
+  void ultimoCapitulo;
+  return { formato: 'paginas-modulo', meta, secoes, _fonte: fonte.join('\n') };
 }
 
 function extrairLote2(htmlPath) {
   const h = fs.readFileSync(htmlPath, 'utf8');
   const f = detectar(h);
   if (!f) throw new Error('formato de flipbook não reconhecido');
-  const r = f === 'modulo' ? extrairModulo(h) : f === 'pagsjson' ? extrairPaginasJson(h) : extrairEstatico(h);
+  const r = f === 'modulo' ? extrairModulo(h) : f === 'paginas-modulo' ? extrairPaginasModulo(h) : f === 'pagsjson' ? extrairPaginasJson(h) : extrairEstatico(h);
   return r;
 }
 
