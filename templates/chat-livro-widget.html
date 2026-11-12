@@ -414,7 +414,8 @@
     window.ZuniFlutuantes.registrar(toggle, {
       ordem: 1,
       ativo: function () { return !widget.classList.contains('zuni-chat-aberto'); },
-      evitarTexto: function () { return window.innerWidth <= 820; }
+      evitarTexto: function () { return window.innerWidth <= 820; },
+      preferido: function () { return window.innerWidth <= 820; } // celular: canto superior direito da leitura; cantos de baixo por último
     });
   }
 

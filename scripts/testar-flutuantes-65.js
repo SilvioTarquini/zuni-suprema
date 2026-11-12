@@ -85,6 +85,17 @@ app.use('/', require('../src/routes/livros'));
       const topo = document.elementFromPoint(cx, cy);
       return !!topo && (topo === e || e.contains(topo) || !!topo.closest('#zuni-chat-widget, #zs-baixar-pdf'));
     }).map((e) => ({ id: (e.id || String(e.className).slice(0, 24) || e.tagName) + (e.textContent ? `[${e.textContent.trim().slice(0, 12)}]` : ''), ...ret(e.getBoundingClientRect()) }));
+    // controles que não são <button>/<a> (div.zs-btn etc.): pequenos, visíveis, cursor:pointer e no topo no ponto central; vale o de fora (círculo inteiro)
+    for (const e of document.querySelectorAll('div, span, li, svg, label, i, img, [onclick], [tabindex]')) {
+      const r = e.getBoundingClientRect();
+      if (r.width < 8 || r.height < 8 || r.width > 140 || r.height > 140 || r.right <= 0 || r.bottom <= 0 || r.left >= vw || r.top >= vh) continue;
+      if (e.closest('#zuni-chat-widget') || e.id === 'zs-baixar-pdf' || e.closest('#zs-baixar-pdf')) continue;
+      const cs = getComputedStyle(e); if (cs.cursor !== 'pointer' || cs.visibility === 'hidden' || cs.display === 'none' || cs.pointerEvents === 'none' || parseFloat(cs.opacity) === 0) continue;
+      const pai = e.parentElement; if (pai && pai !== document.body) { const rp2 = pai.getBoundingClientRect(); if (rp2.width <= 140 && rp2.height <= 140 && rp2.width > 0 && getComputedStyle(pai).cursor === 'pointer') continue; }
+      const topo = document.elementFromPoint(Math.min(Math.max(r.left + r.width / 2, 1), vw - 1), Math.min(Math.max(r.top + r.height / 2, 1), vh - 1)); if (!topo || !(topo === e || e.contains(topo))) continue;
+      if (ctrl.some((c) => Math.abs(c.left - r.left) < 2 && Math.abs(c.top - r.top) < 2 && Math.abs(c.right - r.right) < 2)) continue;
+      ctrl.push({ id: `ptr:${e.id || String(e.className).slice(0, 18) || e.tagName}`, ...ret(r) });
+    }
     // linhas de texto visíveis (para o celular): nós de texto fora de controles e do widget
     const linhas = [];
     const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
@@ -107,11 +118,17 @@ app.use('/', require('../src/routes/livros'));
   const toca = (a, b, folga) => a.left < b.right + folga && a.right > b.left - folga && a.top < b.bottom + folga && a.bottom > b.top - folga;
 
   async function abrir(id, vp, mobile) {
-    const ctx = await browser.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile }); const page = await ctx.newPage();
+    const ctx = await browser.newContext({ viewport: vp, isMobile: mobile, hasTouch: mobile, deviceScaleFactor: mobile ? 3 : 1 }); const page = await ctx.newPage();
     await page.route('**/*', (rt) => (/^(http:\/\/127|data:|blob:)/.test(rt.request().url()) ? rt.continue() : rt.abort()));
     await page.goto(`${base}/livros/${id}?token=ok-${id}`, { waitUntil: 'domcontentloaded', timeout: 90000 }); await page.waitForTimeout(3000);
     await page.evaluate(() => { const o = document.getElementById('openBtn') || [...document.querySelectorAll('button')].find((b) => /abrir|clique para abrir/i.test(b.textContent)); if (o) o.click(); });
     await page.waitForTimeout(1800);
+    // alguns leitores demoram a ligar o clique: se a capa ainda está na tela, clica de novo (até 3 vezes)
+    for (let t = 0; t < 3; t++) {
+      const capa = await page.evaluate(() => { const o = document.getElementById('openBtn'); if (!o) return false; const r = o.getBoundingClientRect(); const topo = document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2); return r.width > 0 && !!topo && (topo === o || o.contains(topo)); });
+      if (!capa) break;
+      await page.evaluate(() => document.getElementById('openBtn').click()); await page.waitForTimeout(1800);
+    }
     for (let i = 0; i < 6; i++) { await page.keyboard.press('ArrowRight'); await page.waitForTimeout(250); }
     await page.waitForTimeout(900); // o widget reavalia a posição ~300 ms depois da última mudança
     return { ctx, page };
@@ -132,6 +149,7 @@ app.use('/', require('../src/routes/livros'));
           if (m.toggle.left < 0 || m.toggle.top < 0 || m.toggle.right > m.vw || m.toggle.bottom > m.vh) falhas.push('S5 botão fora da tela');
           const s1 = m.ctrl.filter((c) => toca(m.toggle, c, MARGEM_TOQUE)).map((c) => `${c.id}@${Math.round(c.left)},${Math.round(c.top)},${Math.round(c.right)},${Math.round(c.bottom)} (botão ${Math.round(m.toggle.left)},${Math.round(m.toggle.top)},${Math.round(m.toggle.right)},${Math.round(m.toggle.bottom)})`); if (s1.length) falhas.push(`S1 Livro-Vivo a <${MARGEM_TOQUE}px de: ${s1.join(' | ')}`);
           if (m.pdf && toca(m.toggle, m.pdf, MARGEM_TOQUE)) falhas.push('S3 Livro-Vivo encosta no "Baixar PDF"');
+          if (mobile && m.toggle.bottom > m.vh * 0.7) avisos.push(`S6 botão no terço de baixo da tela (top ${Math.round(m.toggle.top)}/${m.vh})`);
           if (mobile) {
             // fração do botão coberta por linhas de texto: até 30% = aviso (leitor de página-cheia, sem posição sem texto a 16 px dos controles); acima = falha
             const t = m.toggle; const areaBotao = (t.right - t.left) * (t.bottom - t.top);
@@ -146,7 +164,8 @@ app.use('/', require('../src/routes/livros'));
     }
   }
 
-  const tarefas = []; for (const id of OBRAS) { tarefas.push([id, '390', { width: 390, height: 844 }, true]); tarefas.push([id, '1366', { width: 1366, height: 800 }, false]); }
+  const CELULARES = [[360, 800], [390, 844], [412, 915], [430, 932]];
+  const tarefas = []; for (const id of OBRAS) { for (const [w, h] of CELULARES) tarefas.push([id, String(w), { width: w, height: h }, true]); tarefas.push([id, '1366', { width: 1366, height: 800 }, false]); }
   let i = 0; let feitos = 0;
   await Promise.all(Array.from({ length: PARALELO }, async () => { while (i < tarefas.length) { const t = tarefas[i++]; const r = await medirObra(...t); resultados.push(r); if (++feitos % 10 === 0) process.stdout.write(`  ${feitos}/${tarefas.length}\n`); } }));
   await browser.close(); srv.close();

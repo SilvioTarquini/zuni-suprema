@@ -703,6 +703,26 @@ document.addEventListener('DOMContentLoaded', async function() {
       if (!topo || !(topo === e || e.contains(topo))) continue; // coberto por outra coisa: não está disponível ao toque
       lista.push(ret(r));
     }
+    // Controles que NÃO são <button>/<a> (ex.: <div class="zs-btn"> das setas e de A−/A+ em vários leitores): pequenos, visíveis, com
+    // cursor:pointer e realmente no topo no ponto central. Vale o elemento de fora (o círculo inteiro, com a borda), não o ícone de dentro.
+    var cand = document.querySelectorAll('[onclick], [tabindex], [data-act], [data-cact], [class*="btn"], [class*="button"], div, span, li, svg, label, i, img');
+    var vistos = 0;
+    for (var k = 0; k < cand.length && vistos < 6000; k++, vistos++) {
+      var c = cand[k];
+      var rc = c.getBoundingClientRect();
+      if (rc.width < 8 || rc.height < 8 || rc.width > 140 || rc.height > 140 || rc.right <= 0 || rc.bottom <= 0 || rc.left >= vw || rc.top >= vh) continue;
+      if (ehNosso(c)) continue;
+      var cc = window.getComputedStyle(c);
+      if (cc.cursor !== 'pointer' || cc.visibility === 'hidden' || cc.display === 'none' || cc.pointerEvents === 'none' || parseFloat(cc.opacity) === 0) continue;
+      var pai = c.parentElement;
+      if (pai && pai !== document.body) { var rpai = pai.getBoundingClientRect(); if (rpai.width <= 140 && rpai.height <= 140 && rpai.width > 0 && window.getComputedStyle(pai).cursor === 'pointer') continue; } // o elemento de fora já cobre
+      var cx2 = Math.min(Math.max(rc.left + rc.width / 2, 1), vw - 1); var cy2 = Math.min(Math.max(rc.top + rc.height / 2, 1), vh - 1);
+      var t2 = document.elementFromPoint(cx2, cy2);
+      if (!t2 || !(t2 === c || c.contains(t2))) continue;
+      var jaTem = false;
+      for (var q = 0; q < lista.length; q++) if (Math.abs(lista[q].left - rc.left) < 2 && Math.abs(lista[q].top - rc.top) < 2 && Math.abs(lista[q].right - rc.right) < 2) { jaTem = true; break; }
+      if (!jaTem) lista.push(ret(rc));
+    }
     return lista;
   }
 
@@ -742,7 +762,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }
 
   // Melhor posição para um retângulo w×h, partindo da preferida (do CSS). Devolve { left, top } ou null (= ficar onde está).
-  function melhorPosicao(pref, obstaculos, linhas) {
+  function melhorPosicao(pref, obstaculos, linhas, usarCusto) {
     var vw = window.innerWidth; var vh = window.innerHeight; var w = pref.width; var h = pref.height; var areaBotao = w * h;
     for (var f = 0; f < FOLGAS.length; f++) {
       var folga = FOLGAS[f];
@@ -757,7 +777,15 @@ document.addEventListener('DOMContentLoaded', async function() {
       }
       if (!livres.length) continue;
       var melhor = null;
-      if (linhas) {
+      if (usarCusto) {
+        // celular: custo = distância até a posição preferida (canto superior direito da leitura) + texto coberto + penalidade para o terço
+        // de baixo da tela (onde ficam as barras e as setas): os cantos inferiores só ganham quando não há nada melhor
+        for (var u = 0; u < livres.length; u++) {
+          var lu = livres[u]; var tx = linhas ? textoCoberto(lu.c, linhas) / areaBotao : 0; if (tx <= TOLERANCIA_TEXTO) tx = 0;
+          lu.custo = Math.sqrt(lu.d) + tx * 1500 + (lu.c.bottom > vh * 0.7 ? 800 : 0);
+          if (!melhor || lu.custo < melhor.custo) melhor = lu;
+        }
+      } else if (linhas) {
         for (var j = 0; j < livres.length; j++) livres[j].texto = textoCoberto(livres[j].c, linhas) / areaBotao;
         for (var m = 0; m < livres.length; m++) {
           var a = livres[m]; var tA = a.texto <= TOLERANCIA_TEXTO ? 0 : a.texto;
@@ -794,6 +822,14 @@ document.addEventListener('DOMContentLoaded', async function() {
       for (var i = 0; i < ativos.length; i++) {
         var it = ativos[i]; var pref = prefs[i];
         if (pref.width <= 0) { colocados.push(pref); continue; }
+        var usaPreferido = false;
+        if (it.preferido && it.preferido()) {
+          // posição de partida própria (celular): canto superior direito da área de leitura, abaixo de qualquer barra do topo
+          var vw0 = window.innerWidth; var vh0 = window.innerHeight; var baixoDoTopo = 0;
+          controles.concat(colocados).forEach(function (cr) { if (cr.top < vh0 * 0.25 && cr.bottom < vh0 * 0.35 && cr.bottom > baixoDoTopo) baixoDoTopo = cr.bottom; });
+          var topP = Math.max(MARGEM_TELA + 4, baixoDoTopo + FOLGAS[0]);
+          pref = { left: vw0 - pref.width - 12, top: topP, right: vw0 - 12, bottom: topP + pref.height, width: pref.width, height: pref.height }; usaPreferido = true;
+        }
         var obst = controles.concat(colocados);
         for (var k = i + 1; k < ativos.length; k++) if (prefs[k].width > 0) obst.push(prefs[k]); // os que ainda não foram colocados, na posição de partida
         var usaTexto = linhas && it.evitarTexto && it.evitarTexto();
@@ -801,8 +837,11 @@ document.addEventListener('DOMContentLoaded', async function() {
         for (var o = 0; o < obst.length; o++) if (interseta(pref, obst[o], folga0)) { livre = false; break; }
         if (livre && usaTexto && textoCoberto(pref, linhas) / (pref.width * pref.height) > TOLERANCIA_TEXTO) livre = false;
         var final = pref;
+        if (livre && usaPreferido) { // a posição de partida do celular (canto superior direito) está livre: aplica-a
+          it.el.style.right = 'auto'; it.el.style.bottom = 'auto'; it.el.style.left = pref.left + 'px'; it.el.style.top = pref.top + 'px';
+        }
         if (!livre) {
-          var p = melhorPosicao(pref, obst, usaTexto ? linhas : null);
+          var p = melhorPosicao(pref, obst, usaTexto ? linhas : null, usaPreferido);
           if (p) {
             it.el.style.right = 'auto'; it.el.style.bottom = 'auto'; it.el.style.left = p.left + 'px'; it.el.style.top = p.top + 'px';
             final = { left: p.left, top: p.top, right: p.left + pref.width, bottom: p.top + pref.height, width: pref.width, height: pref.height };
@@ -811,6 +850,7 @@ document.addEventListener('DOMContentLoaded', async function() {
         colocados.push(final);
       }
     } catch (e) {
+      if (window.console && console.error) console.error('[ZuniFlutuantes] falha ao posicionar:', e && e.message);
       itens.forEach(function (it) { it.el.style.visibility = ''; });
     } finally { observar(true); }
   }
@@ -835,11 +875,11 @@ document.addEventListener('DOMContentLoaded', async function() {
   document.addEventListener('keyup', function () { agendar(450); }, true);
   [60, 600, 1600, 3600].forEach(function (ms) { setTimeout(function () { agendar(0); }, ms); }); // leitores que montam a tela aos poucos
 
-  // el: elemento fixo; opcoes: { ordem (menor = posicionado primeiro), ativo(): bool, evitarTexto(): bool }
+  // el: elemento fixo; opcoes: { ordem (menor = posicionado primeiro), ativo(): bool, evitarTexto(): bool, preferido(): bool (true = parte do canto superior direito da leitura) }
   window.ZuniFlutuantes = {
     registrar: function (el, opcoes) {
       opcoes = opcoes || {};
-      itens.push({ el: el, ordem: opcoes.ordem || 0, ativo: opcoes.ativo, evitarTexto: opcoes.evitarTexto });
+      itens.push({ el: el, ordem: opcoes.ordem || 0, ativo: opcoes.ativo, evitarTexto: opcoes.evitarTexto, preferido: opcoes.preferido });
       itens.sort(function (a, b) { return a.ordem - b.ordem; });
       agendar(100);
     },
@@ -980,7 +1020,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     window.ZuniFlutuantes.registrar(toggle, {
       ordem: 1,
       ativo: function () { return !widget.classList.contains('zuni-chat-aberto'); },
-      evitarTexto: function () { return window.innerWidth <= 820; }
+      evitarTexto: function () { return window.innerWidth <= 820; },
+      preferido: function () { return window.innerWidth <= 820; } // celular: canto superior direito da leitura; cantos de baixo por último
     });
   }
 
