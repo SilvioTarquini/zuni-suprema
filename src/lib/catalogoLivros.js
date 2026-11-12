@@ -84,7 +84,8 @@ const CATALOGO = {
     resumo: 'Da ancestralidade da consciência ao Plano Maior — o volume final da série, sobre o sentido por trás da própria existência.',
     descricao: 'Suba os degraus finais da compreensão. Explore a ancestralidade da consciência, os fios invisíveis que conectam gerações, e o Plano Maior que subjaz à existência. Este penúltimo volume prepara o caminho para a verdade derradeira sobre quem somos e por que estamos aqui.',
     indicadoPara: 'Para quem começou a olhar para trás — heranças de família, padrões que se repetem por gerações — e quer entender o fio que os liga.',
-    textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt'
+    textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
+    chatDisponivel: true
   },
   'os-bastidores-da-mente-6-o-designio': {
     universo: ['desenvolvimento-humano'],
@@ -95,7 +96,8 @@ const CATALOGO = {
     resumo: 'Paralelos entre o universo vivo e a jornada do peregrino — o desfecho da série, da criação eterna ao despertar da alma.',
     descricao: 'O volume derradeiro une todos os fios. Descubra os paralelos entre a estrutura do universo e a jornada da consciência individual. Compreenda a criação eterna, a progressão do ser humano rumo à iluminação, e o despertar da alma que é, afinal, o verdadeiro destino de toda a travessia.',
     indicadoPara: 'Para quem já percorreu a série e busca o fechamento: a relação entre a jornada pessoal e algo maior que ela.',
-    textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt'
+    textoFonteParaLeitura: '/documentos-zuni/os_bastidores_da_mente_base_mentor.txt',
+    chatDisponivel: true
   },
   'arquitetura-excelencia-humana-ii': {
     universo: ['saude-e-longevidade'],

@@ -36,6 +36,8 @@ const OBRAS_COM_LIVRO_VIVO = [
   'os-bastidores-da-mente-2-o-antidoto',
   'os-bastidores-da-mente-3-a-bussola-humana',
   'os-bastidores-da-mente-4-a-travessia',
+  'os-bastidores-da-mente-5-a-escada',
+  'os-bastidores-da-mente-6-o-designio',
   'tempo-para-viver'
 ];
 
