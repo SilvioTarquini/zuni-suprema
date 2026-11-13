@@ -125,7 +125,7 @@
         // celular: custo = distância até a posição preferida (canto superior direito da leitura) + texto coberto + penalidade para o terço
         // de baixo da tela (onde ficam as barras e as setas): os cantos inferiores só ganham quando não há nada melhor
         for (var u = 0; u < livres.length; u++) {
-          var lu = livres[u]; var tx = linhas ? textoCoberto(lu.c, linhas) / areaBotao : 0; if (tx <= TOLERANCIA_TEXTO) tx = 0;
+          var lu = livres[u]; var tx = linhas ? textoCoberto(lu.c, linhas) / areaBotao : 0; lu.texto = tx; if (tx <= TOLERANCIA_TEXTO) tx = 0;
           lu.custo = Math.sqrt(lu.d) + tx * 1500 + (lu.c.bottom > vh * 0.7 ? 800 : 0);
           if (!melhor || lu.custo < melhor.custo) melhor = lu;
         }
@@ -140,7 +140,7 @@
       } else {
         for (var q = 0; q < livres.length; q++) if (!melhor || livres[q].d < melhor.d) melhor = livres[q];
       }
-      return { left: melhor.left, top: melhor.top, folga: folga };
+      return { left: melhor.left, top: melhor.top, folga: folga, texto: melhor.texto || 0 };
     }
     return null;
   }
@@ -150,6 +150,38 @@
     if (!observador) return;
     if (ligar) observador.observe(document.documentElement, { subtree: true, childList: true, attributes: true, attributeFilter: ['class', 'style', 'hidden'] });
     else observador.disconnect();
+  }
+
+  // Posiciona UM item (já no modo de aparência atual, com `pref` = retângulo medido). Devolve { final, limpo }:
+  // limpo = achou lugar a 16 px de qualquer controle e (quando pede) sem cobrir texto além da tolerância.
+  function posicionarUm(it, pref, i, ativos, prefs, controles, colocados, linhas) {
+    var usaPreferido = false;
+    if (it.preferido && it.preferido()) {
+      // posição de partida própria (celular): canto superior direito da área de leitura, abaixo de qualquer barra do topo
+      var vw0 = window.innerWidth; var vh0 = window.innerHeight; var baixoDoTopo = 0;
+      controles.concat(colocados).forEach(function (cr) { if (cr.top < vh0 * 0.25 && cr.bottom < vh0 * 0.35 && cr.bottom > baixoDoTopo) baixoDoTopo = cr.bottom; });
+      var topP = Math.max(MARGEM_TELA + 4, baixoDoTopo + FOLGAS[0]);
+      pref = { left: vw0 - pref.width - 12, top: topP, right: vw0 - 12, bottom: topP + pref.height, width: pref.width, height: pref.height }; usaPreferido = true;
+    }
+    var obst = controles.concat(colocados);
+    for (var k = i + 1; k < ativos.length; k++) if (prefs[k].width > 0) obst.push(prefs[k]); // os que ainda não foram colocados, na posição de partida
+    var usaTexto = linhas && it.evitarTexto && it.evitarTexto();
+    var livre = true;
+    for (var o = 0; o < obst.length; o++) if (interseta(pref, obst[o], FOLGAS[0])) { livre = false; break; }
+    if (livre && usaTexto && textoCoberto(pref, linhas) / (pref.width * pref.height) > TOLERANCIA_TEXTO) livre = false;
+    var final = pref; var limpo = livre;
+    if (livre && usaPreferido) { // a posição de partida do celular (canto superior direito) está livre: aplica-a
+      it.el.style.right = 'auto'; it.el.style.bottom = 'auto'; it.el.style.left = pref.left + 'px'; it.el.style.top = pref.top + 'px';
+    }
+    if (!livre) {
+      var p = melhorPosicao(pref, obst, usaTexto ? linhas : null, usaPreferido);
+      if (p) {
+        it.el.style.right = 'auto'; it.el.style.bottom = 'auto'; it.el.style.left = p.left + 'px'; it.el.style.top = p.top + 'px';
+        final = { left: p.left, top: p.top, right: p.left + pref.width, bottom: p.top + pref.height, width: pref.width, height: pref.height };
+        limpo = p.folga === FOLGAS[0] && (!usaTexto || (p.texto || 0) <= TOLERANCIA_TEXTO);
+      } else { limpo = false; }
+    }
+    return { final: final, limpo: limpo };
   }
 
   function reposicionarTodos() {
@@ -164,35 +196,23 @@
       ativos.forEach(function (it) { it.el.style.visibility = ''; });
       var colocados = []; // retângulos finais dos já posicionados (o próximo os trata como controles)
       for (var i = 0; i < ativos.length; i++) {
-        var it = ativos[i]; var pref = prefs[i];
-        if (pref.width <= 0) { colocados.push(pref); continue; }
-        var usaPreferido = false;
-        if (it.preferido && it.preferido()) {
-          // posição de partida própria (celular): canto superior direito da área de leitura, abaixo de qualquer barra do topo
-          var vw0 = window.innerWidth; var vh0 = window.innerHeight; var baixoDoTopo = 0;
-          controles.concat(colocados).forEach(function (cr) { if (cr.top < vh0 * 0.25 && cr.bottom < vh0 * 0.35 && cr.bottom > baixoDoTopo) baixoDoTopo = cr.bottom; });
-          var topP = Math.max(MARGEM_TELA + 4, baixoDoTopo + FOLGAS[0]);
-          pref = { left: vw0 - pref.width - 12, top: topP, right: vw0 - 12, bottom: topP + pref.height, width: pref.width, height: pref.height }; usaPreferido = true;
-        }
-        var obst = controles.concat(colocados);
-        for (var k = i + 1; k < ativos.length; k++) if (prefs[k].width > 0) obst.push(prefs[k]); // os que ainda não foram colocados, na posição de partida
-        var usaTexto = linhas && it.evitarTexto && it.evitarTexto();
-        var folga0 = FOLGAS[0]; var livre = true;
-        for (var o = 0; o < obst.length; o++) if (interseta(pref, obst[o], folga0)) { livre = false; break; }
-        if (livre && usaTexto && textoCoberto(pref, linhas) / (pref.width * pref.height) > TOLERANCIA_TEXTO) livre = false;
-        var final = pref;
-        if (livre && usaPreferido) { // a posição de partida do celular (canto superior direito) está livre: aplica-a
-          it.el.style.right = 'auto'; it.el.style.bottom = 'auto'; it.el.style.left = pref.left + 'px'; it.el.style.top = pref.top + 'px';
-        }
-        if (!livre) {
-          var p = melhorPosicao(pref, obst, usaTexto ? linhas : null, usaPreferido);
-          if (p) {
-            it.el.style.right = 'auto'; it.el.style.bottom = 'auto'; it.el.style.left = p.left + 'px'; it.el.style.top = p.top + 'px';
-            final = { left: p.left, top: p.top, right: p.left + pref.width, bottom: p.top + pref.height, width: pref.width, height: pref.height };
+        var it = ativos[i];
+        var modos = it.modos && it.modos.length ? it.modos : [null]; // modos de aparência (ex.: pílula → círculo): o primeiro que couber sem sobrepor
+        var escolhido = null;
+        for (var mi = 0; mi < modos.length; mi++) {
+          var pref = prefs[i];
+          if (modos[mi]) { // muda a aparência, mede de novo (o tamanho muda) e tenta posicionar
+            limpar(it.el); modos[mi](); it.el.style.visibility = 'hidden'; pref = ret(it.el.getBoundingClientRect()); it.el.style.visibility = '';
           }
+          if (pref.width <= 0) { escolhido = { final: pref, limpo: true }; break; }
+          limpar(it.el);
+          var r = posicionarUm(it, pref, i, ativos, prefs, controles, colocados, linhas);
+          escolhido = r;
+          if (r.limpo) break; // coube sem sobrepor: este modo vale; senão tenta o próximo (o último vale de qualquer jeito)
         }
-        colocados.push(final);
+        colocados.push(escolhido.final);
       }
+      ativos.forEach(function (x) { if (x.aoPosicionar) { try { x.aoPosicionar(); } catch (e) { /* o callback não pode derrubar o posicionamento */ } } });
     } catch (e) {
       if (window.console && console.error) console.error('[ZuniFlutuantes] falha ao posicionar:', e && e.message);
       itens.forEach(function (it) { it.el.style.visibility = ''; });
@@ -219,11 +239,11 @@
   document.addEventListener('keyup', function () { agendar(450); }, true);
   [60, 600, 1600, 3600].forEach(function (ms) { setTimeout(function () { agendar(0); }, ms); }); // leitores que montam a tela aos poucos
 
-  // el: elemento fixo; opcoes: { ordem (menor = posicionado primeiro), ativo(): bool, evitarTexto(): bool, preferido(): bool (true = parte do canto superior direito da leitura) }
+  // el: elemento fixo; opcoes: { ordem (menor = posicionado primeiro), ativo(): bool, evitarTexto(): bool, preferido(): bool (true = parte do canto superior direito da leitura), modos: [fn…] (aparências em ordem: usa a primeira que caiba sem sobrepor), aoPosicionar(): callback depois de posicionar }
   window.ZuniFlutuantes = {
     registrar: function (el, opcoes) {
       opcoes = opcoes || {};
-      itens.push({ el: el, ordem: opcoes.ordem || 0, ativo: opcoes.ativo, evitarTexto: opcoes.evitarTexto, preferido: opcoes.preferido });
+      itens.push({ el: el, ordem: opcoes.ordem || 0, ativo: opcoes.ativo, evitarTexto: opcoes.evitarTexto, preferido: opcoes.preferido, modos: opcoes.modos, aoPosicionar: opcoes.aoPosicionar });
       itens.sort(function (a, b) { return a.ordem - b.ordem; });
       agendar(100);
     },

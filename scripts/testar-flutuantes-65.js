@@ -155,7 +155,7 @@ app.use('/', require('../src/routes/livros'));
             const t = m.toggle; const areaBotao = (t.right - t.left) * (t.bottom - t.top);
             const cobre = m.linhas.reduce((acc, l) => { const w = Math.min(t.right, l.right) - Math.max(t.left, l.left); const h = Math.min(t.bottom, l.bottom) - Math.max(t.top, l.top); return acc + (w > 0 && h > 0 ? w * h : 0); }, 0);
             fracaoTexto = cobre / areaBotao;
-            if (fracaoTexto > 0.3) falhas.push(`S4 Livro-Vivo cobre ${Math.round(fracaoTexto * 100)}% de texto`); else if (fracaoTexto > 0.02) avisos.push(`S4 ${Math.round(fracaoTexto * 100)}% do botão sobre texto (sem posição melhor a 16 px dos controles)`);
+            if (id === 'entre-o-encanto-e-a-escolha' && fracaoTexto > 0.02) falhas.push(`S4 Livro-Vivo cobre ${Math.round(fracaoTexto * 100)}% de texto em Entre o Encanto (tolerância 0)`); else if (fracaoTexto > 0.3) falhas.push(`S4 Livro-Vivo cobre ${Math.round(fracaoTexto * 100)}% de texto`); else if (fracaoTexto > 0.02) avisos.push(`S4 ${Math.round(fracaoTexto * 100)}% do botão sobre texto (sem posição melhor a 16 px dos controles)`);
           }
         }
         if (m.pdf) { const s2 = m.ctrl.filter((c) => toca(m.pdf, c, MARGEM_TOQUE)).map((c) => `${c.id}@${Math.round(c.left)},${Math.round(c.top)},${Math.round(c.right)},${Math.round(c.bottom)} (pdf ${Math.round(m.pdf.left)},${Math.round(m.pdf.top)},${Math.round(m.pdf.right)},${Math.round(m.pdf.bottom)})`); if (s2.length) falhas.push(`S2 "Baixar PDF" a <${MARGEM_TOQUE}px de: ${s2.join(' | ')}`); }

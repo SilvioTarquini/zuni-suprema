@@ -95,6 +95,7 @@ const intersecta = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.t
   for (const id of OBRAS) {
     await teste(`${id}: título do chat visível e livre; "Baixar PDF" some enquanto o chat está aberto e volta ao fechar`, async () => {
       const { ctx, page } = await abrir(id, { width: 1366, height: 800 }, false);
+      const ehCapaOuFim = false; // (o teste abre o livro e vira 6 páginas)
       const antes = await page.evaluate(() => { const p = document.getElementById('zs-baixar-pdf'); return p ? getComputedStyle(p).display !== 'none' : null; });
       await page.click('#zuni-chat-toggle'); await page.waitForTimeout(700);
       const r = await page.evaluate(() => {
@@ -108,7 +109,8 @@ const intersecta = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.t
       const depois = await page.evaluate(() => { const p = document.getElementById('zs-baixar-pdf'); return p ? getComputedStyle(p).display !== 'none' : null; });
       await ctx.close();
       assert.ok(r.tituloLivre, 'algo cobre o título do chat'); assert.ok(!r.pillCobre, '"Baixar PDF" cobre o título');
-      if (antes !== null) { assert.strictEqual(antes, true, '"Baixar PDF" deveria aparecer com o chat fechado'); assert.strictEqual(r.pillVisivel, false, '"Baixar PDF" continua visível com o chat aberto'); assert.strictEqual(depois, true, '"Baixar PDF" não voltou ao fechar o chat'); }
+      // desde 12/11/2026 o flutuante só aparece na capa e na última página: no meio do livro (aqui, depois de virar 6 páginas) fica escondido, com o chat fechado, aberto e de novo fechado
+      if (antes !== null) { assert.ok(antes === false || ehCapaOuFim, '"Baixar PDF" deveria estar escondido no meio do livro'); assert.strictEqual(r.pillVisivel, false, '"Baixar PDF" visível com o chat aberto'); assert.ok(depois === false || ehCapaOuFim, '"Baixar PDF" apareceu no meio do livro ao fechar o chat'); }
     });
   }
 
@@ -131,12 +133,13 @@ const intersecta = (a, b) => a.left < b.right - 1 && a.right > b.left + 1 && a.t
 
   console.log('C3 — formato e posição em 390 px e 1366 px, e depois de redimensionar a tela');
   for (const id of OBRAS) {
-    await teste(`${id}: celular = botão redondo só com o ícone; computador = botão com rótulo; 0 sobreposições nos dois e depois de redimensionar`, async () => {
+    await teste(`${id}: celular = pílula "💬 Livro-Vivo" (ou, sem espaço, círculo com a palavra embaixo); computador = botão com rótulo; 0 sobreposições nos dois e depois de redimensionar`, async () => {
       const { ctx, page } = await abrir(id, { width: 390, height: 844 }, true);
       const m = await page.evaluate(medir);
       assert.ok(!m.sem, 'sem botão');
-      assert.ok(Math.abs(m.toggle.w - m.toggle.h) < 1 && m.toggle.w <= 56, `no celular o botão deveria ser redondo (${Math.round(m.toggle.w)}×${Math.round(m.toggle.h)})`);
-      assert.strictEqual(m.rotuloVisivel, false, 'no celular o rótulo deveria estar escondido');
+      // desde 12/11/2026: pílula compacta com o rótulo; se não coube sem sobrepor, círculo de 48 px com a palavra embaixo (rótulo também visível)
+      assert.ok(m.toggle.w > m.toggle.h * 1.5 || (m.toggle.h > 50 && m.toggle.w <= 80), `no celular o botão deveria ser a pílula ou o círculo com rótulo (${Math.round(m.toggle.w)}×${Math.round(m.toggle.h)})`);
+      assert.strictEqual(m.rotuloVisivel, true, 'no celular o rótulo "Livro-Vivo" deveria estar visível');
       assert.deepStrictEqual(sobrepostos(m), [], 'cobre no celular: ' + sobrepostos(m).join(', '));
       assert.ok(m.toggle.left >= 0 && m.toggle.right <= m.vw && m.toggle.top >= 0 && m.toggle.bottom <= m.vh, 'botão fora da tela (celular)');
       // celular → computador (redimensionar): o widget reavalia sozinho

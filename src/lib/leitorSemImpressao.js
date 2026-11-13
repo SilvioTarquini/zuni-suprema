@@ -9,6 +9,8 @@
 // Aplicado na hora de servir, junto do patch de celular (ver leitorMobile.js). Toda âncora é obrigatória e ocorre
 // exatamente uma vez; senão lança, e o patch inteiro é abandonado (livro original + [LEITOR_PATCH_FALHOU]).
 
+const fs = require('fs');
+const path = require('path');
 const { jsFlutuantes } = require('./flutuantes');
 
 const LIVROS_SEM_IMPRESSAO = new Set([
@@ -127,9 +129,14 @@ const CSS_BOTAO_PDF = '<style id="zs-pdf-css">#zs-baixar-pdf{position:fixed;top:
 // templates/flutuantes.js — o mesmo do botão do Livro-Vivo — o desloca para a posição livre mais próxima, a 16 px de qualquer
 // controle, de preferência longe do texto, e o trata junto do Livro-Vivo (um não cobre o outro).
 function botaoPdfFlutuante() {
+  // Comportamento (capa/fim + ícone na barra): templates/pdf-flutuante.js; o marcador vira a navegação para a rota protegida do PDF.
+  const comportamento = fs.readFileSync(path.join(__dirname, '..', '..', 'templates', 'pdf-flutuante.js'), 'utf8').split(String.fromCharCode(13, 10)).join(String.fromCharCode(10))
+    .replace(/^\s*\/\*[\s\S]*?\*\/\s*/, '').split('/*__IR_PARA_PDF__*/').join(JS_IR_PARA_PDF).trim();
+  if (comportamento.includes('</script')) throw new Error('pdf-flutuante.js não pode conter "</script"');
   return CSS_BOTAO_PDF + '<button type="button" id="zs-baixar-pdf" title="Baixar o livro em PDF">&#8681; Baixar PDF</button><script id="zs-pdf-js">'
-    + jsFlutuantes() + '\n(function(){ var b = document.getElementById("zs-baixar-pdf"); b.addEventListener("click",function(){ ' + JS_IR_PARA_PDF + ' });'
-    + ' window.ZuniFlutuantes.registrar(b, { ordem: 0, ativo: function(){ return getComputedStyle(b).display !== "none"; }, evitarTexto: function(){ return true; } }); })();</script>';
+    + jsFlutuantes() + String.fromCharCode(10) + '(function(){ var b = document.getElementById("zs-baixar-pdf");'
+    + ' window.ZuniFlutuantes.registrar(b, { ordem: 0, ativo: function(){ return getComputedStyle(b).display !== "none"; }, evitarTexto: function(){ return true; } }); })();' + String.fromCharCode(10)
+    + comportamento + '</script>';
 }
 
 function tirarImpressaoHtmlEstatico(html) {
